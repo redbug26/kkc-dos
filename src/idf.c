@@ -36,7 +36,7 @@ struct key K[nbrkey]=	{
 {  {0xD7,0xCD,0xC6,0x9A},
 		4,
 		0,
-		"Windows Vectoriel Image",
+        "Windows Vectorial Image",
 		"WMF",
 		"",
 		74,0,0,4},
@@ -73,7 +73,7 @@ struct key K[nbrkey]=	{
 		0,
 		"Midi file",
 		"MID",
-		"",
+        "I.M.A.",       // International MIDI Association
 		14,0,1,1},
 {  {"MTM"},
 		3,
@@ -87,7 +87,7 @@ struct key K[nbrkey]=	{
 		0,
 		"669 Module",
 		"669",
-		"",
+        "Renaissance",
 		4,1,1,1},
 {  {"Extended Module: "},
 		17,
@@ -255,14 +255,14 @@ struct key K[nbrkey]=	{
 		0x14,
 		"Scream Tracker Module",
 		"STM",
-		"",
+        "Future Crew",
 		18,0,1,1},
 {  {"FARþ"},
 		4,
 		0,
 		"Farandole Module",
 		"FAR",
-		"",
+        "Digital Infinity",     // Daniel Potter / DI
 		8,0,1,1},
 {  {"FSMþ"},
 		4,
@@ -276,21 +276,21 @@ struct key K[nbrkey]=	{
 		0,
 		"Far. Sample Data Unsigned",
 		"USM",
-        "Dig. Infinity",
+        "Digital Infinity",
 		26,0,1,2},
 {  {"FPTþ"},
 		4,
 		0,
 		"Farandole Pattern",
 		"FPT",
-        "Dig. Infinity",
+        "Digital Infinity",
 		9,0,1,1},
 {  {"F2RFAR"},
 		6,
 		0,
 		"Far. Linear Module V2.0",
 		"F2R",
-        "Dig. Infinity",
+        "Digital Infinity",
 		7,0,1,1},
 {  {"DMDL"},
 		4,
@@ -346,14 +346,14 @@ struct key K[nbrkey]=	{
 		0,
 		"JPEG Picture",
 		"JPG",
-		"",
+        "Joint Photo.Exp.Group", // Joint Photographic Experts Group
 		38,0,0,4},
 {  {0x89,0x50,0x4E,0x47},
 		4,
 		0,
 		"PNG Network Graphics",
 		"PNG",
-		"",
+        "Thomas Boutell",
 		41,0,0,4},
 {  {"JMUSIC"},
 		6,
@@ -417,7 +417,7 @@ struct key K[nbrkey]=	{
 		"ZSoft PCX 3.0",
 		"PCX",
         "ZSoft",
-		40,0,0,4},
+        40,0,1,4},
 {  {"RIX3"},
 		4,
 		0,
@@ -514,7 +514,7 @@ struct key K[nbrkey]=	{
 		0,
 		"Advanced module system",
 		"AMS",
-		"",
+        "Extreme",      // Ou alors ( Velvet Development) Velvet Studio
 		68,0,1,1},
 {  {"AIL3DIG"},
 		7,
@@ -526,7 +526,7 @@ struct key K[nbrkey]=	{
 {  {"DMS!"},
 		4,
 		0,
-		"DMS File ?",
+        "Disk Masker File (Amiga)",
 		"DMS",
 		"",
 		70,0,0,6},
@@ -535,14 +535,14 @@ struct key K[nbrkey]=	{
 		0,
 		"EXPAND compressed file",
 		"___",
-		"",
+        "Microsoft",
 		71,0,0,3},
 {  {0x1F,0x8B,0x08,0x08},
         3,
 		0,
 		"GZIP compressed file",
 		"GZ",
-		"",
+        "GNU",
 		72,0,0,3},
 {  {"MICROSOFT PIFEX"},
    15,
@@ -618,13 +618,13 @@ struct key K[nbrkey]=	{
 		0,
 		"Acrobat Text",
 		"PDF",
-		"",87,0,0,6},
+        "Adobe",87,0,0,6},
 {  {0x50,0x57,0x41,0x44},
 		4,
 		0,
 		"WAD file",
 		"WAD",
-		"",88,0,0,6},
+        "ID Software",88,0,0,6},
 {  {0x00,0x00,0x00,0x00,0x13,0x00,0x81,0x5A,// 8
 		0x00,0x00,0x81,0x5A,0x00,0x00,0xFF,0x7F,// 8
 		0x00,0x00,0x7F,0xA5,0x00,0x00,0x81,0x5A},// 8
@@ -632,7 +632,7 @@ struct key K[nbrkey]=	{
 		138,
 		"FS4 Mode",
 		"MOD",
-		"",89,0,0,6},
+        "Microsoft",89,0,0,6},
 {  {0x80},
 		1,
 		0,
@@ -651,13 +651,12 @@ struct key K[nbrkey]=	{
 		"Device Driver",
 		"SYS",
 		"",93,0,0,6},
-{  {0xFF,0x57,0x50,0x43,0x10,0x00,0x00,0x00,// úWPCúúúú
-		0x01,0x16		 }, // úú
-		0xA,
+{  {77,88,77,0},  // MXM
+        4,
 		0,
-		"WordPerfect Picture",
-		"WPG",
-		"",94,0,0,6},
+        "MXM Module",
+        "MXM",
+        "Cubic Team",94,0,0,1},                     // Pascal/Cubic Team
 {  {0x00,0x00,0x00,0x00,0x00,0x00,0xE0,0x01,// úúúúúúúú
 		0x00,0x00,0x80,0x02,0x00,0x00,0xE0,0xC5}, // úú€úúúúú
 		16,
@@ -698,7 +697,7 @@ struct key K[nbrkey]=	{
 		0,
 		"PS16 Module",
 		"P16",
-		"",100,0,0,1},
+        "Renaissance",100,0,0,1},     // Joshua C. Jensen aka CyberStrike/Renaissance
 
 {  {"KKRB"},                          // Clef
         4,                            // Longueur de la clef
@@ -710,8 +709,8 @@ struct key K[nbrkey]=	{
         0,                            // vaut la clef doit ˆtre verifie par proc
         0,                            // vaut 1 si il existe un lien vers une proc
         6},                           // type de fichier (1: module, 4: image, 3:executable, 6:other, 2:sample, 5:anim)
-{  {"KKDR"},                          // Clef
-        4,                            // Longueur de la clef
+{  {"KKD"},                           // Clef
+        3,                            // Longueur de la clef
         0,                            // Position de la clef dans le fichier
         "Description of disk",        // Nom du format
         "KKR",                        // Extension du format
@@ -756,7 +755,7 @@ struct key K[nbrkey]=	{
     0x27,
     "PTM Module",
     "PTM",
-    "?",108,0,1,1},
+    "Nostalgia",108,0,1,1},
 {  {"SAdT"},
     4,
     0,
@@ -800,8 +799,6 @@ struct key K[nbrkey]=	{
     "AMS",
     "?",115,0,1,2},
 
-
-
 /*******************************************
  - structures … traiter en dernier ressort -
  *******************************************/
@@ -831,9 +828,9 @@ struct key K[nbrkey]=	{
         "TXT",      // Extension ?
         "",91,1,0,6},    // Laissez celui-ci dernier
 
-/*******************************************
- - structures … traiter en dernier ressort -
- *******************************************/
+/**************************************************
+ - structures … ne pas toucher en dernier ressort -
+ **************************************************/
 
 {  {0,0},
         2,
@@ -897,6 +894,7 @@ short Infos3m(struct info *Info);	// Nø3
 short Infout(struct info *Info);
 short Inforar(struct info *Info);
 short Infogif(struct info *Info);
+short Infopcx(struct info *Info);
 short Infobmp(struct info *Info);
 short Infookt(struct info *Info);
 short Infoau(struct info *Info);
@@ -1123,12 +1121,7 @@ short err;
 
 char path[256];
 
-
-
 short trv=-1;     // vaut -1 tant que l'on a rien trouv‚
-
-
-// buffer=malloc(32768);
 
 sprintf(path,"%s",Info->path);
 
@@ -1178,7 +1171,8 @@ if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) ) {
 				case  4: err=Info669(Info); break;
 				case 15: err=Infomtm(Info); break;
 				case 34: err=Inforar(Info); break;
-				case 37: err=Infogif(Info); break;
+                case 37: err=Infogif(Info); break;
+                case 40: err=Infopcx(Info); break;
                 case 36: err=Infobmp(Info); break;
                 case 73: err=Inforaw(Info); break;
 				case 16: err=Infookt(Info); break;
@@ -1240,11 +1234,13 @@ if (trv!=-1) break;
 
 if (trv==-1) {
 		n=-2; // format non reconnu
-		strcpy(Info->format,"Unknow Format");
+        strcpy(Info->format,"Unknown Format");
 		SplitName(nomfic,NULL,Info->ext);
+        Info->Btype=0;
 		}
 		else {
 		n=K[trv].numero;
+        Info->Btype=K[trv].type;
 		}
 
 if (*Info->fullname==0)
@@ -1253,7 +1249,6 @@ ClearSpace(Info->fullname);
 
 Info->posfic+=Info->taille;
 Info->numero=n;
-
 
 close(handle);
 
@@ -1743,6 +1738,23 @@ Info->taille=(tell(Info->handle)-Info->posfic);
 return 0;
 }
 
+short Infopcx(struct info *Info)
+{
+short Lp,Hp;
+char BP;
+
+Lp=ReadInt(Info,8,1)+1;
+Hp=ReadInt(Info,10,1)+1;
+
+BP=Info->buffer[3];
+
+sprintf(Info->message[0]," Image is      %4d * %4d / %2dBps",Lp,Hp,BP);
+
+// Info->taille=(tell(Info->handle)-Info->posfic);
+
+return 0;
+}
+
 
 
 short Infobmp(struct info *Info)
@@ -1761,13 +1773,10 @@ short Infopkm(struct info *Info)
 {
 short Lp,Hp;
 
-
-// if (strncmp(buf,"GIF8",4)) return 1;
-
 Lp=ReadInt(Info,6,1);
 Hp=ReadInt(Info,8,1);
 
-sprintf(Info->message[0], "  Image is      %4d * %4d / 8Bps",Lp,Hp);
+sprintf(Info->message[0]," Image is      %4d * %4d / 8Bps",Lp,Hp);
 
 return 0;
 }
@@ -1781,7 +1790,7 @@ Bp=8;
 Lp=ReadInt(Info,8,2);
 Hp=ReadInt(Info,10,2);
 
-sprintf(Info->message[0], " Image is      %4d * %4d / %2dBps",Lp,Hp,Bp);
+sprintf(Info->message[0]," Image is      %4d * %4d / %2dBps",Lp,Hp,Bp);
 
 return 0;
 }
@@ -2184,62 +2193,62 @@ if ( (cs==0xFFF0) & (ip==0x100) )
 lseek(Info->handle,Info->posfic+(int)pe,SEEK_SET);
 read(Info->handle,buf2,32);
 
-sprintf(Info->message[0]," Header is %17ld bytes",((int)header)*16);
+sprintf(Info->message[0]," Header is %18ld bytes",((int)header)*16);
 
 
 if (!memcmp(buf2,hai,7))
-        sprintf(Info->message[1]," Compressed with        BROKEN AIN");
+        sprintf(Info->message[1]," Compressed with         BROKEN AIN");
 if (!memcmp(buf2,exe,12))
-        sprintf(Info->message[1]," Compressed with     EXEPACK V3.63");
+        sprintf(Info->message[1]," Compressed with      EXEPACK V3.63");
 if (!memcmp(buf2,exe+2,10))
-        sprintf(Info->message[1]," Compressed with     EXEPACK V4.05");
+        sprintf(Info->message[1]," Compressed with      EXEPACK V4.05");
 if (!memcmp(buf2,lze,9))
-        sprintf(Info->message[1]," Compressed with      BROKEN LZEXE");
+        sprintf(Info->message[1]," Compressed with       BROKEN LZEXE");
 if ( (!memcmp(buf2+9,pkl+9,4)) & (buf2[0]==pkl[0]) & (buf2[3]==pkl[3]) & (buf2[6]==pkl[6]) )
-        sprintf(Info->message[1]," Compressed with     BROKEN PKLITE");
+        sprintf(Info->message[1]," Compressed with      BROKEN PKLITE");
 
 if (!memcmp(buf+0x1E,"PKLITE",6))
-        sprintf(Info->message[1]," Compressed with      PKLITE V1.%02d",buf[0x1C]);
+        sprintf(Info->message[1]," Compressed with       PKLITE V1.%02d",buf[0x1C]);
 if (!memcmp(buf+0x1C,"LZ91",4))
-        sprintf(Info->message[1]," Compressed with             LZEXE");
+        sprintf(Info->message[1]," Compressed with              LZEXE");
 if (!memcmp(buf+0x1C,"WWP ",4))
-        sprintf(Info->message[1]," Compressed with            WWPACK");
+        sprintf(Info->message[1]," Compressed with             WWPACK");
 if (!memcmp(buf+0x20,"RNC",3))
-        sprintf(Info->message[1]," Compressed with          PRO-PACK");
+        sprintf(Info->message[1]," Compressed with           PRO-PACK");
 if (!memcmp(buf+0x20,"AIN2",4))
-        sprintf(Info->message[1]," Compressed with         AIN V2.23");
+        sprintf(Info->message[1]," Compressed with          AIN V2.23");
 
 
 
 
 if (!memcmp(buf+0x55,"PMODE",5))    {
-        sprintf(Info->message[2]," Using  ");
-        memcpy((Info->message[2])+8,buf+0x55,27);
-		(Info->message[2])[36]=0;
+        sprintf(Info->message[2]," Using   ");
+        memcpy((Info->message[2])+9,buf+0x55,27);
+        (Info->message[2])[37]=0;
 		}
 if (!memcmp(buf+0x25C,"DOS/4G",6))
-        sprintf(Info->message[3]," Using                      DOS/4G");
+        sprintf(Info->message[3]," Using                       DOS/4G");
 
 
 if (!memcmp(buf+0x1C,"L.S.",4))
-        sprintf(Info->message[3]," Crypt. by LIGHT SHOW/Eclipse 1.13");
+        sprintf(Info->message[3]," Crypt  by  LIGHT SHOW/Eclipse 1.13");
 if (!memcmp(buf+0x1C,"@KLS",4))
-        sprintf(Info->message[3]," Crypt. by LIGHT SHOW/Eclipse 1.15");
+        sprintf(Info->message[3]," Crypt. by  LIGHT SHOW/Eclipse 1.15");
 if (!memcmp(buf2,dsh,5))
-        sprintf(Info->message[3]," Crypted by                DSHIELD");
+        sprintf(Info->message[3]," Crypted by                 DSHIELD");
 
 if (!memcmp(buf+0x371,"WATCOM C",8))
-        sprintf(Info->message[3]," Compiled with            WATCOM C");
+        sprintf(Info->message[3]," Compiled with             WATCOM C");
 if (!memcmp(buf+0x279,"WATCOM C",8))
-        sprintf(Info->message[3]," Compiled with            WATCOM C");
+        sprintf(Info->message[3]," Compiled with             WATCOM C");
 if (!memcmp(buf+0x273,"WATCOM C",8))
-        sprintf(Info->message[3]," Compiled with            WATCOM C");
+        sprintf(Info->message[3]," Compiled with             WATCOM C");
 if (!memcmp(buf2,htp,3))
-        sprintf(Info->message[3]," Compiled with        TURBO PASCAL");
+        sprintf(Info->message[3]," Compiled with         TURBO PASCAL");
 if ( (buf2[0]==htc[0]) & (!memcmp(buf2+3,htc+3,3)) & (!memcmp(buf2+8,htc+8,4)) )
-        sprintf(Info->message[3]," Compiled with         TURBO C/C++");
+        sprintf(Info->message[3]," Compiled with          TURBO C/C++");
 if (!memcmp(buf2,hqc,9))
-        sprintf(Info->message[3]," Compiled with             QUICK C");
+        sprintf(Info->message[3]," Compiled with              QUICK C");
 
 
 
@@ -2251,7 +2260,7 @@ if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"NE",2))   {
 		ULONG pos;
 
 		os=*(buf+(*(WORD*)(buf+0x3C)+0x36));
-		sprintf(Info->info,"Unknow OS");
+        sprintf(Info->info,"Unknown OS");
 		if ((os&1)==1) sprintf(Info->info,"OS2");
 		if ((os&2)==2) {
 				sprintf(Info->info,"WIN ");

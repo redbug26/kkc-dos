@@ -1,4 +1,4 @@
-#define VERSION "0.21"
+#define VERSION "0.23"
 
 #define ENTIER short
 
@@ -45,11 +45,10 @@ struct fenetre {
      ENTIER x3,y3;      // position de l'infoselect
      ENTIER pcur,paff;  // positon dans le tableau
      ENTIER scur,saff;  // positon du curseur … l'‚cran
-     char path[256]; // path complete (disk et repertoire)
-                     // La lettre du disque ne peut prendre que 1 caractere
-                     //                  et doit etre en majuscule
-                     // Le repertoire ne doit pas finir par '/' sauf le ROOT
-     unsigned drive; // A:1, B:2 ...
+     char path[256];    // path complete (disk et repertoire)
+                        // La lettre du disque ne peut prendre que 1 caractere
+                        //                  et doit etre en majuscule
+                        // Le repertoire ne doit pas finir par '/' sauf le ROOT
      ENTIER FenTyp;    // Type de fenetre: 0:norm, 1:diz
      ENTIER init;      // si =1 --> r‚initialise fenˆtre (bordure ...)
      struct fenetre *Fen2;
@@ -59,10 +58,9 @@ struct fenetre {
      ENTIER sorting;      // 1: Name, 2: ext, 3: date, 4: size, 0: unsort
 
      // Systeme
-     ENTIER system;        // 0: DOS
-                         // 1: RAR
+     ENTIER system;      // 0: DOS, 1: RAR, 2: ARJ, 3: ZIP, 4: LHA, 5: KKD
+
      char VolName[255];  // Nom du volume
-     char Tpath[255];    // Veritable path (sauvegarde de path avec archive)
 
 };
 

@@ -34,7 +34,7 @@ struct info
    char os;	// 1: DOS, 2:WIN, 3:WIN32
    int numero;
    int Btype;	// 1: module, 2: image, 3: executable,
-				// 4:other,   5:sample/instruments, 6:anim.
+                // 4:other,   5:sample/instruments, 6:anim.
 
    char *buffer;	// buffer pour E/S
    ULONG posbuf;	// position du buffer dans le fichier par rapport … posfic

@@ -201,6 +201,8 @@ switch(LO(car))   {
                 break;
             }
         break;
+    case 32:
+    case 13:
     case 27:
         fin=-1;
         break;
@@ -229,7 +231,6 @@ return fin;
 static char curattr = 7;
 static int curx = 0,cury = 0;
 static int maxx = 80, maxy = 25;  /* size of ansi output window */
-static char useansi = 1;           /* while true, interp ansi seqs */
 static int tabspaces = 8;
 static int savx,savy,issaved = 0;
 static char ansi_terminators[] = "HFABCDnsuJKmp";
@@ -247,245 +248,247 @@ int tempo;
 
 void set_pos (char *argbuf,int arglen,char cmd)
 {
-      int   y,x;
-      char *p;
+int   y,x;
+char *p;
 
-      if (!*argbuf || !arglen)
-      {
-            curx = cury = 0;
-      }
-      y = atoi(argbuf) - 1;
-      p = strchr(argbuf,';');
-      if (y >= 0 && p)
-      {
-            x = atoi(p + 1) - 1;
-            if(x >= 0)
-            {
-                  curx = x;
-                  cury = y;
-            }
-      }
+if (!*argbuf || !arglen)
+    {
+    curx = cury = 0;
+    }
+y = atoi(argbuf) - 1;
+p = strchr(argbuf,';');
+if (y >= 0 && p)
+    {
+    x = atoi(p + 1) - 1;
+    if(x >= 0)
+        {
+        curx = x;
+        cury = y;
+        }
+    }
 }
 
 void go_up (char *argbuf,int arglen,char cmd)
 {
-      int x;
+int x;
 
-      x = atoi(argbuf);
-      if (!x)
-            x = 1;
-      for ( ; x ; x--)
-      {
-            if (!cury)
-                  break;
-            cury--;
-      }
+x = atoi(argbuf);
+if (!x)
+    x=1;
+
+for ( ; x ; x--)
+    {
+    if (!cury)
+        break;
+    cury--;
+    }
 }
 
 void go_down (char *argbuf,int arglen,char cmd)
 {
-      int x;
+int x;
 
-      x = atoi(argbuf);
-      if (!x)
-            x = 1;
-      for ( ; x ; x--)
-      {
-            if (cury == maxy - 1)
-                  break;
-            cury++;
-      }
+x = atoi(argbuf);
+if (!x)
+    x = 1;
+for ( ; x ; x--)
+    {
+    if (cury == maxy - 1)
+        break;
+    cury++;
+    }
 }
 
 void go_left (char *argbuf,int arglen,char cmd)
 {
-      int x;
+int x;
 
-      x = atoi(argbuf);
-      if (!x)
-            x = 1;
-      for ( ; x ; x--)
-      {
-            if(!curx)
-                  break;
-            curx--;
-      }
+x = atoi(argbuf);
+if (!x)
+    x = 1;
+for ( ; x ; x--)
+    {
+    if(!curx)
+        break;
+    curx--;
+    }
 }
 
 void go_right (char *argbuf,int arglen,char cmd)
 {
-      int x;
+int x;
 
-      x = atoi(argbuf);
-      if (!x)
-            x = 1;
-      for ( ; x ; x--)
-      {
-            if (curx == maxx - 1)
-                  break;
-            curx++;
-      }
+x = atoi(argbuf);
+if (!x)
+    x = 1;
+for ( ; x ; x--)
+    {
+    if (curx == maxx - 1)
+        break;
+    curx++;
+    }
 }
 
 void report (char *argbuf,int arglen,char cmd)
 {
-      /* you figure out how to implement it ... */
+/* you figure out how to implement it ... */
 }
 
 void save_pos (char *argbuf,int arglen,char cmd)
 {
-      savx = curx;
-      savy = cury;
-      issaved = 1;
+savx = curx;
+savy = cury;
+issaved = 1;
 }
 
 void restore_pos (char *argbuf,int arglen,char cmd)
 {
-      if(issaved)
-      {
-            curx = savx;
-            cury = savy;
-            issaved = 0;
-      }
+if(issaved)
+    {
+    curx = savx;
+    cury = savy;
+    issaved = 0;
+    }
 }
 
 
 
 void set_colors (char *argbuf,int arglen,char cmd)
 {
-      char *p,*pp;
+char *p,*pp;
 
-      if (*argbuf && arglen)
-      {
-            pp = argbuf;
-            do
+if (*argbuf && arglen)
+    {
+    pp = argbuf;
+    do
+        {
+        p = strchr(pp,';');
+        if (p && *p)
             {
-                  p = strchr(pp,';');
-                  if (p && *p)
-                  {
-                        *p = 0;
-                        p++;
-                  }
-                  switch (atoi(pp))
-                  {
-                  case 0: /* all attributes off */
-                        curattr = 7;
-                        break;
+            *p = 0;
+            p++;
+            }
+        switch (atoi(pp))
+            {
+            case 0: /* all attributes off */
+                curattr = 7;
+                break;
 
-                  case 1: /* bright on */
-                        curattr |= 8;
-                        break;
+            case 1: /* bright on */
+                  curattr |= 8;
+                  break;
 
-                  case 2: /* faint on */
-                        curattr &= (~8);
-                        break;
+            case 2: /* faint on */
+                  curattr &= (~8);
+                  break;
 
-                  case 3: /* italic on */
-                        break;
+            case 3: /* italic on */
+                  break;
 
-                  case 5: /* blink on */
-                        curattr |= 128;
-                        break;
+            case 5: /* blink on */
+                  curattr |= 128;
+                  break;
 
-                  case 6: /* rapid blink on */
-                        break;
+            case 6: /* rapid blink on */
+                  break;
 
-                  case 7: /* reverse video on */
-                        curattr = 112;
-                        break;
+            case 7: /* reverse video on */
+                  curattr = 112;
+                  break;
 
-                  case 8: /* concealed on */
-                        curattr = 0;
-                        break;
+            case 8: /* concealed on */
+                  curattr = 0;
+                  break;
 
-                  case 30: /* black fg */
-                        curattr &= (~7);
-                        break;
+            case 30: /* black fg */
+                  curattr &= (~7);
+                  break;
 
-                  case 31: /* red fg */
-                        curattr &= (~7);
-                        curattr |= 4;
-                        break;
+            case 31: /* red fg */
+                  curattr &= (~7);
+                  curattr |= 4;
+                  break;
 
-                  case 32: /* green fg */
-                        curattr &= (~7);
-                        curattr |= 2;
-                        break;
+            case 32: /* green fg */
+                  curattr &= (~7);
+                  curattr |= 2;
+                  break;
 
-                  case 33: /* yellow fg */
-                        curattr &= (~7);
-                        curattr |= 6;
-                        break;
+            case 33: /* yellow fg */
+                  curattr &= (~7);
+                  curattr |= 6;
+                  break;
 
-                  case 34: /* blue fg */
-                        curattr &= (~7);
-                        curattr |= 1;
-                        break;
+            case 34: /* blue fg */
+                  curattr &= (~7);
+                  curattr |= 1;
+                  break;
 
-                  case 35: /* magenta fg */
-                        curattr &= (~7);
-                        curattr |= 5;
-                        break;
+            case 35: /* magenta fg */
+                  curattr &= (~7);
+                  curattr |= 5;
+                  break;
 
-                  case 36: /* cyan fg */
-                        curattr &= (~7);
-                        curattr |= 3;
-                        break;
+            case 36: /* cyan fg */
+                  curattr &= (~7);
+                  curattr |= 3;
+                  break;
 
-                  case 37: /* white fg */
-                        curattr |= 7;
-                        break;
+            case 37: /* white fg */
+                  curattr |= 7;
+                  break;
 
-                  case 40: /* black bg */
-                        curattr &= (~112);
-                        break;
+            case 40: /* black bg */
+                  curattr &= (~112);
+                  break;
 
-                  case 41: /* red bg */
-                        curattr &= (~112);
-                        curattr |= (4 << 4);
-                        break;
+            case 41: /* red bg */
+                  curattr &= (~112);
+                  curattr |= (4 << 4);
+                  break;
 
-                  case 42: /* green bg */
-                        curattr &= (~112);
-                        curattr |= (2 << 4);
-                        break;
+            case 42: /* green bg */
+                  curattr &= (~112);
+                  curattr |= (2 << 4);
+                  break;
 
-                  case 43: /* yellow bg */
-                        curattr &= (~112);
-                        curattr |= (6 << 4);
-                        break;
+            case 43: /* yellow bg */
+                  curattr &= (~112);
+                  curattr |= (6 << 4);
+                  break;
 
-                  case 44: /* blue bg */
-                        curattr &= (~112);
-                        curattr |= (1 << 4);
-                        break;
+            case 44: /* blue bg */
+                  curattr &= (~112);
+                  curattr |= (1 << 4);
+                  break;
 
-                  case 45: /* magenta bg */
-                        curattr &= (~112);
-                        curattr |= (5 << 4);
-                        break;
+            case 45: /* magenta bg */
+                  curattr &= (~112);
+                  curattr |= (5 << 4);
+                  break;
 
-                  case 46: /* cyan bg */
-                        curattr &= (~112);
-                        curattr |= (3 << 4);
-                        break;
+            case 46: /* cyan bg */
+                  curattr &= (~112);
+                  curattr |= (3 << 4);
+                  break;
 
-                  case 47: /* white bg */
-                        curattr |= 112;
-                        break;
+            case 47: /* white bg */
+                  curattr |= 112;
+                  break;
 
-                  case 48: /* subscript bg */
-                        break;
+            case 48: /* subscript bg */
+                  break;
 
-                  case 49: /* superscript bg */
-                        break;
+            case 49: /* superscript bg */
+                  break;
 
-                  default: /* unsupported */
-                        break;
-                  }
-                  pp = p;
-            } while (p);
-      }
+            default: /* unsupported */
+                  break;
+            }
+        pp = p;
+        }
+    while (p);
+    }
 }
 
 
@@ -495,18 +498,20 @@ int ansi_out (char *buf)
 int  arglen = 0, ansistate = NOTHING, x;
 char *b = buf, argbuf[MAXARGLEN] = "";
 
+// Gestion des SHIFT, CTRL ...
+char *Keyboard_Flag1=(char*)0x417;
+char car;
 
-
-if (!useansi)                       /* is ANSI interp on? */
-    {
-    ansistate = NOTHING;
-    arglen = 0;
-    *argbuf = 0;
-    }
 
 while (*b)
     {
     tempo++;
+
+    do
+        {
+        car=*Keyboard_Flag1;
+        }
+    while ((car&1)==1);
 
     if (touche!=1)
         {
@@ -516,7 +521,7 @@ while (*b)
         else
         break;
 
-    if (tempo>=Cfg->AnsiSpeed)
+    if ( (tempo>=Cfg->AnsiSpeed) & ((car&2)!=2) )
         {
         tempo=0;
         
@@ -525,34 +530,30 @@ while (*b)
         }
 
     switch (ansistate)
-            {
-            case NOTHING:
-                  switch (*b)
-                  {
-                  case '\x1b':
-                        if (useansi)
-                        {
-                              ansistate = WASESCAPE;
-                              break;
-                        }
+        {
+        case NOTHING:
+            switch (*b)
+                {
+                case 27:
+                    ansistate = WASESCAPE;
+                    break;
+                case '\r':
+                    curx = 0;
+                    break;
 
-                  case '\r':
-                        curx = 0;
-                        break;
-
-                  case '\n':
-                        cury++;
-                        if (cury > maxy - 1)
+                case '\n':
+                    cury++;
+                    if (cury > maxy - 1)
                         {
                         ScrollUp();
                         ChrWin(0,maxy-1,maxx-1,maxy,32);
                         ColWin(0,maxy-1,maxx-1,maxy,curattr);
                         cury--;
                         }
-                        break;
+                    break;
 
-                  case '\t':     /* so _you_ figure out what to do... */
-                        for (x = 0; x < tabspaces; x++)
+                case '\t':     /* so _you_ figure out what to do... */
+                    for (x = 0; x < tabspaces; x++)
                         {
                         AffChr(curx,cury,' ');
                         AffCol(curx,cury,curattr);
@@ -690,7 +691,7 @@ while (*b)
                   break;
 
             default:
-                WinError("Error in ANSI state machine");
+                WinError("Error of ANSI code");
                 break;
             }
             b++;
@@ -744,10 +745,9 @@ do
 while(n==16384);
 
 
-getch();
+Wait(0,0,0);
 
 SetTaille();
-
 
 ChargeEcran();
 free(buffer);
@@ -786,7 +786,7 @@ char pasfini;
 SaveEcran();
 PutCur(3,0);
 
-Bar(" Help  ----  ----  Hexa  ----  ---- Search ----  Mask  ---- ");
+Bar(" Help  ----  ----  Hexa  ----  ---- Search Print Mask  ---- ");
 
 wrap=0;
 aff=1;
@@ -1002,7 +1002,10 @@ switch(LO(code))
             case 0x41:  // F7
                 SearchTxt();
                 break;
-            case 0x43:
+            case 0x42:  // F8
+                Print(fichier,1);
+                break;
+            case 0x43:  // F9
                 ChangeMask();
                 ColWin(x,y,x+xl-1,y+yl-1,10*16+1);
                 break;
@@ -1093,6 +1096,8 @@ switch(LO(code))
                 break;
             }
         break;
+    case 32:
+    case 13:
     case 27:
         fin=-1;
         break;
@@ -1915,14 +1920,12 @@ switch(LO(code))   {
             }
             else
             {
-
             Path2Abs(fichier,"..");
             Path2Abs(fichier,titre);
 
             strcpy(Info.path,fichier);
 
             FileinPath(fichier,titre);
-
 
             Traitefic(titre,&Info);
             }
@@ -2007,16 +2010,20 @@ if (fic==NULL)
     WinError("Couldn't open file");
     i=-1;
     }
-taille=filelength(fileno(fic));
+    else
+    {
 
-if (taille==0) i=-1;
+    taille=filelength(fileno(fic));
 
-fread(view_buffer,32768,1,fic);
+    if (taille==0) i=-1;
 
-pos=0;
-posl=32768;
+    fread(view_buffer,32768,1,fic);
 
-posn=0;
+    pos=0;
+    posl=32768;
+
+    posn=0;
+    }
 
 while(i!=-1)
     {
@@ -2041,7 +2048,8 @@ while(i!=-1)
         }
     }
 
-fclose(fic);
+if (fic!=NULL)
+    fclose(fic);
 
 free(liaison);
 free(fichier);
@@ -2266,3 +2274,82 @@ while ( (car!=27) & (car!=13) );
 
 ChargeEcran();
 }
+
+char PRN_init(short lpt,char a)
+{
+union REGS regs;
+
+regs.h.ah=1;
+regs.w.dx=lpt;
+
+int386(0x17,&regs,&regs);
+
+return regs.h.ah;
+}
+
+// Retourne 1 si tout va bien
+
+char PRN_print(short lpt,char a)
+{
+union REGS regs;
+char code,cont;
+
+PrintAt(0,0,"Printing...");
+
+do
+    {
+    regs.h.ah=0;
+    regs.h.al=a;
+    regs.w.dx=lpt;
+
+    int386(0x17,&regs,&regs);
+
+    code=regs.h.ah;
+
+    cont=0;
+
+    if ( ((code&128)==128) & ((code&16)==16) ) cont=1;
+    if ((code&1)==1)   WinError("Time-Out");
+    if ((code&8)==8)   WinError("I/O Error");
+    if ((code&32)==32) WinError("No more paper");
+    if ((code&64)==64) PrintAt(0,0,"ACK Error"),cont=0;
+    }
+while(cont);
+
+return 1;
+}
+
+
+
+void Print(char *fichier,int n)
+{
+FILE *fic;
+short lpt;
+char a;
+char Font[]={27,91,3,27,51,28};
+int m;
+
+lpt=0;
+
+
+fic=fopen(fichier,"rb");
+if (fic==NULL)
+    { WinError("Couldn't open file"); return; }
+
+for (m=0;m<6;m++)
+    PRN_print(lpt,Font[m]);
+    
+
+if (n==1)   // Fichier TEXTE
+    {
+    do
+        {
+        if (fread(&a,1,1,fic)==0) break;
+        if (PRN_print(lpt,a)==0) break;
+        }
+    while(1);
+    }
+
+WinMesg("Print","The file is printed");
+}
+

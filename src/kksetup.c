@@ -94,6 +94,7 @@ int info;
 int prem;
 
 SaveEcran();
+PutCur(32,0);
 
 info=0;
 
@@ -342,6 +343,7 @@ if (nbr<2) l=9;
 x=(80-(l*nbr))/2;
 
 SaveEcran();
+PutCur(32,0);
 
 WinCadre(x-2,6,x+l*nbr+1,11,0);
 ColWin(x-1,7,x+l*nbr,10,0*16+1);
@@ -571,7 +573,7 @@ if (LoadCfg()==-1)
     Mask[1]->Other_Col=1;
 
     strcpy(Mask[15]->title,"User Defined Style");
-    strcpy(Mask[15]->chaine,"ketchup killers redbug access darkangel katana ecstazy cray magic fred cobra z @");
+    strcpy(Mask[15]->chaine,"ketchup killers redbug access darkangel katana ecstasy cray magic fred cobra z @");
     Mask[15]->Ignore_Case=1;
     Mask[15]->Other_Col=1;
 
@@ -664,6 +666,8 @@ PrintAt(10,13,"F3: Load KKSETUP.INI");
 
 PrintAt(10,17,"F4: List all the format");
 
+PutCur(32,0);
+
 do
 {
 
@@ -673,6 +677,7 @@ switch(HI(car))
     {
     case 0x3B:  // F1
         SaveEcran();
+        PutCur(32,0);
         ChrWin(0,0,79,49,32);
         Help();
         ChargeEcran();
@@ -690,8 +695,8 @@ switch(HI(car))
 
 } while ( (HI(car)!=0x44) & (LO(car)!=27) );
 
-PrintAt(10,(Cfg->TailleY-6),"KK.BAT is now in PATH -> You could run KK from everywhere");
-PrintAt(10,(Cfg->TailleY-5),"KKDESC.BAT is now in path -> IDEM");
+PrintAt(10,(Cfg->TailleY-6),"KK.BAT & KKDESC.BAT are now in PATH");
+PrintAt(20,(Cfg->TailleY-5),"-> You could run KK from everywhere");
 PrintAt(10,(Cfg->TailleY-4),"%s is done",chaine);
 
 PrintAt(29,(Cfg->TailleY-2),"Press a key to continue");
@@ -712,6 +717,7 @@ char ch[256];
 FILE *fic;
 
 SaveEcran();
+PutCur(32,0);
 
 ChrWin(1,3,78,(Cfg->TailleY-2),32);
 ColWin(1,3,78,(Cfg->TailleY-2),10*16+1);
@@ -728,8 +734,9 @@ ListDrive(lstdrv);
 for (n=0;n<26;n++)
     {
     sprintf(ch,"%c:\\",n+'A');
-    if ( (lstdrv[n]==1) & (VerifyDisk(n+1)==0) )
-        KKR_Search(ch);
+    if (lstdrv[n]==1)
+        if (VerifyDisk(n+1)==0)
+            KKR_Search(ch);
     }
 
 nbrdir=0;
@@ -737,8 +744,9 @@ nbrdir=0;
 for (n=0;n<26;n++)
     {
     sprintf(ch,"%c:\\*.*",n+'A');
-    if ( (lstdrv[n]==1) & (VerifyDisk(n+1)==0) )
-        SSearch(ch);
+    if (lstdrv[n]==1)
+        if (VerifyDisk(n+1)==0)
+            SSearch(ch);
     }
 
 fic=fopen("idfext.rb","wb");
@@ -1077,6 +1085,7 @@ do
                         t=(80-x)/2;
 
                         SaveEcran();
+                        PutCur(32,0);
 
                         WinCadre(t-1,9,t+x,15,2);
                         ColWin(t,10,t+x-1,14,10*16+2);
@@ -1251,6 +1260,7 @@ fic=fopen("kksetup.ini","rt");
 if (fic==NULL) return;
 
 SaveEcran();
+PutCur(32,0);
 
 
 while (fgets(chaine,128,fic)!=NULL)
@@ -1304,6 +1314,24 @@ if (!stricmp(var,"directpoint"))
 if (!stricmp(var,"hiddenfile"))
     {
     Cfg->hidfil=valeur;
+    erreur=0;
+    }
+
+if (!stricmp(var,"logfile"))
+    {
+    Cfg->logfile=valeur;
+    erreur=0;
+    }
+
+if (!stricmp(var,"font"))
+    {
+    Cfg->font=valeur;
+    erreur=0;
+    }
+
+if (!stricmp(var,"debug"))
+    {
+    Cfg->debug=valeur;
     erreur=0;
     }
 

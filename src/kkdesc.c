@@ -135,7 +135,7 @@ ChrLin(0,(Cfg->TailleY-1),80,32);
 FileFormat();
 
 NbrFormat=0;
-strcpy(Titre,"Unknow");
+strcpy(Titre,"Unknown");
 strcpy(Meneur,"?");
 Load();
 
@@ -844,7 +844,7 @@ switch(HI(car))
 
 if (car==32)
     {
-    if (K[n].ext[0]!='*')
+    if (K[pres].ext[0]!='*')
         NumExt[pres] = (NumExt[pres]==1) ? 0 : 1;
     }
 

@@ -19,11 +19,12 @@ struct {
                 // 1: Decompacteur
                 // 2: Compacteur
     char dir[128];
-    } app[20];
+    } app[50];
 
 
 int nbr;	// nombre d'application
 int nbrdir; //
+int prem,max;
 
 
 int d,fin;
@@ -120,46 +121,60 @@ for(n=0;n<nbrdir;n++)	{
 
 fclose(fic);
 
-if (nbrappl==0) {
+if (nbrappl==0)
+    {
 	PUTSERR("No player for this file !");
 	return 2;
 	}
 
-if (nbrappl!=1) {
-	m=(25-nbrappl)/2;
+if (nbrappl!=1)
+    {
+    m=((Cfg->TailleY)-nbrappl)/2;
 
-    WinCadre(12,m-1,67,m+nbrappl,0);
-    ColWin(13,m,66,m+nbrappl-1,10*16+1);
-    ChrWin(13,m,66,m+nbrappl-1,32);
+    if (m<2) m=2;
+    max=m+nbrappl;
+    if (max>Cfg->TailleY-3) max=Cfg->TailleY-3;
+
+
+    WinCadre(12,m-1,67,max,0);
+    ColWin(13,m,66,max-1,10*16+1);
+    ChrWin(13,m,66,max-1,32);
 
     PrintAt(37,m-1," Who? ");
     
-    for(n=m;n<m+nbrappl;n++)
-        PrintAt(15,n,app[n-m].Titre);
-
-	pos=m;
+    pos=m;
 	nbr=nbrappl;
 
     d=14;
     fin=65;
 
+    prem=0;
+
 	do	{
+        while (pos<m) pos=m;
+        while (pos>m+nbrappl-1) pos=m+nbrappl-1;
+
+        while (pos-prem<m) prem--;
+        while (pos-prem>max-1) prem++;
+
         PrintAt(0,0,"%39s by %-37s",app[pos-m].Titre,app[pos-m].Meneur);
-		while (pos<m) pos+=nbr;
-		while (pos>m+nbr-1) pos-=nbr;
+
+        for(n=m;n<max;n++)
+            PrintAt(15,n,"%-49s",app[n-m+prem].Titre);
 
 		for (n=d;n<=fin;n++)
-			col[n]=GetCol(n,pos);
-
-		for (n=d;n<=fin;n++)
-            AffCol(n,pos,7*16+4);
+            {
+            col[n]=GetCol(n,pos-prem);
+            AffCol(n,pos-prem,7*16+4);
+            }
 
 		a=getch();
 		for (n=d;n<=fin;n++)
-			AffCol(n,pos,col[n]);
+            AffCol(n,pos-prem,col[n]);
 
 
-		if (a==0)	{
+        if (a==0)
+            {
 			a=getch();
 			if (a==72)		pos--;
 			if (a==80)		pos++;
@@ -167,6 +182,7 @@ if (nbrappl!=1) {
 			if (a==0x4F)	pos=m+nbr-1;
 			if (a==0x51)	pos+=5;
 			if (a==0x49)	pos-=5;
+            if (a==0x86)    WinMesg("Info. on dir",app[pos-m].dir);    // F12
 			}
 
 		} while ( (a!=27) & (a!=13) );
@@ -179,9 +195,6 @@ if (nbrappl!=1) {
 	n=0;
 
 
-/* chaine[0]=di+'A';
-chaine[1]=':';
-chaine[2]=0; */
 strcpy(chaine,app[n].dir);
 strcat(chaine,app[n].Filename);
 CommandLine("#%s %s",chaine,name);

@@ -46,6 +46,7 @@ int crc32file(char *name,unsigned long *crc);   // Compute CRC-32 of file
 
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F);
 int WinError(char*);
+int WinMesg(char *,char *);
 
 int Gradue(int x,int y,int length,int from,int to,int total);
 
@@ -86,6 +87,11 @@ struct config {
 
      char pntrep;           // vaut 1 si on affiche le repertoire "."
      char hidfil;           // vaut 1 si on affiche les fichiers caches
+
+     char logfile;          // vaut 1 si on utilise un logfile
+     char debug;            // vaut 1 si on est en mode DEBUG
+
+     char font;             // utilisation des fonts
 
     // Pas touche
     //-----------

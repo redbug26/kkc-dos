@@ -244,8 +244,6 @@ return 0;
 
 void InstallARJ(void)
 {
-strcpy(DFen->Tpath,DFen->path);
-
 strcpy(DFen->VolName,DFen->path);
 Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
 
@@ -419,8 +417,6 @@ return 0;
 
 void InstallRAR(void)
 {
-strcpy(DFen->Tpath,DFen->path);
-
 strcpy(DFen->VolName,DFen->path);
 Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
 
@@ -635,8 +631,6 @@ return 0;
 
 void InstallZIP(void)
 {
-strcpy(DFen->Tpath,DFen->path);
-
 strcpy(DFen->VolName,DFen->path);
 Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
 
@@ -851,8 +845,6 @@ return 0;
 
 void InstallLHA(void)
 {
-strcpy(DFen->Tpath,DFen->path);
-
 strcpy(DFen->VolName,DFen->path);
 Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
 
@@ -865,25 +857,36 @@ DFen->system=4;
                                FICHIER .KKD
  *****************************************************************************/
 
+struct kkdesc
+    {
+    long desc;
+    long next;
+    long size;
+    short time;
+    short date;
+    char attrib;
+    };
+
+
 int KKDlitfic(void)
 {
+struct kkdesc KKD_desc;
+
 char nom[256];
+static char name[256];
 
 char Nomarch[256];
 char fin;
 int handle;
 
-int nbrdir;
 
 int n;
 
-char info;
+int i,j;
 
-short tai;  // taille des noms
-long t;     // position dans archive
+unsigned char tai;  // taille des noms
 
 struct file **Fic;
-
 
 DFen->pcur=0;
 DFen->scur=0;
@@ -896,96 +899,152 @@ DFen->nbrsel=0;
 
 Fic=DFen->F;
 
-Fic[0]->name=GetMem(2);
-strcpy(Fic[0]->name,".");
+DFen->nbrfic=0;
 
-Fic[0]->size=0;
-Fic[0]->time=0;
-Fic[0]->date=33;
-Fic[0]->attrib=0x10;
-Fic[0]->select=0;
+if (Cfg->pntrep==1)
+    {
+    Fic[1]->name=GetMem(2);
+    strcpy(Fic[1]->name,".");
 
-Fic[1]->name=GetMem(3);
-strcpy(Fic[1]->name,"..");
+    Fic[1]->size=0;
+    Fic[1]->time=0;
+    Fic[1]->date=33;
+    Fic[1]->attrib=0x10;
+    Fic[1]->select=0;
 
-Fic[1]->size=0;
-Fic[1]->time=0;
-Fic[1]->date=33;
-Fic[1]->attrib=0x10;
-Fic[1]->select=0;
+    DFen->nbrfic=1;
+    }
 
-DFen->nbrfic=2;
+if (strlen(DFen->path)==strlen(DFen->VolName))
+    {
+    Fic[1]->name=GetMem(2);
+    strcpy(Fic[1]->name,"..");
+
+    Fic[1]->size=0;
+    Fic[1]->time=0;
+    Fic[1]->date=33;
+    Fic[1]->attrib=0x10;
+    Fic[1]->select=0;
+
+    (DFen->nbrfic)++;
+    strcpy(nom,"");
+    }
+    else
+    {
+    strcpy(nom,(DFen->path)+strlen(DFen->VolName)+1);
+    strcat(nom,"\\");
+    }
 
 handle=open(DFen->VolName,O_RDONLY | O_BINARY);
 
-// Okay.
+lseek(handle,3,SEEK_SET);   // Passe la cle
+
+read(handle,&tai,1);        // Passe la version
+
+read(handle,&tai,1);        // Passe le nom du volume
+read(handle,Nomarch,tai);   
+
+read(handle,&n,4);          // Passe le nombre d'octets non utilise
+read(handle,&n,4);          // Passe le nombre d'octets non utilise avant reconstruction
+
+
+i=0;    // DEBUT
+j=0;    // FIN
+
+i=j;
+strcpy(name,nom+j);
+for(n=j;n<strlen(nom);n++)
+    {
+    if (nom[n]=='\\')
+        {
+        name[n-j]=0;
+        j=n+1;
+        break;
+        }
+    }
 
 fin=0;
 
-if (strlen(DFen->path)==strlen(DFen->VolName))
-    strcpy(nom,"\\");
+while(i!=j)
+{
+read(handle,&tai,1);
+read(handle,Nomarch,tai);
+Nomarch[tai]=0;
+
+read(handle,&KKD_desc,sizeof(struct kkdesc));
+
+if ( (!stricmp(Nomarch,name)) & ((KKD_desc.attrib&0x10)==0x10) )
+    {
+    if (KKD_desc.desc==0)
+        {
+        fin=1;          // Un gros probleme: un directory qui ne mene a rien
+        break;
+        }
+    lseek(handle,KKD_desc.desc,SEEK_SET);
+
+    i=j;
+    strcpy(name,nom+j);
+    for(n=j;n<strlen(nom);n++)
+        {
+        if (nom[n]=='\\')
+            {
+            name[n-j]=0;
+            j=n+1;
+            break;
+            }
+        }
+    }
     else
     {
-    strcpy(nom,"\\");
-    strcat(nom,(DFen->path)+strlen(DFen->VolName)+1);
-    }
-
-lseek(handle,4,SEEK_SET);   // Passe la cle
-
-read(handle,&nbrdir,4);
-
-for (n=0;n<nbrdir;n++)
-    {
-    read(handle,&tai,2);
-    read(handle,Nomarch,tai);
-    Nomarch[tai]=0;
-    read(handle,&t,4);
-    if (!stricmp(nom,Nomarch))
+    if (KKD_desc.next==0)
+        {
+        fin=1;          // Directory pas trouv‚
         break;
-    }
-
-lseek(handle,t,SEEK_SET);
-
-while(!fin)
-{
-read(handle,&info,1);
-if (info==0)
-    {
-    fin=1;
-    break;
-    }
-
-if (info==1)
-    {
-    read(handle,&tai,2);
-
-    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
-
-    Fic[DFen->nbrfic]->name=GetMem(tai+1);
-
-    read(handle,Fic[DFen->nbrfic]->name,tai);
-    Fic[DFen->nbrfic]->name[tai]=0;
-
-    read(handle,&(Fic[DFen->nbrfic]->size),4);
-
-    DFen->taillefic+=Fic[DFen->nbrfic]->size;
-
-    read(handle,&(Fic[DFen->nbrfic]->time),2);
-    read(handle,&(Fic[DFen->nbrfic]->date),2);
-
-    read(handle,&(Fic[DFen->nbrfic]->attrib),1);
-
-    Fic[DFen->nbrfic]->select=0;
-
-    DFen->nbrfic++;
+        }
+    lseek(handle,KKD_desc.next,SEEK_SET);
     }
 }
 
-close(handle);
 
+if (fin==0)
+    {
+    do
+        {
+        read(handle,&tai,1);
+        read(handle,Nomarch,tai);
+        Nomarch[tai]=0;
+
+        read(handle,&KKD_desc,sizeof(struct kkdesc));
+
+
+        Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+        Fic[DFen->nbrfic]->name=GetMem(tai+1);
+
+        strcpy(Fic[DFen->nbrfic]->name,Nomarch);
+        Fic[DFen->nbrfic]->name[tai]=0;
+
+        Fic[DFen->nbrfic]->size=KKD_desc.size;
+
+        DFen->taillefic+=Fic[DFen->nbrfic]->size;
+
+        Fic[DFen->nbrfic]->time=KKD_desc.time;
+        Fic[DFen->nbrfic]->date=KKD_desc.date;
+
+        Fic[DFen->nbrfic]->attrib=KKD_desc.attrib;
+
+        Fic[DFen->nbrfic]->select=0;
+
+        DFen->nbrfic++;
+
+        lseek(handle,KKD_desc.next,SEEK_SET);
+        }
+    while(KKD_desc.next!=0);
+    }
+
+close(handle);
 DFen->init=1;
 
-if (DFen->nbrfic==2)
+if (fin==1)
     {
     strcpy(DFen->path,DFen->VolName);
     return 1;
@@ -998,8 +1057,6 @@ return 0;
 
 void InstallKKD(void)
 {
-strcpy(DFen->Tpath,DFen->path);
-
 strcpy(DFen->VolName,DFen->path);
 Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
 
@@ -1008,10 +1065,13 @@ strcpy(DFen->path,DFen->VolName);
 DFen->system=5;
 }
 
+/**************************/
 
 struct HeaderKKD
     {
     char *nom;
+    long next;
+    long desc;
     long size;
     short time;
     short date;
@@ -1023,22 +1083,25 @@ void MakeKKD(struct fenetre *Fen,char *ficname)
 struct find_t ff;
 char error;
 char **TabRec;
-long NbrRec;
+long NbrRec,CurRec;
 
+unsigned char tai;
 
 long n;
 long Nbfic;
 long Nbdir;
-long Posfic;
 FILE *fic;
 
 struct HeaderKKD **Fichier;
+int *Desc;
+
 char **Repert;
-long *PosRepert;
 
 char moi[256],nom[256],nomtemp[256];
 
 char nom2[256];
+
+int oldpos;
 
 
 fic=fopen(ficname,"wb");
@@ -1052,8 +1115,9 @@ strcpy(nom2,Fen->path);
 
 
 Fichier=GetMem(50000*sizeof(void*));
+Desc=GetMem(50000*sizeof(long));
+
 Repert=GetMem(5000*sizeof(void*));
-PosRepert=GetMem(5000*sizeof(long));
 
 
 TabRec=GetMem(500*sizeof(char*));
@@ -1063,160 +1127,163 @@ NbrRec=1;
 
 Nbdir=0;
 Nbfic=0;
-Posfic=0;
 
 
 SaveEcran();
 ColLin(0,0,80,1*16+4);
 
+oldpos=3+1+256+4+4;
+
+Desc[NbrRec-1]=0; // pour la boucle, sera ecraser plus tard
 
 do
 {
-Repert[Nbdir]=GetMem(strlen(TabRec[NbrRec-1])-1);
-PosRepert[Nbdir]=Posfic;
-memcpy(Repert[Nbdir],(TabRec[NbrRec-1])+2,strlen(TabRec[NbrRec-1])-1);
+CurRec=NbrRec-1;
+
+if (Fichier[Desc[CurRec]]!=NULL)
+    Fichier[Desc[CurRec]]->desc=oldpos;
+
+Repert[Nbdir]=GetMem(strlen(TabRec[CurRec])-1);
+memcpy(Repert[Nbdir],(TabRec[CurRec])+2,strlen(TabRec[CurRec])-1);
 
 Nbdir++;
 
-PrintAt(0,0,"Go in  %-73s",TabRec[NbrRec-1]);
+PrintAt(0,0,"Go in  %-73s",TabRec[CurRec]);
 
-strcpy(nomtemp,TabRec[NbrRec-1]);
+strcpy(nomtemp,TabRec[CurRec]);
 Path2Abs(nomtemp,"*.*");
 
-strcpy(nom,TabRec[NbrRec-1]);
+strcpy(nom,TabRec[CurRec]);
 
 // The files
 
 error=_dos_findfirst(nomtemp,63,&ff);
 
-while (error==0) {
-
-    if (ff.name[0]!='.')
+while (error==0)
+    {
+    if  (strcmp(ff.name,".")!=0)
         {
-        Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
+        error=ff.attrib;
 
-        Fichier[Nbfic]->nom=GetMem(strlen(ff.name)+1);
-        memcpy(Fichier[Nbfic]->nom,ff.name,strlen(ff.name)+1);
-        Fichier[Nbfic]->size=ff.size;
-        Fichier[Nbfic]->time=ff.wr_time;
-        Fichier[Nbfic]->date=ff.wr_date;
-        Fichier[Nbfic]->attrib=ff.attrib;
+        if ((error&0x10)!=0x10)    // Not a Subdir
+            {
+            Fichier[Nbfic]->desc=0;
 
-        Nbfic++;
+            Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
 
-        Posfic+=(1+2+2+4+strlen(ff.name)+2+1);
+            Fichier[Nbfic]->nom=GetMem(strlen(ff.name)+1);
+            memcpy(Fichier[Nbfic]->nom,ff.name,strlen(ff.name)+1);
+            Fichier[Nbfic]->size=ff.size;
+            Fichier[Nbfic]->time=ff.wr_time;
+            Fichier[Nbfic]->date=ff.wr_date;
+            Fichier[Nbfic]->attrib=ff.attrib;
+
+            oldpos+=18+strlen(ff.name);
+
+            Fichier[Nbfic]->next=oldpos;
+
+            Nbfic++;
+            }
         }
 
     error=_dos_findnext(&ff);
     }
 
-free(TabRec[NbrRec-1]);
+free(TabRec[CurRec]);
 NbrRec--;
 
 // The directories
 
 error=_dos_findfirst(nomtemp,63,&ff);
 
-while (error==0) {
-    error=ff.attrib;
-
-    if (ff.name[0]!='.')
+while (error==0)
+    {
+    if  (strcmp(ff.name,".")!=0)
         {
-        if ((error&0x10)==0x10)    // Subdir
-            {
-            strcpy(moi,nom);
-            Path2Abs(moi,ff.name);
+        error=ff.attrib;
 
-            TabRec[NbrRec]=GetMem(strlen(moi)+1);
-            memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
-            NbrRec++;
+        if ((error&0x10)==0x10)    // Not a Subdir
+            {
+            Fichier[Nbfic]->desc=0; // On le fera plus tard;
+
+            Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
+
+            Fichier[Nbfic]->nom=GetMem(strlen(ff.name)+1);
+            memcpy(Fichier[Nbfic]->nom,ff.name,strlen(ff.name)+1);
+            Fichier[Nbfic]->size=ff.size;
+            Fichier[Nbfic]->time=ff.wr_time;
+            Fichier[Nbfic]->date=ff.wr_date;
+            Fichier[Nbfic]->attrib=ff.attrib;
+
+            oldpos+=18+strlen(ff.name);
+
+            Fichier[Nbfic]->next=oldpos;
+
+            if (ff.name[0]!='.')
+                {
+                strcpy(moi,nom);
+                Path2Abs(moi,ff.name);
+
+                Desc[NbrRec]=Nbfic;
+
+                TabRec[NbrRec]=GetMem(strlen(moi)+1);
+                memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
+                NbrRec++;
+                }
+
+            Nbfic++;
             }
         }
 
     error=_dos_findnext(&ff);
-
-    PrintAt(0,21,"%10d %10d",Nbfic,Posfic);
     }
 
-
-Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
-Fichier[Nbfic]->nom=GetMem(1);
-memcpy(Fichier[Nbfic]->nom,".",1);
-
-Nbfic++;
-Posfic++;
-
-PrintAt(0,20,"%6d fic %10d pos ",Nbfic,Posfic);
-
+Fichier[Nbfic-1]->next=0;
 }
 while (NbrRec>0);
 
 ChargeEcran();
 
 
-fprintf(fic,"KKDR");
-
-fwrite(&Nbdir,1,4,fic);
-
-Posfic=8;       // 4(cle) + 4(nbdir)
+fprintf(fic,"KKD");
+tai=1;
+fwrite(&tai,1,1,fic);       // VERSION
+tai=255;
+fwrite(&tai,1,1,fic);
+fwrite(Fen->path,1,255,fic);
+n=0;
+fwrite(&n,4,1,fic);
+fwrite(&n,4,1,fic);
 
 for(n=0;n<Nbdir;n++)
-    {
-    Posfic+=strlen(Repert[n])+2+4;
-    }
-
-for(n=0;n<Nbdir;n++)
-    {
-    short t;
-    long tn;
-
-    t=strlen(Repert[n]);
-
-    fwrite(&t,1,2,fic);
-    fwrite(Repert[n],t,1,fic);
-
-    tn=PosRepert[n]+Posfic;
-
-    fwrite(&tn,1,4,fic);
-
     free(Repert[n]);
-    }
 
 for(n=0;n<Nbfic;n++)
     {
-    char info;
-    short t;
+    unsigned char tai;
 
-    if (Fichier[n]->nom[0]=='.')
-        {
-        info=0;
-        fwrite(&info,1,1,fic);
-        }
-        else
-        {
-        info=1;
-        fwrite(&info,1,1,fic);                  // 1
+    tai=strlen(Fichier[n]->nom);
+    fwrite(&tai,1,1,fic);                   // 2
+    fwrite(Fichier[n]->nom,tai,1,fic);      // t
 
-        t=strlen(Fichier[n]->nom);
-        fwrite(&t,1,2,fic);                     // 2
-        fwrite(Fichier[n]->nom,t,1,fic);       // t
+    fwrite(&Fichier[n]->desc,4,1,fic);      // desc
+    fwrite(&Fichier[n]->next,4,1,fic);      // suiv
 
-        fwrite(&Fichier[n]->size,4,1,fic);      // 4
+    fwrite(&Fichier[n]->size,4,1,fic);      // 4
 
-        fwrite(&Fichier[n]->time,2,1,fic);      // 2
-        fwrite(&Fichier[n]->date,2,1,fic);      // 2
+    fwrite(&Fichier[n]->time,2,1,fic);      // 2
+    fwrite(&Fichier[n]->date,2,1,fic);      // 2
 
-        fwrite(&Fichier[n]->attrib,1,1,fic);    // 1
-        }
+    fwrite(&Fichier[n]->attrib,1,1,fic);    // 1
 
     free(Fichier[n]->nom);
     free(Fichier[n]);
     }
 
 
+free(Desc);
 free(Fichier);
 free(Repert);
-free(PosRepert);
 free(TabRec);
 
 fclose(fic);
@@ -1225,4 +1292,6 @@ DFen=Fen->Fen2;
 CommandLine("#cd .");
 DFen=Fen->Fen2;
 }
+
+
 

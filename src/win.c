@@ -192,6 +192,8 @@ int x=2,y=3;
 if (Fen->init==1)
     ClearNor(Fen);
 
+
+
 if (Fen->scur>Fen->pcur) Fen->scur=Fen->pcur;
 
 while (Fen->pcur<0)
@@ -301,6 +303,10 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y++)
 
 Fen->paff=Fen->pcur;
 Fen->saff=Fen->scur;
+
+if (Fen->FenTyp==3)
+    FenInfo(Fen);   //  Affiche les infos sur les fichiers si type=3
+
 Fen->init=0;
 }
 
@@ -429,8 +435,11 @@ void ClearInfo(struct fenetre *Fen)
 int i;
 struct file *F;
 struct info Info;
+struct fenetre *Fen2;
 
 SaveEcran();
+
+Fen2=Fen->Fen2;
 
 WinCadre(19,9,61,11,0);
 ColWin(20,10,60,10,10*16+4);
@@ -438,34 +447,38 @@ ChrWin(20,10,60,10,32);
 
 PrintAt(23,10,"Wait Please");
 
-for (i=0;i<Fen->Fen2->nbrfic;i++)
+for (i=0;i<Fen->nbrfic;i++)
     {
-    F=Fen->Fen2->F[i];
+    F=Fen->F[i];
 
     if (F->info==NULL)
         F->info=GetMem(41);
 
     if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
         {
-        strcpy(F->info,"Directory");
+        sprintf(F->info,"%cDirectory",0);
         }
         else
         {
-        strcpy(Info.path,Fen->Fen2->path);
+        strcpy(Info.path,Fen->path);
         if (Info.path[strlen(Info.path)-1]!='\\') strcat(Info.path,"\\");
         strcat(Info.path,F->name);
 
         Traitefic(F->name,&Info);
-        strcpy(F->info,Info.format);
+        strcpy(F->info+1,Info.format);
+        F->info[0]=Info.Btype;
         }
     }
 
 ChargeEcran();
 
-WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,2);
+WinCadre(Fen2->x,Fen2->y,Fen2->x+Fen2->xl,Fen2->y+Fen2->yl,1);
 
-ChrWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,' ');
-ColWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,7*16+6);
+ChrWin(Fen2->x+1,Fen2->y+1,Fen2->x+Fen2->xl-1,Fen2->y+Fen2->yl-1,' ');
+ColWin(Fen2->x+1,Fen2->y+1,Fen2->x+Fen2->xl-1,Fen2->y+Fen2->yl-1,7*16+6);
+
+ChrLin(Fen2->x+1,Fen2->y+Fen2->yl-2,Fen2->xl-1,196);
+PrintAt(Fen2->x+1,Fen2->y+Fen2->yl-1,"Use this at your own risk ;)");
 }
 
 void FenInfo(struct fenetre *Fen)
@@ -485,62 +498,52 @@ Fen2=Fen->Fen2;
 if (Fen->init==1)
     ClearInfo(Fen);
 
-if (Fen2->scur>Fen2->pcur) Fen2->scur=Fen2->pcur;
-
-while (Fen2->pcur<0)
-    {
-    Fen2->scur++;
-    Fen2->pcur++;
-    }
-
-while (Fen2->pcur>=Fen2->nbrfic)
-    {
-    Fen2->pcur--;
-    Fen2->scur--;
-    }
-
-if (Fen2->scur<0)
-    Fen2->scur=0;
-
-if (Fen2->scur>Fen2->yl2-1)
-    Fen2->scur=Fen2->yl2-1;
-
 a=Cfg->Tfont[0];
 
-x1=Fen->x2;
-y1=Fen->y2;
+x1=Fen2->x2;
+y1=Fen2->y2;
 
-n=(Fen2->pcur)-(Fen2->scur);            // premier
+n=(Fen->pcur)-(Fen->scur);            // premier
 
-InfoSelect(Fen2);
-
-for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y++)
+for (i=0;(i<Fen2->yl2) & (n<Fen->nbrfic);i++,n++,y++)
     {
 // ------------------ Line Activity ------------------------------------
-    if (n==(Fen2->pcur))
-        {
-        if (Fen2->F[n]->select==0)
-            ColLin(x+x1,y+y1,38,1*16+6);
-            else
-            ColLin(x+x1,y+y1,38,1*16+5);
-        }
+    if (n==(Fen->pcur))
+        ColLin(x+x1,y+y1,38,1*16+5);
         else
         {
-        if (Fen2->F[n]->select==0)
-            ColLin(x+x1,y+y1,38,7*16+6);
+        if (Fen->F[n]->info!=NULL)
+            switch(Fen->F[n]->info[0])
+                {
+                case 1:
+                    ColLin(x+x1,y+y1,38,4*16+11);
+                    break;
+                case 2:
+                    ColLin(x+x1,y+y1,38,4*16+1);
+                    break;
+                case 3:
+                    ColLin(x+x1,y+y1,38,4*16+13);
+                    break;
+                case 4:
+                    ColLin(x+x1,y+y1,38,3*16+11);
+                    break;
+                case 5:
+                    ColLin(x+x1,y+y1,38,3*16+1);
+                    break;
+                case 6:
+                    ColLin(x+x1,y+y1,38,3*16+13);
+                    break;
+                default:
+                    ColLin(x+x1,y+y1,38,7*16+5);
+                    break;
+                }
             else
-            ColLin(x+x1,y+y1,38,7*16+5);
+                ColLin(x+x1,y+y1,38,7*16+5);
         }
 
-    if (Fen2->F[n]->info!=NULL)
-        {
-        PrintAt(x+x1,y+y1,"%-38s",Fen2->F[n]->info);
-        }
+    if (Fen->F[n]->info!=NULL)
+        PrintAt(x+x1,y+y1,"%-38s",Fen->F[n]->info+1);
     }
-
-Fen2->paff=Fen2->pcur;
-Fen2->saff=Fen2->scur;
-Fen->init=0;
 }
 
 /******************************************************************************/
@@ -784,4 +787,194 @@ strcpy(Buffer,s);
 
 WinTraite(T,5,&F);
 
+}
+
+/*-------------------------------------------------------------*\
+ *   Gestion de la barre de menu                               *
+ * Renvoie 0 pour ESC                                          *
+ * Sinon numero du titre;                                      *
+ * xp: au depart, c'est le numero du titre                     *
+ *     a l'arrivee ,c'est la position du titre                 *
+\*-------------------------------------------------------------*/
+
+int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp)
+{
+int c,i,j,n,x;
+char let[32];
+int car=0;
+
+for (n=0;n<nbr;n++)
+    let[n]=toupper(bar[n].titre[0]);
+
+ColLin(0,0,80,1*16+7);
+ChrLin(0,0,80,32);
+
+
+x=0;
+for(n=0;n<nbr;n++)
+    x+=strlen(bar[n].titre);
+
+i=(80-x)/nbr;
+x=(80-(nbr-1)*i-x)/2;
+
+c=*poscur;
+
+do
+{
+if (c<0) c=nbr-1;
+if (c>=nbr) c=0;
+
+j=0;
+for (n=0;n<nbr;n++)
+    {
+    if (n==c)
+        {
+        AffCol(x+j+n*i-1,0,7*16+4);
+        AffCol(x+j+n*i,0,7*16+5);
+        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),7*16+4);
+        *xp=x+j+n*i;
+        }
+        else
+        {
+        AffCol(x+j+n*i-1,0,1*16+7);
+        AffCol(x+j+n*i,0,1*16+5);
+        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),1*16+7);
+        }
+
+    PrintAt(x+j+n*i,0,"%s",bar[n].titre);
+    j+=strlen(bar[n].titre);
+    }
+
+if (*yp==0)
+    break;
+
+car=Wait(0,0,0);
+
+switch(HI(car))
+    {
+    case 0x4B:
+        c--;
+        break;
+    case 0x4D:
+        c++;
+        break;
+    case 80:
+        *yp=1;
+        car=13;
+        break;
+    }
+if (LO(car)!=0)
+    for (n=0;n<nbr;n++)
+        if (toupper(car)==let[n])
+            c=n;
+}
+while ( (car!=13) & (car!=27) );
+
+*poscur=c;
+
+if (car==27)
+    return 0;
+    else
+    return 1;
+}
+
+// 1: [RIGHT]   -1: [LEFT]
+// 0: [ESC]      2: [ENTER]
+int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp)
+{
+int max,n,m,car,fin;
+int i,col;
+char couleur;
+char let[32];
+
+for (n=0;n<nbr;n++)
+    {
+    i=0;
+
+    do
+        {
+        let[n]=toupper(bar[n].titre[i]);
+        fin=1;
+        for (m=0;m<n;m++)
+            if (let[m]==let[n]) fin=0,i++;
+        }
+    while(fin==0);
+
+    }
+
+max=0;
+
+for (n=0;n<nbr;n++)
+    if (max<strlen(bar[n].titre))
+        max=strlen(bar[n].titre);
+
+SaveEcran();
+
+if ((*xp)<1) (*xp)=1;
+
+WinCadre(*xp-1,*yp-1,*xp+max,*yp+nbr,3);
+ColWin(*xp,*yp,*xp+max-1,*yp+nbr-1,10*16+4);
+ChrWin(*xp,*yp,*xp+max-1,*yp+nbr-1,32);
+
+fin=0;
+
+do
+{
+if ((*c)<0)   (*c)=nbr-1;
+if ((*c)>=nbr) (*c)=0;
+
+for (n=0;n<nbr;n++)
+    {
+    if (bar[n].fct==0)
+        {
+        ChrLin(*xp,(*yp)+n,max,196);
+        ColLin(*xp,(*yp)+n,max,10*16+1);
+        }
+        else
+        {
+        PrintAt(*xp,(*yp)+n,"%s",bar[n].titre);
+        col=1;
+        if (n==*c)
+            couleur=7*16+1;
+            else
+            couleur=10*16+4;
+
+        for (i=0;i<strlen(bar[n].titre);i++)
+            {
+            if ( (col==1) & (toupper(bar[n].titre[i])==let[n]) )
+                AffCol((*xp)+i,(*yp)+n,(couleur&240)+5),col=0;
+                else
+                AffCol((*xp)+i,(*yp)+n,couleur);
+            }
+        }
+    }
+
+car=Wait(0,0,0);
+
+do
+{
+switch(HI(car))
+    {
+    case 0x48:  (*c)--; break;
+    case 0x4B:  fin=-1; car=27;  break;
+    case 0x4D:  fin=1;  car=27;  break;
+    case 0x50:  (*c)++; break;
+    }
+
+if (LO(car)!=0)
+    for (n=0;n<nbr;n++)
+        if (toupper(car)==let[n])
+            (*c)=n;
+}
+while (bar[*c].fct==0);
+
+}
+while ( (car!=13) & (car!=27) );
+
+ChargeEcran();
+
+if (car==27)
+    return fin;
+    else
+    return 2;
 }

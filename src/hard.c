@@ -805,6 +805,7 @@ strcpy(chaine,Fics->path);
 strcat(chaine,"\\font8x8.cfg");
 
 Cfg->UseFont=0;
+if (Cfg->font==0) return;
 
 fic=fopen(chaine,"rb");
 if (fic==NULL) return;
@@ -860,6 +861,7 @@ strcpy(chaine,Fics->path);
 strcat(chaine,"\\font8x16.cfg");
 
 Cfg->UseFont=0;
+if (Cfg->font==0) return;
 
 fic=fopen(chaine,"rb");
 if (fic==NULL) return;
@@ -1301,6 +1303,53 @@ T[0].x=(l/4)-5;
 T[1].x=(3*l/4)-6;
 
 strcpy(Buffer,erreur);
+
+if (WinTraite(T,4,&F)==0)
+    return 0;
+    else
+    return 1;
+
+}
+
+// 1 -> Cancel
+// 0 -> OK
+int WinMesg(char *mesg,char *erreur)
+{
+int x,l;
+static char Buffer[70];
+static char Buffer2[70];
+static int CadreLength=71;
+
+struct Tmt T[4] = {
+      {15,4,2,NULL,NULL},
+      {45,4,3,NULL,NULL},
+      { 1,1,6,NULL,&CadreLength},
+      { 2,2,0,Buffer,NULL}
+      };
+
+struct TmtWin F = {
+    3,10,76,16,
+    Buffer2};
+
+l=strlen(erreur);
+
+x=(80-l)/2;     // 1-> 39, 2->39
+if (x>25) x=25;
+
+l=(40-x)*2;
+
+CadreLength=l+1;
+
+F.x1=x-2;
+F.x2=x+l+1;
+
+l=l+3;
+
+T[0].x=(l/4)-5;
+T[1].x=(3*l/4)-6;
+
+strcpy(Buffer,erreur);
+strcpy(Buffer2,mesg);
 
 if (WinTraite(T,4,&F)==0)
     return 0;

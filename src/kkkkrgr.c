@@ -22,7 +22,7 @@ struct player {
     short pres;     // 0 si pas trouv‚ sinon numero du directory
     } *app[5000];
 
-char dir[50][128]; // 50 directory diff‚rents de 128 caracteres
+char dir[100][256]; // 50 directory diff‚rents de 128 caracteres
 
 short nbr;    // nombre d'application lu dans les fichiers KKR
 
@@ -208,7 +208,7 @@ return 1;
 void KKR_Search(char *nom)
 {
 struct find_t fic;
-char moi[255];
+char moi[128];
 char ok;
 FILE *Fic;
 

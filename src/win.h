@@ -19,3 +19,16 @@ char *Long2Str(long n);
 
 extern int *TailleX;
 
+
+/*********************************************
+ -       Gestion de la barre de menu         -
+ *********************************************/
+
+int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
+int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
+struct barmenu
+        {
+        char titre[20];
+        char help[80];
+        short fct;
+        };

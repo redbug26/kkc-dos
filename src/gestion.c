@@ -78,6 +78,27 @@ switch(q)
 return 0;
 }
 
+char *getext(char *nom,char *ext)
+{
+int j=0;
+
+ext[0]=0;
+j=0;
+
+if (nom[0]!='.')
+    while(nom[j]!=0)
+        {
+        if (nom[j]=='.')
+            {
+            memcpy(ext,nom+j+1,4);
+            ext[3]=0;
+            break;
+            }
+        j++;
+        }
+}
+
+
 // Comparaison entre un nom et un autre
 int Maskcmp(char *src,char *mask)
 {
@@ -307,7 +328,8 @@ switch(DFen->system)  {
         err=DOSlitfic();
         strupr(DFen->path);
 
-        PutInHistDir();
+        if (strcmp(Ficname,"..")!=0)
+            PutInHistDir();
         break;
     case 1:
         err=RARlitfic();
@@ -514,18 +536,18 @@ char flag;            // direction flag pour plein de choses
 // ------------------------
 int Run(char *chaine)
 {
-/*
+
 FILE *fic;
 time_t t;
 t=time(NULL);
 
-if ( (chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) )
+if ( (chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (Cfg->logfile==1) )
     {
     fic=fopen(Fics->log,"at");
     fprintf(fic,"%-50s @ %s",chaine,ctime(&t));
     fclose(fic);
     }
-*/
+
 
 if (!strnicmp(chaine,"CD -",4)) {
    ChangeDir(GetLastHistDir());
@@ -697,15 +719,7 @@ if (affich==1)
 
 if (FctType==1) traite=1;
 
-if (traite==1) {
-    if (Run(chaine)==0)
-        {
-        Shell(">%s",chaine);
-        }
-    goto Ligne_Traite;
-    }
-
-if ( (chaine[1]==':') & (chaine[0]!=0) )
+if ( (chaine[1]==':') & (chaine[0]!=0) & (chaine[2]==0) & (traite==1) )
     {
     unsigned nbrdrive;
     char error;
@@ -738,7 +752,6 @@ if ( (chaine[1]==':') & (chaine[0]!=0) )
         {
         InstallDOS();              // drive 1 for A, 2 for B
 
-        _dos_getdrive(&(DFen->drive));
         DFen->FenTyp=0;
 
         traite=1;
@@ -752,10 +765,21 @@ if ( (chaine[1]==':') & (chaine[0]!=0) )
 
     Run("cd .");
     traite=1;
+
+    goto Ligne_Traite;
+    }
+
+if (traite==1)
+    {
+    if (Run(chaine)==0)
+        {
+        Shell(">%s",chaine);
+        }
     goto Ligne_Traite;
     }
 
 Ligne_Traite:
+
 
 if (traite==1)
     {
@@ -786,3 +810,4 @@ if (traite==1)
 
 return 1;
 }
+

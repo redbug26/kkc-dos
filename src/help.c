@@ -296,7 +296,7 @@ long n;
 
 int nbrkey;
 
-short x,y,t;
+short x,y;
 
 char type;  // 1: Centre & highlighted
             // 2: Highlighted
@@ -310,7 +310,7 @@ PutCur(32,0);
 
 WinCadre(0,1,79,(Cfg->TailleY)-2,1);
 ColWin(1,2,78,(Cfg->TailleY)-3,10*16+1);
-ChrWin(1,2,78,(Cfg->TailleY)-3,32);
+ChrWin(1,2,78,(Cfg->TailleY)-3,SPACE);
 
 pres=z;
 
@@ -329,7 +329,8 @@ n++;
 
 while(1)
     {
-    switch(hlp[n]) {
+    switch(hlp[n])      // Premier caractere
+        {
         case '^':
             type=1;
             break;
@@ -348,11 +349,11 @@ while(1)
             break;
         }
 
-    if (type==69)
+    if (type==69)       // Autre type -> fin d'affichage
         break;
 
     n++;
-    if (n>lng) break;
+    if (n>lng) break;   // Depassement de ligne -> fin d'affichage
 
     y++;
     x=1;
@@ -376,45 +377,45 @@ while(1)
 
     while(hlp[n]!=0x0A)
         {
-        if (n>lng) break;
-        switch(hlp[n])  {
-            case 0x0D:
-                break;
+        if (n>lng) break;       // Autre type -> fin d'affichage
+        switch(hlp[n])
+            {
             case 0x09:
-                t=x/8;
-                t=t*8+8;
-
-                while (x!=t)
+                do
                    {
                    AffChr(x,y,SPACE);
                    x++;
                    }
+                while ((x&7)!=0);
+                break;
+            case 0x0D:
                 break;
             default:
                 AffChr(x,y,hlp[n]);
-                if (type!=0)
-                    AffCol(x,y,10*16+5);
-                    else
-                    AffCol(x,y,10*16+1);
                 x++;
                 break;
                 }
         n++;
         }
-    while(x<79)
-        {
-        AffChr(x,y,SPACE);
-        x++;
-        }
+
+    ChrLin(x,y,79-x,SPACE);             // Efface jusqu'a la fin
+
+    if (type!=0)                        // Couleur de la ligne
+        ColLin(1,y,78,10*16+5);
+        else
+        ColLin(1,y,78,10*16+1);
+
     n++;
 
     if (y==Cfg->TailleY-3)
         {
         while(hlp[apres]!=0x0A) apres++;
         apres++;
-        break;
+        break;  // On arrive en bas --> fin d'affichage
         }
     }
+
+if (kbhit()!=0) nbrkey=0;
 
 if (nbrkey==0)
     {
@@ -428,12 +429,16 @@ if (nbrkey==0)
 if (pres!=z)
     {
     avant-=2;
-    while(hlp[avant]!=0x0A) avant--;
+    while(hlp[avant]!=0x0A)
+        avant--;
+
     avant++;
-    if (avant<z) avant=z;
+    if (avant<z)
+        avant=z;
     }
 
-switch(car2)    {
+switch(car2)
+    {
     case 80:    // BAS
         pres=apres;
         break;
