@@ -64,7 +64,7 @@ struct key K[nbrkey]=	{
 {  {"IMPM"},
 		4,
 		0,
-		"Impulse Tracker",
+        "Impulse Tracker Module",
 		"IT",
         "Impulse",
 		10,0,1,1},
@@ -214,7 +214,7 @@ struct key K[nbrkey]=	{
 		"Patch Gravis Ultrasound",
 		"PAT",
         "Gravis Ultrasound",
-		24,0,0,2},
+        24,0,1,2},
 {  {"Turbo C Project File"},
 		20,
 		0,
@@ -741,7 +741,7 @@ struct key K[nbrkey]=	{
     0,
     "DSMi Module",
     "AMF",
-    "RealTech (?)",106,0,1,1},
+    "Virtual Visions",106,0,1,1},
 {  {0x00,0xC3,0x50,0x01,0xCE,0xED,0x66,0x66,
     0xCC,0x0D,0x00,0x0B,0x03,0x73,0x00,0x83,
     0x00,0x0C,0x00,0x0D,0x00,0x08,0x11,0x1F},
@@ -769,6 +769,36 @@ struct key K[nbrkey]=	{
     "PKM Bitmap",
     "PKM",
     "Karl Maritaud",110,0,1,4},
+{  {0x49,0x4D,0x50,0x53}, // IMPS
+    4,
+    0,
+    "Impulse Tracker Sample",
+    "ITS",
+    "Impulse",111,0,1,2},
+{  {0x53,0x43,0x52,0x53,0x80}, // SCRS€
+    5,
+    0x4c,
+    "Scream Tracker Sample",
+    "DP3",
+    "Future Crew",112,0,1,2},
+{  {"DDSF"},
+    4,
+    0,
+    "X-Tracker Sample",
+    "DSF",
+    "?",113,0,1,2},
+{  {"MUWFD"},
+    5,
+    0x22,
+    "Ultratracker Sample",
+    "UWF",
+    "Mysteriois MAS",114,0,1,2},
+{  {"AMS"},
+    3,
+    0,
+    "Audio Manager Sample",
+    "AMS",
+    "?",115,0,1,2},
 
 
 
@@ -799,8 +829,54 @@ struct key K[nbrkey]=	{
         0,
         "Text File",
         "TXT",      // Extension ?
-        "",91,1,0,6}    // Laissez celui-ci dernier
+        "",91,1,0,6},    // Laissez celui-ci dernier
 
+/*******************************************
+ - structures … traiter en dernier ressort -
+ *******************************************/
+
+{  {0,0},
+        2,
+        0,
+        "Module",
+        "*",
+        "?",
+        -1,0,0,1},
+{  {0,0},
+        2,
+        0,
+        "Sample",
+        "*",
+        "?",
+        -1,0,0,2},
+{  {0,0},
+        2,
+        0,
+        "Archive",
+        "*",
+        "?",
+        -1,0,0,3},
+{  {0,0},
+        2,
+        0,
+        "Bitmap",
+        "*",
+        "?",
+        -1,0,0,4},
+{  {0,0},
+        2,
+        0,
+        "Animation",
+        "*",
+        "?",
+        -1,0,0,5},
+{  {0,0},
+        2,
+        0,
+        "Others",
+        "*",
+        "?",
+        -1,0,0,6}
 };
 
 
@@ -858,6 +934,12 @@ short Infogb(struct info *Info);
 short Infoptm(struct info *Info);
 short Infohtm(struct info *Info);
 short Inforaw(struct info *Info);
+short Infoits(struct info *Info);
+short Infodp3(struct info *Info);
+short Infopat(struct info *Info);
+short Infodsf(struct info *Info);
+short Infouwf(struct info *Info);
+short Infoams2(struct info *Info);
 
 
 ULONG ReadLng(struct info *Info,ULONG position,char type);
@@ -1069,7 +1151,7 @@ Info->buffer=buffer;	// buffer pour E/S
 Info->posbuf=Info->posfic;
 Info->sizebuf=32768U;
 
-for (n=0;n<nbrkey;n++)	{
+for (n=0;n<nbrkey-6;n++)  {
 
 if (K[n].proc==0)
 		if (!memcmp(buffer+K[n].pos,K[n].buf,K[n].len)) trv=n;
@@ -1137,6 +1219,12 @@ if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) ) {
                 case 107:err=Infogb(Info); break;
                 case 108:err=Infoptm(Info); break;
                 case 110:err=Infopkm(Info); break;
+                case 111:err=Infoits(Info); break;
+                case 112:err=Infodp3(Info); break;
+                case 113:err=Infodsf(Info); break;
+                case 114:err=Infouwf(Info); break;
+                case 115:err=Infoams2(Info); break;
+                case 24:err=Infopat(Info); break;
 				default:
 						sprintf(Info->format,"Pingouin %d",K[n].numero);
 						trv=1;
@@ -1525,31 +1613,6 @@ pos=Info->posfic;
 fin=0;
 nbr=0;
 
-while(!fin)
-{
-while (1)
-		{
-		lseek(Info->handle,pos,SEEK_SET);
-		if (read(Info->handle,&Lt,32)!=32) { fin=1; break; }
-
-		if ( (Lt.TeteType<0x72) | (Lt.TeteType>0x75) | (Lt.TeteSize<7) ) { fin=1; break; }
-
-		if (Lt.TeteType==0x74)
-				{
-				nbr++;
-				lseek(Info->handle,pos+32,SEEK_SET);
-				read(Info->handle,Nomarch,Lt.NomSize);
-				Nomarch[Lt.NomSize]=0;			// contient les fichiers dans l'archive
-				}
-
-		pos=pos+Lt.TeteSize;
-		if (Lt.Flags & 0x8000) pos+=Lt.PackSize;		// LONG_BLOCK
-		}
-}
-
-Info->taille=(pos-Info->posfic);
-
-sprintf(Info->message[1],"  Files in archive: %15d",nbr);
 return 0;
 }
 
@@ -2402,6 +2465,43 @@ ReadStr(Info,0x06,Info->fullname,40);
 return 0;
 }
 
+short Infoits(struct info *Info)
+{
+ReadStr(Info,0x14,Info->fullname,22);
+return 0;
+}
+
+short Infodp3(struct info *Info)
+{
+ReadStr(Info,0x30,Info->fullname,22);
+return 0;
+}
+
+short Infopat(struct info *Info)
+{
+ReadStr(Info,0x83,Info->fullname,16);
+return 0;
+}
+
+short Infodsf(struct info *Info)
+{
+ReadStr(Info,4,Info->fullname,22);
+return 0;
+}
+
+short Infouwf(struct info *Info)
+{
+ReadStr(Info,0,Info->fullname,22);
+return 0;
+}
+
+short Infoams2(struct info *Info)
+{
+ReadStr(Info,37,Info->fullname,22);
+return 0;
+}
+
+
 
 short Infomdl(struct info *Info)
 {
@@ -2450,7 +2550,7 @@ short Infospl(struct info *Info)
 {
 char *buf;
 
-ReadStr(Info,0x05,Info->fullname,32);
+ReadStr(Info,0x05,Info->fullname,22);
 
 buf=Info->buffer;
 sprintf(Info->message[0], "  Sampling rate: %15d Hz",*(WORD*)(buf+45));

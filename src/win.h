@@ -1,7 +1,5 @@
 void Fenet(int x1,int y1,int x2,int y2,int type);
 
-int Gradue(int x,int y,int length,int from,int to,int total);
-
 void FenNor(struct fenetre *Fen);
 void FenDIZ(struct fenetre *Fen);
 

@@ -47,6 +47,8 @@ int crc32file(char *name,unsigned long *crc);   // Compute CRC-32 of file
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F);
 int WinError(char*);
 
+int Gradue(int x,int y,int length,int from,int to,int total);
+
 struct TmtWin {
      int x1,y1,x2,y2;
      char *name;
@@ -83,6 +85,7 @@ struct config {
      unsigned char wmask;            // C'est quel masque kon emploie ?
 
      char pntrep;           // vaut 1 si on affiche le repertoire "."
+     char hidfil;           // vaut 1 si on affiche les fichiers caches
 
     // Pas touche
     //-----------

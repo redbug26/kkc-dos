@@ -60,7 +60,8 @@ if (error==1)
 
 while (error==0)
     {
-    if ((Cfg->pntrep==1) | (strcmp(ff.name,".")==1) )
+    if ( ((Cfg->pntrep==1) | (strcmp(ff.name,".")!=0)) &
+         ((Cfg->hidfil==1) | (((ff.attrib)&_A_HIDDEN)!=_A_HIDDEN)) )
         {
         Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
         Fic[DFen->nbrfic]->name=GetMem(strlen(ff.name)+1);

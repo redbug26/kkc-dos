@@ -234,6 +234,8 @@ va_end(arglist);
 a=x;
 while (*suite!=0)
 	{
+//    AffChr(a,y,'Û');
+//    Delay(1);
 	AffChr(a,y,*suite);
 	a++;
 	suite++;
@@ -1306,3 +1308,96 @@ if (WinTraite(T,4,&F)==0)
     return 1;
 
 }
+
+// Avancement de graduation
+// Renvoit le prochain
+int Gradue(int x,int y,int length,int from,int to,int total)
+{
+short j1,j2;
+int j3;
+
+if (total==0) return 0;
+
+if ( (to>1000) & (total>1000) )
+    {
+    j3=(to/1000);
+    j3=(j3*length*8)/(total/1000);
+    }
+    else
+    j3=(to*length*8)/total;
+
+if (j3>=(length*8)) j3=(length*8)-1;
+
+j1=from;
+
+for (;j1<j3;j1++)
+    {
+    j2=j1/8;
+    if (Cfg->UseFont==0)
+    switch(j1%8) {
+        case 0:
+            AffChr(j2+x,y,'*'); // b
+            break;
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            AffChr(j2+x,y,'*'); // d
+            AffChr(j2+x+1,y,32); // i
+            break;
+        case 5:
+        case 6:
+        case 7:
+            AffChr(j2+x,y,32); // g
+            AffChr(j2+x+1,y,'*'); // l
+            break;
+        }
+    else
+    switch(j1%8) {
+        case 0:
+            AffChr(j2+x,y,156); // b
+            break;
+        case 1:
+            AffChr(j2+x,y,157); // c
+            AffChr(j2+x+1,y,32); // c
+            break;
+        case 2:
+            AffChr(j2+x,y,158); // d
+            AffChr(j2+x+1,y,163); // i
+            break;
+        case 3:
+            AffChr(j2+x,y,159); // e
+            AffChr(j2+x+1,y,164); // j
+            break;
+        case 4:
+            AffChr(j2+x,y,160); // f
+            AffChr(j2+x+1,y,165); // k
+            break;
+        case 5:
+            AffChr(j2+x,y,161); // g
+            AffChr(j2+x+1,y,166); // l
+            break;
+        case 6:
+            AffChr(j2+x,y,162); // h
+            AffChr(j2+x+1,y,167); // k
+            break;
+        case 7:
+            AffChr(j2+x,y,32);  // a
+            AffChr(j2+x+1,y,155);
+            break;
+        }
+    }
+
+if (to==total)
+    ChrLin(x,y,length+1,32);
+
+if (to==0)
+    if (Cfg->UseFont==0)
+    AffChr(x,y,'*'); // b
+    else
+    AffChr(x,y,155);
+
+return j1;
+}
+
+

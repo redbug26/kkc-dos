@@ -1,3 +1,5 @@
+#define VERSION "KKDESC V0.3"
+
 #include <dos.h>
 #include <direct.h>
 #include <io.h>
@@ -15,15 +17,7 @@
 
 extern struct key K[nbrkey];
 
-struct player {
-    char *Meneur;
-    char *Titre;
-    short ext;      // Numero d'extension
-    short pres;     // 0 si pas trouv‚ sinon numero du directory
-    char type;
-    } *app[50];
-
-short NumExt[50];
+short NumExt[nbrkey];
 
 char KKRname[256];
 char Filename[256];
@@ -39,8 +33,11 @@ int NbrFormat;
 
 void main(short argc,char **argv)
 {
+char OldY;
 int n;
 char *path;
+
+OldY=(*(char*)(0x484))+1;
 
 path=GetMem(256);
 
@@ -50,6 +47,18 @@ for (n=strlen(path);n>0;n--) {
         path[n]=0;
         break;
         }
+    }
+
+ColWin(0,0,79,49,7);
+ChrWin(0,0,79,49,32);
+GotoXY(0,0);
+
+if (argc<=1) {
+    printf("KKDESC\n");
+    printf("-------\n");
+    printf("  Parameters:\n");
+    printf("   filename:  file.KKR");
+    exit(1);
     }
 
 
@@ -79,14 +88,14 @@ strcpy(Fics->path,path);
 
 Fics->help=GetMem(256);
 strcpy(Fics->help,path);
-strcat(Fics->help,"\\kk_desc.hlp");
+strcat(Fics->help,"\\kkdesc.hlp");
 
-TXTMode(50);
+TXTMode(30);
 NoFlash();
 
-Font8x8();
+Font8x16();
 
-Cfg->TailleY=50;
+Cfg->TailleY=30;
 
 SetPal(0, 43, 37, 30);
 SetPal(1, 31, 22, 17);
@@ -96,21 +105,11 @@ SetPal(4, 44, 63, 63);
 SetPal(5, 63, 63, 21);
 SetPal(6,43,37,30);
 SetPal(7,  0,  0,  0);
-
 SetPal(10, 43, 37, 30);
+SetPal(15, 47, 41, 34);
 
 
-ColWin(0,0,79,49,7);
-ChrWin(0,0,79,49,32);
-GotoXY(0,0);
 
-if (argc<=1) {
-    printf("KK_DESC\n");
-    printf("-------\n");
-    printf("  Parameters:\n");
-    printf("   filename:  file.KKR");
-    exit(1);
-    }
 
 strcpy(KKRname,argv[1]);
 for (n=strlen(KKRname);n>0;n--)  {
@@ -124,22 +123,14 @@ strcat(KKRname,".kkr");
 
 strcpy(Filename,"*.*");
 
-for(n=0;n<50;n++)  {
-    app[n]=malloc(sizeof(struct player));
-    app[n]->Meneur=malloc(255);
-    strcpy(app[n]->Meneur,"?");
-    app[n]->Titre=malloc(255);
-    strcpy(app[n]->Titre,"?");
-    }
 
+ColWin(0,0,79,(Cfg->TailleY-2),10*16+1);
+ChrWin(0,0,79,(Cfg->TailleY-2),32);
 
-WinCadre(0,0,79,49,0);
-ColWin(1,1,78,48,10*16+1);
-ChrWin(1,1,78,48,32);
+WinCadre(0,2,79,(Cfg->TailleY-2),2);
 
-WinLine(1,3,76,0);
-
-// ChrWin(1,3,78,47,176);  // '°'
+ColLin(0,(Cfg->TailleY-1),80,1*16+2);
+ChrLin(0,(Cfg->TailleY-1),80,32);
 
 FileFormat();
 
@@ -148,188 +139,17 @@ strcpy(Titre,"Unknow");
 strcpy(Meneur,"?");
 Load();
 
-Insere();
+IdfListe();
 
 Sauve();
 
-getch();
+TXTMode(OldY);
 
-TXTMode(50);
+puts(VERSION);
 }
 
 
 
-
-void Insere(void)
-{
-#define MAXFOR 21
-
-char car1,car2;
-int o,n;
-char fin;
-char aff;
-
-int i,i0,i1;
-
-i0=0;
-
-aff=1;
-fin=0;
-n=0;
-o=0;
-
-
-do {
-i1=NbrFormat;
-if ((i1-i0)>=MAXFOR) i1=i0+MAXFOR;
-
-if (aff==1)  {
-    WinCadre(0,0,79,49,1);
-    ColWin(1,1,78,48,10*16+1);
-    ChrWin(1,1,78,48,32);
-
-    WinLine(1,2,78,0);
-
-    WinLine(1,46,78,0);
-
-    PrintAt(2,47,"Arrow: Change format       [F3] Details");
-    PrintAt(2,48,"[ESC] Quit Selection       [F7] Compute CRC-32");
-
-
-    PrintAt(2,1,"%s by %s",Titre,Meneur);
-    aff=0;
-    }
-
-
-
-for(i=i0;i<=i1;i++)  {
-    int a;
-    a=((i-i0)*2)+3;
-    n=NumExt[i];
-
-    ColLin(38,a,40,10*16+3); //  "Info" : "----"
-
-    ColLin(2,a+1,17,10*16+3); // ÀÄÄÄ> Filename:
-
-    ColLin(19,a+1,59,1*16+2);  // filename
-
-    ColLin(6,a,32,10*16+2);   // format
-
-    ColLin(2,a,4,10*16+5);    // EXT
-
-    PrintAt(2,a,"%3s %-32s %4s",K[n].ext,K[n].format,K[n].other==1 ? "Info" : "----");
-    PrintAt(2,a+1," ÀÄÄÄ> Filename: \"%s\" %08X",Filename,Checksum);
-    }
-
-n=NumExt[o];
-
-ColWin(2,(o*2)+3,77,(o*2)+4,3*16+7);
-car1=getch();
-
-switch(car1) {
-    case 0:
-        car2=getch();
-        switch(car2) {
-            case 0x4B:    // gauche
-                n--;
-                if (n==-1)
-                    n=nbrkey-1;
-                break;
-            case 0x4D:    // droite
-                n++;
-                if (n==nbrkey)
-                    n=0;
-                break;
-            case 80:      // bas
-                o++;
-                if (o>NbrFormat) {
-                    if (o<MAXFOR) {
-                        NbrFormat++;
-                        NumExt[o]=n;
-                        }
-                        else
-                        o=0;
-                    }
-                n=NumExt[o];
-                break;
-            case 72:      // haut
-                o--;
-                if (o==-1)
-                    o=NbrFormat;
-                n=NumExt[o];
-                break;
-            case 0x3B:
-                Help();
-                break;
-            case 0x3D:    // F3
-                WinCadre(9,10,70,17,0);
-                ChrWin(10,11,69,16,32);
-                ColWin(10,11,69,16,10*16+1);
-                            // 2         3
-                            // 012345678901234567
-                PrintAt(11,12,"Player Title:");
-                PrintAt(11,14,"Created by ");
-                PrintAt(11,16,"Filename with parameter:");
-                ColLin(11,12,13,10*16+3);
-                ColLin(11,14,11,10*16+3);
-                ColLin(11,16,23,10*16+3);
-
-                PrintAt(26,12,Titre);
-                PrintAt(23,14,Meneur);
-                PrintAt(37,16,Filename);
-
-                InputAt(26,12,Titre,38);
-                InputAt(23,14,Meneur,38);
-                InputAt(37,16,Filename,18);
-
-                aff=1;
-                break;
-            case 0x41:      // F7  (CRC-32)
-                strcpy(buf,Filename);
-                if (strlen(buf)==0)
-                    strcpy(buf,"*.*");
-                if (Seekfile(10,10,buf)==0)
-                    crc32file(buf,&Checksum);
-                break;
-            case 0x53:      // DEL
-                if (NbrFormat!=0) {
-                    int k;
-                    struct player *ptmp;
-                    short Numtmp;
-
-                    for(k=o;k<NbrFormat;k++) {
-                        ptmp=app[k];
-                        app[k]=app[k+1];
-                        app[k+1]=ptmp;
-
-                        Numtmp=NumExt[k];
-                        NumExt[k]=NumExt[k+1];
-                        NumExt[k+1]=Numtmp;
-                        }
-                    NbrFormat--;
-                    if (o>NbrFormat) o--;
-                    aff=1;
-                    n=NumExt[o];
-                    }
-                break;
-            default:
-                break;
-            }
-        break;
-    case 13:
-        break;
-    case 27:
-        fin=1;
-        break;
-    default:
-        break;
-    }
-NumExt[o]=n;
-}
-while(!fin);
-
-
-}
 
 
 void Sauve(void)
@@ -371,17 +191,20 @@ fwrite(&code,1,1,fic);
 fwrite(&sa,1,1,fic);
 fwrite(a,sa,1,fic);
 
-for (n=0;n<=NbrFormat;n++)  {
-    code=3;     // nom du programme
+for (n=0;n<nbrkey;n++)  {
+    if (NumExt[n]==1)
+        {
+        code=3;     // nom du programme
 
-    sa=strlen(Filename);
-    fwrite(&code,1,1,fic);
-    fwrite(&sa,1,1,fic);
-    fwrite(Filename,sa,1,fic);
+        sa=strlen(Filename);
+        fwrite(&code,1,1,fic);
+        fwrite(&sa,1,1,fic);
+        fwrite(Filename,sa,1,fic);
 
-    code=5;
-    fwrite(&code,1,1,fic);
-    fwrite(&(K[NumExt[n]].numero),2,1,fic);
+        code=5;
+        fwrite(&code,1,1,fic);
+        fwrite(&(K[n].numero),2,1,fic);
+        }
     }
 
 code=6;     // Fin de fichier
@@ -425,8 +248,8 @@ if (!strncmp(Key,"KKRB",4))
         ChrWin(0,0,79,49,32);
         GotoXY(0,0);
 
-        printf("KK_DESC\n");
-        printf("-------\n");
+        printf("KKDESC\n");
+        printf("------\n");
         printf("  Parameters:\n");
         printf("   filename:  file.KKR");
         printf("\n\nYou couldn't modify THIS file !!!\n");
@@ -461,16 +284,10 @@ if (!strncmp(Key,"KKRB",4))
             break;
         case 5:             // Format
             fread(&format,2,1,Fic);
-            strcpy(app[NbrFormat]->Meneur,Meneur);
-            strcpy(app[NbrFormat]->Titre,Titre);
-
-            Checksum;
-            app[NbrFormat]->ext=format;
-            app[NbrFormat]->pres=0;
 
             for (n=0;n<nbrkey;n++)
-                if (K[n].numero==app[NbrFormat]->ext)
-                    NumExt[NbrFormat]=n;
+                if (K[n].numero==format)
+                    NumExt[n]=1;
 
             NbrFormat++;
             break;
@@ -479,6 +296,9 @@ if (!strncmp(Key,"KKRB",4))
             break;
         case 7:             // Reset
             Checksum=0;
+
+            for (n=0;n<nbrkey;n++)
+                NumExt[n]=0;
 
             strcpy(Titre,"?");
             strcpy(Meneur,"?");
@@ -511,8 +331,6 @@ return Code;
 
 
 /*****************************************************************************/
-
-
 
 int sort_function(const void *a,const void *b)
 {
@@ -859,4 +677,189 @@ if (a==27)
     else
     return 0;
 
+}
+
+/****************************************************************************/
+int sortidf(const void *a,const void *b)
+{
+struct key *a1,*b1;
+
+a1=(struct key*)a;
+b1=(struct key*)b;
+
+// return (a1->numero)-(b1->numero);
+
+if (a1->type!=b1->type) return (a1->type)-(b1->type);
+
+return strcmp(a1->ext,b1->ext);		// ou format ?
+}
+
+
+
+
+void IdfListe(void)
+{
+int car,y;
+
+int n;
+int info;
+
+int prem;
+int pres;
+
+SaveEcran();
+
+info=0;
+
+y=3;
+
+PrintAt(32,0,"Describe player");
+ColLin(32,0,20,10*16+3);
+
+PrintAt(2,(Cfg->TailleY-1),"F1: Help   F3: Information   F7: Compute CRC   ESC: Quit & Save Modification");
+
+prem=0;
+pres=0;
+
+do
+{
+if (Checksum==0)
+    PrintAt(68,0,"            ");
+    else
+    PrintAt(68,0,"CRC:%08X",Checksum);
+
+PrintAt(0,1,"%-38s by %38s",Titre,Meneur);
+
+y=3;
+
+for (n=prem;n<nbrkey;n++)
+    {
+    if (K[n].ext[0]=='*')
+        {
+        ChrLin(1,y,78,196);
+        PrintAt(4,y,"%s",K[n].format);
+
+        if (y&1==1)
+            ColLin(1,y,78,10*16+3);
+            else
+            ColLin(1,y,78,15*16+3);
+        }
+        else
+        {
+        if (y&1==1)
+            {
+            ColLin(1,y,4,  10*16+3);
+            ColLin(5,y,1,  10*16+3);
+            ColLin(6,y,32, 10*16+4);
+            ColLin(38,y,6, 10*16+3);
+            ColLin(44,y,29,10*16+5);
+            ColLin(73,y,1, 10*16+3);
+            ColLin(74,y,5, 10*16+3);
+            }
+            else
+            {
+            ColLin(1,y,4,  15*16+3);
+            ColLin(5,y,1,  15*16+3);
+            ColLin(6,y,32, 15*16+4);
+            ColLin(38,y,6, 15*16+3);
+            ColLin(44,y,29,15*16+5);
+            ColLin(73,y,1, 15*16+3);
+            ColLin(74,y,5, 15*16+3);
+            }
+
+        PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,K[n].format,K[n].pro,NumExt[n]==1 ? " OK " : "    ");
+
+        if (K[n].other==1) info++;
+        }
+
+
+    if (pres==n)
+        ColLin(1,y,78,2*16+1);
+
+    y++;
+
+    if ( (y==(Cfg->TailleY-2)) | (n==nbrkey-1) ) break;
+    }
+
+
+car=Wait(0,0,0);
+
+switch(HI(car))
+    {
+    case 72:        // UP
+        pres--;
+        break;
+    case 80:        // DOWN
+        pres++;
+        break;
+    case 0x49:      // PGUP
+        pres-=10;
+        break;
+    case 0x51:      // PGDN
+        pres+=10;
+        break;
+    case 0x47:  // HOME
+        pres=0;
+        break;
+    case 0X4F: // END
+        pres=nbrkey-1;
+        break;
+    case 0x3B:
+        Help();
+        break;
+    case 0x3D:    // F3
+        SaveEcran();
+
+        WinCadre(9,10,70,17,0);
+        ChrWin(10,11,69,16,32);
+        ColWin(10,11,69,16,10*16+1);
+            // 2         3
+            // 012345678901234567
+        PrintAt(11,12,"Player Title:");
+        PrintAt(11,14,"Created by ");
+        PrintAt(11,16,"Filename with parameter:");
+
+        ColLin(11,12,13,10*16+3);
+        ColLin(11,14,11,10*16+3);
+        ColLin(11,16,23,10*16+3);
+
+        PrintAt(26,12,Titre);
+        PrintAt(23,14,Meneur);
+        PrintAt(37,16,Filename);
+
+        InputAt(26,12,Titre,38);
+        InputAt(23,14,Meneur,38);
+        InputAt(37,16,Filename,18);
+
+        ChargeEcran();
+        break;
+    case 0x41:      // F7  (CRC-32)
+        strcpy(buf,Filename);
+        if (strlen(buf)==0)
+            strcpy(buf,"*.*");
+        if (Seekfile(10,10,buf)==0)
+            crc32file(buf,&Checksum);
+        break;
+    }
+
+if (car==32)
+    {
+    if (K[n].ext[0]!='*')
+        NumExt[pres] = (NumExt[pres]==1) ? 0 : 1;
+    }
+
+if (pres<0) pres=0;
+if (pres>=nbrkey) pres=nbrkey-1;
+
+while (pres>prem+Cfg->TailleY-6) prem++;
+while (pres<prem) prem--;
+
+if (prem<0) prem=0;
+if (prem>nbrkey-Cfg->TailleY+6) prem=nbrkey-Cfg->TailleY+6;
+
+
+}
+while (car!=27);
+
+ChargeEcran();
 }

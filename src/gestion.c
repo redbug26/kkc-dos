@@ -664,10 +664,10 @@ do {
 		case 8: 			// delete
 			if (pos>0) pos--;
 			break;
-		case 0X7F:
+        case 0X7F:  // CTRL-DEL
 			while (pos!=0) {
 				pos--;
-				if (chaine[pos]==32) break;
+                if ((chaine[pos]==32) | (chaine[pos]=='.')) break;
 				chaine[pos]=0;
 				if (affich==1)
 					AffChr(pos+x0+x1,py,32);
@@ -713,14 +713,17 @@ if ( (chaine[1]==':') & (chaine[0]!=0) )
 
     error=0;
 
+    IOver=1;
+    IOerr=0;
+
     _dos_setdrive(toupper(chaine[0])-'A'+1,&nbrdrive);
+    getcwd(DFen->path,256);
+    if (chdir(DFen->path)!=0)
+        DFen->path[3]=0;
 
     InstallDOS();
 
     _dos_getdrive(&nbrdrive);
-
-    IOver=1;
-    IOerr=0;
 
     if (nbrdrive!=(toupper(chaine[0])-'A'+1) )
         error=1;

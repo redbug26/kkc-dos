@@ -31,6 +31,8 @@ void Fin(void);
 void SaveSel(struct fenetre *F1);
 void LoadSel(struct fenetre *F1,int n);
 
+void Move(struct fenetre *F1,struct fenetre *F2);
+
 /*---------------------------*
  * Declaration des variables *
  *---------------------------*/
@@ -560,7 +562,13 @@ switch(DFen->order)  {
             if (stricmp(e1,e2)>0)
                 c=1;
                 else
-                c=0;
+                if (stricmp(e1,e2)<0)
+                    c=0;
+                    else
+                    if (stricmp(F1->name,F2->name)>0)
+                        c=1;
+                        else
+                        c=0;
             }
         break;
     case 3: // date
@@ -856,13 +864,49 @@ if ( (n==0) | (n==1) ) {
 }
 
 
+// Retourne 0 si tout va bene
+int VerifyDisk(char c)  // 1='A'
+{
+char path[256];
+unsigned nbrdrive,cdrv,n;
+struct diskfree_t d;
+
+n=_bios_equiplist();
+
+n=(n&192)/64;
+if ( (n==0) & (c==2) ) return 1;    // Seulement un disque
+
+
+_dos_getdrive(&cdrv);
+
+IOerr=0;
+IOver=1;
+
+_dos_setdrive(c,&nbrdrive);
+getcwd(path,256);
+
+if (_dos_getdiskfree(c,&d)!=0)
+    IOerr=1;
+
+_dos_setdrive(cdrv,&nbrdrive);
+
+return IOerr;
+}
+
+
+
+
 //---------------------------------
 // Change drive of current window -
 //---------------------------------
 void ChangeDrive(void)
 {
+static char path[256],path2[256];
+int fpos,cpos,pos,p1,p2;
+
 char drive[26];
 short m,n,x,l,nbr;
+short x1;
 signed char i;
 
 int car;
@@ -886,13 +930,18 @@ x=(40-(l*nbr))/2+DFen->x;
 
 SaveEcran();
 
-WinCadre(x-2,6,x+l*nbr+1,11,0);
-ColWin(x-1,7,x+l*nbr,10,0*16+1);
-ChrWin(x-1,7,x+l*nbr,10,32);
 
+x1=DFen->x+1;
+
+WinCadre(x1,6,x1+37,21,3);
+ColWin(x1+1,7,x1+36,20,10*16+1);
+ChrWin(x1+1,7,x1+36,20,32);
 WinCadre(x-1,8,x+l*nbr,10,1);
 
-PrintAt(x,7,"Choose a drive");
+WinCadre(x1+1,11,x1+36,20,3);
+
+PrintAt(x1+2,7, "Choose a drive");
+PrintAt(x1+2,11,"Directory...");
 
 m=x+l/2;
 for (n=0;n<26;n++)
@@ -908,17 +957,97 @@ for (n=0;n<26;n++)
     }
 
 
-i=-1;
+cpos=12;
+fpos=0;
+
+p1=DFen->path[0];
+p1=toupper(p1)-'A';
+p1=p1-1;
+
+i=p1;
 car=DROITE*256;
+
 do	{
-    do {
-        if (HI(car)==GAUCHE) i--;
-        if (HI(car)==DROITE) i++;
+    do
+        {
+        ColLin(x1+3,cpos-fpos,32,10*16+1);
+
+        switch(HI(car))
+            {
+            case GAUCHE: i--,cpos=50; break;    // LEFT
+            case DROITE: i++,cpos=50; break;    // RIGHT
+            case 80: cpos++; break;             // DOWN
+            case 72: cpos--; break;             // UP
+            case 0x47: cpos=12; break;          // HOME
+            case 0x4F: cpos=pos-1; break;       // END
+            }
+
         if (i==26) i=0;
         if (i<0) i=25;
-        } while (drive[i]==0);
 
-    if (HI(car)==0) {
+        if ( (drive[i]!=0) & (cpos==50) )
+            if (VerifyDisk(i+1)==0)
+                {
+                unsigned nbrdrive,ii;
+
+                ChrWin(x1+2,12,x1+35,19,32);
+                ColWin(x1+2,12,x1+35,19,10*16+1);
+
+                ii=i+1;
+                _dos_setdrive(ii,&nbrdrive);
+
+                p1=DFen->path[0];
+                p1=toupper(p1)-'A';
+
+                if (p1==i)
+                    strcpy(path,DFen->path);
+                    else
+                    getcwd(path,256);
+
+                if (path[strlen(path)-1]!='\\') strcat(path,"\\");
+
+
+                /* Calcule le nombre de position occup‚e par les repertoires */
+                pos=12;
+                for (p2=0;p2<strlen(path);p2++)
+                    if (path[p2]=='\\')
+                        pos++;
+                break;
+                }
+        }
+    while (cpos==50);
+
+    if (cpos>=pos)   cpos=pos-1;
+    if (cpos<12)     cpos=12;
+
+    while (cpos-fpos>19) fpos++;
+    while (cpos-fpos<12) fpos--;
+
+    pos=12;
+    p1=0;
+    p2=0;
+
+    for (p2=0;p2<strlen(path);p2++)
+        {
+        if (path[p2]=='\\')
+            {
+            memset(path2,32,255);
+            memcpy(path2+(pos-12)*2,path+p1,p2-p1+1);
+            path2[31]=0;
+
+            p1=p2+1;
+
+            if ( (pos-fpos>=12) & (pos-fpos<=19) )
+                PrintAt(x1+4,pos-fpos,"%s",path2);
+
+            pos++;
+            }
+        }
+
+    ColLin(x1+3,cpos-fpos,32,7*16+4);
+
+    if (HI(car)==0)
+        {
         car=(toupper(car)-'A');
         if ( (car>=0) & (car<26) )
             if (drive[car]!=0)
@@ -927,7 +1056,7 @@ do	{
                 car=13;
                 break;
                 }
-	   }
+        }
 
     AffCol(drive[i],9,1*16+5);
 
@@ -936,11 +1065,25 @@ do	{
 
 } while ( (LO(car)!=27) & (LO(car)!=13));
 
+pos=12;
+p1=0;
+p2=0;
+
+for (p2=0;p2<strlen(path);p2++)
+    {
+    if (path[p2]=='\\')
+        {
+        if (pos==cpos)
+            path[p2]=0;
+        pos++;
+        }
+    }
+if (path[strlen(path)-1]==':') strcat(path,"\\");
+
 ChargeEcran();
 
-if (car==13) {
-   CommandLine("\r%c:",i+'A');
-   }
+if (car==13)
+   CommandLine("#cd %s",path);
 }
 
 //---------------------------------
@@ -1305,6 +1448,67 @@ fclose(fic);
 }
 
 
+/*****************
+ - Fonction MOVE -
+ *****************/
+void WinMove(struct fenetre *F1,struct fenetre *F2)
+{
+SaveSel(F1);      // sauvegarde position et selection
+Copie(F1,F2);
+LoadSel(F1,1);     // selection des anciens uniquements
+Delete(F1);
+CommandLine("#cd .");
+LoadSel(F1,0);
+
+DFen=F2;
+CommandLine("#cd .");
+DFen=F1;
+}
+
+/*******************
+ - Fonction RENAME -
+ *******************/
+void WinRename(struct fenetre *F1,struct fenetre *F2)
+{
+static char Dir[70];
+static char Name[256];
+static int DirLength=70;
+static int CadreLength=71;
+
+struct Tmt T[5] = {
+      { 2,3,1,
+        Dir,
+        &DirLength},
+      {15,5,2,NULL,NULL},
+      {45,5,3,NULL,NULL},
+      { 5,2,0,"Move/rename file to",NULL},
+      { 1,1,4,NULL,&CadreLength}
+      };
+
+struct TmtWin F = {
+    3,10,76,17,
+    "Move/rename"};
+
+int n;
+
+strcpy(Dir,F2->path);
+Path2Abs(Dir,F1->F[DFen->pcur]->name);
+
+strcpy(Name,F1->path);
+Path2Abs(Name,F1->F[DFen->pcur]->name);
+
+n=WinTraite(T,5,&F);
+
+if ( (n==0) | (n==1) )
+    {
+    if (rename(Name,Dir)!=0)
+        WinError("Couldn't rename file");
+    }
+
+CommandLine("#cd .");
+}
+
+
 
 
 /*************************************************************************
@@ -1491,7 +1695,7 @@ do {
             break;
 
         case 0x0A:  // CTRL-ENTER
-            CommandLine("%s",DFen->F[DFen->pcur]->name);
+            CommandLine("%s ",DFen->F[DFen->pcur]->name);
             break;
         case 27:    // ESCAPE
             CommandLine("\r");
@@ -1562,12 +1766,12 @@ do {
             DFen->scur++;
             DFen->pcur++;
             break;
-        case 0x4B:       // GAUCHE
+        case 0x4B:       // LEFT
             Cfg->FenAct=0;
             DFen=Fenetre[Cfg->FenAct];
             ChangeLine();      // Affichage Path
             break;
-        case 0x4D:       // DROITE
+        case 0x4D:       // RIGHT
             Cfg->FenAct=1;
             DFen=Fenetre[Cfg->FenAct];
             ChangeLine();      // Affichage Path
@@ -1605,19 +1809,7 @@ do {
             DFen=DFen->Fen2;
             break;
         case 0x40:       // F6
-            SaveSel(DFen);      // sauvegarde position et selection
-            Copie(DFen,DFen->Fen2);
-
-            DFen=DFen->Fen2;
-            CommandLine("#cd .");
-            DFen=DFen->Fen2;
-
-            LoadSel(DFen,1);     // selection des anciens uniquements
-
-            Delete(DFen);
-            CommandLine("#cd .");
-
-            LoadSel(DFen,0);
+            WinMove(DFen,DFen->Fen2);
             break;
         case 0x41:       // F7
             CreateDirectory();
@@ -1635,6 +1827,9 @@ do {
                     View(DFen);
                     break;
                 }
+            break;
+        case 0x59:       // SHIFT-F6
+            WinRename(DFen,DFen->Fen2);
             break;
         case 0x5E:       // CTRL-F1
                DFen=Fenetre[0];
@@ -1869,9 +2064,6 @@ DFen->Fen2->init=1;
 ChangeLine();
 
 MenuBar(3);
-
-AffFen(DFen);
-AffFen(DFen->Fen2);
 }
 
 
@@ -1990,7 +2182,11 @@ short taille;
 fic=fopen(Fics->CfgFile,"rb");
 if (fic==NULL) return -1;
 
-fread((void*)Cfg,sizeof(struct config),1,fic);
+if (fread((void*)Cfg,sizeof(struct config),1,fic)==0)
+    {
+    fclose(fic);
+    return -1;
+    }
 
 
 for(n=0;n<16;n++)
@@ -2113,7 +2309,7 @@ return 0;
  - Gestion 4DOS -
  ****************/
 
-// Put Cfg->_4dos on if 4dos founded
+// Put Cfg->_4dos on if 4dos found
 void _4DOSverif(void)
 {
 union REGS R;

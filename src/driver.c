@@ -76,8 +76,8 @@ DFen->nbrsel=0;
 
 Fic=DFen->F;
 
-Fic[0]->name=GetMem(2);
-strcpy(Fic[0]->name,".");
+Fic[0]->name=GetMem(3);
+strcpy(Fic[0]->name,"..");
 
 Fic[0]->size=0;
 Fic[0]->time=0;
@@ -85,16 +85,22 @@ Fic[0]->date=33;
 Fic[0]->attrib=0x10;
 Fic[0]->select=0;
 
-Fic[1]->name=GetMem(3);
-strcpy(Fic[1]->name,"..");
+DFen->nbrfic=1;
 
-Fic[1]->size=0;
-Fic[1]->time=0;
-Fic[1]->date=33;
-Fic[1]->attrib=0x10;
-Fic[1]->select=0;
+if (Cfg->pntrep==1)
+    {
+    Fic[1]->name=GetMem(2);
+    strcpy(Fic[1]->name,".");
 
-DFen->nbrfic=2;
+    Fic[1]->size=0;
+    Fic[1]->time=0;
+    Fic[1]->date=33;
+    Fic[1]->attrib=0x10;
+    Fic[1]->select=0;
+
+    DFen->nbrfic=2;
+    }
+
 
 handle=open(DFen->VolName,O_RDONLY | O_BINARY);
 
@@ -304,8 +310,8 @@ DFen->nbrsel=0;
 
 Fic=DFen->F;
 
-Fic[0]->name=GetMem(2);
-strcpy(Fic[0]->name,".");
+Fic[0]->name=GetMem(3);
+strcpy(Fic[0]->name,"..");
 
 Fic[0]->size=0;
 Fic[0]->time=0;
@@ -313,16 +319,21 @@ Fic[0]->date=33;
 Fic[0]->attrib=0x10;
 Fic[0]->select=0;
 
-Fic[1]->name=GetMem(3);
-strcpy(Fic[1]->name,"..");
+DFen->nbrfic=1;
 
-Fic[1]->size=0;
-Fic[1]->time=0;
-Fic[1]->date=33;
-Fic[1]->attrib=0x10;
-Fic[1]->select=0;
+if (Cfg->pntrep==1)
+    {
+    Fic[1]->name=GetMem(2);
+    strcpy(Fic[1]->name,".");
 
-DFen->nbrfic=2;
+    Fic[1]->size=0;
+    Fic[1]->time=0;
+    Fic[1]->date=33;
+    Fic[1]->attrib=0x10;
+    Fic[1]->select=0;
+
+    DFen->nbrfic=2;
+    }
 
 handle=open(DFen->VolName,O_RDONLY | O_BINARY);
 
@@ -473,8 +484,8 @@ DFen->nbrsel=0;
 
 Fic=DFen->F;
 
-Fic[0]->name=GetMem(2);
-strcpy(Fic[0]->name,".");
+Fic[0]->name=GetMem(3);
+strcpy(Fic[0]->name,"..");
 
 Fic[0]->size=0;
 Fic[0]->time=0;
@@ -482,16 +493,21 @@ Fic[0]->date=33;
 Fic[0]->attrib=0x10;
 Fic[0]->select=0;
 
-Fic[1]->name=GetMem(3);
-strcpy(Fic[1]->name,"..");
+DFen->nbrfic=1;
 
-Fic[1]->size=0;
-Fic[1]->time=0;
-Fic[1]->date=33;
-Fic[1]->attrib=0x10;
-Fic[1]->select=0;
+if (Cfg->pntrep==1)
+    {
+    Fic[1]->name=GetMem(2);
+    strcpy(Fic[1]->name,".");
 
-DFen->nbrfic=2;
+    Fic[1]->size=0;
+    Fic[1]->time=0;
+    Fic[1]->date=33;
+    Fic[1]->attrib=0x10;
+    Fic[1]->select=0;
+
+    DFen->nbrfic=2;
+    }
 
 handle=open(DFen->VolName,O_RDONLY | O_BINARY);
 
@@ -683,8 +699,8 @@ DFen->nbrsel=0;
 
 Fic=DFen->F;
 
-Fic[0]->name=GetMem(2);
-strcpy(Fic[0]->name,".");
+Fic[0]->name=GetMem(3);
+strcpy(Fic[0]->name,"..");
 
 Fic[0]->size=0;
 Fic[0]->time=0;
@@ -692,16 +708,21 @@ Fic[0]->date=33;
 Fic[0]->attrib=0x10;
 Fic[0]->select=0;
 
-Fic[1]->name=GetMem(3);
-strcpy(Fic[1]->name,"..");
+DFen->nbrfic=1;
 
-Fic[1]->size=0;
-Fic[1]->time=0;
-Fic[1]->date=33;
-Fic[1]->attrib=0x10;
-Fic[1]->select=0;
+if (Cfg->pntrep==1)
+    {
+    Fic[1]->name=GetMem(2);
+    strcpy(Fic[1]->name,".");
 
-DFen->nbrfic=2;
+    Fic[1]->size=0;
+    Fic[1]->time=0;
+    Fic[1]->date=33;
+    Fic[1]->attrib=0x10;
+    Fic[1]->select=0;
+
+    DFen->nbrfic=2;
+    }
 
 handle=open(DFen->VolName,O_RDONLY | O_BINARY);
 
@@ -1030,7 +1051,7 @@ if (fic==NULL)
 strcpy(nom2,Fen->path);
 
 
-Fichier=GetMem(10000*sizeof(void*));
+Fichier=GetMem(50000*sizeof(void*));
 Repert=GetMem(5000*sizeof(void*));
 PosRepert=GetMem(5000*sizeof(long));
 
@@ -1113,6 +1134,8 @@ while (error==0) {
         }
 
     error=_dos_findnext(&ff);
+
+    PrintAt(0,21,"%10d %10d",Nbfic,Posfic);
     }
 
 
@@ -1123,10 +1146,13 @@ memcpy(Fichier[Nbfic]->nom,".",1);
 Nbfic++;
 Posfic++;
 
+PrintAt(0,20,"%6d fic %10d pos ",Nbfic,Posfic);
+
 }
 while (NbrRec>0);
 
 ChargeEcran();
+
 
 fprintf(fic,"KKDR");
 

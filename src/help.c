@@ -118,7 +118,7 @@ for (n=0;n<NbrMain;n++)
 
 
 x1=5; // (82-max)/2;
-y1=5; // ((Cfg->TailleY)-3*NbrMain)/2;
+y1=3; // ((Cfg->TailleY)-3*NbrMain)/2;
 
 x2=x1+max+3;
 y2=y1+(NbrMain+1)*3;

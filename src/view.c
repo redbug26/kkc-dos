@@ -26,45 +26,70 @@
 
 
 void ChangeMask(void);
+void Masque(short x1,short y1,short x2,short y2);
+
 char ReadChar(void);
+
 int HexaView(char *fichier);
 int TxtView(char *fichier);
 int HtmlView(char *fichier,char *liaison);
 
-void Masque(short x1,short y1,short x2,short y2);
+
+
+static FILE *fic;
+static long taille;
+static char view_buffer[32768];
+static long pos;        // position de depart
+static long posl;       // taille du buffer
+static long posn;       // octet courant
+
+// Lit l'octet se trouvant en posn
+//---------------------------------
+char ReadChar(void)
+{
+// PrintAt(0,0,"Position: %9d",posn);
+
+if (posn>taille)
+    {
+    posn=taille-1;
+    return 0;
+    }
+
+if (posn<0)
+    posn=0;
+
+if (posn-pos>=posl)
+    {
+    while (posn-pos>=posl) pos+=32768;
+
+    fseek(fic,pos,SEEK_SET);
+    fread(view_buffer,32768,1,fic);
+    }
+
+if (posn-pos<0)
+    {
+    while (posn-pos<0) pos-=32768;
+
+    fseek(fic,pos,SEEK_SET);
+    fread(view_buffer,32768,1,fic);
+    }
+
+return view_buffer[posn-pos];
+}
 
 int HexaView(char *fichier)
 {
-FILE *fic;
-int x,y,ks;
-
+int x,y;
 long cur1,cur2;
-
-long taille,z,k,kl;
-
-char *buffer;
-
+long posd;
 int car;
-
 
 int fin=0; // Code de retour
 
-fic=fopen(fichier,"rb");
-
-if (fic==NULL)
-    {
-    PrintAt(0,0,"Error on file '%s'",fichier);
-    WinError("Couldn't open file");
-    return -1;
-    }
-taille=filelength(fileno(fic));
-
-if (taille==0) return -1;
-
-buffer=GetMem(65536);
-
 SaveEcran();
 PutCur(3,0);
+
+Bar(" Help  ----  ----  Text  ----  ----  ----  ----  ----  ---- ");
 
 
 ColWin(1,1,78,(Cfg->TailleY)-3,10*16+1);
@@ -82,74 +107,26 @@ WinCadre(0,0,79,2,3);
 
 ChrCol(34,4,(Cfg->TailleY)-6,Cfg->Tfont[0]);
 
-z=0;
-
 PrintAt(3,1,"View File %s",fichier);
-
-fseek(fic,z,SEEK_SET);
-
-fread(buffer,65536,1,fic);
-
-k=0;
 
 //
 
 do
 {
-if ((z+k+(((Cfg->TailleY)-6)*16) )>taille)
-    kl=taille-z;
-    else
-    kl=k+(((Cfg->TailleY)-6)*16);
-
-while (k>32768)
-    {
-    kl-=32768;
-    k-=32768;
-    z+=32768;
-
-    fseek(fic,z,SEEK_SET);
-    fread(buffer,65536,1,fic);
-    }
-
-while (k<0)
-    {
-    k+=32768;
-    kl+=32768;
-    z-=32768;
-
-    fseek(fic,z,SEEK_SET);
-    fread(buffer,65536,1,fic);
-    }
-
-
-if (taille<1024*1024)
-    {
-    cur1=(z+k)*(Cfg->TailleY-7);
-    cur1=cur1/taille+4;
-
-    cur2=(z+kl)*(Cfg->TailleY-7);
-    cur2=cur2/taille+4;
-    }
-
-
-ChrCol(78,4,cur1-4,32);
-
-ChrCol(78,cur1,cur2-cur1+1,219);
-
-ChrCol(78,cur2+1,(Cfg->TailleY-3)-cur2,32);
-
-ks=k;
+posd=posn;
      
 for (y=0;y<Cfg->TailleY-6;y++)
     {
-    PrintAt(1,y+4,"%08X",z+k);
+    PrintAt(1,y+4,"%08X",posn);
 
     for (x=0;x<16;x++)
         {
-        if (z+k<taille)
+        if (posn<taille)
             {
-            PrintAt(x*3+11,y+4,"%02X",(unsigned char)(buffer[k]));
-            AffChr(x+60,y+4,buffer[k]);
+            char a;
+            a=ReadChar();
+            PrintAt(x*3+11,y+4,"%02X",a);
+            AffChr(x+60,y+4,a);
             }
             else
             {
@@ -157,11 +134,33 @@ for (y=0;y<Cfg->TailleY-6;y++)
             AffChr(x+60,y+4,32);
             }
 
-        k++;
+        posn++;
         }
     }
 
-k=ks;
+if (taille<1024*1024)
+    {
+    cur1=(posd)*(Cfg->TailleY-7);
+    cur1=cur1/taille+4;
+
+    cur2=(posn)*(Cfg->TailleY-7);
+    cur2=cur2/taille+4;
+    }
+    else
+    {
+    cur1=(posd/1024)*(Cfg->TailleY-7);
+    cur1=cur1/(taille/1024)+4;
+
+    cur2=(posn/1024)*(Cfg->TailleY-7);
+    cur2=cur2/(taille/1024)+4;
+    }
+
+
+ChrCol(78,4,cur1-4,32);
+ChrCol(78,cur1,cur2-cur1+1,219);
+ChrCol(78,cur2+1,(Cfg->TailleY-3)-cur2,32);
+
+posn=posd;
 
 car=Wait(0,0,0);
 
@@ -169,30 +168,34 @@ switch(LO(car))   {
     case 0:
         switch(HI(car))   {
             case 80:    // BAS
-                k+=16;
+                posn+=16;
                 break;
             case 72:    // HAUT
-                k-=16;
+                posn-=16;
                 break;
             case 0x51:  // PGDN
-                k+=480;
+                posn+=480;
                 break;
             case 0x49:  // PGUP
-                k-=480;
+                posn-=480;
                 break;
             case 0x47:  // HOME
-                k=-z;
+                posn=0;
                 break;
             case 0x4F:  // END
-                k=taille-((((Cfg->TailleY)-6)*16))-z+15;
-                k=k/16;
-                k=k*16;
+                posn=taille-((((Cfg->TailleY)-6)*16))+15;
                 break;
             case 0x43:  // F9
                 fin=86;
                 break;
             case 0x8D:  // CTRL-UP
                 fin=-1;
+                break;
+            case 0x3B:  // F1
+                Help();
+                break;
+            case 0x3E:  // F4
+                fin=91;
                 break;
             default:
                 break;
@@ -205,18 +208,13 @@ switch(LO(car))   {
         break;
     }
 
-while (k>=taille-((((Cfg->TailleY)-7)*16))-z) k-=16;
-
-while ((z+k)<0) k+=16;
+while (posn>=taille-((((Cfg->TailleY)-7)*16))) posn-=16;
+while (posn<0) posn+=16;
 
 }
 while(fin==0);
 
 ChargeEcran();
-
-free(buffer);
-
-fclose(fic);
 
 return fin;
 }
@@ -758,46 +756,7 @@ fclose(fic);
 return (-1);
 }
 
-static FILE *fic;
-static long taille;
-static char view_buffer[32768];
-static long pos;        // position de depart
-static long posl;       // taille du buffer
-static long posn;       // octet courant
 
-// Lit l'octet se trouvant en posn
-//---------------------------------
-char ReadChar(void)
-{
-// PrintAt(0,0,"Position: %9d",posn);
-
-if (posn>taille)
-    {
-    posn=taille-1;
-    return 0;
-    }
-
-if (posn<0)
-    posn=0;
-
-if (posn-pos>=posl)
-    {
-    while (posn-pos>=posl) pos+=32768;
-
-    fseek(fic,pos,SEEK_SET);
-    fread(view_buffer,32768,1,fic);
-    }
-
-if (posn-pos<0)
-    {
-    while (posn-pos<0) pos-=32768;
-
-    fseek(fic,pos,SEEK_SET);
-    fread(view_buffer,32768,1,fic);
-    }
-
-return view_buffer[posn-pos];
-}
 
 int TxtView(char *fichier)
 {
@@ -820,33 +779,14 @@ register int n;
 char affichage[81];
 
 int code;
-char fin;
+int fin=0;
 
 char pasfini;
-
-fic=fopen(fichier,"rb");
-
-if (fic==NULL)
-    {
-    PrintAt(0,0,"Error on file '%s'",fichier);
-    WinError("Couldn't open file");
-    return -1;
-    }
-taille=filelength(fileno(fic));
-
-if (taille==0) return -1;
-
-fread(view_buffer,32768,1,fic);
-
-pos=0;
-posl=32768;
-
-posn=0;
 
 SaveEcran();
 PutCur(3,0);
 
-Bar(" Help  ----  ----  ----  ----  ---- Search ----  Mask  ---- ");
+Bar(" Help  ----  ----  Hexa  ----  ---- Search ----  Mask  ---- ");
 
 wrap=0;
 aff=1;
@@ -981,6 +921,9 @@ do
         case '„': chaine[0]=227; break;
 
         case '‡': chaine[0]='c'; break;
+        case '—': chaine[0]='u'; break;
+
+        case 0xFA: chaine[0]=7; break;
 
         default:
             break;
@@ -1045,14 +988,16 @@ Masque(x,y,x+xl-1,y+yl-1);
 code=Wait(0,0,0);
 
 posn=posd;
-fin=0;
 
 switch(LO(code))
     {
     case 0:
        switch(HI(code))   {
-            case 0x3B:       // F1
+            case 0x3B:  // F1
                 Help();
+                break;
+            case 0x3E:  // F4
+                fin=-2;
                 break;
             case 0x41:  // F7
                 SearchTxt();
@@ -1144,12 +1089,12 @@ switch(LO(code))
                 posn=0;
                 break;
             case 0x8D: // CTRL-UP
-                fin=1;
+                fin=-1;
                 break;
             }
         break;
     case 27:
-        fin=1;
+        fin=-1;
         break;
     }
 
@@ -1159,11 +1104,7 @@ while(!fin);
 
 ChargeEcran();
 
-
-fclose(fic);
-// free(view_buffer);
-
-return -1;
+return fin;
 }
 
 // Recherche une chaine
@@ -2058,13 +1999,32 @@ strcpy(liaison,"");
 
 i=InfoIDF(F);
 
+fic=fopen(fichier,"rb");
+
+if (fic==NULL)
+    {
+    PrintAt(0,0,"Error on file '%s'",fichier);
+    WinError("Couldn't open file");
+    i=-1;
+    }
+taille=filelength(fileno(fic));
+
+if (taille==0) i=-1;
+
+fread(view_buffer,32768,1,fic);
+
+pos=0;
+posl=32768;
+
+posn=0;
+
 while(i!=-1)
     {
     switch(i) {
         case 86: //Ansi
             i=AnsiView(fichier);
             break;
-        case 91: //DIZ
+        case 91: //Texte
             i=TxtView(fichier);
             break;
         case 104: // HTML
@@ -2080,6 +2040,8 @@ while(i!=-1)
             break;
         }
     }
+
+fclose(fic);
 
 free(liaison);
 free(fichier);
@@ -2300,8 +2262,6 @@ do
 
     }
 while ( (car!=27) & (car!=13) );
-
-
 
 
 ChargeEcran();

@@ -7,10 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <bios.h>
 
-#include "hard.h"
+#include "kk.h"
 #include "idf.h"
-#include "help.h"
 
 #define GAUCHE 0x4B
 #define DROITE 0x4D
@@ -38,7 +38,9 @@ short nbrdir; //
 
 char OldY;
 
-void Search(char *nom);
+struct fenetre *Fenetre[2];
+
+void SSearch(char *nom);
 void ApplSearch(void);
 void ClearAllSpace(char *name);
 
@@ -84,10 +86,12 @@ return strcmp(a1->ext,b1->ext);		// ou format ?
 
 void IdfListe(void)
 {
-int y;
+int car,y;
 
 int n;
 int info;
+
+int prem;
 
 SaveEcran();
 
@@ -99,72 +103,92 @@ y=3;
 
 PrintAt(2,1,"%-77s","List of the format");
 
-for (n=0;n<nbrkey;n++)  {
-    if ( (n==0) | (K[n-1].type!=K[n].type) )
+prem=0;
+
+do
+{
+// ChrWin(1,3,78,48,32);
+// ColWin(1,3,78,48,10*16+1);
+
+y=3;
+
+for (n=prem;n<nbrkey;n++)
+    {
+    if (K[n].ext[0]=='*')
         {
         ChrLin(1,y,78,196);
-        switch(K[n+1].type)
-            {
-            case 1: PrintAt(4,y,"Module");
-                break;
-            case 2: PrintAt(4,y,"Sample");
-                break;
-            case 3: PrintAt(4,y,"Archive");
-                break;
-            case 4: PrintAt(4,y,"Bitmap");
-                break;
-            case 5: PrintAt(4,y,"Animation");
-                break;
-            case 6: PrintAt(4,y,"Others");
-                break;
-            }
-        y++;
-        if ( (y==48) | (n==nbrkey-1) )
-            {
-            y=3;
-            Wait(0,0,0);
-            ChrWin(1,3,78,48,32);
-            ColWin(1,3,78,48,10*16+1);
-            }
-        }
+        PrintAt(4,y,"%s",K[n].format);
 
-    if (n&1==1)
-        {
-        ColLin(2,y,3,  10*16+3);
-        ColLin(5,y,1,  10*16+3);
-        ColLin(6,y,32, 10*16+4);
-        ColLin(38,y,6, 10*16+3);
-        ColLin(44,y,29,10*16+5);
-        ColLin(73,y,1, 10*16+3);
-        ColLin(74,y,4, 10*16+3);
+        if (y&1==1)
+            ColLin(1,y,78,10*16+3);
+            else
+            ColLin(1,y,78,15*16+3);
         }
         else
         {
-        ColLin(2,y,3,  15*16+3);
-        ColLin(5,y,1,  15*16+3);
-        ColLin(6,y,32, 15*16+4);
-        ColLin(38,y,6, 15*16+3);
-        ColLin(44,y,29,15*16+5);
-        ColLin(73,y,1, 15*16+3);
-        ColLin(74,y,4, 15*16+3);
+        if (y&1==1)
+            {
+            ColLin(1,y,4,  10*16+3);
+            ColLin(5,y,1,  10*16+3);
+            ColLin(6,y,32, 10*16+4);
+            ColLin(38,y,6, 10*16+3);
+            ColLin(44,y,29,10*16+5);
+            ColLin(73,y,1, 10*16+3);
+            ColLin(74,y,5, 10*16+3);
+            }
+            else
+            {
+            ColLin(1,y,4,  15*16+3);
+            ColLin(5,y,1,  15*16+3);
+            ColLin(6,y,32, 15*16+4);
+            ColLin(38,y,6, 15*16+3);
+            ColLin(44,y,29,15*16+5);
+            ColLin(73,y,1, 15*16+3);
+            ColLin(74,y,5, 15*16+3);
+            }
+
+        PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,K[n].format,K[n].pro,K[n].other==1 ? "Info" : "----");
+
+        if (K[n].other==1) info++;
         }
-
-    PrintAt(2,y,"%3s %-32s from %29s %4s",K[n].ext,K[n].format,K[n].pro,K[n].other==1 ? "Info" : "----");
-
-    if (K[n].other==1) info++;
 
     y++;
-    if ( (y==48) | (n==nbrkey-1) )
-        {
-        y=3;
-        Wait(0,0,0);
-        ChrWin(1,3,78,48,32);
-        ColWin(1,3,78,48,10*16+1);
-        }
+
+    if ( (y==(Cfg->TailleY-2)) | (n==nbrkey-1) ) break;
     }
 
-// printf("\n%3d formats",nbrkey);
-// printf("\n%3d informations\n\n",info);
+car=Wait(0,0,0);
+
+switch(HI(car))
+    {
+    case 72:        // UP
+        prem--;
+        break;
+    case 80:        // DOWN
+        prem++;
+        break;
+    case 0x49:      // PGUP
+        prem-=10;
+        break;
+    case 0x51:      // PGDN
+        prem+=10;
+        break;
+    case 0x47:  // HOME
+        prem=0;
+        break;
+    case 0X4F: // END
+        prem=nbrkey-(Cfg->TailleY-5);
+        break;
+    }
+
+if (prem<0) prem=0;
+if (prem>nbrkey-(Cfg->TailleY-5)) prem=nbrkey-(Cfg->TailleY-5);
+
+
+// if ( (y==48) | (n==nbrkey-1) )
+
+}
+while (car!=27);
 
 ChargeEcran();
 }
@@ -174,8 +198,7 @@ void SaveCfg(void)
 int m,n,t;
 FILE *fic;
 short taille;
-char chaine[256];
-ENTIER e;
+struct fenetre *Fen;
 
 Cfg->FenTyp[0]=0;
 Cfg->FenTyp[1]=0;
@@ -195,28 +218,26 @@ for(n=0;n<16;n++)
     fwrite(Mask[n]->title,taille,1,fic);
     }
 
-
 for(t=0;t<2;t++)
 {
+Fen=Fenetre[t];
 
-strcpy(chaine,Fics->LastDir);
-fwrite(chaine,256,1,fic);           // Path
-e=1;
-fwrite(&e,sizeof(ENTIER),1,fic);    // Order
+fwrite(Fen->path,256,1,fic);
+fwrite(&(Fen->order),sizeof(ENTIER),1,fic);
+fwrite(&(Fen->sorting),sizeof(ENTIER),1,fic);
 
-e=0;
-fwrite(&e,sizeof(ENTIER),1,fic);    // Sorting
+fwrite(&(Fen->nbrsel),4,1,fic);
 
-n=0;
-fwrite(&n,4,1,fic);                 // Nombre de selectionne
+for (n=0;n<=Fen->nbrfic;n++)
+    {
+    m=strlen(Fen->F[n]->name);
+    fwrite(&m,4,1,fic);
+    fwrite(Fen->F[n]->name,1,m,fic);
+    }
 
-strcpy(chaine,"KK.EXE");
-m=strlen(chaine);
-fwrite(&m,4,1,fic);                 // Fichier sur lequel se trouve le curseur
-fwrite(chaine,1,m,fic);
-
-fwrite(&e,sizeof(ENTIER),1,fic);    // Position du curseur
+fwrite(&(Fen->scur),sizeof(ENTIER),1,fic);
 }
+
 
 fclose(fic);
 }
@@ -226,9 +247,11 @@ fclose(fic);
 //           0 si tout va bien
 int LoadCfg(void)
 {
-int n;
+int i,t,n,m;
 FILE *fic;
 short taille;
+char nom[256];
+struct fenetre *DFen;
 
 
 fic=fopen(Fics->CfgFile,"rb");
@@ -249,6 +272,37 @@ for(n=0;n<16;n++)
     Mask[n]->title[taille]=0;
     }
 
+for (t=0;t<2;t++)
+    {
+    DFen=Fenetre[t];
+
+    DFen->FenTyp=Cfg->FenTyp[t];
+    
+    fread(DFen->path,256,1,fic);
+    fread(&(DFen->order),sizeof(ENTIER),1,fic);
+    fread(&(DFen->sorting),sizeof(ENTIER),1,fic);
+
+    fread(&nbr,4,1,fic);
+
+    DFen->nbrsel=0;
+
+    for (i=0;i<=nbr;i++)
+        {
+        DFen->F[i]=GetMem(sizeof(struct file));
+
+        fread(&m,4,1,fic);
+        fread(nom,m,1,fic);
+        nom[m]=0;
+
+        DFen->F[i]->name=GetMem(m+1);
+        memcpy(DFen->F[i]->name,nom,m+1);
+        }
+
+    DFen->nbrsel=nbr;
+
+    fread(&(DFen->scur),sizeof(ENTIER),1,fic);
+    }
+
 
 fclose(fic);
 
@@ -263,8 +317,9 @@ return 0;
 //---------------------------------
 void ListDrive(char *lstdrv)
 {
-char drive[26];
+char drive[26],etat[26];
 short m,n,x,l,nbr;
+int xx,yy;
 signed char i;
 
 int car;
@@ -274,6 +329,7 @@ nbr=0;
 
 for (i=0;i<26;i++)
     {
+    etat[i]=0;
     drive[i]=GetDriveReady(i);
     if (drive[i]==0)
         nbr++;
@@ -300,6 +356,9 @@ for (n=0;n<26;n++)
     {
     if (drive[n]==0)
         {
+        if (VerifyDisk(n+1)==0)
+            etat[n]=1;
+
         drive[n]=m;
         AffChr(m,9,n+'A');
         if (lstdrv[n]==0)
@@ -321,9 +380,20 @@ car=DROITE*256;
 
 do	{
     do {
+
+
         if ( (LO(car)==32) & (drive[i]!=0) )
             {
-            if (lstdrv[i]==0) lstdrv[i]=1; else lstdrv[i]=0;
+            if (lstdrv[i]==0)
+                {
+                lstdrv[i]=1;
+                if (VerifyDisk(i+1)==0)
+                    etat[i]=1;
+                    else
+                    etat[i]=0;
+                }
+                else
+                lstdrv[i]=0;
             car=9;
             }
 
@@ -341,19 +411,25 @@ do	{
         if (i<0) i=25;
         } while (drive[i]==0);
 
-/*    if (HI(car)==0)
-        {
-        car=(toupper(car)-'A');
-        if ( (car>=0) & (car<26) )
-            if (drive[car]!=0)
-                {
-                i=car;
-                car=13;
-                break;
-                }
-       } */
 
-    
+
+    xx=2;
+    yy=13;
+
+    for(n=0;n<26;n++)
+        if (lstdrv[n]!=0)
+            {
+            PrintAt(xx,yy,"Search in %c: (%9s)",n+'A',etat[n]==1 ? "Ready" : "Not Ready");
+            yy++;
+            if (yy>=Cfg->TailleY-4) yy=13,xx+=39;
+            }
+
+    while(xx!=80)
+        {
+        PrintAt(xx,yy,"                        ");
+        yy++;
+        if (yy>=Cfg->TailleY-4) yy=13,xx+=39;
+        }
 
     if (lstdrv[i]==0)
         AffCol(drive[i],9,1*16+5);
@@ -377,6 +453,14 @@ if (car==27)
 
 }
 
+//---------------- Error and Signal Handler -------------------------------------
+int IOerr;
+
+int __far Error_handler(unsigned deverr,unsigned errcode,unsigned far *devhdr)
+{
+IOerr=1;
+return _HARDERR_IGNORE;
+}
 
 void main(short argc,char **argv)
 {
@@ -387,7 +471,11 @@ int car;
 
 char *path;
 
+/***********************
+ - Gestion des erreurs -
+ ***********************/
 
+_harderr(Error_handler);
 
 OldY=(*(char*)(0x484))+1;
 
@@ -401,6 +489,11 @@ for (n=strlen(path);n>0;n--) {
         }
     }
 
+Fenetre[0]=GetMem(sizeof(struct fenetre));
+Fenetre[0]->F=GetMem(TOTFIC*sizeof(void *));        // allocation des pointeurs
+
+Fenetre[1]=GetMem(sizeof(struct fenetre));
+Fenetre[1]->F=GetMem(TOTFIC*sizeof(void *));        // allocation des pointeurs
 
 Cfg=GetMem(sizeof(struct config));
 Fics=GetMem(sizeof(struct fichier));
@@ -437,6 +530,8 @@ strcpy(Fics->LastDir,path);
 
 if (LoadCfg()==-1)
     {
+    struct fenetre *DFen;
+    int t;
     char defcol[48]={43,37,30, 31,22,17,  0, 0, 0, 58,58,50,
                      44,63,63, 63,63,21, 43,37,30,  0, 0, 0,
                      63,63, 0, 63,63,63, 43,37,30, 63, 0, 0,
@@ -476,15 +571,47 @@ if (LoadCfg()==-1)
     Mask[1]->Other_Col=1;
 
     strcpy(Mask[15]->title,"User Defined Style");
-    strcpy(Mask[15]->chaine,"ketchup killers redbug access darkangel katana cray magic fred cobra @");
+    strcpy(Mask[15]->chaine,"ketchup killers redbug access darkangel katana ecstazy cray magic fred cobra z @");
     Mask[15]->Ignore_Case=1;
     Mask[15]->Other_Col=1;
+
+    for (t=0;t<2;t++)
+        {
+        DFen=Fenetre[t];
+
+        DFen->FenTyp=Cfg->FenTyp[t];
+
+        strcpy(DFen->path,Fics->path);
+        DFen->order=1;
+        DFen->sorting=1;
+
+        DFen->nbrsel=0;
+
+        DFen->F[0]=GetMem(sizeof(struct file));
+
+        DFen->F[0]->name=GetMem(256);
+        strcpy(DFen->F[0]->name,"kk.exe");
+
+
+        DFen->scur=0;
+        }
+    ConfigFile();
     }
 
-TXTMode(50);
+TXTMode(Cfg->TailleY);
 NoFlash();
 
-Font8x8();
+switch (Cfg->TailleY)
+    {
+    case 50:
+        Font8x8();
+        break;
+    case 25:
+    case 30:
+        Font8x16();
+        break;
+    }
+
 
 SetPal(0, 43, 37, 30);
 SetPal(1, 31, 22, 17);
@@ -494,14 +621,12 @@ SetPal(4, 44, 63, 63);
 SetPal(5, 63, 63, 21);
 SetPal(6,43,37,30);
 SetPal(7,  0,  0,  0);
-
 SetPal(10, 43, 37, 30);
-
 SetPal(15, 47, 41, 34);
 
-WinCadre(0,0,79,49,1);
-ChrWin(1,1,78,48,32);
-ColWin(1,1,78,48,10*16+1);
+WinCadre(0,0,79,(Cfg->TailleY-1),1);
+ChrWin(1,1,78,(Cfg->TailleY-2),32);
+ColWin(1,1,78,(Cfg->TailleY-2),10*16+1);
 ColLin(1,1,78,10*16+5);
 WinLine(1,2,78,0);
 
@@ -518,14 +643,15 @@ fprintf(fic,"@REM This file was making by KKSETUP\n");
 
 fclose(fic);
 
-strcpy(chaine,"c:\\dos\\kk_desc.bat");
+strcpy(chaine,"c:\\dos\\kkdesc.bat");
 fic=fopen(chaine,"wt");
 
-fprintf(fic,"@%s\\kk_desc.exe %%1 \n",path);
+fprintf(fic,"@%s\\kkdesc.exe %%1 \n",path);
 fprintf(fic,"@REM This file was making by KKSETUP\n");
 
 fclose(fic);
 
+strcpy(chaine,Fics->path);
 strcat(chaine,"\\trash");
 mkdir(chaine);
 
@@ -564,12 +690,12 @@ switch(HI(car))
 
 } while ( (HI(car)!=0x44) & (LO(car)!=27) );
 
-PrintAt(10,35,"KK.BAT is now in PATH -> You could run KK from everywhere");
-PrintAt(10,37,"KKDESC.BAT is now in path -> IDEM");
-PrintAt(10,36,"%s is done",chaine);
+PrintAt(10,(Cfg->TailleY-6),"KK.BAT is now in PATH -> You could run KK from everywhere");
+PrintAt(10,(Cfg->TailleY-5),"KKDESC.BAT is now in path -> IDEM");
+PrintAt(10,(Cfg->TailleY-4),"%s is done",chaine);
 
-PrintAt(29,48,"Press a key to continue");
-ColLin(1,48,78,0*16+2);
+PrintAt(29,(Cfg->TailleY-2),"Press a key to continue");
+ColLin(1,(Cfg->TailleY-2),78,0*16+2);
 
 Wait(0,0,0);
 TXTMode(OldY);
@@ -587,6 +713,9 @@ FILE *fic;
 
 SaveEcran();
 
+ChrWin(1,3,78,(Cfg->TailleY-2),32);
+ColWin(1,3,78,(Cfg->TailleY-2),10*16+1);
+
 nbr=0;
 
 for (n=2;n<26;n++)
@@ -596,11 +725,10 @@ lstdrv[1]=0;
 
 ListDrive(lstdrv);
 
-
 for (n=0;n<26;n++)
     {
     sprintf(ch,"%c:\\",n+'A');
-    if (lstdrv[n]==1)
+    if ( (lstdrv[n]==1) & (VerifyDisk(n+1)==0) )
         KKR_Search(ch);
     }
 
@@ -609,8 +737,8 @@ nbrdir=0;
 for (n=0;n<26;n++)
     {
     sprintf(ch,"%c:\\*.*",n+'A');
-    if (lstdrv[n]==1)
-        Search(ch);
+    if ( (lstdrv[n]==1) & (VerifyDisk(n+1)==0) )
+        SSearch(ch);
     }
 
 fic=fopen("idfext.rb","wb");
@@ -660,15 +788,15 @@ if (fic!=NULL) {
 	fclose(fic);
 	}
 
-PrintAt(29,48,"Press a key to continue");
-ColLin(1,48,78,0*16+2);
+PrintAt(29,(Cfg->TailleY-2),"Press a key to continue");
+ColLin(1,(Cfg->TailleY-2),78,0*16+2);
 
 Wait(0,0,0);
-ColWin(1,1,78,48,0*16+1);
-ChrWin(1,1,78,48,32);  // '±'
+ColWin(1,1,78,(Cfg->TailleY-2),0*16+1);
+ChrWin(1,1,78,(Cfg->TailleY-2),32);  // '±'
 
 PrintAt(10,10,"Stat.");
-PrintAt(10,12,"I have founded %3d applications",St_App);
+PrintAt(10,12,"I have found %3d applications",St_App);
 PrintAt(10,13,"            in %3d directories",St_Dir);
 
 Wait(0,0,0);
@@ -709,10 +837,11 @@ if (!strncmp(Key,"KKRB",4))
             PrintAt(3,posy,"Loading information about %s",Titre);
             posy++;
 
-            if (posy>=45) {
-                MoveText(1,4,78,46,1,3);
+            if (posy>(Cfg->TailleY-2))
+                {
+                MoveText(1,4,78,(Cfg->TailleY-2),1,3);
                 posy--;
-                ChrLin(1,46,78,32);
+                ChrLin(1,(Cfg->TailleY-2),78,32);
                 }
             break;
         case 2:             // Code Programmeur
@@ -853,7 +982,7 @@ free(TabRec);
 // int Allform[1024];
 
 
-void Search(char *nom2)
+void SSearch(char *nom2)
 {
 struct find_t fic;
 char moi[256],nom[256];
@@ -966,12 +1095,11 @@ do
 
                         ChargeEcran();
                         if ( (t=='y') | (t=='Y') )
-                            {
-                            StrVerif=app[n]->Titre;
                             Verif=1;
-                            }
                             else
                             Verif=2;
+
+                        StrVerif=app[n]->Titre;
                         }
 
                     if (Verif==1)
@@ -1008,12 +1136,12 @@ do
         PrintAt(3,posy,"Found %s in %s",app[wok]->Titre,dir[o-1]);
         posy++;
 
-        if (posy>=45)
-            {
-            MoveText(1,4,78,46,1,3);
-            posy--;
-            ChrLin(1,46,78,32);
-            }
+        if (posy>(Cfg->TailleY-2))
+                {
+                MoveText(1,4,78,(Cfg->TailleY-2),1,3);
+                posy--;
+                ChrLin(1,(Cfg->TailleY-2),78,32);
+                }
         }
    }
 while (_dos_findnext(&fic)==0);
@@ -1173,6 +1301,12 @@ if (!stricmp(var,"directpoint"))
     erreur=0;
     }
 
+if (!stricmp(var,"hiddenfile"))
+    {
+    Cfg->hidfil=valeur;
+    erreur=0;
+    }
+
 
 if (erreur==1)
     {
@@ -1182,4 +1316,34 @@ if (erreur==1)
 
 ChargeEcran();
 }
+
+
+// Retourne 0 si tout va bene
+int VerifyDisk(char c)  // 1='A'
+{
+char path[256];
+unsigned nbrdrive,cdrv,n;
+struct diskfree_t d;
+
+n=_bios_equiplist();
+
+n=(n&192)/64;
+if ( (n==0) & (c==2) ) return 1;    // Seulement un disque
+
+
+_dos_getdrive(&cdrv);
+
+IOerr=0;
+
+_dos_setdrive(c,&nbrdrive);
+getcwd(path,256);
+
+if (_dos_getdiskfree(c,&d)!=0)
+    IOerr=1;
+
+_dos_setdrive(cdrv,&nbrdrive);
+
+return IOerr;
+}
+
 
