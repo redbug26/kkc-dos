@@ -837,15 +837,14 @@ if (car==27)
 
 void PutInPath(void)
 {
+MENU menu;
+static struct barmenu dir[MAXDIR];
 char *TPath;
-char path[2048];
-int Mlen;
+static char path[2048];
 char erreur;
 FILE *fic;
 
 int i,j,k;
-static char **dir;
-
 
 
 k=Cfg->TailleY-6;
@@ -865,87 +864,30 @@ for(i=0;i<k;i++)
     if (path[i]==';')
         path[i]=0;
 
-dir=GetMem(MAXDIR*sizeof(char *));
-
 j=0;
-Mlen=0;
 for (i=0;i<50;i++)
     {
-    dir[i]=path+j;
-    dir[i]=strupr(dir[i]);
-    if (strlen(dir[i])>Mlen) Mlen=strlen(dir[i]);
-    if (strlen(dir[i])==0) break;
+    dir[i].Titre=path+j;
+    dir[i].Help=NULL;
+    dir[i].fct=i+1;
+    dir[i].Titre=strupr(dir[i].Titre);
+    if (strlen(dir[i].Titre)==0) break;
     while ( (j!=k) & (path[j]!=0) ) j++;
     j++;
     }
 
+menu.x=2;
+menu.y=9;
+
+menu.attr=2+8;
+
+menu.cur=0;
+
 if (i!=0)
     {
-    int x=2,y,pos,car,max,prem;
-
-    pos=0;
-
-    y=MesgY;
-
-    SaveScreen();
-    PutCur(32,0);
-
-    max=i;
-    if (max>Cfg->TailleY-(y+1)-1) max=Cfg->TailleY-(y+1)-1;
-
-    Cadre(x-2,y-1,x+Mlen+1,y+max,0,Cfg->col[55],Cfg->col[56]);
-    Window(x-1,y,x+Mlen,y+max-1,Cfg->col[16]);
-
-    prem=0;
-
-    do {
-    while((pos-prem)>=max) prem++;
-    while((pos-prem)<0) prem--;
-
-    for (j=0;j<max;j++)
-        PrintAt(x,y+j,"%-*s",Mlen,dir[j+prem]);
-
-    ColLin(x-1,y+(pos-prem),Mlen+2,7*16+5);
-
-    car=Wait(0,0,0);
-
-    ColLin(x-1,y+(pos-prem),Mlen+2,0*16+1);
-
-    switch(HI(car))
+    if (PannelMenu(dir,i,&menu)==2)
         {
-        case 72:                                                   // UP
-            pos--;
-            if (pos==-1) pos=0;  // i-1;
-            break;
-        case 80:                                                 // DOWN
-            pos++;
-            if (pos==i) pos=i-1; // 0;
-            break;
-        case 0x47:                                               // HOME
-            pos=0;
-            break;
-        case 0x4F:                                                // END
-            pos=i-1;
-            break;
-        case 0x49:                                               // PGUP
-            pos-=5;
-            if (pos<0) pos=0;
-            break;
-        case 0x51:                                               // PGDN
-            pos+=5;
-            if (pos>=i) pos=i-1;
-            break;
-        }
-    }
-    while ( (car!=13) & (car!=27) & (HI(car)!=0x8D) );
-
-    LoadScreen();
-
-
-
-    if (car==13)
-        {
-        strcpy(path,dir[pos]);
+        strcpy(path,dir[menu.cur].Titre);
         Path2Abs(path,"kk.bat");
         fic=fopen(path,"wt");
         if (fic!=NULL)
@@ -957,7 +899,7 @@ if (i!=0)
             DispMessage("%s is done",path);
             DispMessage("");
 
-            strcpy(path,dir[pos]);
+            strcpy(path,dir[menu.cur].Titre);
             Path2Abs(path,"kkdesc.bat");
             fic=fopen(path,"wt");
             if (fic!=NULL)
@@ -967,7 +909,7 @@ if (i!=0)
                 fclose(fic);
                 erreur=0;
 
-                strcpy(PathOfKK,dir[pos]);
+                strcpy(PathOfKK,dir[menu.cur].Titre);
 
                 DispMessage("%s is done",path);
                 DispMessage("");
@@ -976,7 +918,6 @@ if (i!=0)
         
         }
     }
-free(dir);
 
 if (erreur==1)
     strcpy(PathOfKK,"");
@@ -1876,6 +1817,12 @@ KKCfg->autoreload=get_private_profile_int(section,"autoreload",
                                             KKCfg->autoreload,filename);
 KKCfg->dispath=get_private_profile_int(section,"dispupperpath",
                                                KKCfg->dispath,filename);
+KKCfg->pathdown=get_private_profile_int(section,"displowerpath",
+                                              KKCfg->pathdown,filename);
+
+KKCfg->sizewin=get_private_profile_int(section,"sizewin",
+                                               KKCfg->sizewin,filename);
+
 KKCfg->verifhist=get_private_profile_int(section,"verifhist",
                                              KKCfg->verifhist,filename);
 KKCfg->palafter=get_private_profile_int(section,"palafter",
@@ -2087,6 +2034,10 @@ write_private_profile_int(section,"serial_databit",Cfg->combit,
                                                               filename);
 write_private_profile_int(section,"dispupperpath",
                                                KKCfg->dispath,filename);
+write_private_profile_int(section,"displowerpath",
+                                              KKCfg->pathdown,filename);
+write_private_profile_int(section,"sizewin",KKCfg->sizewin,filename);
+
 sprintf(buffer,"%c",Cfg->comparity);
 write_private_profile_string(section,"serial_parity",buffer,filename);
 write_private_profile_int(section,"serial_stopbit",Cfg->comstop,
@@ -2775,12 +2726,10 @@ char filename[128];
 FILE *fic;
 char buffer[256];
 
-int x,y,n;
-
 MENU menu;
 struct barmenu bar[20];
 char bars[20][25];
-int nbmenu=0,retour;
+int nbmenu=0;
 
 strcpy(filename,Fics->path);
 Path2Abs(filename,"kksetup.ini");
@@ -2811,31 +2760,19 @@ if (nbmenu>1)
     {
     DispMessage("Select the configuration");
 
-    x=45;
-    y=3;
-    n=0;
+    menu.x=45;
+    menu.y=3;
+    menu.cur=0;
+    menu.attr=8;
 
-    do
-        {
-        menu.x=x;
-        menu.y=y;
-        menu.cur=n;
-        menu.attr=0;
-
-        retour=PannelMenu(bar,nbmenu,&menu);
-
-        n=menu.cur;
-        }
-    while ((retour==1) | (retour==-1));
-
-    if (retour==2)
-        strcpy(part,bar[n].Titre);
+    if (PannelMenu(bar,nbmenu,&menu)==2)
+        strcpy(part,bar[menu.cur].Titre);
         else
         strcpy(part,"*");
     }
 
 if (nbmenu==1)
-    strcpy(part,bar[n].Titre);
+    strcpy(part,bar[0].Titre);
 
 
 }
@@ -2983,7 +2920,7 @@ InitMessage();
 void ColorChange(void)
 {
 MENU menu;
-int retour,n,x,y;
+int retour;
 static struct barmenu bar[19];
 
 bar[0].Titre="Pannel"; bar[0].Help=NULL;
@@ -3018,24 +2955,19 @@ SaveScreen();
 IColor();
 
 
-x=20;
-y=4;
-n=0;
+menu.x=20;
+menu.y=4;
+menu.cur=0;
+menu.attr=8;
 
 do
     {
-    menu.cur=n;
-    menu.x=x;
-    menu.y=y;
-    menu.attr=0;
-
     retour=PannelMenu(bar,9,&menu);
 
-    n=menu.cur;
     if (retour==2)
-        CColor(bar[n].fct-1);
+        CColor(bar[menu.cur].fct-1);
     }
-while ( (retour==1) | (retour==-1) | (retour==2) );
+while (retour==2);
 
 LoadScreen();
 }
@@ -3096,15 +3028,16 @@ if (car==27)
 
 void CColor(int m)
 {
-int retour,n,x,y;
+int retour,n;
 static struct barmenu bar[16];
 MENU menu;
 int r;
 
 SaveScreen();
 
-x=20;
-y=4;
+menu.x=20;
+menu.y=4;
+menu.attr=8;
 
 switch(m)
     {
@@ -3152,21 +3085,14 @@ switch(m)
         bar[15].Titre="USeR defined"; bar[15].Help=NULL;
         bar[15].fct=35;
 
-        n=0;
+        menu.cur=0;
 
         Window(59,2,77,18,0);
         AffColScreen(m);
 
         do
             {
-            menu.x=x;
-            menu.y=y;
-            menu.cur=n;
-            menu.attr=0;
-
             retour=PannelMenu(bar,16,&menu);
-
-            n=menu.cur;
 
             if (retour==2)
                 {
@@ -3174,14 +3100,14 @@ switch(m)
                     {
                     AffColScreen(m);
 
-                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    r=DColor(Cfg->col[(bar[menu.cur].fct)-1]);
                     if (r!=-1)
-                        Cfg->col[(bar[n].fct)-1]=r;
+                        Cfg->col[(bar[menu.cur].fct)-1]=r;
                     }
                 while(r!=-1);
                 }
             }
-        while ( (retour==1) | (retour==-1) | (retour==2) );
+        while (retour==2);
         break;
 
 
@@ -3200,10 +3126,7 @@ switch(m)
 
         do
             {
-            menu.x=x;
-            menu.y=y;
             menu.cur=n;
-            menu.attr=0;
 
             retour=PannelMenu(bar,2,&menu);
 
@@ -3248,10 +3171,7 @@ switch(m)
 
         do
             {
-            menu.x=x;
-            menu.y=y;
             menu.cur=n;
-            menu.attr=0;
 
             retour=PannelMenu(bar,5,&menu);
 
@@ -3297,10 +3217,7 @@ switch(m)
 
         do
             {
-            menu.x=x;
-            menu.y=y;
             menu.cur=n;
-            menu.attr=0;
 
             retour=PannelMenu(bar,5,&menu);
 
@@ -3354,10 +3271,7 @@ switch(m)
 
         do
             {
-            menu.x=x;
-            menu.y=y;
             menu.cur=n;
-            menu.attr=0;
 
             retour=PannelMenu(bar,7,&menu);
 
@@ -3408,10 +3322,7 @@ switch(m)
 
         do
             {
-            menu.x=x;
-            menu.y=y;
             menu.cur=n;
-            menu.attr=0;
 
             retour=PannelMenu(bar,7,&menu);
 
@@ -3453,10 +3364,7 @@ switch(m)
 
         do
             {
-            menu.x=x;
-            menu.y=y;
             menu.cur=n;
-            menu.attr=0;
 
             retour=PannelMenu(bar,4,&menu);
 
@@ -3504,10 +3412,7 @@ switch(m)
 
         do
             {
-            menu.x=x;
-            menu.y=y;
             menu.cur=n;
-            menu.attr=0;
 
             retour=PannelMenu(bar,6,&menu);
 
@@ -3567,10 +3472,7 @@ switch(m)
 
         do
             {
-            menu.x=x;
-            menu.y=y;
             menu.cur=n;
-            menu.attr=0;
 
             retour=PannelMenu(bar,10,&menu);
 

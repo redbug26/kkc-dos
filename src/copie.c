@@ -595,8 +595,8 @@ if (n!=27)  // pas escape
         {
         if (!strcmp(Dir,F1->path)) return 1;
 
-//        if (FTrash->system==0)
-//            {
+        if (FTrash->system==0)  // Pour pouvoir copie dans les archives
+            {
             if (chdir(Dir)!=0)
                 {
                 strcpy(temp,Dir);
@@ -609,7 +609,7 @@ if (n!=27)  // pas escape
                 FileinPath(Dir,temp);
                 Path2Abs(Dir,"..");
                 }
-//            }
+            }
 
         DFen=FTrash;
         CommandLine("#cd %s",Dir);

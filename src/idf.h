@@ -2,7 +2,7 @@
 #define uchar  unsigned char
 #define ushort unsigned short
 
-#define nbrkey 165
+#define nbrkey 167
         // number of format + 6
 
 /*--------------------------------------------------------------------*\
@@ -24,10 +24,17 @@ struct key
 /*
    other: bit 7 6 5 4 3 2 1 0
               ³ ³ ³ ³ ³ ³ ³ ³
-              ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ 0: IDF have more information on file
-              ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ 1: The key is not defined in structure
-              ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄÄ 2: This is a text file
-              ÀÄÁÄÁÄÁÄÁÄÄÄÄÄÄÄ 3-7: Always to 0
+              ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ 1: IDF have more information on file
+              ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ 2: The key is not defined in structure
+              ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄÄ 4: This is a text file
+              ÀÄÁÄÁÄÁÄÁÄÄÄÄÄÄÄ    : Always to 0
+
+   type: 1: module
+         2: sample
+         3: archive
+         4: bitmap
+         5: animation
+         6: others
 */
 
 

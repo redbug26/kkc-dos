@@ -2965,18 +2965,14 @@ bar[4].fct=10;
 
 fin=0;
 
-do
-    {
     menu.x=x;
     menu.y=y;
     menu.cur=n;
-    menu.attr=0;
+    menu.attr=8;
 
     retour=PannelMenu(bar,nbr,&menu);
 
     n=menu.cur;
-    }
-while ( (retour==1) | (retour==-1) );
 
 if (retour==2)
     {

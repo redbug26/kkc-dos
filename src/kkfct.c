@@ -10,6 +10,8 @@ void DefaultKKCfg(void)
 {
 short Nm[]={72,68,42,40,3,63};
 
+KKCfg->sizewin=0;
+
 KKCfg->KeyAfterShell=0;
 
 KKCfg->savekey=0;           //--- Vaut 0 par defaut --------------------
@@ -28,6 +30,7 @@ KKCfg->scrrest=1;
 KKCfg->confexit=1;
 
 KKCfg->dispath=0;
+KKCfg->pathdown=0;
 
 strcpy(Mask[0]->title,"C Style");
 strcpy(Mask[0]->chaine,      "asm break case cdecl char const continue "
@@ -85,6 +88,7 @@ KKCfg->fentype=4;
 KKCfg->mtrash=100000;
 
 KKCfg->currentdir=1;
+KKCfg->alcddir=0;
 KKCfg->overflow1=0;
 KKCfg->overflow2=0;
 
@@ -280,3 +284,19 @@ strcpy(KKFics->ficscreen,KKFics->trash);
 Path2Abs(KKFics->ficscreen,"kkc.scr");
 }
 
+
+/*--------------------------------------------------------------------*\
+|- Remplis le vide si on est en mode 90 colonnes                      -|
+\*--------------------------------------------------------------------*/
+void RemplisVide(void)
+{
+if (Cfg->TailleX==80) return;
+
+Cadre(80,0,Cfg->TailleX-1,2,3,Cfg->col[55],Cfg->col[56]);
+PrintAt(81,1,"%*s",Cfg->TailleX-82,"KetchupK");
+
+Cadre(80,3,Cfg->TailleX-1,Cfg->TailleY-2,2,Cfg->col[55],Cfg->col[56]);
+Window(81,4,Cfg->TailleX-2,Cfg->TailleY-3,Cfg->col[16]);
+
+AffChr(Cfg->TailleX-2,Cfg->TailleY-3,3);
+}

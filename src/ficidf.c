@@ -199,8 +199,8 @@ if ( (nbrappl!=1) & (fin==0) )
         while (pos-prem<0) prem--;
         while (pos-prem>=max) prem++;
 
-        PrintAt(0,0,"%*s by %-*s",Cfg->TailleX/2-1,app[pos].Titre,
-                                       Cfg->TailleX/2-3,app[pos].Meneur);
+        PrintAt(0,0,"%39s by %-*s",app[pos].Titre,
+                                       Cfg->TailleX-43,app[pos].Meneur);
 
         for(n=0;n<max;n++)
             PrintTo(2,n,"%-49s",app[n+prem].Titre);

@@ -894,21 +894,6 @@ StartWinArc();
 
 if (strlen(DFen->path)==strlen(DFen->VolName))
     {
-/*
-    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
-    Fic[DFen->nbrfic]->name=GetMem(2);
-    strcpy(Fic[DFen->nbrfic]->name,"..");
-
-    Fic[DFen->nbrfic]->size=0;
-    Fic[DFen->nbrfic]->time=0;
-    Fic[DFen->nbrfic]->date=33;
-    Fic[DFen->nbrfic]->attrib=0x10;
-    Fic[DFen->nbrfic]->select=0;
-
-    Fic[DFen->nbrfic]->desc=0;
-
-    (DFen->nbrfic)++;
-*/
     strcpy(nom,"");
     }
     else
@@ -919,15 +904,14 @@ if (strlen(DFen->path)==strlen(DFen->VolName))
 
 
 
-fseek(fic,3,SEEK_SET);                                   // Passe la cle
+fseek(fic,3+1+1+255+4+4,SEEK_SET);                       // Passe la cle
 
-fread(&tai,1,1,fic);                                 // Passe la version
+//fread(&tai,1,1,fic);                               // Passe la version
+//fread(&tai,1,1,fic);                         // Passe le nom du volume
+//fread(Nomarch,tai,1,fic);
 
-fread(&tai,1,1,fic);                           // Passe le nom du volume
-fread(Nomarch,tai,1,fic);
-
-fread(&n,4,1,fic);               // Passe le nombre d'octets non utilise
-fread(&n,4,1,fic);  // Passe le nbr de bytes non utilise avant reconstr.
+//fread(&n,4,1,fic);             // Passe le nombre d'octets non utilise
+//fread(&n,4,1,fic);// Passe le nbr de bytes non utilise avant reconstr.
 
 
 i=0;    //--- DEBUT ----------------------------------------------------

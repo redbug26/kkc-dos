@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <signal.h>                               // For handling signal
 
-/*
+/*  // PAS ANSI
 #include <dos.h>                            //  Pour redirection des I/O
 #include <direct.h>
 #include <i86.h>
@@ -47,6 +47,7 @@ void EditFile(char *s);
 void CreateDirectory(void);
 void WinCD(void);
 void HistDir(void);
+void PathDir(void);
 void WinRename(FENETRE *F1);
 void SwitchScreen(void);
 void ChangeType(char n);
@@ -284,415 +285,6 @@ LoadScreen();
 
 }
 
-/*--------------------------------------------------------------------*\
-|-  Other Procedures                                                  -|
-|-   c=0 --> change from selection                                    -|
-|-     1 --> default set of color                                     -|
-|-     2 --> norton set                                               -|
-\*--------------------------------------------------------------------*/
-void ChangePalette(char c)
-{
-int x,y,i;
-char rec,reloadpal;
-
-int n,m,ntot;
-int nt,mt;
-int car;
-
-int ex,ey;
-int x1,y1;
-
-char *titre="Palette configuration";
-
-#define NBRS 4
-
-char defcol[NBRS][48]={ RBPALDEF ,
-                     { 0, 0, 0, 42,42,42,  0, 0, 0, 63,63,63,
-                      63,63,63, 63,63,32, 42,63,63,  0, 0,43,
-                      63,63, 0, 63,63,63,  0, 0,43, 57,63, 0,
-                      30,60,30,  0,40,63,  0, 0, 0,  0, 0, 0},
-                     {25,36,29, 36,18,15,  0, 0, 0, 49,39,45,
-                      44,63,63, 42,37,63, 45,39,35,  0, 0, 0,
-                       0,63,63, 63,63,63, 25,36,29, 63, 0, 0,
-                       0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0},
-                     {42,37,63, 14,22,17,  0, 0, 0, 58,58,50,
-                      18, 1,36, 63,63,21, 58,42,49, 16,16,32,
-                      63,63, 0, 63,63,63, 43,37,63, 63,20,20,
-                      20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
-                       };
-
-char *Style[NBRS]={"Default Style","Norton Style","Cyan Style",
-                                                             "Venus "};
-int posx[NBRS],posy[NBRS];
-
-if (c>0)
-    {
-    memcpy(Cfg->palette,defcol[c-1],48);
-    LoadPal(Cfg->palette);
-    return;
-    }
-
-SaveScreen();
-PutCur(32,0);
-
-RemplisVide();
-
-Cadre(0,0,79,(Cfg->TailleY)-2,2,Cfg->col[55],Cfg->col[56]);
-Window(1,1,78,(Cfg->TailleY)-3,Cfg->col[16]);
-
-if (Cfg->TailleY==50)
-    {
-    x1=9;
-    y1=7;
-    ey=7;
-    ex=24;
-    for (n=0;n<NBRS;n++)
-        {
-        posx[n]=56;
-        posy[n]=n*3+24;
-        }
-    }
-    else
-    {
-    x1=4;
-    y1=2;
-    ey=4;
-    ex=19;
-    for (n=0;n<NBRS;n++)
-        {
-        posx[n]=n*19+4;
-        posy[n]=(Cfg->TailleY)-4;
-        }
-    }
-
-
-
-ntot=15+NBRS;
-
-for(n=0;n<ntot-15;n++)
-    {
-    Cadre(posx[n]-2,posy[n]-1,posx[n]+15,posy[n]+1,2
-                                            ,Cfg->col[55],Cfg->col[56]);
-    ColLin(posx[n],posy[n],strlen(Style[n]),Cfg->col[16]);
-    PrintAt(posx[n],posy[n],Style[n]);
-    }
-
-if (Cfg->TailleY==50)
-    {
-    Cadre(2,2,77,4,2,Cfg->col[55],Cfg->col[56]);
-    Cadre(2,5,77,44,2,Cfg->col[55],Cfg->col[56]);
-    PrintAt(30,3,titre);
-
-    Cadre(2,45,77,47,2,Cfg->col[55],Cfg->col[56]);
-
-    Cadre(52,16,73,40,2,Cfg->col[55],Cfg->col[56]);
-    PrintAt(5,46,"%s /RedBug",RBTitle);
-
-    Cadre(53,17,72,21,2,Cfg->col[55],Cfg->col[56]);
-    PrintAt(54,19,"Predefined palette");
-    }
-    else
-    {
-    PrintAt(30,0,titre);
-    }
-
-
-n=0;
-m=0;
-
-
-i=0;
-
-rec=1;
-
-do
-{
-if (rec==1)
-    {
-    rec=0;
-    for (nt=0;nt<16;nt++)
-        {
-        x=(nt/ey)*ex+x1;
-        y=(nt%ey)*5+y1;
-
-        Cadre(x-1,y-1,x+9,y+3,1,Cfg->col[55],Cfg->col[56]);
-        Window(x,y,x+8,y+2,Cfg->col[16]);
-
-        Cadre(x+10,y-1,x+14,y+3,1,Cfg->col[55],Cfg->col[56]);
-        ColWin(x+11,y,x+13,y+2,nt*16+nt);
-        ChrWin(x+11,y,x+13,y+2,220);
-
-        for(mt=0;mt<3;mt++)
-            {
-            Gradue(x,y+mt,8,0,Cfg->palette[nt*3+mt],64);
-            ColWin(x,y+mt,x+8,y+mt,Cfg->col[16]);
-            PrintAt(x-3,y+mt,"%02d",Cfg->palette[nt*3+mt]);
-            }
-        }
-    }
-
-if (n<16)
-    {
-    i=Cfg->palette[n*3+m];
-    if (i!=0) i--;
-
-    x=(n/ey)*ex+x1;
-    y=(n%ey)*5+y1;
-
-    Gradue(x,y+m,8,i,Cfg->palette[n*3+m],64);
-    PrintAt(x-3,y+m,"%02d",Cfg->palette[n*3+m]);
-
-    ColWin(x,y+m,x+8,y+m,Cfg->col[17]);
-
-    car=Wait(0,0,0);
-
-    ColWin(x,y+m,x+8,y+m,Cfg->col[16]);
-
-    switch(HI(car))
-        {
-        case 0x47:                                               // HOME
-            ChrWin(x,y+m,x+8,y+m,32);
-            Cfg->palette[n*3+m]=0;
-            reloadpal=1;
-            break;
-        case 0X4F:                                                // END
-            ChrWin(x,y+m,x+8,y+m,32);
-            Cfg->palette[n*3+m]=63;
-            reloadpal=1;
-            break;
-        case 80:                                                  // bas
-            m++;
-            break;
-        case 72:                                                 // haut
-            m--;
-            break;
-        case 0x4B:                                             // gauche
-            if (Cfg->palette[n*3+m]!=0)
-                Cfg->palette[n*3+m]--;
-            reloadpal=1;
-            break;
-        case 0x4D:                                             // droite
-            if (Cfg->palette[n*3+m]!=63)
-                Cfg->palette[n*3+m]++;
-            reloadpal=1;
-            break;
-        case 0xF:                                           // SHIFT-TAB
-            n--;
-            break;
-        }
-
-    switch(LO(car))
-        {
-        case 9:
-            n++;
-            break;
-        }
-
-    if (m==3) n++,m=0;
-    if (m<0)  n--,m=2;
-    if (n<0)  n=ntot;
-
-    if (reloadpal)
-        {
-        LoadPal(Cfg->palette);
-        reloadpal=0;
-        }
-    }
-    else
-    {
-    ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),Cfg->col[17]);
-
-    car=Wait(0,0,0);
-
-    ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),Cfg->col[16]);
-
-    switch(HI(car))
-        {
-        case 80:                                                  // bas
-            n++;
-            break;
-        case 72:                                                 // haut
-            n--;
-            break;
-        case 0xF:                                           // SHIFT-TAB
-            n--;
-            break;
-        }
-
-    switch(LO(car))
-        {
-        case 9:
-            n++;
-            break;
-        case 13:
-            memcpy(Cfg->palette,defcol[n-16],48);
-            LoadPal(Cfg->palette);
-            rec=1;
-            break;
-        }
-
-    if (n<0)        n=ntot;
-    if (n>ntot)     n=0;
-    }
-}
-while(car!=27);
-
-
-LoadScreen();
-}
-
-/*--------------------------------------------------------------------*\
-|-  Other Procedures                                                  -|
-|-   c=0 --> change from selection                                    -|
-|-     1 --> default set of color                                     -|
-|-     2 --> norton set                                               -|
-\*--------------------------------------------------------------------*/
-/*
-void ChangePalette2(char c)
-{
-int dx;
-
-int i,j,m,n;
-
-int car;
-
-char *titre="Palette configuration";
-
-#define NBRS 4
-
-char defcol[NBRS][48]={ RBPALDEF ,
-                     { 0, 0, 0, 42,42,42,  0, 0, 0, 63,63,63,
-                      63,63,63, 63,63,32, 42,63,63,  0, 0,43,
-                      63,63, 0, 63,63,63,  0, 0,43, 57,63, 0,
-                      30,60,30,  0,40,63,  0, 0, 0,  0, 0, 0},
-                     {25,36,29, 36,18,15,  0, 0, 0, 49,39,45,
-                      44,63,63, 42,37,63, 45,39,35,  0, 0, 0,
-                       0,63,63, 63,63,63, 25,36,29, 63, 0, 0,
-                       0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0},
-                     {42,37,63, 14,22,17,  0, 0, 0, 58,58,50,
-                      18, 1,36, 63,63,21, 58,42,49, 16,16,32,
-                      63,63, 0, 63,63,63, 43,37,63, 63,20,20,
-                      20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
-                       };
-
-char *Style[NBRS]={"Default Style","Norton Style","Cyan Style",
-                                                             "Venus "};
-
-if (c>0)
-    {
-    memcpy(Cfg->palette,defcol[c-1],48);
-    LoadPal(Cfg->palette);
-    return;
-    }
-
-SaveScreen();
-PutCur(32,0);
-
-dx=(Cfg->TailleX-72)/2;
-
-WinCadre(dx  ,2,dx+71,21,0);
-Window  (dx+1,3,dx+70,20,10*16+1);
-
-WinCadre(dx+1, 3,dx+34, 7,2);
-
-WinCadre(dx+35,3,dx+35+3+2*16,20,2);
-
-
-for(n=0;n<16;n++)
-    {
-    for(m=0;m<16;m++)
-        {
-        PrintAt(dx+37+m*2,4+n,"%02d",n);
-        ColLin(dx+37+m*2,4+n,2,n*16+m);
-        }
-    }
-
-
-n=0;
-m=0;
-
-do
-{
-//i=Cfg->palette[n*3+m];
-//if (i!=0) i--;
-
-for(i=0;i<3;i++)
-    {
-    j=Cfg->palette[n*3+i]/2;
-
-    ChrLin(dx+2,4+i,j,32);
-    AffChr(dx+2+j,4+i,0xDD+((Cfg->palette[n*3+i])&1));
-    ChrLin(dx+3+j,4+i,31-j,32);
-    if (i==m)
-        ColLin(dx+2,4+i,32,10*16+3);
-        else
-        ColLin(dx+2,4+i,32,10*16+1);
-
-    if (Cfg->palette[n*3+i]<32)
-        PrintAt(dx+29,4+i,"%2d",Cfg->palette[n*3+i]);
-        else
-        PrintAt(dx+5,4+i,"%2d",Cfg->palette[n*3+i]);
-    }
-
-
-AffChr(dx+36,4+n,16);
-AffChr(dx+69,4+n,17);
-
-car=Wait(0,0,0);
-
-AffChr(dx+36,4+n,32);
-AffChr(dx+69,4+n,32);
-
-switch(HI(car))
-    {
-    case 0x47:                                               // HOME
-        Cfg->palette[n*3+m]=0;
-        LoadPal(Cfg->palette);
-        break;
-    case 0X4F:                                                // END
-        Cfg->palette[n*3+m]=63;
-        LoadPal(Cfg->palette);
-        break;
-    case 80:                                                  // bas
-        m++;
-        break;
-    case 72:                                                 // haut
-        m--;
-        break;
-    case 0x4B:                                             // gauche
-        if (Cfg->palette[n*3+m]!=0)
-            Cfg->palette[n*3+m]--;
-        LoadPal(Cfg->palette);
-        break;
-    case 0x4D:                                             // droite
-        if (Cfg->palette[n*3+m]!=63)
-            Cfg->palette[n*3+m]++;
-        LoadPal(Cfg->palette);
-        break;
-    case 0xF:
-        n--;
-        break;
-    }
-
-switch(LO(car))
-    {
-    case 9:
-        n++;
-        break;
-    }
-
-if (m==3) n++,m=0;
-if (m<0)  n--,m=2;
-
-if (n<0) n=15;
-if (n>15) n=0;
-}
-while(car!=27);
-
-
-LoadScreen();
-}
-*/
 
 /*--------------------------------------------------------------------*\
 |-  Programme de setup                                                -|
@@ -796,7 +388,9 @@ Fin();
 |- 80: Help on Error                                                  -|
 |- 81: Switch la taille horizontale                                   -|
 |- 82: Change les couleurs                                            -|
+|- 83: Fenetre changement de dir d'apres PATH                         -|
 \*--------------------------------------------------------------------*/
+
 
 void GestionFct(int fct)
 {
@@ -931,7 +525,6 @@ switch(fct)
         Path2Abs(buffer,"kksetup.exe -PALETTE");
         KKCfg->scrrest=0;
         CommandLine("#%s",buffer);
-        ChangePalette(0);
         break;
     case 18:                                                    // About
         WinMesg("About",RBTitle" /RedBug",0);
@@ -1348,7 +941,9 @@ switch(fct)
         Path2Abs(buffer,"kksetup.exe -COLOR");
         KKCfg->scrrest=0;
         CommandLine("#%s",buffer);
-        ChangePalette(0);
+        break;
+    case 83:
+        PathDir();
         break;
     }
 
@@ -1375,6 +970,7 @@ SaveScreen();
 
 if (i==0)
     retour=0;
+/*
     else
     {
     retour=1;
@@ -1389,6 +985,7 @@ if (i==0)
         case 0x23:  poscur=6;  break;                           // ALT-H
         }
     }
+*/
 
 do
 {
@@ -1644,51 +1241,82 @@ for (n=0;n<DFen->nbrfic;n++)
 |-                      Fenetre History Directory                     -|
 \*--------------------------------------------------------------------*/
 
+
+
 void HistDir(void)
 {
-int Mlen;
 MENU menu;
 
 int i,j;
-static struct barmenu dir[100];
-
-int x,y,n,retour;
+static struct barmenu dir[86];  // 256:3
 
 j=0;
-Mlen=0;
-for (i=0;i<100;i++)
+for (i=0;i<86;i++)
     {
     dir[i].Titre=KKCfg->HistDir+j;
     dir[i].Help=NULL;
     dir[i].fct=i+1;
     dir[i].Titre=StrUpr(dir[i].Titre);
-    if (strlen(dir[i].Titre)>Mlen) Mlen=strlen(dir[i].Titre);
     if (strlen(dir[i].Titre)==0) break;
     while ( (j!=256) & (KKCfg->HistDir[j]!=0) ) j++;
     j++;
     }
 
-x=2;
-y=2;
-n=0;
+
+menu.x=2;
+menu.y=2;
+
+menu.attr=2+8;
+
+menu.cur=i-1;
 
 if (i!=0)
     {
-    do
-        {
-        menu.x=x;
-        menu.y=y;
-        menu.cur=n;
-        menu.attr=0;
+    if (PannelMenu(dir,i,&menu)==2)
+        CommandLine("#cd %s",dir[menu.cur].Titre);
+    }
+}
 
-        retour=PannelMenu(dir,i,&menu);
+void PathDir(void)
+{
+MENU menu;
 
-        n=menu.cur;
-        }
-    while ((retour==1) | (retour==-1));
+int i,j,k;
+static struct barmenu dir[50];
+char *TPath;
+static char path[2048];
 
-    if (retour==2)
-        CommandLine("#cd %s",dir[n].Titre);
+TPath=getenv("PATH");
+strcpy(path,TPath);
+k=strlen(path);
+
+for(i=0;i<k;i++)
+    if (path[i]==';')
+        path[i]=0;
+
+j=0;
+for (i=0;i<50;i++)
+    {
+    dir[i].Titre=path+j;
+    dir[i].Help=NULL;
+    dir[i].fct=i+1;
+    dir[i].Titre=strupr(dir[i].Titre);
+    if (strlen(dir[i].Titre)==0) break;
+    while ( (j!=k) & (path[j]!=0) ) j++;
+    j++;
+    }
+
+menu.x=2;
+menu.y=2;
+
+menu.attr=2+8;
+
+menu.cur=0;
+
+if (i!=0)
+    {
+    if (PannelMenu(dir,i,&menu)==2)
+        CommandLine("#cd %s",dir[menu.cur].Titre);
     }
 }
 
@@ -1696,108 +1324,57 @@ if (i!=0)
 |-                      Fenetre History Commande                      -|
 \*--------------------------------------------------------------------*/
 
+int HistComFct(struct barmenu *bar)
+{
+MenuCreat(bar->Titre,bar->Titre,DFen->path);
+return 0;
+}
+
 void HistCom(void)
 {
-int Mlen;
+MENU menu;
+
 char dest[256];
 int i,j;
-static char **com;
-
-com=(char**)GetMem(100*sizeof(char *));
+static struct barmenu dir[100];
 
 j=0;
-Mlen=0;
 for (i=0;i<100;i++)
     {
     History2Line(KKCfg->HistCom+j,dest);
     dest[76]=0;
-    com[i]=(char*)GetMem(strlen(dest)+1);
-    strcpy(com[i],dest);
+    if (strlen(dest)==0) break;
+    dir[i].Titre=(char*)GetMem(strlen(dest)+1);
+    strcpy(dir[i].Titre,dest);
+    dir[i].fct=i+1;
+    dir[i].Help="histcom";
 
-    if (strlen(com[i])>Mlen) Mlen=strlen(com[i]);
-    if (strlen(com[i])==0) break;
     while ( (j!=512) & (KKCfg->HistCom[j]!=0) ) j++;
     j++;
     }
 
+NewEvents(HistComFct,"CrMenu",2);
+
+menu.x=2;
+menu.y=2;
+
+menu.attr=2+8;
+
+menu.cur=0;
+
 if (i!=0)
     {
-    int x=2,y=2,pos=i-1,car,max,prem;
-
-    SaveScreen();
-    PutCur(32,0);
-
-    Bar(" Help CrMenu ----  ----  ----  ----  ----  ----  ----  ---- ");
-
-    max=i;
-    if (max>Cfg->TailleY-4) max=Cfg->TailleY-4;
-
-    Cadre(x-2,y-1,x+Mlen+1,y+max,0,Cfg->col[46],Cfg->col[47]);
-    Window(x-1,y,x+Mlen,y+max-1,Cfg->col[28]);
-
-    prem=0;
-
-    do {
-
-    while((pos-prem)>=max) prem++;
-    while((pos-prem)<0) prem--;
-
-    for (j=0;j<max;j++)
-        PrintAt(x,y+j,"%-*s",Mlen,com[j+prem]);
-
-    ColLin(x-1,y+(pos-prem),Mlen+2,Cfg->col[30]);
-
-    car=Wait(0,0,0);
-
-    ColLin(x-1,y+(pos-prem),Mlen+2,Cfg->col[28]);
-
-    switch(HI(car))
+    if (PannelMenu(dir,i,&menu)==2)
         {
-        case 72:      //--- UP -----------------------------------------
-            pos--;
-            if (pos==-1) pos=i-1;
-            break;
-        case 80:      //--- DOWN ---------------------------------------
-            pos++;
-            if (pos==i) pos=0;
-            break;
-        case 0x47:    //--- HOME ---------------------------------------
-            pos=0;
-            break;
-        case 0x4F:    //--- END ----------------------------------------
-            pos=i-1;
-            break;
-        case 0x49:    //--- PGUP ---------------------------------------
-            pos-=5;
-            if (pos<0) pos=0;
-            break;
-        case 0x51:    //--- PGDN ---------------------------------------
-            pos+=5;
-            if (pos>=i) pos=i-1;
-            break;
-        case 0X3B:    //--- F1 -----------------------------------------
-            HelpTopic("histcom");
-            break;
-        case 0x3C:    //--- F2 -----------------------------------------
-            MenuCreat(com[pos],com[pos],DFen->path);
-            break;
-        }
-    }
-    while ( (car!=13) & (car!=27) & (HI(car)!=0x8D) );
-
-    LoadScreen();
-
-    if (car==13)
-        {
-        History2Line(com[pos],dest);
+        History2Line(dir[menu.cur].Titre,dest);
         CommandLine("%s\n",dest);
         }
     }
 
-for(j=0;j<=i;j++)
-    LibMem(com[j]);
+ClearEvents();
 
-LibMem(com);
+for(j=0;j<i;j++)
+    LibMem(dir[j].Titre);
 }
 
 
@@ -1813,8 +1390,10 @@ static char CadreLength=70;
 
 struct Tmt T[] =
       { { 2,3,1, Dir, &DirLength},
-        {15,5,2,NULL,NULL},
-        {45,5,3,NULL,NULL},
+        { 4,5,2,NULL,NULL},
+        {21,5,5,"  Normal CD  ",&DirLength},     // "normal cd "
+        {38,5,5," Create Tree ",NULL},     // "create lcd"
+        {55,5,3,NULL,NULL},     // Cancel
         { 5,2,0,"Change to which directory",NULL},
         { 1,1,4,&CadreLength,NULL} };
 
@@ -1822,11 +1401,24 @@ struct TmtWin F = {-1,10,74,17, "Change Directory" };
 
 int n;
 
-n=WinTraite(T,5,&F,0);
+n=WinTraite(T,7,&F,0);
 
 if (n!=27)
-    if (T[n].type!=3)
-        CommandLine("#cd %s",Dir);
+    {
+    if ((T[n].type==2) | (T[n].type==1))
+        {
+        if (Dir[strlen(Dir)-1]!='*')
+            strcat(Dir,"*");
+        ExecLCD(DFen,Dir);
+        }
+    if (T[n].type==5)
+        {
+        if (T[n].entier==&DirLength)
+            CommandLine("#cd %s",Dir);
+            else
+            MakeNCD();
+        }
+    }
 }
 
 
@@ -2272,15 +1864,19 @@ CommandLine("#cd %c:\\",i+'A');
 return i;
 }
 
-void QuickSearch(char *c,char *c2)
+void QuickSearch(int key,char *c,char *c2)
 {
 static char chaine[32];
 static int lng=0;
 
 char fin,fin2;
-int i,x,y;
+int i,x,y,n;
 char car,car2;
+int car3;
 signed char vit;
+char bkey[]=
+    {0x1E,0x30,0x2E,0x20,0x12,0x21,0x22,0x23,0x17,0x24,0x25,0x26,0x32,
+      0x31,0x18,0x19,0x10,0x13,0x1F,0x14,0x16,0x2F,0x11,0x2D,0x15,0x2C};
 
 int c1;
 
@@ -2298,6 +1894,9 @@ if (lng!=0)
 if (WildCmp(DFen->F[DFen->pcur]->name,chaine)!=0)
     lng=0;
 
+if (key!=0)
+    lng=0;
+
 chaine[lng]=0;
 
 do
@@ -2307,12 +1906,30 @@ do
         else
         PrintAt(x,y,"%24s",chaine);
 
-    c1=Wait(x+23,y,0);
+    GotoXY(x+23,y);
+    if (key==0)
+        {
+        while(!KbHit());
+        car3=_bios_keybrd(0x11);
+        c1=Wait(x+23,y,0);
+        }
+        else
+        {
+        c1=key;
+        key=0;
+        }
 
     car=LO(c1);
-    car2=HI(c1);
 
-    car=(char)tolower(car);
+    if ( ((car3&255)==0) & (car==0))
+        {
+        car=0;
+        for(n=0;n<26;n++)
+            if ((car3/256)==bkey[n])
+                car=n+'a';
+        }
+
+    car2=HI(c1);
 
     fin=1;
     vit=0;
@@ -2827,15 +2444,14 @@ if (KKCfg->key==0)
             if (ym==0)
                 c=0x43*256;
                 else
-            if ((xm>=DFen->x) & (xm<=DFen->x+DFen->xl))
+            if ((xm>=DFen->x) & (xm<=DFen->xl))
                 {
                 if (ym>(DFen->scur+DFen->y2+3)) c=80*256;
                 if (ym<(DFen->scur+DFen->y2+3)) c=72*256;
                 oldzm=0;     // On peut laisser le bouton appuy‚ ---
                 }
                 else
-            if ((xm>=DFen->Fen2->x) &
-                                 (xm<=DFen->Fen2->x+DFen->Fen2->xl))
+            if ((xm>=DFen->Fen2->x) & (xm<=DFen->Fen2->xl))
                 {
                 oldzm=0;     // On peut laisser le bouton appuy‚ ---
                 c=9;
@@ -2844,9 +2460,12 @@ if (KKCfg->key==0)
                 {
                 int n;
 
-                n=(ym-1)/3;
-                if ( (n>=0) & (n<6) )
-                    GestionFct(KKCfg->Nmenu[n]);
+                if (ym<DFen->yl-3)
+                    {
+                    n=(ym-1)/3;
+                    if ( (n>=0) & (n<6) )
+                        GestionFct(KKCfg->Nmenu[n]);
+                    }
                 c=3;                       //--- On ne fait rien ---
                 }
             }
@@ -2854,7 +2473,7 @@ if (KKCfg->key==0)
         if ((zm&4)==4)
             {
             if ( (ym==(DFen->scur+DFen->y2+3)) &
-                 ((xm>=DFen->x) & (xm<=DFen->x+DFen->Fen2->xl)) )
+                 ((xm>=DFen->x) & (xm<=DFen->Fen2->xl)) )
                 c=13;
             }
 
@@ -2892,7 +2511,7 @@ if (KKCfg->key==0)
 
         }
 
-    car3=(_bios_keybrd(0x11)/256);
+    car3=_bios_keybrd(0x11);
 
     if (c==0)
         c=Wait(0,0,0);
@@ -2910,7 +2529,7 @@ if (KKCfg->key==0)
                 {
                 car=0;
                 for (i=0;i<DFen->nbrfic;i++)
-                   if (!strnicmp("FILE_ID.DIZ",DFen->F[i]->name,13))
+                   if (!WildCmp("FILE_ID.DIZ",DFen->F[i]->name))
                         {
                         DFen->pcur=i;
                         DFen->scur=i;
@@ -2977,8 +2596,7 @@ else
     car3=0;
 
     for (i=0;i<DFen->nbrfic;i++)
-        if (!strnicmp(KKCfg->FileName,DFen->F[i]->name,
-            strlen(KKCfg->FileName)))
+        if (!WildCmp(KKCfg->FileName,DFen->F[i]->name))
             {
             DFen->pcur=i;
             DFen->scur=i;
@@ -2993,7 +2611,7 @@ car2=HI(c);
 
 //-Quick search (CTRL-TAB)----------------------------------------------
 if (car2==0x94)
-    QuickSearch(&car,&car2);
+    QuickSearch(0,&car,&car2);
 
 //-Pour accelerer la vitesse d'affichage des fichiers ------------------
 switch(car2)
@@ -3010,7 +2628,7 @@ switch(car2)
     }
 
 //-Switch car3 (BIOS_KEYBOARD)------------------------------------------
-switch (car3)
+switch (car3/256)
     {
     case 0xE0:                                          // Extended code
         switch(car)
@@ -3038,14 +2656,30 @@ switch (car3)
         break;
     }
 
+if ( ((car3&255)==0) & (car3!=0) )
+    {
+    char bkey[]=
+      {0x1E,0x30,0x2E,0x20,0x12,0x21,0x22,0x23,0x17,0x24,0x25,0x26,0x32,
+      0x31,0x18,0x19,0x10,0x13,0x1F,0x14,0x16,0x2F,0x11,0x2D,0x15,0x2C};
+    int key,n;
+
+    key=0;
+    for(n=0;n<26;n++)
+        if (bkey[n]==(car3/256))
+            key=n+'a';
+    if (key!=0)
+        {
+        QuickSearch(key,&car,&car2);
+        }
+    }
+
+
 //-Switch car-----------------------------------------------------------
 switch (car)
     {
-    case 0x12:                                                 // CTRL-R
-        GestionFct(27);        break;
-    case 1:                                                    // CTRL-A
+    case 0x01:                                                 // CTRL-A
         GestionFct(28);        break;
-    case 2:                                                    // CTRL-B
+    case 0x02:                                                 // CTRL-B
         i=GestionBar(0);
 
         if (i==20)
@@ -3053,21 +2687,27 @@ switch (car)
             else
             GestionFct(i);
         break;
-    case 3:
-        break;
 
-    case 5:                                                    // CTRL-E
-        GestionFct(70);        break;
-    case 4:                                                    // CTRL-D
+    case 0x03:
+        break;
+    case 0x04:                                                 // CTRL-D
         GestionFct(29);        break;
-    case 6:                                                    // CTRL-F
+    case 0x05:                                                 // CTRL-E
+        GestionFct(70);        break;
+    case 0x06:                                                 // CTRL-F
         GestionFct(32);        break;
-    case 9:                                                       // TAB
+    case 0x09:                                           // TAB & CTRL-I
         KKCfg->FenAct= (KKCfg->FenAct==1) ? 0:1;
         DFen=Fenetre[KKCfg->FenAct];
-        ChangeLine();                                  // Affichage Path
+        ChangeLine();
         break;
-    case 13:                                                    // ENTER
+    case 0x0A:                                    // CTRL-ENTER & CTRL-J
+        GestionFct(30);
+        break;
+    case 0x0C:                                                 // CTRL-L
+        GestionFct(63);
+        break;
+    case 0x0D:                                         // ENTER & CTRL-M
         ext=getext(DFen->F[DFen->pcur]->name);
         if ( (!stricmp(ext,"COM")) | (!stricmp(ext,"BAT")) |
              ((!stricmp(ext,"BTM")) & (KKCfg->_4dos==1)) )
@@ -3105,22 +2745,21 @@ switch (car)
                 }
             }
         break;
-    case 0x0A:                                             // CTRL-ENTER
-        GestionFct(30);
-        break;
-    case 0x0C:                                                 // CTRL-L
-        GestionFct(63);
-        break;
+
     case 0x0F:                                                 // CTRL-O
         GestionFct(14);
         GestionFct(15);
         break;
+    case 0x12:                                                 // CTRL-R
+        GestionFct(27);        break;
     case 0x14:                                                 // CTRL-T
 //        GestionFct(75);
         break;
     case 0x15:                                                 // CTRL-U
         GestionFct(68);
         break;
+    case 0x19:                                                 // CTRL-Y
+        GestionFct(38);           break;
     case 27:                                                   // ESCAPE
         if (CommandLine("\r")==0)
             if (KKCfg->Esc2Close==1)
@@ -3203,6 +2842,8 @@ switch(car2)
         GestionFct(44);           break;
     case 0x5C:                                               // SHIFT-F9
         GestionFct(81);           break;
+    case 0x5D:                                              // SHIFT-F10
+        break;
     case 0x5E:                                                // CTRL-F1
         GestionFct(14);           break;
     case 0x5F:                                                // CTRL-F2
@@ -3227,6 +2868,8 @@ switch(car2)
         GestionFct(21);           break;
     case 0x6B:                                                 // ALT-F4
         GestionFct(71);           break;
+    case 0x6C:                                                 // ALT-F5
+        GestionFct(83);           break;
     case 0x6D:                                                 // ALT-F6
         GestionFct(69);           break;
     case 0x6E:                                                 // ALT-F7
@@ -3253,8 +2896,7 @@ switch(car2)
         GestionFct(17);           break;
     case 0x91:                                              // CTRL-DOWN
         GestionFct(64);           break;
-    case 0x17:                                                  // ALT-I
-        GestionFct(38);           break;
+
     case 0xA1:                                               // ALT-PGDN
         GestionFct(51);           break;
     case 0x8C:                                                // ALT-F12
@@ -3265,7 +2907,7 @@ switch(car2)
     case 0xB8:                                   //
         break;
 
-    case 0x21:                                                  // ALT-F
+/*    case 0x21:                                                  // ALT-F
     case 0x19:                                                  // ALT-P
     case 0x20:                                                  // ALT-D
     case 0x1F:                                                  // ALT-S
@@ -3278,6 +2920,8 @@ switch(car2)
             else
             GestionFct(i);
         break;
+*/
+
     case 0x43:                                                     // F9
         i=GestionBar(0);
 
@@ -3449,14 +3093,14 @@ GotoXY(0,PosY);
 if (*SpecSortie==0)
     {
     #ifdef DEBUG
-        cprintf("%s / RedBug (DEBUG MODE)\n\r",RBTitle);
+        printf("%s / RedBug (DEBUG MODE)\n",RBTitle);
     #else
-        cprintf("%s / RedBug\n\r",RBTitle);
+        printf("%s / RedBug\n",RBTitle);
     #endif
     }
 
 if (SpecMessy!=NULL)
-    cprintf("\n\r%s\n\r",SpecMessy);
+    printf("\n%s\n",SpecMessy);
 
 if ((SpecSortie[0]=='#') & (KKCfg->savekey==1))
     SpecSortie[0]='@';
@@ -3482,7 +3126,10 @@ CommandLine("##INIT 0 %d %d\n",(Cfg->TailleY)-2,Cfg->TailleX);
 for(n=0;n<NBWIN;n++)
     {
     if (Fenetre[n]->x!=0)
+        {
         Fenetre[n]->x=Cfg->TailleX-40;
+        Fenetre[n]->xl=Fenetre[n]->x+39;
+        }
     }
 
 PrintAt(0,0,"%-40s%*s",RBTitle,Cfg->TailleX-40,"RedBug");
@@ -3700,35 +3347,35 @@ switch (Fen->FenTyp)
         break;
     case 2:      // OFF
         x1=Fen->x;
-        x2=Fen->x+Fen->xl;
+        x2=Fen->xl;
 
         if (x2>=OldX)
             {
-            Window(OldX,Fen->y,x2,Fen->y+Fen->yl,10*16+1);
+            Window(OldX,Fen->y,x2,Fen->yl,10*16+1);
             x2=OldX-1;
             }
 
-        for(y=0;y<=Fen->yl;y++)
+        for(y=Fen->y;y<=Fen->yl;y++)
             {
             nscr=(y+Fen->y)*160+(Fen->x)*2;
-            nbuf=(y-Fen->yl+OldY-1)*OldX+(Fen->x);
+            nbuf=(y-(Cfg->TailleY-3)+OldY-1)*OldX+(Fen->x);
 
             for(x=0;x<x2-x1+1;x++,nbuf++,nscr++)
             if (nbuf<0)
-                AffCol(x+x1,y+Fen->y,7);
+                AffCol(x+x1,y,7);
             else
-                AffCol(x+x1,y+Fen->y,Screen_Buffer[nbuf*2+1]);
+                AffCol(x+x1,y,Screen_Buffer[nbuf*2+1]);
             }
-        for(y=0;y<=Fen->yl;y++)
+        for(y=Fen->y;y<=Fen->yl;y++)
             {
             nscr=(y+Fen->y)*160+(Fen->x)*2;
-            nbuf=(y-Fen->yl+OldY-1)*OldX+(Fen->x);
+            nbuf=(y-(Cfg->TailleY-3)+OldY-1)*OldX+(Fen->x);
 
             for(x=0;x<x2-x1+1;x++,nbuf++,nscr++)
             if (nbuf<0)
-              AffChr(x+x1,y+Fen->y,32);
+              AffChr(x+x1,y,32);
             else
-              AffChr(x+x1,y+Fen->y,CnvASCII(0,Screen_Buffer[nbuf*2]));
+              AffChr(x+x1,y,CnvASCII(0,Screen_Buffer[nbuf*2]));
             }
 
         break;
@@ -3746,6 +3393,39 @@ switch (Fen->FenTyp)
         break;
     }
 
+if ((Fen->nfen==1) & (Fen->yl!=Cfg->TailleY-3))
+    {
+    x2=Cfg->TailleX;
+
+    if (x2>OldX)
+        {
+        Window(OldX,Fen->yl+1,x2-1,Cfg->TailleY-3,10*16+1);
+        x2=OldX;
+        }
+
+    for(y=Fen->yl+1;y<=Cfg->TailleY-3;y++)
+        {
+        nscr=(y+Fen->y)*160;
+        nbuf=(y-(Cfg->TailleY-3)+OldY-1)*OldX;
+
+        for(x=0;x<x2;x++,nbuf++,nscr++)
+        if (nbuf<0)
+            AffCol(x,y,7);
+        else
+            AffCol(x,y,Screen_Buffer[nbuf*2+1]);
+        }
+    for(y=Fen->yl+1;y<=Cfg->TailleY-3;y++)
+        {
+        nscr=(y+Fen->y)*160;
+        nbuf=(y-(Cfg->TailleY-3)+OldY-1)*OldX;
+
+        for(x=0;x<x2;x++,nbuf++,nscr++)
+        if (nbuf<0)
+            AffChr(x,y,32);
+        else
+            AffChr(x,y,CnvASCII(0,Screen_Buffer[nbuf*2]));
+        }
+    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -3766,27 +3446,27 @@ if (Cfg->TailleX==80) return;
 
 if ( (DFen->Fen2->FenTyp==2) & (DFen->FenTyp==2) )
     {
-    for(y=0;y<=DFen->yl;y++)
+    for(y=DFen->y;y<=DFen->yl;y++)
         {
         nscr=(y+DFen->y)*160+x1*2;
-        nbuf=(y-DFen->yl+OldY-1)*OldX+x1;
+        nbuf=(y-(Cfg->TailleY-3)+OldY-1)*OldX+x1;
 
         for(x=0;x<x2-x1+1;x++,nbuf++,nscr++)
             if (nbuf<0)
-                AffCol(x+x1,y+DFen->y,7);
+                AffCol(x+x1,y,7);
             else
-                AffCol(x+x1,y+DFen->y,Screen_Buffer[nbuf*2+1]);
+                AffCol(x+x1,y,Screen_Buffer[nbuf*2+1]);
         }
-    for(y=0;y<=DFen->yl;y++)
+    for(y=DFen->y;y<=DFen->yl;y++)
         {
         nscr=(y+DFen->y)*160+x1*2;
-        nbuf=(y-DFen->yl+OldY-1)*OldX+x1;
+        nbuf=(y-(Cfg->TailleY-3)+OldY-1)*OldX+x1;
 
         for(x=0;x<x2-x1+1;x++,nbuf++,nscr++)
             if (nbuf<0)
-                AffChr(x+x1,y+DFen->y,32);
+                AffChr(x+x1,y,32);
             else
-               AffChr(x+x1,y+DFen->y,CnvASCII(0,Screen_Buffer[nbuf*2]));
+               AffChr(x+x1,y,CnvASCII(0,Screen_Buffer[nbuf*2]));
         }
     }
     else
@@ -3795,17 +3475,19 @@ if ( (DFen->Fen2->FenTyp==2) & (DFen->FenTyp==2) )
 
     for (x=0;x<6;x++)
         {
-        Cadre(x1, 1+x*3,x2, 3+x*3,2,Cfg->col[55],Cfg->col[56]);
-        ColLin(x1+1,2+x*3,8,Cfg->col[17]);
-        memcpy(chaine,KKCfg->Qmenu+x*8,8);
-        PrintAt(x1+1,2+x*3 ,chaine);
+        if (3+x*3<DFen->yl-3)
+            {
+            Cadre(x1, 1+x*3,x2, 3+x*3,2,Cfg->col[55],Cfg->col[56]);
+            ColLin(x1+1,2+x*3,8,Cfg->col[17]);
+            memcpy(chaine,KKCfg->Qmenu+x*8,8);
+            PrintAt(x1+1,2+x*3 ,chaine);
+            }
         }
 
-    Window(x1,19,x2,Cfg->TailleY-6,Cfg->col[17]);     // Efface le reste
+    Window(x1,19,x2,DFen->yl-3,Cfg->col[17]);     // Efface le reste ---
 
-    Cadre(x1,Cfg->TailleY-5,x2,Cfg->TailleY-3,2
-                                            ,Cfg->col[55],Cfg->col[56]);
-    ColLin(x1+1,Cfg->TailleY-4,8,Cfg->col[17]);
+    Cadre(x1,DFen->yl-2,x2,DFen->yl,2,Cfg->col[55],Cfg->col[56]);
+    ColLin(x1+1,DFen->yl-1,8,Cfg->col[17]);
 
     }
 
@@ -3987,12 +3669,13 @@ Fenetre[3]->Fen2=Fenetre[3];
 for (n=0;n<NBWIN;n++)
     {
     Fenetre[n]->y=1;
-    Fenetre[n]->yl=(Cfg->TailleY)-4;
-    Fenetre[n]->xl=39;
+    Fenetre[n]->xl=Fenetre[n]->x+39;
 
     Fenetre[n]->order=17;
     Fenetre[n]->pcur=0;
     Fenetre[n]->scur=0;
+
+    CalcSizeWin(Fenetre[n]);    // Ajuste les autres parametres --------
     }
 
 
@@ -4045,7 +3728,8 @@ InitMouse();
 |- Chargement du repertoire courant si necessaire                     -|
 \*--------------------------------------------------------------------*/
 
-if ( (KKCfg->currentdir==1) & (LC[4]!='0') )
+if ( ( (KKCfg->currentdir==1) & (LC[4]!='0') ) |
+     ( (KKCfg->alcddir==1) & (LC[4]=='0') ) )
     {
     DFen=Fenetre[(KKCfg->FenAct)&1];
 
@@ -4060,8 +3744,8 @@ UseCfg();                      // Emploi les parametres de configuration
 
 InitScreen(Cfg->display);
 
-Fenetre[0]->yl=(Cfg->TailleY)-4;
-Fenetre[1]->yl=(Cfg->TailleY)-4;
+CalcSizeWin(Fenetre[0]);
+CalcSizeWin(Fenetre[1]);
 
 if (KKCfg->verifhist==1)
     VerifHistDir();            // Verifie l'history pour les repertoires
@@ -4136,12 +3820,12 @@ SwapLong(&(Fenetre[a]->x),&(Fenetre[b]->x));
 SwapLong(&(Fenetre[a]->y),&(Fenetre[b]->y));
 SwapLong(&(Fenetre[a]->xl),&(Fenetre[b]->xl));
 SwapLong(&(Fenetre[a]->yl),&(Fenetre[b]->yl));
-SwapLong(&(Fenetre[a]->x2),&(Fenetre[b]->x2));
+//SwapLong(&(Fenetre[a]->x2),&(Fenetre[b]->x2));
 SwapLong(&(Fenetre[a]->y2),&(Fenetre[b]->y2));
-SwapLong(&(Fenetre[a]->xl2),&(Fenetre[b]->xl2));
+//SwapLong(&(Fenetre[a]->xl2),&(Fenetre[b]->xl2));
 SwapLong(&(Fenetre[a]->yl2),&(Fenetre[b]->yl2));
-SwapLong(&(Fenetre[a]->x3),&(Fenetre[b]->x3));
-SwapLong(&(Fenetre[a]->y3),&(Fenetre[b]->y3));
+//SwapLong(&(Fenetre[a]->x3),&(Fenetre[b]->x3));
+//SwapLong(&(Fenetre[a]->y3),&(Fenetre[b]->y3));
 Fenetre[a]->init=1;
 Fenetre[b]->init=1;
 

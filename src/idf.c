@@ -995,10 +995,22 @@ struct key K[nbrkey]=   {
     0,
     "MusicDisk Factory File",
     "MDF",
-    "Fire Dragon",159,1*4+0*2+0,1},
+    "Fire Dragon",159,4,1},
+{  "NG\x00\x01\x00",
+    5,
+    0x0,
+    "Norton Guide",
+    "NG",
+    "Peter Norton",160,1,6},
+{   "PNCI\x00",
+    5,
+    0x0,
+    "Norton Directory List",
+    "NCD",
+    "Peter Norton",161,0,6},
     
 
-// Dernier employe: 159
+// Dernier employe: 161
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -1157,6 +1169,7 @@ void Size2Chr(int Size,char *Taille);
 
 short Infotxt(RB_IDF *Info);   //--- Test pour voir si c'est du texte --
 short Infomtm(RB_IDF *Info);
+short Infong(RB_IDF *Info);
 short Infoexe1(RB_IDF *Info);
 short Infopsm(RB_IDF *Info);
 short Info669(RB_IDF *Info);
@@ -1597,6 +1610,7 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case 146:err=Infobin(Info); break;
             case 156:err=Infombm(Info); break;
             case 157:err=Infousm2(Info); break;
+            case 160:err=Infong(Info); break;
             default:     //--- Ca serait une erreur de ma part alors ---
                 sprintf(Info->format,"Pingouin %d",K[n].numero);
                 trv=1;
@@ -3016,12 +3030,12 @@ return 0;
 
 short Infotpu(RB_IDF *Info)
 {
-char *buf;
+char b;
 
-buf=Info->buffer;
+b=ReadChar(Info,3);
 
-if (buf[3]=='6') strcat(Info->format," Ver 5.5");
-if (buf[3]=='9') strcat(Info->format," Ver 6.0");
+if (b=='6') strcpy(Info->format,"Turbo Pascal Unit Ver 5.5");
+if (b=='9') strcpy(Info->format,"Turbo Pascal Unit Ver 6.0");
 return 0;
 }
 
@@ -3249,8 +3263,9 @@ while(1)
     {
     fseek(Info->fic,taille,SEEK_SET);
 
-    if (fread(chunk,2,1,Info->fic)!=2) break;
-    if (fread(&taille,4,1,Info->fic)!=4) break;
+    if (fread(chunk,2,1,Info->fic)!=1) break;
+    if (fread(&taille,4,1,Info->fic)!=1) break;
+
     taille+=ftell(Info->fic);
 
     if (!memcmp(chunk,"IN",2))
@@ -3273,6 +3288,11 @@ while(1)
     if (!memcmp(chunk,"TR",2)) continue;
     if (!memcmp(chunk,"IS",2)) continue;
     if (!memcmp(chunk,"SA",2)) continue;
+
+    if (!memcmp(chunk,"II",2)) continue;
+    if (!memcmp(chunk,"VE",2)) continue;
+    if (!memcmp(chunk,"PE",2)) continue;
+    if (!memcmp(chunk,"FE",2)) continue;
 
     fseek(Info->fic,-6,SEEK_CUR);
     break;
@@ -3544,6 +3564,13 @@ return 0;
 short Infousm(RB_IDF *Info)
 {
 ReadStr(Info,4,Info->fullname,32);
+
+return 0;
+}
+
+short Infong(RB_IDF *Info)
+{
+ReadStr(Info,8,Info->fullname,40);
 
 return 0;
 }

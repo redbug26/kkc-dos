@@ -65,10 +65,10 @@ struct file
 typedef struct _fenetre
      {
      long x,y;                     // position haut droite de la fenˆtre
-     long xl,yl;                                 // taille de la fenˆtre
-     long x2,y2;                                    // position calculee
-     long xl2,yl2;                                    // taille calculee
-     long x3,y3;                             // position de l'infoselect
+     long xl,yl;                    // position bas gauche de la fenetre
+     long y2;                            // position de name - size ....
+     long yl2;                         // Nombre de fichiers par fenˆtre
+
 
      long IDFSpeed;      // Nombre de clock avant de lire la description
      long nbrfic;
@@ -121,6 +121,7 @@ struct kkconfig
     // Selon user
     //-----------
 
+     char sizewin;     // Taille de la fenˆtre en hauteur (0=max) ------
 
      char fentype;     // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
 
@@ -133,7 +134,8 @@ struct kkconfig
      char verifhist;  // Verify history at any loading of KK (CTRL-PGDN)
      char palafter;    // Load the palette only when configuration is ok
      BYTE noprompt;    // Si x&1 vaut 1 alors on ne prompte pdt la copie
-     char currentdir;                   // Va dans le repertoire courant
+     char currentdir;      // Va dans le repertoire courant au demarrage
+     char alcddir;       // Va dans le repertoire chang‚ par une applic.
 
      char dispcolor;    // Highlight les fichiers suivant les extensions
 
@@ -166,6 +168,8 @@ struct kkconfig
      char confexit;      // vaut 1: si on doit confirmer avant de sortir
 
      char dispath;              // Affiche la path en haut de la fenˆtre
+
+     char pathdown;                       // Affiche la path tout en bas
 
      char savekey; // Vaut 1 si on sauvegarde les touches dans un buffer
 
@@ -257,3 +261,6 @@ extern int IOerr;
 void DefaultKKCfg(void);
 void FileSetup(void);
 void SetDefaultKKPath(char *path);
+
+void RemplisVide(void);  // Remplissage du vide pour les plus de 80 col.
+

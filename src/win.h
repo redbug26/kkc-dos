@@ -2,6 +2,8 @@
 |- prototype pour la gestion des fenetres (?)                         -|
 \*--------------------------------------------------------------------*/
 
+void CalcSizeWin(FENETRE *Fen);
+
 void ScreenSetup(void);
 
 void PutInHistDir(void);
@@ -17,6 +19,8 @@ void FenFileID(FENETRE *Fen);
 void ViewFileID(FENETRE *Fen);
 int SearchInfo(FENETRE *Fen);
 void DispInfo(FENETRE *Fen);
+void WinInfo(FENETRE **Fenetre);
+void FenInfo(FENETRE *Fen);
 
 
 int InfoIDF(FENETRE *Fen);
@@ -33,18 +37,6 @@ void UseCfg(void);
 void Setup(void);
 
 extern int *TailleX;
-
-void RemplisVide(void);  // Remplissage du vide pour les plus de 80 col.
-
-
-
-/*--------------------------------------------------------------------*\
-|-  Fonction de la secret part                                        -|
-\*--------------------------------------------------------------------*/
-
-void WinInfo(FENETRE **Fenetre);
-void FenInfo(FENETRE *Fen);
-void PacNoe(void);
 
 
 

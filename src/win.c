@@ -11,12 +11,6 @@
 
 
 #include <dos.h>
-// #include <direct.h>
-// #include <bios.h>
-// #include <io.h>
-// #include <conio.h>
-// #include <sys\types.h>
-// #include <sys\stat.h>
 
 #include "kk.h"
 
@@ -105,122 +99,6 @@ PrintAt(0,0,"%-40s%-*s",Info.format,(Cfg->TailleX)-40,Info.fullname);
 return Info.numero;
 }
 
-/*--------------------------------------------------------------------*\
-|-  Efface la fenˆtre gestion de fichier                              -|
-\*--------------------------------------------------------------------*/
-
-void ClearNor(FENETRE *Fen)
-{
-char col;
-
-int i;
-int x,y;
-int yl;
-
-char a;
-
-Fen->oldscur=0;
-Fen->oldpcur=-1;
-
-ColWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,Cfg->col[0]);
-
-switch(KKCfg->fentype) //---Couleur uniquement pour fentype=1,2 ou 3 ---
-    {
-    case 1:
-    case 2:
-    case 3:
-        for(x=Fen->x;x<=Fen->x+Fen->xl;x++)
-            AffCol(x,Fen->y,Cfg->col[37]);
-        for(y=Fen->y;y<=Fen->y+Fen->yl;y++)
-            AffCol(Fen->x,y,Cfg->col[37]);
-
-        for(x=Fen->x+1;x<=Fen->x+Fen->xl;x++)
-            AffCol(x,Fen->y+Fen->yl,Cfg->col[38]);
-        for(y=Fen->y+1;y<Fen->y+Fen->yl;y++)
-            AffCol(Fen->x+Fen->xl,y,Cfg->col[38]);
-        break;
-    }
-
-x=Fen->x;
-y=Fen->y;
-
-yl=(Fen->yl)+(Fen->y);
-
-Fen->x2=x-1;
-Fen->xl2=Fen->xl;
-Fen->x3=x+2;
-Fen->y3=y+Fen->yl-1;
-
-switch (KKCfg->fentype)
-    {
-    case 1:
-        Cfg->Tfont=179;
-        Fen->y2=y-1;
-        Fen->yl2=Fen->yl-4;
-
-        PrintAt(x,y,     "ÉÍÍÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÑÍÍÍÍÍ»");
-        PrintAt(x,y+1,   "º    Name    ³   Size   ³  Date  ³Time º");
-        for (i=2;i<yl-3;i++)
-           PrintAt(x,y+i,"º                                      º");
-        PrintAt(x,y+yl-3,"ÇÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄ¶");
-        PrintAt(x,y+yl-2,"º                                      º");
-        PrintAt(x,y+yl-1,"ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼");
-        col=Cfg->col[4];
-
-        break;
-    case 2:
-        if (Cfg->UseFont==1)
-            Cfg->Tfont=168;                // Barre Verticale | with 8x?
-
-        Fen->y2=y-2;
-        Fen->yl2=Fen->yl-3;
-
-        PrintAt(x,y,     "     Name    ³   Size   ³  Date  ³Time  ");
-        for (i=1;i<yl-3;i++)
-           PrintAt(x,y+i,"Û                                      Û");
-        PrintAt(x,y+yl-3,"ÛßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßÛ");
-        PrintAt(x,y+yl-2,"Û                                      Û");
-        PrintAt(x,y+yl-1,"ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß");
-        col=3*16+7;
-        break;
-    case 3:
-        Cfg->Tfont=179;
-        Fen->y2=y-2;
-        Fen->yl2=Fen->yl-3;
-
-        PrintAt(x,y,     "ÚÄ Ä Name Ä ÄÂ Ä Size Ä ÂÄ Date ÄÂTime ¿");
-        for (i=1;i<yl-3;i++)
-           PrintAt(x,y+i,"³                                      ³");
-        PrintAt(x,y+yl-3,"³ÚÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄ¿³");
-        PrintAt(x,y+yl-2,"³                                      ³");
-        PrintAt(x,y+yl-1,"ÀÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙÙ");
-        col=10*16+5;
-        break;
-    case 4:
-        if (Cfg->UseFont==1)
-            Cfg->Tfont=168;                // Barre Verticale | with 8x?
-        a=Cfg->Tfont;
-
-        Fen->y2=y-1;
-        Fen->yl2=Fen->yl-4;
-
-        ChrLin(x+1,y+yl-2,38,32);
-
-        PrintAt(x+1,y+1,
-                     "    Name    %c   Size   %c  Date  %cTime ",a,a,a);
-
-        WinLine(x+1,y+yl-3,38,1);
-        Cadre(x,y,x+39,y+yl-1,1,Cfg->col[37],Cfg->col[38]);
-        col=Cfg->col[4];
-        break;
-    }
-
-ColLin(x+ 5,Fen->y2+2,4,col);
-ColLin(x+17,Fen->y2+2,4,col);
-ColLin(x+27,Fen->y2+2,4,col);
-ColLin(x+34,Fen->y2+2,4,col);
-}
-
 
 /*--------------------------------------------------------------------*\
 |- Affiche la ligne de commande en haut de la fenetre                 -|
@@ -260,219 +138,8 @@ if (y==Fen->y)
     PrintAt(x,y," %s ",buffer);
     ChrLin(x+strlen(buffer)+2,y,Fen->x+36-x-strlen(buffer),32);
     }
-
-
 }
 
-void FenNor(FENETRE *Fen)
-{
-int j,n;                                                     // Compteur
-int date,time;
-char ch1[13],ch2[11],ch3[9],ch4[6];
-char temp[16],temp2[20];
-char nom[13],ext[4];
-
-char dispall;
-
-char col;
-
-short i;
-
-char a;                                           // Separator Character
-
-int x1,y1;
-
-if (Fen->init==1)
-    ClearNor(Fen);
-
-a=Cfg->Tfont;
-
-if (Fen->scur>Fen->pcur)
-    Fen->scur=Fen->pcur;
-
-while (Fen->pcur<0)
-    {
-    Fen->scur++;
-    Fen->pcur++;
-    }
-
-while (Fen->pcur>=Fen->nbrfic)
-    {
-    Fen->pcur--;
-    Fen->scur--;
-    }
-
-if (Fen->scur<0)
-    Fen->scur=0;
-
-if (Fen->scur>Fen->yl2-1)
-    Fen->scur=Fen->yl2-1;
-
-x1=2+Fen->x2;
-y1=3+Fen->y2;
-
-n=(Fen->pcur)-(Fen->scur);                                    // premier
-
-InfoSelect(Fen);
-
-dispall=((Fen->oldpcur-Fen->oldscur)!=(Fen->pcur-Fen->scur));
-
-for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
-    {
-    if ( (n==Fen->oldpcur) | (n==Fen->pcur) | (dispall) )
-        {
-        date=Fen->F[n]->date;
-        time=Fen->F[n]->time;
-
-        strcpy(nom,Fen->F[n]->name);
-
-        if ((Fen->F[n]->attrib& _A_SUBDIR)!=_A_SUBDIR)
-            strlwr(nom);
-
-        ext[0]=0;
-        j=0;
-
-        if (nom[0]!='.')
-            while(nom[j]!=0)
-                {
-                if (nom[j]=='.')
-                    {
-                    memcpy(ext,nom+j+1,4);
-                    ext[3]=0;
-                    nom[j]=0;
-                    break;
-                    }
-                j++;
-                }
-        nom[8]=0;                // Dans le cas o— on aurait un nom long
-
-
-        Int2Char((date>>9)+80,temp,2);
-
-        sprintf(ch1,"%-8s %-3s",nom,ext);
-        sprintf(ch2,"%10s",Long2Str(Fen->F[n]->size,temp2));
-        sprintf(ch3,"%02d/%02d/%2s",(date&31),(date>>5)&15,temp);
-        sprintf(ch4,"%02d:%02d",(time>>11)&31,(time>>5)&63);
-
-        if ((Fen->F[n]->attrib & _A_SUBDIR)==_A_SUBDIR)
-            strcpy(ch2,"SUB--DIR");
-
-        if ((Fen->F[n]->attrib & _A_VOLID)==_A_VOLID)
-            strcpy(ch2,"##Vol-ID##");
-
-        if (nom[1]==':')
-            {
-            strcpy(ch2,"##Reload##");
-            strcpy(ch3,"        ");
-            strcpy(ch4,"     ");
-            }
-
-        if (nom[1]=='*')
-            {
-            strcpy(ch1,"CD-ROM Drive");
-            strcpy(ch2," RELOAD ");
-            }
-
-        if (Fen->F[n]->select!=0)
-            memcpy(ch4,"<SEL>",5);
-
-        if ((Fen->F[n]->attrib & _A_HIDDEN)==_A_HIDDEN)
-            ch1[8]=176;  // 176,177,178
-
-        if ( (Fen->system==5) &
-             (Fen->F[n]->desc==1) &
-             ((Fen->F[n]->attrib & _A_SUBDIR)!=_A_SUBDIR) )
-            ch1[8]=0x18;
-
-        if (nom[0]=='.')
-            {
-            if (nom[1]!='.')
-                memcpy(ch2," RELOAD ",10);
-                else
-            memcpy(ch2," UP-DIR ",10);
-            }
-
-/*--------------------------------------------------------------------*\
-|------------------- Line Activity ------------------------------------|
-\*--------------------------------------------------------------------*/
-        if ( (KKCfg->FenAct==Fen->nfen) & (n==Fen->pcur) )
-            {
-            if (Fen->F[n]->select==0)
-                col=Cfg->col[1];
-                else
-                col=Cfg->col[3];
-            }
-            else
-            {
-            if (Fen->F[n]->select==0)
-                {
-                col=Cfg->col[0];
-
-                if (KKCfg->dispcolor==1)
-                    {
-                    if ((FoundExt(ext,KKCfg->ExtExe)) &
-                                                    (KKCfg->Enable_Exe))
-                        col=Cfg->col[15];                  // Executable
-                    else
-                    if ((FoundExt(ext,KKCfg->ExtArc)) &
-                                                    (KKCfg->Enable_Arc))
-                        col=Cfg->col[22];                     // Archive
-                    else
-                    if ((FoundExt(ext,KKCfg->ExtSnd)) &
-                                                    (KKCfg->Enable_Snd))
-                        col=Cfg->col[23];                         // Son
-                    else
-                    if ((FoundExt(ext,KKCfg->ExtBmp)) &
-                                                    (KKCfg->Enable_Bmp))
-                        col=Cfg->col[32];                       // Image
-                    else
-                    if ((FoundExt(ext,KKCfg->ExtTxt)) &
-                                                    (KKCfg->Enable_Txt))
-                        col=Cfg->col[33];                       // Texte
-                    else
-                    if ((FoundExt(ext,KKCfg->ExtUsr)) &
-                                                    (KKCfg->Enable_Usr))
-                        col=Cfg->col[34];                // User defined
-                    }
-                }
-                else
-                col=Cfg->col[2];
-            }
-
-
-// ---------------------------------------------------------------------
-
-        ColLin(x1,y1,12,col);      PrintAt(x1,y1,"%s",ch1);
-        AffCol(x1+12,y1,Cfg->col[0]);   AffChr(x1+12,y1,a);
-        ColLin(x1+13,y1,10,col);   PrintAt(x1+13,y1,"%s",ch2);
-        AffCol(x1+23,y1,Cfg->col[0]);   AffChr(x1+23,y1,a);
-        ColLin(x1+24,y1,8,col);    PrintAt(x1+24,y1,"%s",ch3);
-        AffCol(x1+32,y1,Cfg->col[0]);   AffChr(x1+32,y1,a);
-        ColLin(x1+33,y1,5,col);    PrintAt(x1+33,y1,"%s",ch4);
-        }
-    }
-
-/*--------------------------------------------------------------------*\
-|------------------- Remplis le reste de la fenˆtre -------------------|
-\*--------------------------------------------------------------------*/
-
-if (dispall)
-    for (;(i<Fen->yl2);i++,y1++)
-       {
-       PrintAt(x1,y1,"            %c          %c        %c     ",a,a,a);
-       ColLin(x1,y1,38,Cfg->col[0]);
-       }
-
-if ( (dispall) & (KKCfg->dispath) )
-    {
-    AffUpperPath(Fen,Fen->y);
-    }
-
-Fen->oldscur=Fen->scur;
-Fen->oldpcur=Fen->pcur;
-
-Fen->init=0;
-}
 
 
 /*--------------------------------------------------------------------*\
@@ -547,200 +214,9 @@ strcat(Buf,"                                    \r\n");
 return;
 }
 
-void FenDIZ(FENETRE *Fen)
-{
-char *Buf;
-RB_IDF Info;
-FENETRE *Fen2;
-struct file *F;
-int x,y,i;
-
-Fen2=Fen->Fen2;
-F=Fen2->F[Fen2->pcur];
-
-if ( ( (F->attrib & _A_SUBDIR)==_A_SUBDIR) & (F->name[0]=='.') )
-    return;
-
-if (Fen2->system!=0) return;
-
-Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
-                                            ,Cfg->col[37],Cfg->col[38]);
-
-strcpy(Info.path,Fen2->path);
-Path2Abs(Info.path,F->name);
-
-if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
-    {
-    FENETRE *OldDFen;
-    int nbr,size;
-    int sel;
-    char temp[32];
-
-    memset(&Info,0,sizeof(RB_IDF));
-
-    if (KKCfg->_Win95==1)
-        {
-        InfoLongFile(Fen2,winbuffer);
-        strncpy(Info.fullname,winbuffer,80);
-        Info.fullname[79]=0;
-        }
-        else
-        strcpy(Info.fullname,F->name);
-
-    OldDFen=DFen;
-
-    sel=F->select;
-    F->select=1;
-
-    CountRepSize(Fen2,Fenetre[2],&nbr,&size);
-
-    F->select=sel;
-
-    DFen=OldDFen;
-
-    strcpy(Info.format,"Directory");
-
-    Long2Str(size,temp);
-
-    sprintf(Info.message[0]," %-12s bytes in %d files",temp,nbr);
-    }
-    else
-    {
-    Traitefic(&Info);
-    }
-
-Buf=GetMem(4000);
-
-Makediz(&Info,Buf);
-
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+4,Cfg->col[16]);
-
-x=Fen->x+2;
-y=Fen->y+6;
-
-i=0;
-while (Buf[i]!=0)
-    {
-    switch (Buf[i])
-        {
-        case 10: x=Fen->x+2; break;
-        case 13: y++; break;
-        default: AffChr(x,y,Buf[i]); x++; break;
-        }
-	i++;
-	}
-
-Cadre(Fen->x+1,Fen->y+5,Fen->x+Fen->xl-1,y,2
-                                            ,Cfg->col[37],Cfg->col[38]);
-ColWin(Fen->x+2,Fen->y+6,Fen->x+Fen->xl-2,y-1,Cfg->col[39]);
-
-Window(Fen->x+1,y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,Cfg->col[39]);
-
-LibMem(Buf);
-
-Fen->init=0;
-}
-
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
-
-void ClearInfo(FENETRE *Fen)
-{
-Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
-                                            ,Cfg->col[37],Cfg->col[38]);
-
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1
-                                                         ,Cfg->col[39]);
-
-ChrLin(Fen->x+1,Fen->y+Fen->yl-2,Fen->xl-1,196);
-PrintAt(Fen->x+1,Fen->y+Fen->yl-1,"         Press ALT-I to close");
-}
-
-
-/*--------------------------------------------------------------------*\
-\*--------------------------------------------------------------------*/
-
-
-/*--------------------------------------------------------------------*\
-|-           Display about select                                     -|
-\*--------------------------------------------------------------------*/
-
-
-void InfoSelect(FENETRE *Fen)
-{
-char temp[20];
-
-if (Fen->FenTyp!=0) return;
-
-if (Fen->nbrsel==0)
-    {
-    if (Fen->nbrfic==1)
-        PrintAt(Fen->x3,Fen->y3,"%-10s bytes in one file         ",
-            Long2Str(Fen->taillefic,temp));
-    else
-        PrintAt(Fen->x3,Fen->y3,"%-10s bytes in %3d files        ",
-            Long2Str(Fen->taillefic,temp),Fen->nbrfic);
-    }
-else
-    {
-    if (Fen->nbrsel==1)
-        PrintAt(Fen->x3,Fen->y3,"%-10s b. in one selected file   ",
-            Long2Str(Fen->taillesel,temp));
-    else
-        PrintAt(Fen->x3,Fen->y3,"%-10s b. in %3d selected files  ",
-            Long2Str(Fen->taillesel,temp),Fen->nbrsel);
-    }
-}
-
-
-/*--------------------------------------------------------------------*\
-|-  The KEY's menu                                                    -|
-\*--------------------------------------------------------------------*/
-
-void CtrlMenu(void)
-{
-char temp[20];
-
-if (DFen->y3==0) return;
-if (DFen->nbrfic==1)
-    PrintAt(DFen->x3,DFen->y3,"%-10s bytes in one file         ",
-        Long2Str(DFen->taillefic,temp));
-else
-    PrintAt(DFen->x3,DFen->y3,"%-10s bytes in %3d files        ",
-        Long2Str(DFen->taillefic,temp),DFen->nbrfic);
-}
-
-void ShiftMenu(void)
-{
-// char chaine[37];
-
-if (DFen->y3==0) return;
-
-AffUpperPath(DFen,DFen->y3);
-AffUpperPath(DFen->Fen2,DFen->y3);
-
-
-/*
-memcpy(chaine,DFen->path,37);
-chaine[36]=0;
-PrintAt(DFen->x3,DFen->y3,"%-36s",chaine);
-*/
-}
-
-
-void AltMenu(void)
-{
-time_t clock;
-static char buffer[40];
-
-if (DFen->y3==0) return;
-
-clock=time(NULL);
-strftime(buffer,40,"%H:%M:%S",localtime(&clock));
-
-PrintAt(DFen->x3,DFen->y3,"%-36s",buffer);
-}
 
 void MenuBar(char c)
 {
@@ -748,7 +224,7 @@ static char bar[4][60]=
  {" Help  User  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
   " ---- Attrib View  Edit  Host Rename ----  ----   Row  ---- ",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
-  " Drv1  Drv2  FDiz FileID ----  Hist Search Type  Line  Disp "}; //ALT
+  " Drv1  Drv2  FDiz FileID Path  Hist Search Type  Line  Disp "}; //ALT
 char Tbar[60];
 int x;
 
@@ -762,7 +238,7 @@ if ((Cfg->TailleX!=80) & ( (DFen->FenTyp!=2) | (DFen->Fen2->FenTyp!=2)))
     clock=time(NULL);
     strftime(buffer,9,"%H:%M:%S",localtime(&clock));
 
-    PrintAt(41,Cfg->TailleY-4,"%-8s",buffer);
+    PrintAt(41,Fenetre[0]->yl-1,"%-8s",buffer);
     }
 
 if (d==c) return;
@@ -886,32 +362,7 @@ WinTraite(T,5,&F,0);
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
-/*--------------------------------------------------------------------*\
-|-  Change la taille de l'ecran                                       -|
-\*--------------------------------------------------------------------*/
 
-void ChangeTaille(int i)
-{
-if (i==0)
-    switch(Cfg->TailleY)
-        {
-        case 25:  Cfg->TailleY=30;  break;
-        case 30:  Cfg->TailleY=50;  break;
-        default:  Cfg->TailleY=25;  break;
-        }
-    else
-    Cfg->TailleY=i;
-
-TXTMode();
-LoadPal(Cfg->palette);
-
-InitFont();
-
-Fenetre[0]->yl=(Cfg->TailleY)-4;
-Fenetre[1]->yl=(Cfg->TailleY)-4;
-
-AfficheTout();
-}
 
 
 /*--------------------------------------------------------------------*\
@@ -1110,12 +561,12 @@ void ScreenSetup(void)
 {
 static int sw,sy;
 
-static int l1,l2;
+static int l1,l2,l3,l4;
 
-static char x1=32,x2=32,x3=32;
-static int y1=3,y2=2,y3=4;
+static char x1=32,x2=32,x3=32,x4=32;
+static int y1=3,y2=2,y3=4,y4=2;
 
-struct Tmt T[16] = {
+struct Tmt T[] = {
       { 5, 2,10,"25 lines",&sw},
       { 5, 3,10,"30 lines",&sw},
       { 5, 4,10,"50 lines",&sw},
@@ -1127,9 +578,13 @@ struct Tmt T[16] = {
       {39, 4,10,"Thin mode   ",&sy},
       {39, 5,10,"Ketchup Mode",&sy},
 
+      {39, 8, 8,"Display lower path",&l4},
+      {39, 9, 7,"Size of pannel",&l3},
+
       {3,1,9,&x1,&y1},
       {3,6,9,&x2,&y2},
       {37,1,9,&x3,&y3},
+      {37,7,9,&x4,&y4},
 
       {11,1,0," Number of lines ",NULL},
       {46,1,0," Window Design ",NULL},
@@ -1152,8 +607,10 @@ switch(Cfg->TailleY)
 sy=KKCfg->fentype+4;
 l1=Cfg->font;
 l2=Cfg->SaveSpeed;
+l3=KKCfg->sizewin;
+l4=KKCfg->pathdown;
 
-n=WinTraite(T,16,&F,0);
+n=WinTraite(T,19,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -1167,6 +624,8 @@ switch(sw)
 KKCfg->fentype=sy-4;
 Cfg->font=l1;
 Cfg->SaveSpeed=l2;
+KKCfg->sizewin=l3;
+KKCfg->pathdown=l4;
 
 GestionFct(67);                                    // Rafraichit l'ecran
 }
@@ -1361,227 +820,6 @@ if (Cfg->speedkey==1)
     Cfg->speedkey=KeyTurbo(1);
 }
 
-
-/*--------------------------------------------------------------------*\
-|-  Information on disk                                               -|
-\*--------------------------------------------------------------------*/
-
-void FenDisk(FENETRE *Fen)
-{
-char *Buf,temp[32],disk[4],volume[32];
-char InfoVol[32];
-
-FENETRE *Fen2;
-struct file *F;
-int x,y;
-
-static char chaine[80];
-short WindowsActif,HVer,NVer;
-
-static long oldfree;
-static char oldpath[256];
-
-struct diskfree_t d;
-long tfree,ttotal;
-
-char drive;
-
-drive=toupper(DFen->path[0])-'A';
-
-Fen2=Fen->Fen2;
-F=Fen2->F[Fen2->pcur];
-
-if (Fen->init==1)
-    {
-    oldfree=0;
-    oldpath[0]=0;
-    }
-
-_dos_getdiskfree(toupper(Fen2->path[0])-'A'+1,&d);
-
-tfree=GetDiskFree(toupper(Fen2->path[0])-'A'+1)/1024;
-
-if ( (tfree!=oldfree) | (strcmp(oldpath,Fen2->path)!=0) )
-    Fen->init=1;
-
-if (Fen->init==0)
-    {
-    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"?");
-    return;
-    }
-
-x=Fen->x+1;
-y=Fen->y+1;
-
-
-Buf=Fen2->path;
-if (strlen(Buf)>37) Buf+=(strlen(Buf)-37);
-
-ttotal=(d.total_clusters)*(d.sectors_per_cluster);
-ttotal=ttotal*(d.bytes_per_sector)/1024;
-
-WindowsActif = windows( &HVer, &NVer );
-
-switch ( WindowsActif )
-    {
-    case 0:
-        sprintf(chaine,"Windows not present");
-        break;
-    case 0x81:
-        sprintf(chaine,"Windows in Real Mode");
-        break;
-    case 0x82:
-        sprintf(chaine,"Windows in Standard Mode");
-        break;
-    case 0x01:
-        sprintf(chaine,"Windows/386 V 2.x");
-        break;
-    case 0x83:
-        sprintf(chaine,"Windows V %d.%d Extended Mode",HVer,NVer);
-        break;
-    }
-
-memcpy(disk,Fen2->path,3);
-disk[3]=0;
-drive=toupper(disk[0])-'A';
-
-GetVolume(drive,volume);
-
-TypeDisk(drive,InfoVol);
-
-Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
-                                            ,Cfg->col[37],Cfg->col[38]);
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1
-                                                         ,Cfg->col[39]);
-
-PrintAt(x+1,y,"%s",RBTitle);
-ColLin(x,y,38,Cfg->col[40]);
-ChrLin(x,y+1,38,196);
-
-PrintAt(x+1,y+2,"Current directory");
-ColLin(x+1,y+2,37,Cfg->col[40]);
-PrintAt(x+1,y+3,"%s",Buf);
-ChrLin(x,y+4,38,196);
-
-
-PrintAt(x+1,y+5,"Current disk");
-ColLin(x+1,y+5,37,Cfg->col[40]);
-
-PrintAt(x+1,y+6,"%s [%s] %s",disk,volume,InfoVol);
-
-PrintAt(x+1,y+7,"Free space: %8s kilobytes",Long2Str(tfree,temp));
-PrintAt(x+1,y+8,"Capacity:   %8s kilobytes",Long2Str(ttotal,temp));
-
-ChrLin(x,y+9 ,38,196);
-PrintAt(x+1,y+10,"System Information");
-ColLin(x+1,y+10,37,Cfg->col[40]);
-
-PrintAt(x+1,y+11,"ş %s",chaine);            // Information about windows
-PrintAt(x+1,y+12,"ş Initialisation: %d clocks ",Info->temps);
-PrintAt(x+1,y+13,"ş Long filenames support: %s ",
-                                            KKCfg->_Win95 ?"Yes": "No");
-
-PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
-
-oldfree=tfree;
-strcpy(oldpath,Fen2->path);
-
-Fen->init=0;
-}
-
-/*--------------------------------------------------------------------*\
-|-  Information on FILE_ID.DIZ                                        -|
-\*--------------------------------------------------------------------*/
-void FenFileID(FENETRE *Fen)
-{
-int x,y,n,l;
-char c;
-char path[256],*name;
-FILE *fic;
-char *ext;
-static char oldpath[256],oldname[256];
-
-x=Fen->x+1;
-y=Fen->y+1;
-
-Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
-                                            ,Cfg->col[37],Cfg->col[38]);
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,
-                                                          Cfg->col[39]);
-
-ext=getext(Fen->Fen2->F[Fen->Fen2->pcur]->name);
-
-strcpy(path,Fen->Fen2->path);
-if ( (Fen->Fen2->F[Fen->Fen2->pcur]->name[0]!='.') &
-    ( (((Fen->Fen2->F[Fen->Fen2->pcur]->attrib)&_A_SUBDIR)==_A_SUBDIR)|
-      (!stricmp(ext,"ARJ")) |
-      (!stricmp(ext,"ZIP")) |
-      (!stricmp(ext,"RAR")) |
-      (!stricmp(ext,"LHA")) ))
-    Path2Abs(path,Fen->Fen2->F[Fen->Fen2->pcur]->name);  // Ajout gedeon
-/*    else
-    oldpath[0]=0;*/  // PQ ?
-Path2Abs(path,"FILE_ID.DIZ");
-
-if (strcmp(path,oldpath)!=0)
-    {
-    strcpy(oldpath,path);
-
-    name=AccessAbsFile(path);  // Ajout GEDEON ------------------------
-    if (name==NULL)
-        strcpy(oldname,"");
-        else
-        strcpy(oldname,name);
-
-    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
-    }
-    else
-    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"?");
-
-// Affichage du file_id.diz dans la fenetre ----------------------------
-
-if (oldname[0]!=0)
-    {
-    fic=fopen(oldname,"rb");
-    if (fic==NULL)
-        {
-        PrintAt(x+1,y+1,"FILE_ID.DIZ doesn't exist !");
-        return;
-        }
-
-    l=flength(fileno(fic));
-
-    if (l>32768) l=32768;
-
-    for(n=0;n<l;n++)
-        {
-        c=fgetc(fic);
-
-        switch(c)
-            {
-            case 10:
-                x=Fen->x+1;
-                y++;
-                break;
-            case 7:
-            case 13:
-                break;
-            default:
-                if (x<Fen->x+Fen->xl)
-                    {
-                    AffChr(x,y,c);
-                    x++;
-                    }
-                break;
-            }
-        if (y>Fen->y+Fen->yl-2) break;
-        }
-    fclose(fic);
-    }
-
-Fen->init=0;
-}
-
 /*--------------------------------------------------------------------*\
 |-  Information on FILE_ID.DIZ                                        -|
 \*--------------------------------------------------------------------*/
@@ -1604,9 +842,6 @@ DFen->init=1;
 
 
 
-/*--------------------------------------------------------------------*\
-|- S E C R E T                                                P A R T -|
-\*--------------------------------------------------------------------*/
 
 
 /*--------------------------------------------------------------------*\
@@ -1668,21 +903,7 @@ n=WinTraite(T,6,&F,0);
 }
 
 
-/*--------------------------------------------------------------------*\
-|- Remplis le vide si on est en mode 90 colonnes                      -|
-\*--------------------------------------------------------------------*/
-void RemplisVide(void)
-{
-if (Cfg->TailleX==80) return;
 
-Cadre(80,0,Cfg->TailleX-1,2,3,Cfg->col[55],Cfg->col[56]);
-PrintAt(81,1,"%*s",Cfg->TailleX-82,"KetchupK");
-
-Cadre(80,3,Cfg->TailleX-1,Cfg->TailleY-2,2,Cfg->col[55],Cfg->col[56]);
-Window(81,4,Cfg->TailleX-2,Cfg->TailleY-3,Cfg->col[16]);
-
-AffChr(Cfg->TailleX-2,Cfg->TailleY-3,3);
-}
 
 /*--------------------------------------------------------------------*\
 |- Information about files                                            -|
@@ -1734,91 +955,6 @@ for (i=0;i<Fen2->nbrfic;i++)
 return new;
 }
 
-void DispInfo(FENETRE *Fen)
-{
-int n;                                                       // Compteur
-FENETRE *Fen2;
-static char buffer[40];
-
-short i;
-
-int x1,y1;
-int x=2,y=3;
-
-Fen2=Fen->Fen2;
-
-if (Fen2->InfoPos>40) Fen2->InfoPos=40;
-
-x1=Fen->x-1;
-
-if (Fen->y==Fen2->y)
-    y1=Fen2->y2;
-    else
-    y1=Fen->y-1;
-
-n=(Fen2->pcur)-(Fen2->scur);                                  // premier
-
-if (n<0) n=0;
-
-for (i=0;(y+y1+1<Fen->yl) & (n<Fen2->nbrfic);i++,n++,y++)
-    {
-// ------------------ Line Activity ------------------------------------
-    if (n==(Fen2->pcur))
-        ColLin(x+x1,y+y1,38,Cfg->col[1]);
-        else
-        {
-        if (Fen2->F[n]->info!=NULL)
-            switch(Fen2->F[n]->info[0])
-                {
-                case 1:  ColLin(x+x1,y+y1,38,Cfg->col[23]);   break;
-                case 2:  ColLin(x+x1,y+y1,38,Cfg->col[23]);   break;
-                case 3:  ColLin(x+x1,y+y1,38,Cfg->col[22]);   break;
-                case 4:  ColLin(x+x1,y+y1,38,Cfg->col[32]);   break;
-                case 5:  ColLin(x+x1,y+y1,38,Cfg->col[32]);   break;
-                case 6:  ColLin(x+x1,y+y1,38,Cfg->col[0]);    break;
-                default: ColLin(x+x1,y+y1,38,Cfg->col[0]);    break;
-                }
-            else
-                ColLin(x+x1,y+y1,38,Cfg->col[4]);
-        }
-
-    if (Fen2->F[n]->info!=NULL)
-        {
-        memcpy(buffer,Fen2->F[n]->info+1+Fen2->InfoPos,38);
-        buffer[38]=0;
-        PrintAt(x+x1,y+y1,"%-38s",buffer);
-        }
-        else
-        PrintAt(x+x1,y+y1,"%-38s","?");
-
-    }
-
-for (;(y+y1+1<Fen->yl);i++,y++)
-    {
-    PrintAt(x+x1,y+y1,"%-38s","");
-    ColLin(x+x1,y+y1,38,Cfg->col[4]);
-    }
-}
-
-
-/*--------------------------------------------------------------------*\
-|-  Fenˆtre avec les infos sur fichiers d'apres header                -|
-\*--------------------------------------------------------------------*/
-
-void FenInfo(FENETRE *Fen)
-{
-if (Fen->init==1)
-    {
-    ClearInfo(Fen);
-    Fen->init=0;
-    Fen->Fen2->InfoPos=0;
-    }
-
-DispInfo(Fen);
-
-if (SearchInfo(Fen)!=0)
-    DispInfo(Fen);
-}
 
 
 /*--------------------------------------------------------------------*\
@@ -1900,3 +1036,866 @@ for(;i<Fen->yl-Fen->y-1;i++)
 DFen=OldFen;
 }
 
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------*\
+|-  Change la taille de l'ecran                                       -|
+\*--------------------------------------------------------------------*/
+
+void ChangeTaille(int i)
+{
+if (i==0)
+    switch(Cfg->TailleY)
+        {
+        case 25:  Cfg->TailleY=30;  break;
+        case 30:  Cfg->TailleY=50;  break;
+        default:  Cfg->TailleY=25;  break;
+        }
+    else
+    Cfg->TailleY=i;
+
+TXTMode();
+LoadPal(Cfg->palette);
+
+InitFont();
+
+CalcSizeWin(Fenetre[0]);
+CalcSizeWin(Fenetre[1]);
+
+AfficheTout();
+}
+
+/*--------------------------------------------------------------------*\
+|-  Efface la fenˆtre gestion de fichier                              -|
+\*--------------------------------------------------------------------*/
+
+void ClearNor(FENETRE *Fen)
+{
+char col;
+int sb;
+
+int i;
+int x,y;
+int xl,yl;
+
+char a;
+
+Fen->oldscur=0;
+Fen->oldpcur=-1;
+
+sb=1+(KKCfg->pathdown);
+
+ColWin(Fen->x+1,Fen->y+1,Fen->xl-1,Fen->yl-1,Cfg->col[0]);
+
+switch(KKCfg->fentype) //---Couleur uniquement pour fentype=1,2 ou 3 ---
+    {
+    case 1:
+    case 2:
+    case 3:
+        for(x=Fen->x;x<Fen->xl;x++)
+            AffCol(x,Fen->y,Cfg->col[37]);
+        for(y=Fen->y;y<=Fen->yl;y++)
+            AffCol(Fen->x,y,Cfg->col[37]);
+
+        for(x=Fen->x+1;x<=Fen->xl;x++)
+            AffCol(x,Fen->yl,Cfg->col[38]);
+        for(y=Fen->y;y<Fen->yl;y++)
+            AffCol(Fen->xl,y,Cfg->col[38]);
+        break;
+    }
+
+x=Fen->x;
+y=Fen->y;
+
+xl=Fen->xl;
+yl=Fen->yl;
+
+switch (KKCfg->fentype)
+    {
+    case 1:
+        Cfg->Tfont=179;
+
+        PrintAt(x,y,      "ÉÍÍÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÑÍÍÍÍÍ»");
+        PrintAt(x,y+1,    "º    Name    ³   Size   ³  Date  ³Time º");
+        for (i=y+2;i<yl-sb-1;i++)
+             PrintAt(x,i, "º                                      º");
+        PrintAt(x,yl-sb-1,"ÇÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄ¶");
+        for (i=yl-sb;i<yl;i++)
+             PrintAt(x,i, "º                                      º");
+        PrintAt(x,yl,     "ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼");
+        col=Cfg->col[4];
+
+        break;
+    case 2:
+        if (Cfg->UseFont==1)
+            Cfg->Tfont=168;                // Barre Verticale | with 8x?
+
+        PrintAt(x,y,      "ÛÛÛÛÛNameÛÛÛÛÛÛÛÛSizeÛÛÛÛÛÛDateÛÛÛTimeÛÛ");
+        for (i=y+1;i<yl-sb-1;i++)
+            PrintAt(x,i,  "Û                                      Û");
+        PrintAt(x,yl-sb-1,"ÛßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßÛ");
+        for (i=yl-sb;i<yl;i++)
+            PrintAt(x,i,  "Û                                      Û");
+        PrintAt(x,yl,     "ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß");
+        col=(Cfg->col[4]&15)+(Cfg->col[37]&15)*16;
+        break;
+    case 3:
+        Cfg->Tfont=179;
+
+        PrintAt(x,y,      "ÚÄ Ä Name Ä ÄÂ Ä Size Ä ÂÄ Date ÄÂTime ¿");
+        for (i=y+1;i<yl-sb-1;i++)
+           PrintAt(x,i,"³                                      ³");
+        PrintAt(x,yl-sb-1,"³ÚÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄ¿³");
+        for (i=yl-sb;i<yl;i++)
+            PrintAt(x,i,  "³                                      ³");
+        PrintAt(x,yl,     "ÀÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙÙ");
+        col=10*16+5;
+        break;
+    case 4:
+        if (Cfg->UseFont==1)
+            Cfg->Tfont=168;                // Barre Verticale | with 8x?
+        a=Cfg->Tfont;
+
+        Window(x+1,yl-sb,xl-1,yl-1,32);
+
+        PrintAt(x+1,Fen->y2,
+                     "    Name    %c   Size   %c  Date  %cTime ",a,a,a);
+        WinLine(x+1,yl-sb-1,38,1);
+        Cadre(x,y,xl,yl,1,Cfg->col[37],Cfg->col[38]);
+        col=Cfg->col[4];
+        break;
+    }
+
+ColLin(x+ 5,Fen->y2,4,col);
+ColLin(x+17,Fen->y2,4,col);
+ColLin(x+27,Fen->y2,4,col);
+ColLin(x+34,Fen->y2,4,col);
+}
+
+void FenNor(FENETRE *Fen)
+{
+int j,n;                                                     // Compteur
+int date,time;
+char ch1[13],ch2[11],ch3[9],ch4[6];
+char temp[16],temp2[20];
+char nom[13],ext[4];
+
+char dispall;
+
+char col;
+
+short i;
+
+char a;                                           // Separator Character
+
+int x1,y1;
+
+if (Fen->init==1)
+    ClearNor(Fen);
+
+a=Cfg->Tfont;
+
+if (Fen->scur>Fen->pcur)
+    Fen->scur=Fen->pcur;
+
+while (Fen->pcur<0)
+    {
+    Fen->scur++;
+    Fen->pcur++;
+    }
+
+while (Fen->pcur>=Fen->nbrfic)
+    {
+    Fen->pcur--;
+    Fen->scur--;
+    }
+
+if (Fen->scur<0)
+    Fen->scur=0;
+
+if (Fen->scur>=Fen->yl2)
+    Fen->scur=Fen->yl2-1;
+
+x1=Fen->x+1;
+y1=Fen->y2+1;
+
+n=(Fen->pcur)-(Fen->scur);                                    // premier
+
+InfoSelect(Fen);
+
+if (KKCfg->pathdown)
+    AffUpperPath(Fen,Fen->yl-2);
+
+dispall=((Fen->oldpcur-Fen->oldscur)!=(Fen->pcur-Fen->scur));
+
+for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
+    {
+    if ( (n==Fen->oldpcur) | (n==Fen->pcur) | (dispall) )
+        {
+        date=Fen->F[n]->date;
+        time=Fen->F[n]->time;
+
+        strcpy(nom,Fen->F[n]->name);
+
+        if ((Fen->F[n]->attrib& _A_SUBDIR)!=_A_SUBDIR)
+            strlwr(nom);
+
+        ext[0]=0;
+        j=0;
+
+        if (nom[0]!='.')
+            while(nom[j]!=0)
+                {
+                if (nom[j]=='.')
+                    {
+                    memcpy(ext,nom+j+1,4);
+                    ext[3]=0;
+                    nom[j]=0;
+                    break;
+                    }
+                j++;
+                }
+        nom[8]=0;                // Dans le cas o— on aurait un nom long
+
+
+        Int2Char((date>>9)+80,temp,2);
+
+        sprintf(ch1,"%-8s %-3s",nom,ext);
+        sprintf(ch2,"%10s",Long2Str(Fen->F[n]->size,temp2));
+        sprintf(ch3,"%02d/%02d/%2s",(date&31),(date>>5)&15,temp);
+        sprintf(ch4,"%02d:%02d",(time>>11)&31,(time>>5)&63);
+
+        if ((Fen->F[n]->attrib & _A_SUBDIR)==_A_SUBDIR)
+            strcpy(ch2,"SUB--DIR");
+
+        if ((Fen->F[n]->attrib & _A_VOLID)==_A_VOLID)
+            strcpy(ch2,"##Vol-ID##");
+
+        if (nom[1]==':')
+            {
+            strcpy(ch2,"##Reload##");
+            strcpy(ch3,"        ");
+            strcpy(ch4,"     ");
+            }
+
+        if (nom[1]=='*')
+            {
+            strcpy(ch1,"CD-ROM Drive");
+            strcpy(ch2," RELOAD ");
+            }
+
+        if (Fen->F[n]->select!=0)
+            memcpy(ch4,"<SEL>",5);
+
+        if ((Fen->F[n]->attrib & _A_HIDDEN)==_A_HIDDEN)
+            ch1[8]=176;  // 176,177,178
+
+        if ( (Fen->system==5) &
+             (Fen->F[n]->desc==1) &
+             ((Fen->F[n]->attrib & _A_SUBDIR)!=_A_SUBDIR) )
+            ch1[8]=0x18;
+
+        if (nom[0]=='.')
+            {
+            if (nom[1]!='.')
+                memcpy(ch2," RELOAD ",10);
+                else
+            memcpy(ch2," UP-DIR ",10);
+            }
+
+/*--------------------------------------------------------------------*\
+|------------------- Line Activity ------------------------------------|
+\*--------------------------------------------------------------------*/
+        if ( (KKCfg->FenAct==Fen->nfen) & (n==Fen->pcur) )
+            {
+            if (Fen->F[n]->select==0)
+                col=Cfg->col[1];
+                else
+                col=Cfg->col[3];
+            }
+            else
+            {
+            if (Fen->F[n]->select==0)
+                {
+                col=Cfg->col[0];
+
+                if (KKCfg->dispcolor==1)
+                    {
+                    if ((FoundExt(ext,KKCfg->ExtExe)) &
+                                                    (KKCfg->Enable_Exe))
+                        col=Cfg->col[15];                  // Executable
+                    else
+                    if ((FoundExt(ext,KKCfg->ExtArc)) &
+                                                    (KKCfg->Enable_Arc))
+                        col=Cfg->col[22];                     // Archive
+                    else
+                    if ((FoundExt(ext,KKCfg->ExtSnd)) &
+                                                    (KKCfg->Enable_Snd))
+                        col=Cfg->col[23];                         // Son
+                    else
+                    if ((FoundExt(ext,KKCfg->ExtBmp)) &
+                                                    (KKCfg->Enable_Bmp))
+                        col=Cfg->col[32];                       // Image
+                    else
+                    if ((FoundExt(ext,KKCfg->ExtTxt)) &
+                                                    (KKCfg->Enable_Txt))
+                        col=Cfg->col[33];                       // Texte
+                    else
+                    if ((FoundExt(ext,KKCfg->ExtUsr)) &
+                                                    (KKCfg->Enable_Usr))
+                        col=Cfg->col[34];                // User defined
+                    }
+                }
+                else
+                col=Cfg->col[2];
+            }
+
+
+// ---------------------------------------------------------------------
+
+        ColLin(x1,y1,12,col);      PrintAt(x1,y1,"%s",ch1);
+        AffCol(x1+12,y1,Cfg->col[0]);   AffChr(x1+12,y1,a);
+        ColLin(x1+13,y1,10,col);   PrintAt(x1+13,y1,"%s",ch2);
+        AffCol(x1+23,y1,Cfg->col[0]);   AffChr(x1+23,y1,a);
+        ColLin(x1+24,y1,8,col);    PrintAt(x1+24,y1,"%s",ch3);
+        AffCol(x1+32,y1,Cfg->col[0]);   AffChr(x1+32,y1,a);
+        ColLin(x1+33,y1,5,col);    PrintAt(x1+33,y1,"%s",ch4);
+        }
+    }
+
+/*--------------------------------------------------------------------*\
+|------------------- Remplis le reste de la fenˆtre -------------------|
+\*--------------------------------------------------------------------*/
+
+if (dispall)
+    for (;(i<Fen->yl2);i++,y1++)
+       {
+       PrintAt(x1,y1,"            %c          %c        %c     ",a,a,a);
+       ColLin(x1,y1,38,Cfg->col[0]);
+       }
+
+if ( (dispall) & (KKCfg->dispath) )
+    {
+    AffUpperPath(Fen,Fen->y);
+    }
+
+Fen->oldscur=Fen->scur;
+Fen->oldpcur=Fen->pcur;
+
+Fen->init=0;
+}
+
+void FenDIZ(FENETRE *Fen)
+{
+char *Buf;
+RB_IDF Info;
+FENETRE *Fen2;
+struct file *F;
+int x,y,i;
+
+Fen2=Fen->Fen2;
+F=Fen2->F[Fen2->pcur];
+
+if ( ( (F->attrib & _A_SUBDIR)==_A_SUBDIR) & (F->name[0]=='.') )
+    return;
+
+if (Fen2->system!=0) return;
+
+Cadre(Fen->x,Fen->y,Fen->xl,Fen->yl,1,Cfg->col[37],Cfg->col[38]);
+
+strcpy(Info.path,Fen2->path);
+Path2Abs(Info.path,F->name);
+
+if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
+    {
+    FENETRE *OldDFen;
+    int nbr,size;
+    int sel;
+    char temp[32];
+
+    memset(&Info,0,sizeof(RB_IDF));
+
+    if (KKCfg->_Win95==1)
+        {
+        InfoLongFile(Fen2,winbuffer);
+        strncpy(Info.fullname,winbuffer,80);
+        Info.fullname[79]=0;
+        }
+        else
+        strcpy(Info.fullname,F->name);
+
+    OldDFen=DFen;
+
+    sel=F->select;
+    F->select=1;
+
+    CountRepSize(Fen2,Fenetre[2],&nbr,&size);
+
+    F->select=sel;
+
+    DFen=OldDFen;
+
+    strcpy(Info.format,"Directory");
+
+    Long2Str(size,temp);
+
+    sprintf(Info.message[0]," %-12s bytes in %d files",temp,nbr);
+    }
+    else
+    {
+    Traitefic(&Info);
+    }
+
+Buf=GetMem(4000);
+
+Makediz(&Info,Buf);
+
+Window(Fen->x+1,Fen->y+1,Fen->xl-1,Fen->y+4,Cfg->col[16]);
+
+x=Fen->x+2;
+y=Fen->y+6;
+
+i=0;
+while (Buf[i]!=0)
+    {
+    switch (Buf[i])
+        {
+        case 10: x=Fen->x+2; break;
+        case 13: y++; break;
+        default: AffChr(x,y,Buf[i]); x++; break;
+        }
+    i++;
+    }
+
+Cadre(Fen->x+1,Fen->y+5,Fen->xl-1,y,2
+                                            ,Cfg->col[37],Cfg->col[38]);
+ColWin(Fen->x+2,Fen->y+6,Fen->xl-2,y-1,Cfg->col[39]);
+
+Window(Fen->x+1,y+1,Fen->xl-1,Fen->yl-1,Cfg->col[39]);
+
+LibMem(Buf);
+
+Fen->init=0;
+}
+
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+void ClearInfo(FENETRE *Fen)
+{
+Cadre(Fen->x,Fen->y,Fen->xl,Fen->yl,1,Cfg->col[37],Cfg->col[38]);
+
+Window(Fen->x+1,Fen->y+1,Fen->xl-1,Fen->yl-1,Cfg->col[39]);
+
+ChrLin(Fen->x+1,Fen->yl-2,Fen->xl-Fen->x-1,196);
+PrintAt(Fen->x+1,Fen->yl-1,"        Press CTRL-Y to close");
+}
+
+void DispInfo(FENETRE *Fen)
+{
+int n;                                                       // Compteur
+FENETRE *Fen2;
+static char buffer[40];
+
+short i;
+
+int x,y;
+
+Fen2=Fen->Fen2;
+
+if (Fen2->InfoPos>40) Fen2->InfoPos=40;
+
+x=Fen->x+1;
+y=Fen2->y2+1;
+
+n=(Fen2->pcur)-(Fen2->scur);                                  // premier
+
+if (n<0) n=0;
+
+for (i=0;(i<Fen2->yl2) & (n<Fen2->nbrfic);i++,n++,y++)
+    {
+// ------------------ Line Activity ------------------------------------
+    if (n==(Fen2->pcur))
+        ColLin(x,y,38,Cfg->col[1]);
+        else
+        {
+        if (Fen2->F[n]->info!=NULL)
+            switch(Fen2->F[n]->info[0])
+                {
+                case 1:  ColLin(x,y,38,Cfg->col[23]);   break;
+                case 2:  ColLin(x,y,38,Cfg->col[23]);   break;
+                case 3:  ColLin(x,y,38,Cfg->col[22]);   break;
+                case 4:  ColLin(x,y,38,Cfg->col[32]);   break;
+                case 5:  ColLin(x,y,38,Cfg->col[32]);   break;
+                case 6:  ColLin(x,y,38,Cfg->col[0]);    break;
+                default: ColLin(x,y,38,Cfg->col[0]);    break;
+                }
+            else
+                ColLin(x,y,38,Cfg->col[4]);
+        }
+
+    if (Fen2->F[n]->info!=NULL)
+        {
+        memcpy(buffer,Fen2->F[n]->info+1+Fen2->InfoPos,38);
+        buffer[38]=0;
+        PrintAt(x,y,"%-38s",buffer);
+        }
+        else
+        PrintAt(x,y,"%-38s","?");
+    }
+
+for (;(i<Fen2->yl2);i++,y++)
+    {
+    PrintAt(x,y,"%-38s","");
+    ColLin(x,y,38,Cfg->col[4]);
+    }
+}
+
+
+/*--------------------------------------------------------------------*\
+|-  Fenˆtre avec les infos sur fichiers d'apres header                -|
+\*--------------------------------------------------------------------*/
+
+void FenInfo(FENETRE *Fen)
+{
+if (Fen->init==1)
+    {
+    ClearInfo(Fen);
+    Fen->init=0;
+    Fen->Fen2->InfoPos=0;
+    }
+
+DispInfo(Fen);
+
+if (SearchInfo(Fen)!=0)
+    DispInfo(Fen);
+}
+
+
+
+/*--------------------------------------------------------------------*\
+|-           Display about select                                     -|
+\*--------------------------------------------------------------------*/
+
+
+void InfoSelect(FENETRE *Fen)
+{
+char temp[20];
+
+if (Fen->FenTyp!=0) return;
+
+if (Fen->nbrsel==0)
+    {
+    if (Fen->nbrfic==1)
+        PrintAt(Fen->x+2,Fen->yl-1,"%-10s bytes in one file         ",
+            Long2Str(Fen->taillefic,temp));
+    else
+        PrintAt(Fen->x+2,Fen->yl-1,"%-10s bytes in %3d files        ",
+            Long2Str(Fen->taillefic,temp),Fen->nbrfic);
+    }
+else
+    {
+    if (Fen->nbrsel==1)
+        PrintAt(Fen->x+2,Fen->yl-1,"%-10s b. in one selected file   ",
+            Long2Str(Fen->taillesel,temp));
+    else
+        PrintAt(Fen->x+2,Fen->yl-1,"%-10s b. in %3d selected files  ",
+            Long2Str(Fen->taillesel,temp),Fen->nbrsel);
+    }
+}
+
+
+/*--------------------------------------------------------------------*\
+|-  The KEY's menu                                                    -|
+\*--------------------------------------------------------------------*/
+
+void CtrlMenu(void)
+{
+char temp[20];
+
+if (DFen->yl==0) return;
+if (DFen->nbrfic==1)
+    PrintAt(DFen->x+2,DFen->yl-1,"%-10s bytes in one file         ",
+        Long2Str(DFen->taillefic,temp));
+else
+    PrintAt(DFen->x+2,DFen->yl-1,"%-10s bytes in %3d files        ",
+        Long2Str(DFen->taillefic,temp),DFen->nbrfic);
+}
+
+void ShiftMenu(void)
+{
+// char chaine[37];
+
+if (DFen->yl==0) return;
+
+AffUpperPath(DFen,DFen->yl-1);
+AffUpperPath(DFen->Fen2,DFen->yl-1);
+
+/*
+memcpy(chaine,DFen->path,37);
+chaine[36]=0;
+PrintAt(DFen->x3,DFen->y3,"%-36s",chaine);
+*/
+}
+
+
+void AltMenu(void)
+{
+time_t clock;
+static char buffer[40];
+
+if (DFen->yl==0) return;
+
+clock=time(NULL);
+strftime(buffer,40,"%H:%M:%S",localtime(&clock));
+
+PrintAt(DFen->x+2,DFen->yl-1,"%-36s",buffer);
+}
+
+
+/*--------------------------------------------------------------------*\
+|-  Information on disk                                               -|
+\*--------------------------------------------------------------------*/
+
+void FenDisk(FENETRE *Fen)
+{
+char *Buf,temp[32],disk[4],volume[32];
+char InfoVol[32];
+
+FENETRE *Fen2;
+struct file *F;
+int x,y;
+
+static char chaine[80];
+short WindowsActif,HVer,NVer;
+
+static long oldfree;
+static char oldpath[256];
+
+struct diskfree_t d;
+long tfree,ttotal;
+
+char drive;
+
+drive=toupper(DFen->path[0])-'A';
+
+Fen2=Fen->Fen2;
+F=Fen2->F[Fen2->pcur];
+
+if (Fen->init==1)
+    {
+    oldfree=0;
+    oldpath[0]=0;
+    }
+
+_dos_getdiskfree(toupper(Fen2->path[0])-'A'+1,&d);
+
+tfree=GetDiskFree(toupper(Fen2->path[0])-'A'+1)/1024;
+
+if ( (tfree!=oldfree) | (strcmp(oldpath,Fen2->path)!=0) )
+    Fen->init=1;
+
+if (Fen->init==0)
+    {
+    PrintAt(Fen->xl-1,Fen->yl-1,"?");
+    return;
+    }
+
+x=Fen->x+1;
+y=Fen->y+1;
+
+
+Buf=Fen2->path;
+if (strlen(Buf)>37) Buf+=(strlen(Buf)-37);
+
+ttotal=(d.total_clusters)*(d.sectors_per_cluster);
+ttotal=ttotal*(d.bytes_per_sector)/1024;
+
+WindowsActif = windows( &HVer, &NVer );
+
+switch ( WindowsActif )
+    {
+    case 0:
+        sprintf(chaine,"Windows not present");
+        break;
+    case 0x81:
+        sprintf(chaine,"Windows in Real Mode");
+        break;
+    case 0x82:
+        sprintf(chaine,"Windows in Standard Mode");
+        break;
+    case 0x01:
+        sprintf(chaine,"Windows/386 V 2.x");
+        break;
+    case 0x83:
+        sprintf(chaine,"Windows V %d.%d Extended Mode",HVer,NVer);
+        break;
+    }
+
+memcpy(disk,Fen2->path,3);
+disk[3]=0;
+drive=toupper(disk[0])-'A';
+
+GetVolume(drive,volume);
+
+TypeDisk(drive,InfoVol);
+
+Cadre(Fen->x,Fen->y,Fen->xl,Fen->yl,1,Cfg->col[37],Cfg->col[38]);
+Window(Fen->x+1,Fen->y+1,Fen->xl-1,Fen->yl-1,Cfg->col[39]);
+
+PrintAt(x+1,y,"%s",RBTitle);
+ColLin(x,y,38,Cfg->col[40]);
+ChrLin(x,y+1,38,196);
+
+PrintAt(x+1,y+2,"Current directory");
+ColLin(x+1,y+2,37,Cfg->col[40]);
+PrintAt(x+1,y+3,"%s",Buf);
+ChrLin(x,y+4,38,196);
+
+
+PrintAt(x+1,y+5,"Current disk");
+ColLin(x+1,y+5,37,Cfg->col[40]);
+
+PrintAt(x+1,y+6,"%s [%s] %s",disk,volume,InfoVol);
+
+PrintAt(x+1,y+7,"Free space: %8s kilobytes",Long2Str(tfree,temp));
+PrintAt(x+1,y+8,"Capacity:   %8s kilobytes",Long2Str(ttotal,temp));
+
+ChrLin(x,y+9 ,38,196);
+PrintAt(x+1,y+10,"System Information");
+ColLin(x+1,y+10,37,Cfg->col[40]);
+
+PrintAt(x+1,y+11,"ş %s",chaine);            // Information about windows
+PrintAt(x+1,y+12,"ş Initialisation: %d clocks ",Info->temps);
+PrintAt(x+1,y+13,"ş Long filenames support: %s ",
+                                            KKCfg->_Win95 ?"Yes": "No");
+
+PrintAt(Fen->xl-1,Fen->yl-1,"");
+
+oldfree=tfree;
+strcpy(oldpath,Fen2->path);
+
+Fen->init=0;
+}
+
+/*--------------------------------------------------------------------*\
+|-  Information on FILE_ID.DIZ                                        -|
+\*--------------------------------------------------------------------*/
+void FenFileID(FENETRE *Fen)
+{
+int x,y,n,l;
+char c;
+char path[256],*name;
+FILE *fic;
+char *ext;
+static char oldpath[256],oldname[256];
+
+x=Fen->x+1;
+y=Fen->y+1;
+
+Cadre(Fen->x,Fen->y,Fen->xl,Fen->yl,1,Cfg->col[37],Cfg->col[38]);
+Window(Fen->x+1,Fen->y+1,Fen->xl-1,Fen->yl-1,Cfg->col[39]);
+
+ext=getext(Fen->Fen2->F[Fen->Fen2->pcur]->name);
+
+strcpy(path,Fen->Fen2->path);
+if ( (Fen->Fen2->F[Fen->Fen2->pcur]->name[0]!='.') &
+    ( (((Fen->Fen2->F[Fen->Fen2->pcur]->attrib)&_A_SUBDIR)==_A_SUBDIR)|
+      (!stricmp(ext,"ARJ")) |
+      (!stricmp(ext,"ZIP")) |
+      (!stricmp(ext,"RAR")) |
+      (!stricmp(ext,"LHA")) ))
+    Path2Abs(path,Fen->Fen2->F[Fen->Fen2->pcur]->name);  // Ajout gedeon
+/*    else
+    oldpath[0]=0;*/  // PQ ?
+Path2Abs(path,"FILE_ID.DIZ");
+
+if (strcmp(path,oldpath)!=0)
+    {
+    strcpy(oldpath,path);
+
+    name=AccessAbsFile(path);  // Ajout GEDEON ------------------------
+    if (name==NULL)
+        strcpy(oldname,"");
+        else
+        strcpy(oldname,name);
+
+    PrintAt(Fen->xl-1,Fen->yl-1,"");
+    }
+    else
+    PrintAt(Fen->xl-1,Fen->yl-1,"?");
+
+// Affichage du file_id.diz dans la fenetre ----------------------------
+
+if (oldname[0]!=0)
+    {
+    fic=fopen(oldname,"rb");
+    if (fic==NULL)
+        {
+        PrintAt(x+1,y+1,"FILE_ID.DIZ doesn't exist !");
+        return;
+        }
+
+    l=flength(fileno(fic));
+
+    if (l>32768) l=32768;
+
+    for(n=0;n<l;n++)
+        {
+        c=fgetc(fic);
+
+        switch(c)
+            {
+            case 10:
+                x=Fen->x+1;
+                y++;
+                break;
+            case 7:
+            case 13:
+                break;
+            default:
+                if (x<Fen->xl)
+                    {
+                    AffChr(x,y,c);
+                    x++;
+                    }
+                break;
+            }
+        if (y>=Fen->yl) break;
+        }
+    fclose(fic);
+    }
+
+Fen->init=0;
+}
+
+void CalcSizeWin(FENETRE *Fen)
+{
+int sb;
+
+sb=1+(KKCfg->pathdown);
+
+if (KKCfg->sizewin==0)
+    Fen->yl=(Cfg->TailleY)-3;
+    else
+    Fen->yl=Fen->y+KKCfg->sizewin-1;
+
+if (Fen->yl>(Cfg->TailleY)-3)
+    Fen->yl=(Cfg->TailleY)-3;
+
+switch (KKCfg->fentype)
+    {
+    case 1:
+    case 4:
+        Fen->y2=Fen->y+1;
+        Fen->yl2=Fen->yl-Fen->y-sb-3;
+        break;
+    case 2:
+    case 3:
+        Fen->y2=Fen->y;
+        Fen->yl2=Fen->yl-Fen->y-sb-2;
+    }
+}

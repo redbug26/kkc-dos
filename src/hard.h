@@ -277,8 +277,20 @@ typedef struct __mainmenu
     int cur;
     } MENU;
 
+/* attr:
+   7 6 5 4 3 2 1 0
+   ³ ³ ³ ³ ³ ³ ³ ÀÄÄ   1 Use nbrmax items at a time on screen.
+   ³ ³ ³ ³ ³ ³ ÀÄÄÄÄ   2 Don't use shortcut.
+   ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄ   4 Don't save screen.
+   ³ ³ ³ ³ ÀÄÄÄÄÄÄÄÄ   8 Don't accept LEFT & RIGHT key.
+   ÀÄÁÄÁÄÁÄÄÄÄÄÄÄÄÄÄ     0
+*/
+
 int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
 int PannelMenu(struct barmenu *bar,int nbr,MENU *menu);
+
+void ClearEvents(void);
+void NewEvents(int (*fct)(struct barmenu *),char *titre,int key);
 
 
 void Bar(char *);                               // Affichage de la barre

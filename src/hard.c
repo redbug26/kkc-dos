@@ -1979,6 +1979,7 @@ return buf;
 /*--------------------------------------------------------------------*\
 |-   si p vaut 0 mets off                                             -|
 |-   si p vaut 2 mets on                                              -|
+|-   si p vaut 3 mets default                                         -|
 |-   si p vaut 1 interroge                                            -|
 |-   retourne -1 si SHIFT TAB, 1 si TAB                               -|
 \*--------------------------------------------------------------------*/
@@ -2047,9 +2048,9 @@ if (p==1)
             }
         }
 
-if (p!=2)
+if (p!=2)       //--- Mets OFF -----------------------------------------
     {
-    if ((Cfg->col[48])&240!=(Cfg->col[19])&240)
+    if ((((Cfg->col[48])&240)!=((Cfg->col[19])&240)) & (p!=3))
         {
         AffChr(x,y,32);
         AffChr(x+lng-1,y,32);
@@ -2207,6 +2208,7 @@ int i,i2,j;
 int *adr;
 static char chaine[80];
 int x1,y1,x2,y2;
+int def=-1;
 
 SaveScreen();
 
@@ -2247,11 +2249,15 @@ switch(T[i].type) {
         break;
     case 2:
         PrintAt(x1+T[i].x,y1+T[i].y,"      OK     ");
-        Puce(x1+T[i].x,y1+T[i].y,13,0);
+        if (def!=-1)
+            Puce(x1+T[def].x,y1+T[def].y,13,0);
+        Puce(x1+T[i].x,y1+T[i].y,13,3);
+        def=i;
         break;
     case 3:
         PrintAt(x1+T[i].x,y1+T[i].y,"    CANCEL   ");
-        Puce(x1+T[i].x,y1+T[i].y,13,0);
+        if (def==-1) def=i;
+        Puce(x1+T[i].x,y1+T[i].y,13,(def == i) ? 3 : 0);
         break;
     case 4:
         Cadre(x1+T[i].x,y1+T[i].y,
@@ -2259,7 +2265,8 @@ switch(T[i].type) {
         break;
     case 5:
         PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
-        Puce(x1+T[i].x,y1+T[i].y,13,0);
+        if (def==-1) def=i;
+        Puce(x1+T[i].x,y1+T[i].y,13,(def == i) ? 3 : 0);
         break;
     case 6:
         Cadre(x1+T[i].x,y1+T[i].y,
@@ -2312,15 +2319,10 @@ switch(T[i].type)
         break;
     case 11:
     case 1:
-        direct=InputAt(x1+T[i].x,y1+T[i].y,T[i].str,
-                                                        *(T[i].entier));
+        direct=InputAt(x1+T[i].x,y1+T[i].y,T[i].str,*(T[i].entier));
         break;
     case 2:
-        direct=Puce(x1+T[i].x,y1+T[i].y,13,1);
-        break;
     case 3:
-        direct=Puce(x1+T[i].x,y1+T[i].y,13,1);
-        break;
     case 5:
         direct=Puce(x1+T[i].x,y1+T[i].y,13,1);
         break;
@@ -2414,6 +2416,11 @@ switch(direct)
 
 if (i==-1) i=nbr-1;
 if (i==nbr) i=0;
+
+if ( (T[i].type!=2) & (T[i].type!=3) & (T[i].type!=5))
+    Puce(x1+T[def].x,y1+T[def].y,13,3);
+    else
+    Puce(x1+T[def].x,y1+T[def].y,13,0);
 }
 
 LoadScreen();
@@ -2936,6 +2943,8 @@ void InitSeg(void)
 {
 int n;
 
+ClearEvents();
+
 for(n=0;n<50;n++)
     scrseg[n]=(char*)(0xB8000+n*(Cfg->TailleX)*2);
 }
@@ -3164,6 +3173,33 @@ if (car==27)
 }
 
 
+static int (*fonction[12])(struct barmenu *);
+static char fctname[61];
+
+void ClearEvents(void)
+{
+int n;
+
+for(n=0;n<12;n++)
+    {
+    fonction[n]=NULL;
+    if (n<10)
+        strcpy(fctname+n*6," ---- ");
+    }
+}
+
+
+void NewEvents(int (*fct)(struct barmenu *),char *titre,int key)
+{
+if ((key<1) | (key>12))
+    WinError("Invalid Key");
+
+fonction[key-1]=fct;
+if (key<=10)
+    memcpy(fctname+(key-1)*6,titre,6);
+}
+
+
 /*--------------------------------------------------------------------*\
 |-  1: [RIGHT]   -1: [LEFT]                                           -|
 |-  0: [ESC]      2: [ENTER]                                          -|
@@ -3173,7 +3209,8 @@ int PannelMenu(struct barmenu *bar,int nbr,MENU *menu)
 int max,n,m,car,fin;
 int i,col;
 int col1,col2;
-char let[32];
+char *let;
+char bbar[61];
 int nbraff,prem;
 int xp,yp;
 int c;
@@ -3182,25 +3219,35 @@ xp=menu->x;
 yp=menu->y;
 c=menu->cur;
 
-for (n=0;n<nbr;n++)
-    {
-    i=0;
+let=GetMem(nbr);
 
-    do
+if (((menu->attr)&2)==2)
+    {
+    for (n=0;n<nbr;n++)
+        let[n]=0;
+    }
+else
+    {
+    for (n=0;n<nbr;n++)
         {
+        i=0;
+
         do
             {
-            let[n]=toupper(bar[n].Titre[i]);
-            i++;
-            }
-        while ((let[n]<=32) & (let[n]!=0));
+            do
+                {
+                let[n]=toupper(bar[n].Titre[i]);
+                i++;
+                }
+            while ((let[n]<=32) & (let[n]!=0));
 
-        fin=1;
-        if (let[n]!=0)
-            for (m=0;m<n;m++)
-                if (let[m]==let[n]) fin=0;
+            fin=1;
+            if (let[n]!=0)
+                for (m=0;m<n;m++)
+                    if (let[m]==let[n]) fin=0;
+            }
+        while(fin==0);
         }
-    while(fin==0);
     }
 
 max=0;
@@ -3209,16 +3256,21 @@ for (n=0;n<nbr;n++)
     if (max<strlen(bar[n].Titre))
         max=strlen(bar[n].Titre);
 
-if (nbr>(Cfg->TailleY-10))
-    nbraff=10;
+if (((menu->attr)&1)==1)
+    nbraff=menu->nbrmax;
     else
     nbraff=nbr;
+
+if (nbraff>Cfg->TailleY-yp-2)
+    nbraff=Cfg->TailleY-yp-2;
 
 prem=0;
 
 
-SaveScreen();
+if (((menu->attr)&4)==0)
+    SaveScreen();
 
+strcpy(bbar,fctname);
 
 if (xp<1) xp=1;
 
@@ -3271,9 +3323,14 @@ for (n=0;n<nbraff;n++)
     }
 
 if (bar[c].Help!=NULL)
-    Bar(" Help  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
+    memcpy(bbar," Help ",6);
     else
-    Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
+    memcpy(bbar," ---- ",6);
+
+Bar(bbar);
+
+if (fonction[0]!=NULL)
+    fonction[0](&(bar[c]));
 
 car=Wait(0,0,0);
 
@@ -3286,10 +3343,14 @@ if (car==0)
 
     button=MouseButton();
 
-    if ((button&4)==4) car=13;
+    if ((button&4)==4)
+        car=13;
 
-    if (((button&2)==2) | (ym<0) )
-                            car=27; // en esperant que la barre est en 0
+    if ((button&2)==2)
+        car=27; 
+
+    if ((ym<0) & (((menu->attr)&8)==0))
+        car=27;                     // en esperant que la barre est en 0
 
     if ((button&1)==1)
         {
@@ -3317,13 +3378,35 @@ do
             c--;
             break;
         case 0x4B:     //--- LEFT --------------------------------------
-            fin=-1;
-            car=27;
+            if (((menu->attr)&8)==0)
+                fin=-1, car=27;
             break;
         case 0x4D:     //--- RIGHT -------------------------------------
-            fin=1;
-            car=27;
+            if (((menu->attr)&8)==0)
+                fin=1, car=27;
             break;
+        case 0x49:     //--- PGUP --------------------------------------
+            m=c;
+            for(n=0;n<5;n++)
+                {
+                m--;
+                if (m>=0)
+                    if (bar[m].fct!=0)
+                        c=m;
+                }
+            break;
+
+        case 0x51:     //--- PGDN --------------------------------------
+            m=c;
+            for(n=0;n<5;n++)
+                {
+                m++;
+                if (m<nbr)
+                    if (bar[m].fct!=0)
+                        c=m;
+                }
+            break;
+
         case 0x50:     //--- DOWN --------------------------------------
             c++;
             break;
@@ -3344,6 +3427,18 @@ do
             if (bar[c].Help!=NULL)
                 HelpTopic(bar[c].Help);
             break;
+        case 0x3C:     //--- F2 ----------------------------------------
+        case 0x3D:     //--- F3 ----------------------------------------
+        case 0x3E:     //--- F4 ----------------------------------------
+        case 0x3F:     //--- F5 ----------------------------------------
+        case 0x40:     //--- F6 ----------------------------------------
+        case 0x41:     //--- F7 ----------------------------------------
+        case 0x42:     //--- F8 ----------------------------------------
+        case 0x43:     //--- F9 ----------------------------------------
+        case 0x44:     //--- F0 ----------------------------------------
+            if (fonction[HI(car)-0x3B]!=NULL)
+                fonction[HI(car)-0x3B](&(bar[c]));
+            break;
         }
 
     if (LO(car)!=0)
@@ -3356,9 +3451,12 @@ while (bar[c].fct==0);
 }
 while ( (car!=13) & (car!=27) );
 
-LoadScreen();
+if (((menu->attr)&4)==0)
+    LoadScreen();
 
 menu->cur=c;
+
+LibMem(let);
 
 if (car==27)
     return fin;
@@ -3557,6 +3655,7 @@ x2=x1+max+3;
 y2=y1+(NbrMain+1)*3;
 
 SaveScreen();
+Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
 Cadre(x1,y1,x2,y2,0,Cfg->col[52],Cfg->col[53]);
 Window(x1+1,y1+1,x2-1,y2-1,Cfg->col[24]);
@@ -3670,6 +3769,7 @@ if (y1<0) y1=2;
 if (y2>=(Cfg->TailleY-1)) y2=Cfg->TailleY-3;
 
 SaveScreen();
+Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
 Cadre(x1,y1,x2,y2,0,Cfg->col[52],Cfg->col[53]);
 Window(x1+1,y1+1,x2-1,y2-1,Cfg->col[24]);
@@ -3807,11 +3907,13 @@ if (help_fin==1)
 SaveScreen();
 PutCur(32,0);
 
+Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  Quit ");
+
 
 x1=(Cfg->TailleX-80)/2;
 
-Cadre(x1,0,x1+79,(Cfg->TailleY)-1,0,Cfg->col[52],Cfg->col[53]);
-Window(x1+1,1,x1+78,(Cfg->TailleY)-2,Cfg->col[24]);
+Cadre(x1,0,x1+79,(Cfg->TailleY)-2,0,Cfg->col[52],Cfg->col[53]);
+Window(x1+1,1,x1+78,(Cfg->TailleY)-3,Cfg->col[24]);
 
 pres=z;
 
@@ -3963,7 +4065,7 @@ while(1)
 
         n++;
 
-        if (y==Cfg->TailleY-2)
+        if (y==Cfg->TailleY-3)
             {
             while(hlp[apres]!=0x0A) apres++;
             apres++;
@@ -4019,7 +4121,7 @@ if (nbrkey==0)
 
             if (c==0)
                 {
-                if (y==Cfg->TailleY-1)
+                if (y==Cfg->TailleY-2)
                     c=80*256;
 
                 if (y==0)

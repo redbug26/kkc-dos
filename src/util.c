@@ -28,6 +28,14 @@ void ClearSpace(char *name);    //--- efface les espaces inutiles ------
 \*--------------------------------------------------------------------*/
 char *GetLine(char *ligne,FILE *fic);
 
+int PcTeamGroup(char *groupe);
+int MenuGroup(char *groupe);
+void TeamAffLine(char *titre,char *ligne);
+int TeamSelect(struct barmenu *bar);
+
+int MenuPcTeamExist(void);
+int UserMenuExist(void);
+
 
 /*--------------------------------------------------------------------*\
 |- Buffer global                                                      -|
@@ -435,6 +443,18 @@ while(1);
 return res;
 }
 
+int UserMenuExist(void)
+{
+FILE *fic;
+
+fic=fopen(KKFics->menu,"rt");
+if (fic==NULL) return 0;
+fclose(fic);
+
+return 1;
+}
+
+
 /*--------------------------------------------------------------------*\
 |-  Result:    1 --> fin                                              -|
 \*--------------------------------------------------------------------*/
@@ -449,7 +469,6 @@ char ok;
 int nbr;
 static struct barmenu bar[20];
 char titre[20][25];
-int retour,x,y,n;
 MENU menu;
 
 fic=fopen(KKFics->menu,"rt");
@@ -508,25 +527,15 @@ if (nbr==0)
     return 1;
     }
 
-x=4;
-y=4;
-n=0;
+menu.attr=8;
 
-do
+menu.x=4;
+menu.y=4;
+menu.cur=0;
+
+if (PannelMenu(bar,nbr,&menu)==2)
     {
-    menu.x=x;
-    menu.y=y;
-    menu.cur=n;
-
-    retour=PannelMenu(bar,nbr,&menu);
-
-    n=menu.cur;
-    }
-while ((retour==1) | (retour==-1));
-
-if (retour==2)
-    {
-    fseek(fic,bar[n].fct,SEEK_SET);
+    fseek(fic,bar[menu.cur].fct,SEEK_SET);
     GetLine(ligne,fic);
     buf=strchr(ligne,'[');
 
@@ -584,22 +593,50 @@ void Menu(void)
 {
 char res[256];
 int r;
+static struct barmenu bar[6];
+MENU menu;
+int nbr=0;
 
-
-SaveScreen();
-
-Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
-
-strcpy(res,"[Main]");
-
-do
+if (MenuPcTeamExist())
     {
-    r=MenuGroup(res);
+    bar[nbr].Titre="CD team Menu";
+    bar[nbr].Help="cdteam";
+    bar[nbr].fct=2;
+    nbr++;
     }
-while(r==0);
 
-LoadScreen();
+if (UserMenuExist())
+    {
+    bar[nbr].Titre="User Menu";
+    bar[nbr].Help="User Menu";
+    bar[nbr].fct=1;
+    nbr++;
+    }
 
+menu.attr=8;
+
+menu.x=4;
+menu.y=4;
+menu.cur=0;
+
+if (nbr==0) return;
+
+if (nbr>1)
+    if (PannelMenu(bar,nbr,&menu)!=2)
+        return;
+
+switch(bar[menu.cur].fct)
+    {
+    case 1:
+        strcpy(res,"[Main]");
+        do
+            r=MenuGroup(res);
+        while(r==0);
+        break;
+    case 2:
+        PcTeam();
+        break;
+    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -635,9 +672,20 @@ struct TmtWin F = {-1,5,46,14,"New User Menu"};
 
 strncpy(title,titbuf,32);
 strcpy(section,"[Main]");
+
 Line2PrcLine(buf,line);
-if (!strcmp(line,"!.!"))
+
+if (!strncmp(line,"!.!",3))
+    {
+    int n;
+
+    strcpy(buffer,line);
     strcpy(line,buf);
+    for(n=0;n<strlen(line);n++)
+        if (line[n]==32) break;
+    strcpy(line+n+1,buffer+4);
+    }
+
 
 l1=0;
 
@@ -669,5 +717,680 @@ strcat(buffer,line);
 MenuInsert(section,title,buffer);
 }
 
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+static FILE *teamfic;
 
+/*--------------------------------------------------------------------*\
+|-                                                                    -|
+\*--------------------------------------------------------------------*/
+char *TeamGetLine(char *res,FILE *fic)
+{
+int n;
+char *a;
+a=fgets(res,1024,fic);
+
+if (a!=NULL)
+    {
+    n=strlen(res)-1;
+    while ( ( (res[n]==0x0D) | (res[n]==0x0A) ) & (n>=0) ) res[n]=0,n--;
+    }
+
+return a;
+}
+
+void TeamAffLine(char *titre,char *ligne)
+{
+int n,x,y,mx,x1,y1;
+
+SaveScreen();
+
+mx=0;
+x=0;
+y=0;
+
+for(n=0;n<strlen(ligne);n++)
+    {
+    char aff=1;
+
+    switch(ligne[n])
+        {
+        case ' ': if (x>30) aff=0,x=0,y++; break;
+        }
+    if ((aff) & (ligne[n]>=32))
+        x++;
+    if (x>mx) mx=x;
+    }
+
+x1=(Cfg->TailleX-mx)/2;
+
+y1=(Cfg->TailleY-y)/2;
+
+if (x<strlen(titre)) x=strlen(titre);
+
+Cadre(x1-1,y1-1,x1+mx,y1+y+2,3,Cfg->col[46],Cfg->col[47]);
+Window(x1,y1,x1+mx-1,y1+y+1,Cfg->col[28]);
+
+PrintAt(x1,y1,"%s",titre);
+ColLin(x1,y1,x,Cfg->col[29]);
+
+x=0;
+y=1;
+
+for(n=0;n<strlen(ligne);n++)
+    {
+    char aff=1;
+
+    switch(ligne[n])
+        {
+        case ' ': if (x>30) aff=0,x=0,y++; break;
+        }
+    if ((aff) & (ligne[n]>=32))
+        {
+        PrintAt(x1+x,y1+y,"%c",ligne[n]);
+        x++;
+        }
+    }
+
+while(!KbHit());
+
+LoadScreen();
+}
+
+
+
+int TeamFct(struct barmenu *bar)
+{
+static char ligne[1024];
+int n,x,y,mx,x1,y1;
+
+SaveScreen();
+
+fseek(teamfic,bar->fct,SEEK_SET);
+TeamGetLine(ligne,teamfic);
+TeamGetLine(ligne,teamfic);
+
+mx=0;
+x=0;
+y=0;
+
+
+for(n=0;n<strlen(ligne);n++)
+    {
+    char aff=1;
+
+    switch(ligne[n])
+        {
+        case '$': aff=0,x=0,y++; break;
+        case '*': ligne[n]=','; break;
+        case ' ': if (x>30) aff=0,x=0,y++; break;
+        }
+    if ((aff) & (ligne[n]>=32))
+        x++;
+    if (x>mx) mx=x;
+    }
+
+x1=Cfg->TailleX-mx-1;
+
+y1=4;
+
+if (x<strlen(bar->Titre)) x=strlen(bar->Titre);
+
+Cadre(x1-1,y1-1,x1+mx,y1+y+2,3,Cfg->col[46],Cfg->col[47]);
+Window(x1,y1,x1+mx-1,y1+y+1,Cfg->col[28]);
+
+PrintAt(x1,y1,"%s",bar->Titre);
+ColLin(x1,y1,x,Cfg->col[29]);
+
+x=0;
+y=1;
+
+for(n=0;n<strlen(ligne);n++)
+    {
+    char aff=1;
+
+    switch(ligne[n])
+        {
+        case '$': aff=0,x=0,y++; break;
+        case '*': ligne[n]=','; break;
+        case ' ': if (x>30) aff=0,x=0,y++; break;
+        }
+    if ((aff) & (ligne[n]>=32))
+        {
+        PrintAt(x1+x,y1+y,"%c",ligne[n]);
+        x++;
+        }
+    }
+
+while(!KbHit());
+
+LoadScreen();
+
+return 0;
+}
+
+/* kf1: 1-> path+fichier
+        2-> info … afficher
+
+   kf2: 0-> run
+        1-> installation
+
+   kf3: 0-> ?
+        1-> dos
+        2-> win95
+        3-> win3x
+*/
+
+int TeamSelect(struct barmenu *bar)
+{
+int retour=0;
+static char ligne[1024],buf[256];
+int i,kf1,kf2,kf3,len,ok;
+
+fseek(teamfic,bar->fct,SEEK_SET);
+TeamGetLine(ligne,teamfic);
+
+kf1=0;
+if (!strnicmp(ligne,"!AVI! !CDROM!",13)) kf1=1,kf2=0,kf3=0,len=13;
+if (!strnicmp(ligne,"!CDQUIT!",8))       kf1=1,kf2=0,kf3=0,len=8;
+if (!strnicmp(ligne,"!CDROM!",7))        kf1=1,kf2=0,kf3=0,len=7;
+if (!strnicmp(ligne,"!DOS! !CDROM!",13)) kf1=1,kf2=0,kf3=1,len=13;
+if (!strnicmp(ligne,"!DOSe!",6))         kf1=2,kf2=0,kf3=1,len=6;
+if (!strnicmp(ligne,"!DOSi!",6))         kf1=2,kf2=0,kf3=1,len=6;
+if (!strnicmp(ligne,"!HLPe!",6))         kf1=1,kf2=0,kf3=0,len=6;
+if (!strnicmp(ligne,"!NOT!",5))          kf1=2,kf2=0,kf3=0,len=5;
+if (!strnicmp(ligne,"!NOTw!",6))         kf1=2,kf2=0,kf3=0,len=6;
+if (!strnicmp(ligne,"!Q95i!",6))         kf1=1,kf2=1,kf3=2,len=6;
+if (!strnicmp(ligne,"!QINi!",6))         kf1=1,kf2=1,kf3=3,len=6;
+if (!strnicmp(ligne,"!QTW! !CDROM!",13)) kf1=1,kf2=0,kf3=0,len=13;
+if (!strnicmp(ligne,"!TXTe!",6))         kf1=1,kf2=0,kf3=0,len=6;
+if (!strnicmp(ligne,"!W3xi!",6))         kf1=1,kf2=1,kf3=3,len=6;
+if (!strnicmp(ligne,"!W95e!",6))         kf1=1,kf2=0,kf3=2,len=6;
+if (!strnicmp(ligne,"!W95i!",6))         kf1=1,kf2=1,kf3=2,len=6;
+if (!strnicmp(ligne,"!WINe!",6))         kf1=1,kf2=0,kf3=3,len=6;
+if (!strnicmp(ligne,"!WINi!",6))         kf1=1,kf2=1,kf3=3,len=6;
+if (!strnicmp(ligne,"!WRIe!",6))         kf1=1,kf2=0,kf3=0,len=6;
+
+if (kf1==1)
+    {
+    strcpy(buf,DFen->path);
+    Path2Abs(buf,ligne+len);
+    Path2Abs(buf,"..");
+    CommandLine("#CD %s",buf);
+    FileinPath(ligne+len,buf);
+    ok=-1;
+    len=strlen(buf);
+
+    for(i=0;i<DFen->nbrfic;i++)
+        {
+        buf[len]=0;
+        if (!WildCmp(DFen->F[i]->name,buf))
+            {   ok=i;  break; }
+        strcpy(buf+len,".exe");
+        if (!WildCmp(DFen->F[i]->name,buf))
+            {   ok=i;  break; }
+        strcpy(buf+len,".com");
+        if (!WildCmp(DFen->F[i]->name,buf))
+            {   ok=i;  break; }
+        strcpy(buf+len,".bat");
+        if (!WildCmp(DFen->F[i]->name,buf))
+            {   ok=i;  break; }
+        }
+    if (ok!=-1)
+        {
+        DFen->pcur=i;
+        DFen->scur=(DFen->yl)/2;              // Centrage du nom
+        if ((kf3>=2) & (KKCfg->_Win95!=1))
+            WinError("This program cannot be run in DOS mode");
+            else
+            {
+            retour=1;
+            strcpy(KKCfg->FileName,DFen->F[DFen->pcur]->name);
+            KKCfg->key=13;
+            }
+        }
+
+    }
+
+if (kf1==2)
+    {
+    TeamAffLine(bar->Titre,ligne+len+1);
+    Wait(0,0,0);
+    }
+
+if (kf1==0)
+    PrintAt(0,0,"%s",ligne);
+
+
+return retour;
+}
+
+
+/*--------------------------------------------------------------------*\
+|-  Result:    1 --> fin                                              -|
+\*--------------------------------------------------------------------*/
+
+int PcTeamGroup(char *groupe)
+{
+static char ligne[1024];
+int retour=0;
+int nbr;
+static struct barmenu bar[100];
+MENU menu;
+
+teamfic=fopen(groupe,"rt");
+if (teamfic==NULL) return 1;
+
+//--- Recherche le menu "groupe" ---------------------------------------
+
+nbr=0;
+do
+    {
+    if (TeamGetLine(ligne,teamfic)==NULL) break;
+    if (ligne[0]!='@') break;
+
+    bar[nbr].Titre=GetMem(strlen(ligne));
+    memcpy(bar[nbr].Titre,ligne+1,strlen(ligne)+1); // On passe le '@' -
+
+    bar[nbr].Help="cdteam";
+
+    bar[nbr].fct=ftell(teamfic);
+
+    TeamGetLine(ligne,teamfic);
+    TeamGetLine(ligne,teamfic);
+
+    nbr++;
+    if (nbr==100) break;
+    }
+while(1);
+
+if (nbr==0)
+    {
+    fclose(teamfic);
+    return 1;
+    }
+
+menu.attr=2+8;
+
+menu.x=4;
+menu.y=4;
+menu.cur=0;
+
+do
+    {
+    NewEvents(TeamFct,"PcTeam",1);
+
+    if (PannelMenu(bar,nbr,&menu)!=2)
+        break;
+
+    if (TeamSelect(&(bar[menu.cur])))
+        {
+        retour=1;
+        break;
+        }
+    }
+while(1);
+
+ClearEvents();
+
+fclose(teamfic);
+
+return retour;
+}
+
+/*--------------------------------------------------------------------*\
+|- Menu                                                               -|
+\*--------------------------------------------------------------------*/
+int MenuPcTeamExist(void)
+{
+char res[256];
+
+strcpy(res,DFen->path);
+Path2Abs(res,"\\pc__team\\text_00.txt");
+teamfic=fopen(res,"rb");
+if (teamfic==NULL) return 0;
+fclose(teamfic);
+return 1;
+}
+
+void PcTeam(void)
+{
+int drive;
+MENU menu;
+static struct barmenu bar[6];
+char res[256],name[12],volume[32];
+static int n=0;
+char *HelpText="cdteam";
+
+strcpy(res,DFen->path);
+Path2Abs(res,"\\pc__team\\text_00.txt");
+teamfic=fopen(res,"rb");
+if (teamfic==NULL) return;
+fclose(teamfic);
+
+drive=toupper(DFen->path[0])-'A';
+GetVolume(drive,volume);
+
+bar[0].Titre="Demos ludiques"; bar[0].Help=HelpText;
+bar[1].Titre="Demos utilitaires"; bar[1].Help=HelpText;
+bar[2].Titre="Jeux sharewares"; bar[2].Help=HelpText;
+bar[3].Titre="Utils shareware"; bar[3].Help=HelpText;
+bar[4].Titre="Demos, images et sons"; bar[4].Help=HelpText;
+bar[5].Titre="Divers"; bar[5].Help=HelpText;
+
+if (!strnicmp(volume,"LUDICD",6))
+    {
+    bar[0].Titre="Jeux commerciaux";
+    bar[1].Titre="Ludo-educatifs";
+    bar[2].Titre="Shareware";
+    bar[3].Titre="Trucs et astuces";
+    bar[4].Titre="Add-on et scenarios";
+    bar[5].Titre="Divers";
+    }
+
+if (!strnicmp(volume,"CDPRO",5))
+    {
+    bar[0].Titre="Outils commerciaux";
+    bar[1].Titre="Shareware";
+    bar[2].Titre="Creations";
+    bar[3].Titre="Toolbox";
+    bar[4].Titre="Hardware";
+    bar[5].Titre="Divers";
+    }
+
+bar[0].fct=1;
+bar[1].fct=2;
+bar[2].fct=3;
+bar[3].fct=4;
+bar[4].fct=5;
+bar[5].fct=6;
+
+menu.x=4;
+menu.y=4;
+menu.attr=8;
+
+menu.cur=n;
+
+do
+{
+if (PannelMenu(bar,6,&menu)!=2)
+    break;
+
+strcpy(res,DFen->path);
+Path2Abs(res,"\\pc__team");
+sprintf(name,"text_0%d.txt",menu.cur);
+Path2Abs(res,name);
+
+if (PcTeamGroup(res))
+    break;
+}
+while(1);
+
+n=menu.cur;
+}
+
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+#define MAXLCD 100
+
+void ExecLCD(FENETRE *Fen,char *dir)
+{
+MENU menu;
+static struct barmenu *bar;
+int nbrbar=0;
+
+FILE *fic;
+static char rep[256],rep2[256],name[13];
+char a[3],err;
+short int nbr;
+int m,n,l;
+
+err=0;
+
+bar=GetMem(sizeof(struct barmenu)*MAXLCD);
+
+strcpy(rep,Fen->path);
+Path2Abs(rep,"\\treeinfo.ncd");
+
+strcpy(rep2,Fen->path);
+Path2Abs(rep2,dir);
+
+do
+{
+fic=fopen(rep,"rb");
+if (fic==NULL)
+    if (MakeNCD()) return;
+
+}while(fic==NULL);
+
+fseek(fic,5,SEEK_SET);
+
+fread(&nbr,1,2,fic);
+
+fseek(fic,2,SEEK_CUR);
+
+for(n=0;n<nbr;n++)
+    {
+    fread(name,1,13,fic);
+    fread(a,1,3,fic);
+
+    l=0;
+    for(m=0;m<strlen(rep);m++)
+        {
+        if (rep[m]=='\\')
+            {
+            l++;
+            if (l==a[0]) rep[m]=0;
+            }
+        }
+    Path2Abs(rep,name);
+    
+    if ((!WildCmp(name,dir)) | (!WildCmp(rep,rep2)))
+        {
+        bar[nbrbar].Titre=GetMem(strlen(rep)+1);
+        strcpy(bar[nbrbar].Titre,rep);
+        bar[nbrbar].Help=NULL;
+        bar[nbrbar].fct=nbrbar+1;
+        nbrbar++;
+        if (nbrbar==MAXLCD) break;
+        }
+    }
+fclose(fic);
+
+menu.x=2;
+menu.y=2;
+
+menu.attr=2+8;
+
+menu.cur=0;
+
+if (nbrbar==0)
+    err=1;
+
+if (nbrbar>1)
+    if (PannelMenu(bar,nbrbar,&menu)!=2)
+        err=1;
+
+if (!err)
+    CommandLine("#cd %s",bar[menu.cur].Titre);
+
+
+for(n=0;n<nbrbar;n++)
+    LibMem(bar[n].Titre);
+LibMem(bar);
+}
+
+
+// Renvoit 0 si tout va bien
+
+int MakeNCD(void)
+{
+char prem;
+struct file *ff;
+static char **TabRec,*ARec;
+int NbrRec;
+int n,m;
+static char rep[256],moi[256],nom[256];
+char name[13];
+FENETRE *SFen,*OldFen;
+static char volname[256];
+FILE *fic;
+int pos;
+
+short int nbr,crc;
+
+strcpy(volname,DFen->path);
+Path2Abs(volname,"\\");
+
+strcpy(rep,DFen->path);
+Path2Abs(rep,"\\treeinfo.ncd");
+
+fic=fopen(rep,"wb");
+if (fic==NULL) return 1;
+
+crc=0;
+nbr=0;
+
+fwrite("PNCI\0",5,1,fic);
+fwrite(&nbr,2,1,fic);
+fwrite(&nbr,2,1,fic);
+
+
+
+OldFen=DFen;
+
+SFen=GetMem(sizeof(FENETRE));
+SFen->F=GetMem(TOTFIC*sizeof(void *));
+
+SFen->x=40;
+SFen->nfen=7;
+SFen->FenTyp=0;
+SFen->Fen2=SFen;
+SFen->y=1;
+SFen->yl=(Cfg->TailleY)-4;
+SFen->xl=39;
+SFen->order=0;
+SFen->pcur=0;
+SFen->scur=0;
+
+DFen=SFen;
+
+TabRec=GetMem(500*sizeof(char*));
+ARec=GetMem(500*3);
+
+TabRec[0]=GetMem(strlen(volname)+1);
+memcpy(TabRec[0],volname,strlen(volname)+1);
+NbrRec=1;
+
+do
+{
+NbrRec--;
+
+strcpy(nom,TabRec[0]);
+LibMem(TabRec[0]);
+
+CommandLine("#cd %s",nom);
+
+nbr++;
+
+ARec[0]=0;
+for(n=0;n<strlen(nom);n++)
+    if (nom[n]=='\\') ARec[0]++;
+
+memset(name,0,13);
+FileinPath(nom,name);
+
+if (strlen(name)==0)
+    {
+    ARec[0]=0;
+    ARec[1]=1;
+    ARec[2]=0;
+
+    memset(name,0,13);
+
+    strcpy(name,"\\");
+    }
+
+fwrite(name,13,1,fic);
+fwrite(ARec,3,1,fic);
+
+for(n=0;n<13;n++)
+    crc+=name[n];
+for(n=0;n<3;n++)
+    crc+=ARec[n];
+
+for(n=0;n<NbrRec;n++)
+    {
+    TabRec[n]=TabRec[n+1];
+    ARec[n*3]=ARec[(n+1)*3];
+    ARec[n*3+1]=ARec[(n+1)*3+1];
+    ARec[n*3+2]=ARec[(n+1)*3+2];
+    }
+
+prem=1;
+pos=0;
+for (m=0;m<DFen->nbrfic;m++)
+    {
+    ff=DFen->F[m];
+
+    if (ff->name[0]!='.')
+        {
+        if (IsDir(ff))
+            {
+            int l;
+
+            for(n=NbrRec;n>pos;n--)
+                {
+                TabRec[n]=TabRec[n-1];
+                ARec[n*3]=ARec[(n-1)*3];
+                ARec[n*3+1]=ARec[(n-1)*3+1];
+                ARec[n*3+2]=ARec[(n-1)*3+2];
+                }
+
+            strcpy(moi,nom);
+            Path2Abs(moi,ff->name);
+
+            l=strlen(moi)+1;
+
+            TabRec[pos]=GetMem(l);
+            memcpy(TabRec[pos],moi,l);
+
+            ARec[pos*3+1]=prem;
+            ARec[pos*3+2]=1;
+
+            prem=0;
+
+            NbrRec++;
+            pos++;
+            }
+        }
+    }
+if (pos!=0)
+    ARec[(pos-1)*3+2]=0;
+}
+while (NbrRec!=0);
+
+LibMem(ARec);
+LibMem(TabRec);
+
+LibMem(SFen->F);
+LibMem(SFen);
+
+DFen=OldFen;
+
+// le crc est la somme de tous les names[13] et des a[3]
+fwrite(&crc,2,1,fic);
+
+fseek(fic,5,SEEK_SET);
+fwrite(&nbr,2,1,fic);
+
+nbr=((nbr&0xFF00)/256)+0x12A+(nbr&0xFF);
+fwrite(&nbr,2,1,fic);
+
+fclose(fic);
+
+return 0;
+}
 

@@ -417,7 +417,7 @@ if (err==0)
     if (!strcmp(Ficname,".."))
         {
         for (n=0;n<DFen->nbrfic;n++)
-            if (!stricmp(DFen->F[n]->name,nom))
+            if (!WildCmp(DFen->F[n]->name,nom))
                 {
                 DFen->pcur=n;
                 DFen->scur=(DFen->yl)/2;              // Centrage du nom
