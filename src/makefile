@@ -1,138 +1,78 @@
-#-----------------------------------------------------------------------#
-#                                                                       #
-#                     Ketchup Killers making file                       #
-#                                                                       #
-#                      by RedBug/Ketchup Killers                        #
-#                                                                       #
-#-----------------------------------------------------------------------#
+################
 
-#.SILENT
+# -o3 pour maximum optimisation
 
-#DEBUG = 1
+CC = gcc
+COFLAGS = -c -g -O3 -fno-exceptions -funsigned-char -Iinclude -Iinclude/kkt -DLINUX
+CFLAGS =  -lncurses
 
-CA = wasm
-CC = wcc386
-# wpp386
-CL = *wlink
-CB = wlib
+OBJS = kkmain.o idf.o hard.o win.o gestion.o view.o driver.o ficidf.o copie.o delete.o search.o util.o reddies.o dgpdos.o macro.o kkedit.o english.o wired.o
 
-SYSTEM = pmodew
-#pmodew
-#os2v2_pm
-# win95
-#dos4g
-
-ASM = tasm
-ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
-
-#-----------------------------------------------------------------------#
-# Maximum optimization for speed                                        #
-# CCOPTS = -w3 -dDEBUG -5r -fpi -oneatx -s -zdp -d__WC32__ -zu          #
-# -zu fait       tout planter                                           #
-# -dDEBUG -d3    pour debugging                                         #
-# -mf            pour Model FLAT                                        #
-# -s             pour enlever les checks stack overflow                 #
-# -zm            chaque fonction est mise dans un segment different     #
-# -wx            tout les warning                                       #
-# -od            disable tous les optimisations                         #
-# -5r -5s        pentium register, stack calling                        #
-# -et            pentium profilling                                     #
-# -ou            unique adresse                                         #
-# -xst           save exception                                         #
-# -oneatx        pour optimization                                      #
-# -fpi           pour emuler le coprocesseur                            #
-#-----------------------------------------------------------------------#
-
-#------------------------ En phase de debugging ------------------------#
-#-----------------------------------------------------------------------#
-!ifdef DEBUG
-
-CCOPTS = -wx -5r -fpc -zdp -d__WC32__ -mf -d3 -zm -od -dDEBUG -zp1
-AOPTS = /d1
-LOPTS = option stack=60000 debug all option c option map
-LAOPTS = debug all
-
-#------------------------  En phase de release  ------------------------#
-#-----------------------------------------------------------------------#
-!else
-
-#zp1 alignement
-
-CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1 -zm
-# -obx  (watcom 11.0) chaipuqoui
-# -oneatx (prend bcp de taille)
-# quand on mets les optimisations, on peux plus faire un shell, pq ?
-
-# -zm: each function in a segment
-# option el : eliminate no referenced segment
-
-AOPTS =
-
-LOPTS = option stack=60000 option c option el
-LAOPTS =
-
-!endif
+SETUP_OBJS = kksetup.o hard.o idf.o reddies.o ficidf.o dgpdos.o macro.o english.o
 
 
-#-----------------------------------------------------------------------#
-#----------------- Contruction de tous les executables -----------------#
-#-----------------------------------------------------------------------#
+all : kkmain
 
-all : kk.exe kkmain.exe kksetup.exe kkdesc.exe kkkkrgr.exe kkfont.exe &
-      idf.lib hard.lib readme.exe
-#      edit.exe
+kkmain: $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $@
 
-kkmain.exe  : kkmain.obj     idf.lib  hard.lib    win.obj   gestion.obj &
-                view.obj  driver.obj ficidf.obj copie.obj    delete.obj &
-              search.obj   kkfct.obj  util.obj reddies.obj    rbdos.obj &
-               macro.obj
-             $(CL) system $(SYSTEM) $(LOPTS)  &
-                   option modname = 'Ketchup Killers Commander 0.91' &
-                   name $@ file {$<}
+kkmain.o: kkmain.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-kksetup.exe : kksetup.obj hard.lib idf.lib reddies.obj ficidf.obj &
-              kkfct.obj rbdos.obj
-             $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
+kksetup: $(SETUP_OBJS)
+	$(CC) $(CFLAGS) $(SETUP_OBJS) -o $@
 
-kkdesc.exe  : kkdesc.obj idf.lib hard.lib
-             $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
+kksetup.o: kksetup.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-kkkkrgr.exe : kkkkrgr.obj hard.lib
-             $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
+idf.o: idf.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-kkfont.exe  : kkfont.obj hard.lib
-             $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
+hard.o: hard.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-edit.exe  : edit.obj hard.lib
-             $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
+win.o: win.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-kk.exe      : kk.obj
-             $(CL) $(LAOPTS) name $@ file {$<}
+gestion.o: gestion.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-readme.exe  : readme.obj
-             $(CL) $(LAOPTS) name $@ file {$<}
+view.o: view.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-view.dll : view.obj hard.lib idf.lib reddies.obj
-             $(CL) system $(SYSTEM) dll $(LOPTS) name $@ file {$<}
+driver.o: driver.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-.asm.obj:
-         $(CA) $* $(AOPTS)
-.c.obj:
-         $(CC) $* $(CCOPTS)
+ficidf.o: ficidf.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-idf.lib : idf.obj
-         $(CB) -c -n $@ +-$<
+copie.o: copie.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-hard.lib : hard.obj
-         $(CB) -c -n $@ +-$<
+delete.o: delete.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
+search.o: search.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
+util.o: util.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
 
-#-----------------------------------------------------------------------#
-#                                                                       #
-#  This was the Ketchup Killers making file                             #
-#                                                                       #
-#          by RedBug/Ketchup Killers                                    #
-#                                                                       #
-# EMAIL: RedBug@pctrading.be                                            #
-#-----------------------------------------------------------------------#
+reddies.o: reddies.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
+
+dgpdos.o: dgpdos.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
+
+macro.o: macro.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
+
+kkedit.o: kkedit.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
+
+english.o: english.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
+
+wired.o: wired.cc
+	$(CC) $(COFLAGS) $*.cc -o $@
+ 

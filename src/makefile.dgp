@@ -1,0 +1,14 @@
+################
+
+# -o3 pour maximum optimisation
+
+CC = gcc
+CFLAGS = -s -O3 -m486 -funsigned-char -fpack-struct
+
+OBJS = kkmain.o idf.o hard.o win.o gestion.o view.o driver.o ficidf.o copie.o delete.o search.o kkfct.o util.o reddies.o dgpdos.o macro.o edit.o
+
+all : kkdj.exe
+
+kkdj.exe  : $(OBJS)
+	 $(CC) $(CLFAGS) $(OBJS) -o $@
+

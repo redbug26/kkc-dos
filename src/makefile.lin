@@ -1,0 +1,11 @@
+CP = g++
+
+CPFLAGS = -s -O3 -m486 -funsigned-char -fpack-struct -Iinclude -Iinclude/kkt -DLINUX -lncurses
+
+all: kkedit
+
+kkedit: kkedit.cpp hard.cpp
+	$(CP) $(CPFLAGS) kkedit.cpp hard.cpp -o $@
+
+
+
