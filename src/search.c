@@ -243,7 +243,7 @@ cherdate(nom);
 
 if (nbr==0)
     {
-    WinError("Not file found");
+    WinError("No file found");
     ChargeEcran();
     }
     else

@@ -736,7 +736,13 @@ struct key K[nbrkey]=	{
         103,                          // Numero du format (unique)
         0,                            // vaut la clef doit ˆtre verifie par proc
         0,                            // vaut 1 si il existe un lien vers une proc
-        5},                           // type de fichier (1: module, 4: image, 3:executable, 6:other, 2:sample, 5:anim)
+        5},                           // type de fichier (1: module, 4: image, 3:archive, 6:other, 2:sample, 5:anim)
+{  {0x1F,0x8B,0x08    }, // úúú
+    3,
+    0,
+    "GZip archiver",
+    "GZ",
+    "?",105,0,0,3},
 
 
 /*******************************************
@@ -2648,6 +2654,7 @@ for(n=0;n<32768;n++)
                 titre[n-d]=0;
                 if (!stricmp(titre,"HTML")) return 0;
                 if (!stricmp(titre,"TITLE")) return 0;
+                if (!stricmp(titre,"PRE")) return 0;
                 d=0;
                 }
             break;

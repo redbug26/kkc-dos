@@ -22,6 +22,8 @@
 
 #include "win.h"
 
+void TPath2Abs(char *p,char *Ficname);
+
 void GetFreeMem(char *buffer);
 #pragma aux GetFreeMem = \
     "mov ax,0500h" \
@@ -195,6 +197,37 @@ return s;
 //---------------------------------------------
 void Path2Abs(char *p,char *Ficname)
 {
+int l,m,n;
+char car;
+
+for(n=0;n<strlen(p);n++)
+    if (p[n]=='/') p[n]='\\';
+
+for(n=0;n<strlen(Ficname);n++)
+    if (Ficname[n]=='/') Ficname[n]='\\';
+
+m=0;
+l=strlen(Ficname);
+for(n=0;n<l;n++)
+    if (Ficname[n]=='\\')
+        {
+        car=Ficname[n+1];
+
+        Ficname[n+1]=0;
+
+        TPath2Abs(p,Ficname+m);
+
+        Ficname[n+1]=car;
+        Ficname[n]=0;
+
+        m=n+1;
+        }
+
+TPath2Abs(p,Ficname+m);
+}
+
+void TPath2Abs(char *p,char *Ficname)
+{
 int n;
 static char old[256];     // Path avant changement
 
@@ -202,7 +235,7 @@ memcpy(old,p,256);
 
 if (p[strlen(p)-1]=='\\') p[strlen(p)-1]=0;
 
-if ( (!strcmp(Ficname,"..")) & (p[0]!=0) ) {
+if ( (!strncmp(Ficname,"..",2)) & (p[0]!=0) ) {
     for (n=strlen(p);n>0;n--)
         if (p[n]=='\\') {
             p[n]=0;
@@ -232,6 +265,8 @@ if (Ficname[0]!='.') {
 if (p[strlen(p)-1]==':') strcat(p,"\\");
 }
 
+
+
 void ChangeDir(char *Ficname)
 {
 static char nom[256];
@@ -246,11 +281,7 @@ memcpy(old,p,256);
 for(n=0;n<strlen(Ficname);n++)
     if (Ficname[n]=='/') Ficname[n]='\\';
 
-if (!strcmp(Ficname,"..")) {
-    for (n=strlen(p);n>0;n--)
-        if (p[n]=='\\') break;
-    strcpy(nom,p+n+1);
-    }
+FileinPath(DFen->path,nom);
 
 Path2Abs(DFen->path,Ficname);
 

@@ -1370,8 +1370,6 @@ do {
             ChangeLine();      // Affichage Path
             break;
         case 13:    // ENTER
-
-
             switch(i=EnterArchive())
                 {
                 case 0:
