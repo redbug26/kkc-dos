@@ -211,7 +211,7 @@ for (m=0;m<DFen->nbrfic;m++)
 |- Subdir                                                             -|
 \*--------------------------------------------------------------------*/
 
-    if ( (ff->name[0]!='.')  & (sw!=5) )
+    if ( (ff->name[0]!='.')  & (sw!=6) )
         {
         if ( (IsDir(ff))
            | ((!stricmp(getext(ff->name),"KKD")) & (KKCfg->enterkkd==1)
@@ -251,35 +251,36 @@ static int StrLen=40;
 static char CadreLength=68;
 
 static char x1=26,x2=40,x3=40;
-static int y1=6,y2=2,y3=2;
+static int y1=7,y2=2,y3=2;
 
 char SearchOld[80];
 
 
-struct Tmt T[18] = {
+struct Tmt T[] = {
       { 3,3,1,SearchName,&DirLength},    // 0
       { 6,2,0,"Filename",NULL},
       { 2,1,4,&CadreLength,NULL},
       { 3,6,10, "Current drive",&sw},
       { 3,7,10, "Current dir & subdir",&sw},
-      { 3,8,10, "Only current directory",&sw},
-      { 3,9,10, "All drive",&sw},
-      { 3,10,10,"user defined drive",&sw},
-      { 3,11,1,Drive,&DriveLen},
+      { 3,8,10, "Selected dir & subdir",&sw},
+      { 3,9,10, "Only current directory",&sw},
+      { 3,10,10, "All drive",&sw},
+      { 3,11,10, "user defined drive",&sw},
+      { 3,12,1,Drive,&DriveLen},
       { 2,5,9,&x1,&y1},
       { 30,5,9,&x2,&y2},
-      { 30,9,9,&x3,&y3},
+      { 30,10,9,&x3,&y3},
       { 32,6,0,"Search String:",NULL},
       { 31,7,1,SearchString,&StrLen},
-      { 31,10,8,"Search in KKD",&l1},
-      { 32,11,0,"Ketchup Killers        Search Function",NULL},
+      { 31,11,8,"Search in KKD",&l1},
+      { 32,12,0,"Ketchup Killers        Search Function",NULL},
 
-      {15,13,2,NULL,NULL},                // 1:Ok
-      {45,13,3,NULL,NULL},
+      {15,14,2,NULL,NULL},                // 1:Ok
+      {45,14,3,NULL,NULL},
       };
 
 struct TmtWin F = {
-    -1,4,73,19,
+    -1,4,73,20,
     "Search file(s)"};
 
 int n;
@@ -288,7 +289,7 @@ strcpy(SearchOld,SearchName);
 
 l1=KKCfg->enterkkd;
 
-n=WinTraite(T,18,&F,0);
+n=WinTraite(T,19,&F,0);
 
 if (n!=-1)  // pas escape
     {
@@ -392,11 +393,23 @@ switch(sw)
         strcpy(nom,Fen->path);
         cherdate(nom);
         break;
-    case 5: //--- Current dir ------------------------------------------
+    case 5: //--- Selected dir & subdir --------------------------------
+        for(n=0;n<Fen->nbrfic;n++)
+            {
+            if ( (Fen->F[n]->select) |
+                                  ((Fen->nbrsel==0) & (Fen->pcur==n)))
+                {
+                strcpy(nom,Fen->path);
+                Path2Abs(nom,Fen->F[n]->name);
+                cherdate(nom);
+                }
+            }
+        break;
+    case 6: //--- Current dir ------------------------------------------
         strcpy(nom,Fen->path);
         cherdate(nom);
         break;
-    case 6: //--- all drive --------------------------------------------
+    case 7: //--- all drive --------------------------------------------
         for(n=0;n<26;n++)
             {
             if (VerifyDisk(n+1)==0)
@@ -407,7 +420,7 @@ switch(sw)
                 }
             }
         break;
-    case 7: //--- user defined drive -----------------------------------
+    case 8: //--- user defined drive -----------------------------------
         for(n=0;n<strlen(Drive);n++)
             {
             m=toupper(Drive[n])-'A';

@@ -408,7 +408,7 @@ struct key K[nbrkey]=   {
 {  "AIFF",
         4,
         8,
-        "AIFF Audio File",
+        "Apple Audio File",
         "AIF",
         "Electronic Arts",
         20,0*2+0,2},
@@ -1014,9 +1014,9 @@ struct key K[nbrkey]=   {
     "PowerPacker Archive",
     "PP",
     "?",162,0,3},
-{  "\x00\xA0\xB3\x00\x04\x00", 
-    6,
-    0x35,
+{  "\x1A\x00\x00\x03\x00",
+    5,
+    0,
     "Lotus Notes Database",
     "NSF",
     "Lotus",163,0*2+1,6},
@@ -1034,11 +1034,57 @@ struct key K[nbrkey]=   {
     "KKT",
     "RedBug",
     165,0,6},
+{  "\xFF""FONT   ",
+    5,
+    0,
+    "Code Page Information (Standard Font)",
+    "CPI",
+    "",
+    166,0,6},
+{  "\x7F""DRFONT ",
+    5,
+    0,
+    "Code Page Information (Enhanced Font)",
+    "CPI",    //--- Utilis‚ par DR-DOS et Novell DOS -------------------
+    "",
+    167,0,6},
+{  "DiamondWare Digitized",
+    21,
+    0,
+    "DiamondWare Sound File",
+    "DWD",
+    "",
+    168,0,2},
+{  "AIFC",
+    4,
+    8,
+   "Apple-C Audio File",
+   "AFC",
+   "Electronic Arts",
+   169,0*2+0,2},
+{  "\xF0\x7E\x00\x01",
+    4,
+    0,
+   "MIDI sample dump",
+   "SDS",
+   "",
+   170,0*2+0,2},
+{  "\x00\x00\x03\xE8\x00",
+    5,
+    0,
+   "Matlab sound files",
+   "MAT",
+   "",
+   171,0*2+0,2},
+{  "FIF",
+    3,
+    0,
+    "Fractal Imager",
+    "FIF",
+    "PROPRIO",172,0*2+1,4},
 
-    
-    
 
-// Dernier employe: 165 //marjo
+// Dernier employe: 172 //marjo
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -1210,6 +1256,7 @@ short Infos3m(RB_IDF *Info);   // Nø3
 short Infout(RB_IDF *Info);
 short Inforar(RB_IDF *Info);
 short Infogif(RB_IDF *Info);
+short Infofif(RB_IDF *Info);
 short Infopcx(RB_IDF *Info);
 short Infonsf(RB_IDF *Info);
 short Infobmp(RB_IDF *Info);
@@ -1544,28 +1591,28 @@ void Traitefic(RB_IDF *Info)
 int n;
 FILE *fic;
 int err;
-
 char path[256];
 
 int trv=-1;       //--- vaut -1 tant que l'on a rien trouv‚ ------------
 
 Info->numero=-1;
 
-strcpy(path,Info->path);
+n=0;    //--- recherche dans tous les formats --------------------------
 
-fic=fopen(path,"rb");
+strcpy(path,Info->path);
+memset(Info,0,sizeof(RB_IDF));
+strcpy(Info->path,path);
+
+GetFile(Info->path,Info->filename);
+
+fic=fopen(Info->path,"rb");
 if (fic==NULL)
     {
     strcpy(Info->format,"Invalid Filename");
     strcpy(Info->fullname,"Unknow");
-
     return;
     }
 
-n=0;    //--- recherche dans tous les formats --------------------------
-
-memset(Info,0,sizeof(RB_IDF));
-strcpy(Info->path,path);
 Info->fic=fic;
 Info->posfic=0L;
 
@@ -1580,7 +1627,6 @@ if (Info->sizemax==0)
     return;
     }
 
-GetFile(Info->path,Info->filename);
 
 Info->buffer=buffer;    //--- buffer pour E/S --------------------------
 Info->posbuf=Info->posfic;
@@ -1605,6 +1651,7 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case 15: err=Infomtm(Info); break;
             case 34: err=Inforar(Info); break;
             case 37: err=Infogif(Info); break;
+            case 172: err=Infofif(Info); break;
             case 40: err=Infopcx(Info); break;
             case 36: err=Infobmp(Info); break;
             case 148: err=Infobmp2(Info); break;
@@ -2311,6 +2358,21 @@ Hp=ReadLng(Info,22,1);
 bps=ReadInt(Info,28,1);
                      
 sprintf(Info->message[0]," Picture is     %4d * %4d / %2dBps",Lp,Hp,bps);
+
+return 0;
+}
+
+short Infofif(RB_IDF *Info)
+{
+long Lp,Hp;
+
+Info->taille=ReadLng(Info,0x10,1); // Ordre des bytes pour le int: LO-HI
+
+Lp=ReadLng(Info,6,1);
+Hp=ReadLng(Info,10,1);
+
+if ((Lp<=4096) & (Hp<=4096))
+    sprintf(Info->message[0]," Picture is     %4d * %4d / 24Bps",Lp,Hp);
 
 return 0;
 }

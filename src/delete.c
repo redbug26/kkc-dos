@@ -177,6 +177,11 @@ if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') )
     F1->F[F1->pcur]->select=1;
     F1->nbrsel++;
     F1->taillesel+=F1->F[F1->pcur]->size;
+    if (F1->pcur<F1->nbrfic-1)
+        F1->pcur++;
+        else
+        if (F1->pcur>0)
+            F1->pcur--;
     }
 
 fin=0;

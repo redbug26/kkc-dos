@@ -1857,6 +1857,10 @@ KKCfg->pathdown=get_private_profile_int(section,"displowerpath",
 
 KKCfg->sizewin=get_private_profile_int(section,"sizewin",
                                                KKCfg->sizewin,filename);
+KKCfg->isidf=get_private_profile_int(section,"dispidf",
+                                                 KKCfg->isidf,filename);
+KKCfg->isbar=get_private_profile_int(section,"dispbar",
+                                                 KKCfg->isbar,filename);
 
 KKCfg->KeyAfterShell=get_private_profile_int(section,"keyaftershell",
                                          KKCfg->KeyAfterShell,filename);
@@ -2086,6 +2090,8 @@ write_private_profile_int(section,"dispupperpath",
 write_private_profile_int(section,"displowerpath",
                                               KKCfg->pathdown,filename);
 write_private_profile_int(section,"sizewin",KKCfg->sizewin,filename);
+write_private_profile_int(section,"dispidf",KKCfg->isidf,filename);
+write_private_profile_int(section,"dispbar",KKCfg->isbar,filename);
 
 sprintf(buffer,"%c",Cfg->comparity);
 write_private_profile_string(section,"serial_parity",buffer,filename);

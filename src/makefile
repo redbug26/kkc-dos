@@ -16,6 +16,8 @@ CL = *wlink
 CB = wlib
 
 SYSTEM = pmodew
+#os2v2_pm
+# win95
 #dos4g
 
 ASM = tasm
@@ -63,7 +65,7 @@ CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1 -zm
 # option el : eliminate no referenced segment
 
 AOPTS =
-LOPTS = option stack=60000 option c option ver = 0.82 option el
+LOPTS = option stack=60000 option c option el
 LAOPTS =
 
 !endif
@@ -82,7 +84,7 @@ kkmain.exe  : kkmain.obj     idf.lib  hard.lib    win.obj   gestion.obj &
               search.obj   kkfct.obj  util.obj reddies.obj longname.obj &
                rbdos.obj
              $(CL) system $(SYSTEM) $(LOPTS)  &
-                   option modname = 'Ketchup Killers Commander 0.82' &
+                   option modname = 'Ketchup Killers Commander 0.84' &
                    name $@ file {$<}
 
 kksetup.exe : kksetup.obj hard.lib idf.lib reddies.obj ficidf.obj &
@@ -99,9 +101,6 @@ kkfont.exe  : kkfont.obj hard.lib
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 edit.exe  : edit.obj hard.lib
-             $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
-
-kklist.exe : kklist.obj view.obj reddies.obj hard.lib idf.lib
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 kk.exe      : kk.obj

@@ -123,7 +123,7 @@ return 0;
 
 int IarF0Fct(struct barmenu *bar)
 {
-PrintAt(0,0,"%40sby %-*s",bar->Titre,
+PrintAt(0,0,"%-40sby %-*s",bar->Titre,
                               Cfg->TailleX-43,app[(bar->fct)-1].Meneur);
 return 0;
 }

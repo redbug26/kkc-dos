@@ -1,5 +1,5 @@
-#define VERSION "0.82"
-#define RBTitle "Ketchup Killers Commander V0.82"
+#define VERSION "0.84"
+#define RBTitle "Ketchup Killers Commander V0.84"
 
 #define CALLING __cdecl
 
@@ -171,6 +171,10 @@ struct kkconfig
 
      char Qmenu[48];
      short Nmenu[8];
+
+     char isbar;  // vaut 1 si on affiche la barre en bas --------------
+     char isidf;  // vaut 1 si on affiche la barre en haut -------------
+     char cmdline; //---------------------------------------------------
 
      char Esc2Close;   // vaut 1 si on doit fermer les fenˆtres avec ESC
 

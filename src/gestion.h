@@ -7,7 +7,8 @@ void RemoveHistDir(int a0,int a1);
 void VerifHistDir(void);
 char *GetLastHistDir(void);
 
-char *GetLastHistCom(void);
+char *GetPrevHistCom(char *chaine);
+char *GetNextHistCom(char *chaine);
 
 void ExecCom(void);
 
@@ -51,4 +52,8 @@ int IsDir(struct file *f);
 \*--------------------------------------------------------------------*/
 int FicSelect(FENETRE *Fen,int n,char q);
 
+/*--------------------------------------------------------------------*\
+|- Ligne de commande                                                  -|
+\*--------------------------------------------------------------------*/
+extern char CLstr[256];
 

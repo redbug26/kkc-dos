@@ -727,36 +727,79 @@ chaine[m]=0;
 
 }
 
-
 /*--------------------------------------------------------------------*\
 |-  Give Last Directory in History of command                         -|
 \*--------------------------------------------------------------------*/
-char *GetLastHistCom(void)
+char *GetNextHistCom(char *chaine)
 {
-char *dir,*dir2;
 int j,k;
+char *dir;
 
-j=0;
+dir=KKCfg->HistCom;
+k=0;
 
-if ( (KKCfg->posinhist<=0) | (KKCfg->posinhist>512) )
-    KKCfg->posinhist=512;
-
-while(1)
+for(j=0;j<511;j++)
     {
-    dir=&(KKCfg->HistCom[j]);
-    if (strlen(dir)==0) break;
-
-    dir2=dir;
-    k=j;
-
-    while ( (j!=KKCfg->posinhist) & (KKCfg->HistCom[j]!=0) ) j++;
-    j++;
-    if (j==KKCfg->posinhist) break;
+    if (KKCfg->HistCom[j]==0)
+        {
+        if ((k>KKCfg->posinhist)&(!strnicmp(chaine,dir,strlen(chaine)))&
+            (KKCfg->HistCom[j+1]!=0) )
+            {
+            KKCfg->posinhist=k;
+            return dir;
+            }
+        k=j+1;
+        dir=KKCfg->HistCom+k;
+        }
     }
 
-KKCfg->posinhist=k;
+dir=KKCfg->HistCom+KKCfg->posinhist;
 
-return dir2;
+if (!strnicmp(chaine,dir,strlen(chaine)))
+    return dir;
+    else
+    return chaine;
+}
+
+char *GetPrevHistCom(char *chaine)
+{
+int j,k,l;
+char *dir,*dir2;
+
+dir2=NULL;
+dir=KKCfg->HistCom;
+k=0;
+
+l=KKCfg->posinhist;
+
+for(j=0;j<511;j++)
+    {
+    if (KKCfg->HistCom[j]==0)
+        {
+        if ((k<KKCfg->posinhist)&(!strnicmp(chaine,dir,strlen(chaine)))&
+               (KKCfg->HistCom[k]!=0))
+            {
+            l=k;
+            dir2=dir;
+            }
+        k=j+1;
+        dir=KKCfg->HistCom+k;
+        }
+    }
+
+KKCfg->posinhist=l;
+
+if (dir2==NULL)
+    {
+    dir=KKCfg->HistCom+KKCfg->posinhist;
+
+    if (!strnicmp(chaine,dir,strlen(chaine)))
+        return dir;
+        else
+        return chaine;
+    }
+    else
+    return dir2;
 }
 
 /*--------------------------------------------------------------------*\
@@ -857,7 +900,7 @@ memcpy(&(KKCfg->HistCom[TabCom[i]]),chaine,strlen(chaine)+1);
 /*--------------------------------------------------------------------*\
 |-  Commandes globales                                                -|
 \*--------------------------------------------------------------------*/
-static char str[256];                                // commande interne
+char CLstr[256];                                     // commande interne
 static int px;                                                // Chaipus
 
 /*--------------------------------------------------------------------*\
@@ -913,6 +956,14 @@ if (!strnicmp(chaine,"#MEM",4))
     return 1;
     }
 
+if (!strnicmp(chaine,"#FCT",4))
+    {
+    int fct;
+    sscanf(chaine+4,"%d",&fct);
+    GestionFct(fct);
+    return 1;
+    }
+
 return 0;
 }
 
@@ -939,7 +990,7 @@ struct TmtWin F = {-1,10,74,17, "Execute command" };
 
 int n;
 
-strcpy(Dir,str);
+strcpy(Dir,CLstr);
 Dir[69]=0;
 
 n=WinTraite(T,6,&F,0);
@@ -973,8 +1024,10 @@ if (DFen->ChangeLine==0)
 
 if (DFen->nfen>=2) return;
 
+if (KKCfg->cmdline==0) return;
+
 x1=strlen(DFen->path)+1;
-m=strlen(str);
+m=strlen(CLstr);
 
 v=Cfg->TailleX-2;
 
@@ -982,14 +1035,14 @@ v=Cfg->TailleX-2;
 if ( ((x1+m)>75) & (x1>40) )
     {
     n= (m>=v) ? m-v : 0;
-    PrintAt(0,(Cfg->TailleY)-2,">%-*s",v,str+n);
-    GotoXY(m-n+1,(Cfg->TailleY)-2);
+    PrintAt(0,KKCfg->cmdline,">%-*s",v,CLstr+n);
+    GotoXY(m-n+1,KKCfg->cmdline);
     }
     else
     {
     n= (m>=(v+1-x1)) ? m-(v+1-x1) : 0;
-    PrintAt(0,(Cfg->TailleY)-2,"%s>%-*s",DFen->path,v+1-x1,str+n);
-    GotoXY(x1+m-n,(Cfg->TailleY)-2);
+    PrintAt(0,KKCfg->cmdline,"%s>%-*s",DFen->path,v+1-x1,CLstr+n);
+    GotoXY(x1+m-n,KKCfg->cmdline);
     }
 }
 
@@ -1051,7 +1104,7 @@ if (suite[0]=='#')
     else
     {
     pos=px;                                     // position dans command
-    chaine=str;                                      // commande externe
+    chaine=CLstr;                                      // commande externe
     affich=1;                                                // afficher
     FctType=2;
     n=0;                               // commencer … la premiere lettre
@@ -1183,7 +1236,7 @@ if (traite==1)
         case 1:
             break;                    // Commande Interne (Rien … faire)
         case 2:
-            str[0]=0;
+            CLstr[0]=0;
             px=0;
             DFen->ChangeLine=1;
             break;

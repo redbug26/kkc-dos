@@ -182,6 +182,7 @@ b=0;
 while ( (!kbhit()) & (b==0) & (zm==0) )
     {
     GetPosMouse(&xm,&ym,&zm);
+    
 
     if ( ((clock()-Cl)>Cfg->SaveSpeed*CLOCKS_PER_SEC)
         & (Cfg->SaveSpeed!=0) )
@@ -2079,14 +2080,22 @@ if (p==1)
 
         if (car==0)
             {
-            int px,py,pz;
+            int px,py,pz,xm2,ym2;
 
             px=MousePosX();
             py=MousePosY();
             pz=MouseButton();
 
-            if ( ((pz&4)==4) & (px>=x) & (px<x+lng) & (py==y) )
+            if ( ((pz&1)==1) & (px>=x) & (px<x+lng) & (py==y) )
+                {
+                ReleaseButton();
+
+                do
+                    GetPosMouse(&xm2,&ym2,&pz);
+                while ((pz&1)==1);
+
                 car=13;
+                }
                 else
                 r=8;
             }

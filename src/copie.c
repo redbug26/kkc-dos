@@ -50,6 +50,8 @@ int UserInt(void);      //--- Interruption par l'utilisateur -----------
 int CountRepSize(FENETRE *F1,FENETRE *FTrash,int *nbr,int *size);
                     //--- Renvoit -1 si le nombre de fichier est nul ---
 
+void EraseSpace(char *buffer);
+
 /*--------------------------------------------------------------------*\
 |- internal variable                                                  -|
 \*--------------------------------------------------------------------*/
@@ -63,9 +65,36 @@ static char temp[256];
 static char bufton[32];
 static long SizeMaxRecord;
 static char noselect;              // prend le celui qui est highlighted
+extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
+
 static int chgattr=0;
 static int chgext=0;
-extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
+static int chgname=0;
+
+
+void EraseSpace(char *str)
+{
+char buf[256];
+char c;
+int i,j;
+
+i=0;
+j=0;
+
+while(str[i]!=0)
+    {
+    c=toupper(str[i]);
+    if ( ((c>='0') & (c<='9')) | ((c>='A') & (c<='Z')) )
+        {
+        buf[j]=str[i];
+        j++;
+        }
+    i++;
+    if ((j==8) | (c=='.')) break;
+    }
+buf[j]=0;
+strcpy(str,buf);
+}
 
 
 /*--------------------------------------------------------------------*\
@@ -410,7 +439,7 @@ ok=1;
 
 MaskCnv(outpath);
 
-if (chgext)
+if ((chgext) | (chgname))
     {
     RB_IDF Info;
     static char buffer[255];
@@ -420,20 +449,37 @@ if (chgext)
 
     Traitefic(&Info);
 
-    FileinPath(outpath,buffer);
-    Path2Abs(outpath,"..");
-
-    ext=strchr(buffer,'.');
-    if (ext!=NULL)
-        strcpy(ext+1,Info.ext);
-        else
+    if ((chgname) & (*(Info.fullname)!=0))
         {
-        strcat(buffer,".");
-        strcat(buffer,Info.ext);
+        FileinPath(outpath,buffer);
+        Path2Abs(outpath,"..");
+
+        strcpy(buffer,Info.fullname);
+        EraseSpace(buffer);
+
+        Path2Abs(outpath,buffer);
         }
 
-    Path2Abs(outpath,buffer);
+    if ((chgext) | (chgname))
+        {
+        FileinPath(outpath,buffer);
+        Path2Abs(outpath,"..");
+
+        ext=strchr(buffer,'.');
+        if (ext!=NULL)
+            strcpy(ext+1,Info.ext);
+            else
+            {
+            strcat(buffer,".");
+            strcat(buffer,Info.ext);
+            }
+
+        Path2Abs(outpath,buffer);
+        }
+
+
     }
+
 
 if (!WildCmp(inpath,outpath))
     {
@@ -560,23 +606,25 @@ static int DirLength=70;
 static char CadreLength=70;
 static int n,m,o;
 static char buffer[80];
-static int hauteur=2;
+static int hauteur=3;
 
 struct Tmt T[] = {
       { 2,3,1,Dir,&DirLength},
       { 5,6,8,"Keep attribut",&chgattr},
       { 5,7,8,"Change extension",&chgext},
-      {15,9,2,NULL,NULL},           // le OK
-      {45,9,3,NULL,NULL},           // le CANCEL
+      { 5,8,8,"Change filename",&chgname},
+      {15,10,2,NULL,NULL},           // le OK
+      {45,10,3,NULL,NULL},           // le CANCEL
       { 5,2,0,buffer,NULL},
       { 1,1,4,&CadreLength,NULL},
       { 1,5,9,&CadreLength,&hauteur}
       };
 
-struct TmtWin F = {-1,10,74,21,"Copy" };
+struct TmtWin F = {-1,10,74,22,"Copy" };
 
 chgattr=0;
 chgext=0;
+chgname=0;
 
 if (Nbrfic!=0)
     {
@@ -596,7 +644,7 @@ memcpy(Dir,FTrash->path,255);
 
 n=0;
 if (((KKCfg->noprompt)&1)==0)
-    n=WinTraite(T,8,&F,0);
+    n=WinTraite(T,9,&F,0);
 
 Path2Abs(Dir,".");
 

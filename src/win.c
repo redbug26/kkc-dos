@@ -29,6 +29,7 @@ void MasqueSetup(void);
 void SplitMasque(char *chaine,char *buf1,char *buf2);
 void JointMasque(char *chaine,char *buf1,char *buf2);
 
+static char _intbuffer[256];
 
 /*--------------------------------------------------------------------*\
 |- Fonction cach‚e IDF                                                -|
@@ -71,19 +72,19 @@ if (KKCfg->_Win95==1)
 if (F->name[0]=='*')
     {
     PrintAt(0,0,"%-40s%-*s","Internal function",(Cfg->TailleX)-40,"");
-    return 0;
+    return -1;
     }
 
 if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
     {
     PrintAt(0,0,"%-40s%-*s","Directory",(Cfg->TailleX)-40,buffer);
-    return 0;
+    return -1;
     }
 
 if (Fen->system!=0)
     {
     PrintAt(0,0,"%-40s%-*s","Internal File",(Cfg->TailleX)-40,buffer);
-    return 0;
+    return -1;
     }
 
 strcpy(Info.path,DFen->path);
@@ -233,7 +234,7 @@ void MenuBar(char c)
 {
 static char bar[4][60]=
  {" Help  User  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
-  " ---- Attrib View  Edit  Host Rename ----  ----   Row Consol",//SHIFT
+  " ---- Attrib View  Edit  Host Rename ----  ----   Row  ---- ",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
   " Drv1  Drv2  FDiz FileID Path  Hist Search Type  Line  Disp "}; //ALT
 char Tbar[60];
@@ -276,7 +277,7 @@ switch(c) {
         break;
     }
 
-if (c!=4)
+if ((c!=4) & (KKCfg->isbar))
     {
     memcpy(Tbar,bar[c],60);
 
@@ -574,10 +575,10 @@ void ScreenSetup(void)
 {
 static int sw,sy;
 
-static int l1,l2,l3,l4;
+static int l1,l2,l3,l4,l5,l6;
 
 static char x1=32,x2=32,x3=32,x4=32;
-static int y1=3,y2=2,y3=4,y4=2;
+static int y1=3,y2=2,y3=4,y4=4;
 
 struct Tmt T[] = {
       { 5, 2,10,"25 lines",&sw},
@@ -592,7 +593,9 @@ struct Tmt T[] = {
       {39, 5,10,"Ketchup Mode",&sy},
 
       {39, 8, 8,"Display lower path",&l4},
-      {39, 9, 7,"Size of pannel",&l3},
+      {39, 9, 8,"Display IDF bar",&l5},
+      {39,10, 8,"Display function bar",&l6},
+      {39,11, 7,"Size of pannel",&l3},
 
       {3,1,9,&x1,&y1},
       {3,6,9,&x2,&y2},
@@ -622,8 +625,10 @@ l1=Cfg->font;
 l2=Cfg->SaveSpeed;
 l3=KKCfg->sizewin;
 l4=KKCfg->pathdown;
+l5=KKCfg->isidf;
+l6=KKCfg->isbar;
 
-n=WinTraite(T,20,&F,0);
+n=WinTraite(T,22,&F,0);
 
 if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -639,7 +644,10 @@ Cfg->font=l1;
 Cfg->SaveSpeed=l2;
 if ((l3>=6) | (l3==0))
     KKCfg->sizewin=l3;
+
 KKCfg->pathdown=l4;
+KKCfg->isidf=l5;
+KKCfg->isbar=l6;
 
 GestionFct(67);                                    // Rafraichit l'ecran
 }
@@ -1672,13 +1680,26 @@ AffUpperPath(DFen->Fen2,DFen->yl-1);
 
 void AltMenu(void)
 {
-time_t clock;
 static char buffer[40];
 
 if (DFen->yl==0) return;
 
-clock=time(NULL);
-strftime(buffer,40,"%H:%M:%S",localtime(&clock));
+if ((KKCfg->_Win95==1) & (DFen->system==0))
+    InfoLongFile(DFen,_intbuffer);
+    else
+    strcpy(_intbuffer,DFen->F[DFen->pcur]->name);
+
+if (strlen(_intbuffer)>36)
+    {
+    memcpy(buffer,_intbuffer,3);
+    memcpy(buffer+3,"...",3);
+    memcpy(buffer+6,_intbuffer+strlen(_intbuffer)-30,30);
+    buffer[36]=0;
+    }
+    else
+    {
+    strcpy(buffer,_intbuffer);
+    }
 
 PrintAt(DFen->x+2,DFen->yl-1,"%-36s",buffer);
 }
@@ -1906,13 +1927,24 @@ int sb;
 
 sb=1+(KKCfg->pathdown);
 
+if (KKCfg->isbar)
+    KKCfg->cmdline=Cfg->TailleY-2;
+    else
+    KKCfg->cmdline=Cfg->TailleY-1;
+
+
+if (KKCfg->isidf)
+    Fen->y=1;
+    else
+    Fen->y=0;
+
 if (KKCfg->sizewin==0)
-    Fen->yl=(Cfg->TailleY)-3;
+    Fen->yl=(KKCfg->cmdline)-1;
     else
     Fen->yl=Fen->y+KKCfg->sizewin-1;
 
-if (Fen->yl>(Cfg->TailleY)-3)
-    Fen->yl=(Cfg->TailleY)-3;
+if (Fen->yl>(KKCfg->cmdline)-1)
+    Fen->yl=(KKCfg->cmdline)-1;
 
 switch (KKCfg->fentype)
     {

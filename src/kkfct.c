@@ -12,7 +12,10 @@ static char buffer[256];
 
 void DefaultKKCfg(void)
 {
-short Nm[]={72,68,42,40,3,63};
+short Nm[]={72,68,42,40,92,63};
+
+KKCfg->isbar=1;
+KKCfg->isidf=1;
 
 KKCfg->sizewin=0;
 
@@ -84,7 +87,7 @@ KKCfg->V.Mask[1]->Other_Col=1;
 
 strcpy(KKCfg->V.Mask[15]->title,"Ketchup^Pulpe Style");
 strcpy(KKCfg->V.Mask[15]->chaine,
-                             "ketchup killers redbug access darköangel "
+                  " blackward ketchup killers redbug access darköangel "
                       "off topy kennet typeöone pulpe tyby djamm vatin "
                    "marjorie katana ecstasy cray magicöfred cobra z @");
 KKCfg->V.Mask[15]->Ignore_Case=1;
@@ -135,7 +138,7 @@ strcpy(KKCfg->ExtTxt,
                  "ASM BAS C CPP DIZ DOC H HLP HTM INI LOG NFO PAS TXT");
 KKCfg->Enable_Txt=1;
 strcpy(KKCfg->ExtBmp,
-             "BMP GIF ICO JPG LBM PCX PIC PKM PNG RAW TGA TIF WMF WPG");
+         "FIF BMP GIF ICO JPG LBM PCX PIC PKM PNG RAW TGA TIF WMF WPG");
 KKCfg->Enable_Bmp=1;
 strcpy(KKCfg->ExtSnd,"IT IFF MID MOD MTM S3M VOC WAV XM RTM MXM");
 KKCfg->Enable_Snd=1;

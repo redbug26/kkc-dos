@@ -43,6 +43,10 @@ static char srcch[132];         //--- chaine … rechercher --------------
 
 static char raw;                //--- si vaut 1 -> raw screen ansi -----
 
+static char namebuf[40];
+
+
+
 /*--------------------------------------------------------------------*\
 |- Prototype                                                          -|
 \*--------------------------------------------------------------------*/
@@ -76,6 +80,54 @@ void Decrypt(void);
 void Print(char *fichier,int n);
 
 void StartAnsiPage(void);
+
+
+static int xarc,debarc;
+
+void StartWinView(char *titre)
+{
+int x,y,l;
+
+SaveScreen();
+
+xarc=(Cfg->TailleX-60)/2;
+l=(60-strlen(titre))/2;
+
+Cadre(xarc-1,5,xarc+62,11,0,Cfg->col[55],Cfg->col[56]);
+Window(xarc,6,xarc+61,10,Cfg->col[16]);
+
+Cadre(xarc+1,6,xarc+60,8,2,Cfg->col[55],Cfg->col[56]);
+
+PrintAt(xarc+l,5,"%s",titre);
+
+PrintAt(xarc+3,9,"Reading File");
+PrintAt(xarc+3,10,"%s",namebuf);
+
+x=xarc+43;
+y=9;
+
+PrintAt(x,y,"    STOP    ");
+Puce(x,y,13,0);
+
+debarc=0;
+}
+
+int InterWinView(void)
+{
+debarc=LongGradue(xarc+2,7,58,debarc,posn,taille);
+
+if (KbHit())
+    if (Wait(0,0)==13) return 1;
+
+return 0;
+}
+
+void CloseWinView(void)
+{
+LoadScreen();
+}
+
+
 
 /*--------------------------------------------------------------------*\
 |- Change le mode vid‚o                                               -|
@@ -1815,7 +1867,7 @@ if (strlen(Hexa)!=0)
 
 n=WinTraite(T,8,&F,0);
 
-if ( (n!=0) & (n!=1) ) return;
+if (n!=2) return;
 
 if (strlen(Hexa)!=0)
     {
@@ -2053,6 +2105,10 @@ memset(ChrTxt,32,4000*Cfg->TailleX);
 */
 
 SaveScreen();
+
+StartWinView("HTML Viewer");
+
+
 PutCur(3,0);
 
 x=1;
@@ -2061,12 +2117,6 @@ y=1;
 xl=Cfg->TailleX-2;
 yl=Cfg->TailleY-2;
 
-WinCadre(x-1,y-1,xl+1,yl,2);
-
-Window(x,y,xl,yl-1,Cfg->col[16]);
-
-ColLin(0,yl+1,Cfg->TailleX,Cfg->col[6]);
-ChrLin(0,yl+1,Cfg->TailleX,32);
 
 
 /*--------------------------------------------------------------------*/
@@ -2117,10 +2167,17 @@ posn=0;
 
 derspace=0; //--- le dernier caractere n'est pas un space --------------
 
+
 while(posn<taille)
 {
 do
     {
+    if (InterWinView())
+        {
+        posn=taille;
+        break;
+        }
+
     if (posn>=taille) break;
     car=ReadChar();
     posn++;
@@ -2130,6 +2187,7 @@ do
     if (car!=32) break;
     }
 while(derspace);
+
 
 if (car!=32)
     derspace=0;
@@ -2256,6 +2314,7 @@ switch(car)
             if (!stricmp(titre,"/H4")) nbrcol--,aff=1;
             if (!stricmp(titre,"/H5")) nbrcol--,aff=1;
             if (!stricmp(titre,"/H6")) nbrcol--,aff=1;
+            if (nbrcol<0) nbrcol=0;
             if (!stricmp(titre,"LI"))
                 {
                 if (nlist!=0)
@@ -2314,7 +2373,8 @@ switch(car)
             if (!stricmp(titre,"/I")) aff=0;
 
             if (!stricmp(titre,"PRE")) pre++;
-            if (!stricmp(titre,"/PRE")) pre--;
+            if ((!stricmp(titre,"/PRE")) & (pre!=0) )
+                pre--;
 
             if (!stricmp(titre,"HR"))
                 {
@@ -2609,16 +2669,24 @@ for (k=0;k<lentit;k++)
         }
     aff=0;
 
-    if (yp>3998)
-        break;
+//    if (yp>3998)        break;
 
     } //--- fin du for (k=0;k<lentit;k++) ------------------------------
 
 
 lentit=0;
 
-if (yp>3998) break;
+// if (yp>3998) break;
 }
+
+CloseWinView();
+
+WinCadre(x-1,y-1,xl+1,yl,2);
+
+Window(x,y,xl,yl-1,Cfg->col[16]);
+
+ColLin(0,yl+1,Cfg->TailleX,Cfg->col[6]);
+ChrLin(0,yl+1,Cfg->TailleX,32);
 
 PLine=FLine;
 DLine=FLine;
@@ -3383,7 +3451,7 @@ bar[1].Titre="Unix (LF)";
 bar[1].Help=NULL;
 bar[1].fct=3;
 
-bar[2].Titre="CR";
+bar[2].Titre="Mac (CR)";
 bar[2].Help=NULL;
 bar[2].fct=2;
 
@@ -4078,10 +4146,22 @@ switch(type)
 
 fic=fopen(fichier,"rb");
 
+strupr(fichier);
+
+if (strlen(fichier)>36)
+    {
+    memcpy(namebuf,fichier,3);
+    memcpy(namebuf+3,"...",3);
+    memcpy(namebuf+6,fichier+strlen(fichier)-30,30);
+    namebuf[36]=0;
+    }
+    else
+    strcpy(namebuf,fichier);
+
 if (fic==NULL)
     {
-    //PrintAt(0,0,"Error on file '%s'",fichier);
-    WinError("Couldn't open file");
+    sprintf(fichier,"File not found \"%s\"",namebuf);
+    WinError(fichier);
     i=-1;
     }
     else
