@@ -41,6 +41,14 @@ struct kkfichier *KKFics;
 char iarver=1;
 
 /*--------------------------------------------------------------------*\
+|- Gestion macros (fake in kksetup)                                   -|
+\*--------------------------------------------------------------------*/
+
+short FctStack[128];
+short NbrFunct;
+
+
+/*--------------------------------------------------------------------*\
 |- Fake MenuCreat pour ficidf                                         -|
 \*--------------------------------------------------------------------*/
 void MenuCreat(char *titbuf,char *buf,char *path)
@@ -627,6 +635,9 @@ for (n=0;n<=Fen->nbrfic;n++)
 fwrite(&(Fen->scur),sizeof(short),1,fic);
 }
 
+fwrite(&NbrFunct,2,1,fic);
+if (NbrFunct!=0)
+    fwrite(FctStack,2,NbrFunct,fic);
 
 fclose(fic);
 }
@@ -698,6 +709,10 @@ for (t=0;t<NBWIN;t++)
 
     fread(&(DFen->scur),sizeof(short),1,fic);
     }
+
+fread(&NbrFunct,2,1,fic);
+if (NbrFunct!=0)
+    fread(FctStack,2,NbrFunct,fic);
 
 
 fclose(fic);
@@ -920,7 +935,7 @@ if (i!=0)
             fic=fopen(path,"wt");
             if (fic!=NULL)
                 {
-                fprintf(fic,"@%s\\kkdesc.exe %%1 \n",ActualPath);
+                fprintf(fic,"@%s\\kkdesc.exe %%1 %%2 %%3\n",ActualPath);
                 fprintf(fic,"@REM This file was making by KKSETUP\n");
                 fclose(fic);
                 erreur=0;
@@ -989,7 +1004,7 @@ for (n=0;n<9000;n++)
 
 KKCfg=GetMem(sizeof(struct kkconfig));
 
-_harderr(Error_handler);
+LoadErrorHandler();
 
 path=GetMem(256);
 
@@ -1109,7 +1124,7 @@ if (todo==0)
     strcpy(chaine,KKFics->trash);
     if (mkdir(chaine)==0)
         {
-        DispMessage("Creation of the trash directory '%s': OK",chaine);
+        DispMessage("Creation of the user directory '%s': OK",chaine);
         DispMessage("");
         }
         else
@@ -1119,7 +1134,7 @@ if (todo==0)
 
         if (chdir(chaine)==0)
             {
-            DispMessage("Trash directory exist: %s",chaine);
+            DispMessage("User directory: '%s'",chaine);
             DispMessage("");
             }
             else
@@ -1150,8 +1165,15 @@ if (todo==0)
         sprintf(tata,"@%s",ActualPath);
         Path2Abs(tata,"kk.exe\n");
 
+        DispMessage("Found kk.Bat in %s",buffer);
+            DispMessage("");
+
         if (stricmp(tata,toto)!=0)
-            PutInPath();
+            {
+            if (WinMesg("Warning","KK.BAT have changed\n"
+                                "Do you want overwrite it ?",16+1)==0)
+                PutInPath();
+            }
 
         Path2Abs(buffer,"..");
         strcpy(PathOfKK,buffer);
@@ -1163,7 +1185,7 @@ if (todo==0)
     fic=fopen(KKFics->FicIdfFile,"rb");
     if (fic==NULL)
         {
-        DispMessage("It's the first time that you run KKSETUP");
+        DispMessage("You don't have already search player :(");
         DispMessage("  -> Go to menu 'Player'");
         DispMessage("  -> Select 'Search Player'");
         DispMessage("");
@@ -1836,6 +1858,9 @@ KKCfg->pathdown=get_private_profile_int(section,"displowerpath",
 KKCfg->sizewin=get_private_profile_int(section,"sizewin",
                                                KKCfg->sizewin,filename);
 
+KKCfg->KeyAfterShell=get_private_profile_int(section,"keyaftershell",
+                                         KKCfg->KeyAfterShell,filename);
+
 KKCfg->verifhist=get_private_profile_int(section,"verifhist",
                                              KKCfg->verifhist,filename);
 KKCfg->palafter=get_private_profile_int(section,"palafter",
@@ -1850,6 +1875,8 @@ KKCfg->esttime=get_private_profile_int(section,"esttime",
                                                KKCfg->esttime,filename);
 KKCfg->V.ajustview=get_private_profile_int(section,"ajustview",
                                            KKCfg->V.ajustview,filename);
+KKCfg->addselect=get_private_profile_int(section,"addselect",
+                                             KKCfg->addselect,filename);
 KKCfg->currentdir=get_private_profile_int(section,"loadstartdir",
                                             KKCfg->currentdir,filename);
 KKCfg->V.saveviewpos=get_private_profile_int(section,"saveviewpos",
@@ -2041,8 +2068,13 @@ write_private_profile_int(section,"debug",Cfg->debug,filename);
 write_private_profile_int(section,"confexit",KKCfg->confexit,filename);
 write_private_profile_int(section,"sizetrash",KKCfg->mtrash,filename);
 write_private_profile_int(section,"display",Cfg->display,filename);
+write_private_profile_int(section,"addselect",KKCfg->addselect,
+                                                              filename);
 write_private_profile_int(section,"esc2close",
-                                            KKCfg->Esc2Close,filename);
+                                             KKCfg->Esc2Close,filename);
+
+write_private_profile_int(section,"keyaftershell",
+                                         KKCfg->KeyAfterShell,filename);
 
 write_private_profile_int(section,"serial_port",Cfg->comport,filename);
 write_private_profile_int(section,"serial_speed",Cfg->comspeed,
@@ -2452,7 +2484,7 @@ sy=0;
 
 n=WinTraite(T,5,&F,0);
 
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 DefaultConfig(sy);
@@ -2615,7 +2647,7 @@ switch(WinTraite(T,9,&F,0))
     case 0:
         (*Verif)=1;     // Yes
         break;
-    case 27:
+    case -1:
     case 1:
         (*Verif)=2;     // Cancel
         break;

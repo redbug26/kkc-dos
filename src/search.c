@@ -290,7 +290,7 @@ l1=KKCfg->enterkkd;
 
 n=WinTraite(T,18,&F,0);
 
-if (n!=27)  // pas escape
+if (n!=-1)  // pas escape
     {
     if (T[n].type!=3)
         {

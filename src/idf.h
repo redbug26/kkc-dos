@@ -2,7 +2,7 @@
 #define uchar  unsigned char
 #define ushort unsigned short
 
-#define nbrkey 168
+#define nbrkey 171
         // number of format + 6
 
 /*--------------------------------------------------------------------*\

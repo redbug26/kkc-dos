@@ -3,14 +3,20 @@
 \*--------------------------------------------------------------------*/
 #include <mem.h>
 #include <stdlib.h>       //--- Pour getenv ----------------------------
+#include <stdio.h>
 
 #include "kk.h"
+
+static char buffer[256];
+
 
 void DefaultKKCfg(void)
 {
 short Nm[]={72,68,42,40,3,63};
 
 KKCfg->sizewin=0;
+
+KKCfg->addselect=0;
 
 KKCfg->KeyAfterShell=0;
 
@@ -155,6 +161,8 @@ KKCfg->V.lnfeed=4;                                              // CR/LF
 KKCfg->V.userfeed=0xE3;
 
 KKCfg->V.AnsiSpeed=133;
+
+NbrFunct=0;
 }
 
 void FileSetup(void)
@@ -195,7 +203,7 @@ fin=1;
 
 n=WinTraite(T,10,&F,0);
 
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 if (n==6)
@@ -307,4 +315,28 @@ Cadre(80,3,Cfg->TailleX-1,Cfg->TailleY-2,2,Cfg->col[55],Cfg->col[56]);
 Window(81,4,Cfg->TailleX-2,Cfg->TailleY-3,Cfg->col[16]);
 
 AffChr(Cfg->TailleX-2,Cfg->TailleY-3,3);
+}
+
+void Console(void)
+{
+FILE *fic;
+int n;
+
+SaveScreen();
+
+strcpy(buffer,KKFics->trash);
+Path2Abs(buffer,"console.log");
+
+fic=fopen(buffer,"wt");
+
+for(n=1;n<14;n++)
+    {
+    if (n>1)
+        Window(1,1,Cfg->TailleX-2,n-1,Cfg->col[10]);
+    Cadre(0,0,Cfg->TailleX-1,n,3,Cfg->col[9],Cfg->col[41]);
+    Pause(1);
+    }
+
+Wait(0,0);
+LoadScreen();
 }

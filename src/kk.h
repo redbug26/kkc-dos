@@ -1,5 +1,5 @@
-#define VERSION "0.81"
-#define RBTitle "Ketchup Killers Commander V0.81"
+#define VERSION "0.82"
+#define RBTitle "Ketchup Killers Commander V0.82"
 
 #define CALLING __cdecl
 
@@ -19,6 +19,8 @@
 #define DOOR 1
 
 #include "view.h"
+
+#define NBWIN 4
 
 
 struct kkfichier
@@ -41,6 +43,21 @@ struct RB_info
      };
 
 extern struct RB_info *Info;
+
+/*--------------------------------------------------------------------*\
+|- Gestion macros (fake in kksetup)                                   -|
+\*--------------------------------------------------------------------*/
+
+extern short FctStack[128];
+extern short NbrFunct;
+
+void InitFctStack(void);
+void PutLIFOFct(int fct);
+int GetLIFOFct(void);
+
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
 
 struct file
     {
@@ -106,6 +123,8 @@ typedef struct _fenetre
 
      char InfoPos;                       // On commence o— dans l'info ?
 
+     char ChangeLine;    // Vaut 1 si on doit r‚afficher la command line
+
 
 } FENETRE;
 
@@ -166,6 +185,10 @@ struct kkconfig
 
      char savekey; // Vaut 1 si on sauvegarde les touches dans un buffer
 
+     char KeyAfterShell;            // Vaut 1 si wait key after dosshell
+
+     char addselect;  // 1 -> on rajoute une ligne select dans le pannel
+
     //--- Variable pour le viewer --------------------------------------
 
      KKVIEW V;
@@ -188,8 +211,7 @@ struct kkconfig
 
      char extens[39];              // extension qui viennent tout devant
 
-     short FenTyp[3];                         // Type des fenˆtres SHELL
-     short KeyAfterShell;           // Vaut 1 si wait key after dosshell
+     short FenTyp[NBWIN];                     // Type des fenˆtres SHELL
 
      short key;                              // code touche a reutiliser
      char FileName[256]; // Nom du dernier fichier select. for F3 on arc
@@ -235,7 +257,7 @@ extern int IOerr;
 #define PUTSERR(__Ch)
 #endif
 
-#define NBWIN 4
+
 
 /*--------------------------------------------------------------------*\
 |- prototype de kkfct.c                                               -|
@@ -245,4 +267,8 @@ void FileSetup(void);
 void SetDefaultKKPath(char *path);
 
 void RemplisVide(void);  // Remplissage du vide pour les plus de 80 col.
+
+void Console(void);
+
+
 

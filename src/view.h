@@ -23,7 +23,15 @@ typedef struct _viewer
     } KKVIEW;
 
 
-void View(KKVIEW *V,char *file);
+void View(KKVIEW *V,char *file,int type);
+
+//   0: Auto Type
+//   1: Ansi viewer
+//   2: Html viewer
+//   3: Hexa viewer
+//   4: Text viewer
+//   5: Raw  viewer
+
 
 struct PourMask
      {

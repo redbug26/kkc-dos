@@ -11,7 +11,7 @@ char *GetLastHistCom(void);
 
 void ExecCom(void);
 
-void ChangeLine(void);
+void AffCmdLine(void);
 int CommandLine(char *string,...);
 int Run(char *chaine);
 char GetDrive(void);

@@ -358,6 +358,20 @@ switch(DFen->system)
 }
 while(err==1);
 
+if (KKCfg->addselect)
+    {
+     DFen->F[DFen->nbrfic]=GetMem(sizeof(struct file));
+
+     DFen->F[DFen->nbrfic]->name=GetMem(4);
+     strcpy(DFen->F[DFen->nbrfic]->name,"*92");
+     DFen->F[DFen->nbrfic]->time=0;
+     DFen->F[DFen->nbrfic]->date=0;
+     DFen->F[DFen->nbrfic]->attrib=_A_SUBDIR;
+     DFen->F[DFen->nbrfic]->select=0;
+     DFen->F[DFen->nbrfic]->size=0;
+     DFen->nbrfic++;
+     }
+
 StrUpr(DFen->path);
 
 SortFic(DFen);  
@@ -865,26 +879,26 @@ if ((chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (KKCfg->logfile==1))
 if (!stricmp(chaine,"CD -"))
     {
     ChangeDir(GetLastHistDir());
-    ChangeLine();                                      // Affichage Path
+    DFen->ChangeLine=1;                                // Affichage Path
     return 1;
     }
 if (!strnicmp(chaine,"CD ",3))
     {
     ChangeDir(chaine+3);
-    ChangeLine();                                      // Affichage Path
+    DFen->ChangeLine=1;                                      // Affichage Path
     return 1;
     }
 if ( (!strnicmp(chaine,"CD..",4)) | (!strnicmp(chaine,"CD\\",3)) |
                                            (!strnicmp(chaine,"CD/",3)) )
     {
     ChangeDir(chaine+2);
-    ChangeLine();                                      // Affichage Path
+    DFen->ChangeLine=1;                                      // Affichage Path
     return 1;
     }
 if (!strnicmp(chaine,"MD ",3))
     {
     MakeDir(chaine+3);
-    ChangeLine();                                      // Affichage Path
+    DFen->ChangeLine=1;                                      // Affichage Path
     return 1;
     }
 
@@ -930,7 +944,7 @@ Dir[69]=0;
 
 n=WinTraite(T,6,&F,0);
 
-if (n!=27)
+if (n!=-1)
     {
     if (T[n].type==5)                          // Le bouton personnalis‚
         GestionFct(74);
@@ -950,9 +964,12 @@ if (n!=27)
 /*--------------------------------------------------------------------*\
 |-  Affichage de la ligne de commande                                 -|
 \*--------------------------------------------------------------------*/
-void ChangeLine(void)
+void AffCmdLine(void)
 {
 int x1,m,n,v;
+
+if (DFen->ChangeLine==0)
+    return;
 
 if (DFen->nfen>=2) return;
 
@@ -1083,7 +1100,7 @@ do {
 
 
 if (affich==1)
-    ChangeLine();
+    DFen->ChangeLine=1;
 
 /*--------------------------------------------------------------------*\
 |-Traite les commandes normales (mˆme si traite==0) ! mettre … 1 aprŠs-|
@@ -1168,7 +1185,7 @@ if (traite==1)
         case 2:
             str[0]=0;
             px=0;
-            ChangeLine();
+            DFen->ChangeLine=1;
             break;
         default:
             break;
@@ -1210,6 +1227,7 @@ int IsDir(struct file *F)
 if ( (F->attrib & _A_SUBDIR)!=_A_SUBDIR) return 0;
 if (F->name[1]==':') return 0;
 if (F->name[1]=='*') return 0;
+if (F->name[0]=='*') return 0;
 return 1;
 }
 
@@ -1231,6 +1249,7 @@ int FicSelect(FENETRE *Fen,int n,char q)
 {
 if (Fen->F[n]->name[0]=='.') return 1;
 if (Fen->F[n]->name[1]==':') return 1;
+if (Fen->F[n]->name[0]=='*') return 1;
 if (Fen->F[n]->name[1]=='*') return 1;
 if ((Fen->F[n]->attrib & _A_VOLID)==_A_VOLID) return 1;
 

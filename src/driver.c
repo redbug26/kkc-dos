@@ -1203,7 +1203,7 @@ if (1)
     }
 
 
-ChangeLine();
+DFen->ChangeLine=1;
 
 /*--------------------------------------------------------------------*\
 |-  Temporise le temps … attendre avant le lecture du header OK ;-}   -|

@@ -41,9 +41,13 @@ static long posn;               //--- octet courant --------------------
 
 static char srcch[132];         //--- chaine … rechercher --------------
 
+static char raw;                //--- si vaut 1 -> raw screen ansi -----
+
 /*--------------------------------------------------------------------*\
 |- Prototype                                                          -|
 \*--------------------------------------------------------------------*/
+
+void ViewSetup(void);
 
 void (*AnsiAffChr)(long x,long y,long c);
 void (*AnsiAffCol)(long x,long y,long c);
@@ -70,6 +74,8 @@ void SearchHexa(void);
 void SearchTxt(void);
 void Decrypt(void);
 void Print(char *fichier,int n);
+
+void StartAnsiPage(void);
 
 /*--------------------------------------------------------------------*\
 |- Change le mode vid‚o                                               -|
@@ -246,7 +252,7 @@ x1=(Cfg->TailleX-80)/2;
 SaveScreen();
 PutCur(3,0);
 
-Bar(" Help  ----  ---- ChView ----  ---- Search ----  ----  Quit ");
+Bar(" Help  ----  ---- ChView ----  ---- Search ----  Setup Quit ");
 
 Window  (x1+ 1,1,x1+78,(Cfg->TailleY)-3,Cfg->col[16]);
 WinCadre(x1+ 0,3,x1+ 9,(Cfg->TailleY)-2,2);
@@ -390,6 +396,9 @@ switch(LO(car))   {
                 cv=ChangeViewer(1);
                 if (cv!=0)
                     fin=cv;
+                break;
+            case 0x43:  // --- F9 --------------------------------------
+                ViewSetup();
                 break;
             default:
                 break;
@@ -3533,7 +3542,7 @@ pp=8;
 
 m=WinTraite(T,17,&F,0);
 
-if (m==27)  //--- escape -----------------------------------------------
+if (m==-1)  //--- escape -----------------------------------------------
     return;
     else
     if (T[m].type==3) return;  //--- cancel ----------------------------
@@ -3589,7 +3598,7 @@ AnsiBuffer[y*160+x+80]=(char)c;
 }
 
 
-void StartAllPage(void)
+void StartAnsiPage(void)
 {
 char car;
 
@@ -3606,11 +3615,31 @@ maxy=Cfg->TailleY;
 curx=0;
 cury=0;
 
-for (posn=0;posn<taille;posn++)
+if (raw==0)
     {
-    car=ReadChar();
-    if (car==0x1A) break;
-    ansi_out(car);
+    for (posn=0;posn<taille;posn++)
+        {
+        car=ReadChar();
+        if (car==0x1A) break;
+        ansi_out(car);
+        }
+    }
+    else
+    {
+    int x,y;
+
+    posn=0;
+    for(y=0;y<Cfg->TailleY;y++)
+        for(x=0;x<Cfg->TailleX;x++)
+            {
+            if (posn<taille)
+                {
+                AnsiAffChr(x,y,ReadChar());
+                posn++;
+                AnsiAffCol(x,y,ReadChar());
+                posn++;
+                }
+            }
     }
 
 Ansi2=cury+1-Cfg->TailleY+2;
@@ -3695,7 +3724,7 @@ Cfg->font=0;
 
 TXTMode();
 
-StartAllPage();
+StartAnsiPage();
 
 wrap=0;
 aff=1;
@@ -3997,7 +4026,7 @@ LibMem(buffer);
 |- Fonction principale du viewer                                      -|
 \*--------------------------------------------------------------------*/
 
-void View(KKVIEW *V,char *file)
+void View(KKVIEW *V,char *file,int type)
 {
 static char fichier[256];
 char *liaison;
@@ -4007,7 +4036,7 @@ extern struct key K[nbrkey];
 
 RB_IDF Info;
 
-
+raw=0;
 xor=0;
 
 ViewCfg=V;
@@ -4022,9 +4051,30 @@ strcpy(liaison,"");
 strcpy(fichier,file);
 strcpy(Info.path,fichier);
 
-Traitefic(&Info);
+switch(type)
+    {
+    case 0:
+        Traitefic(&Info);
 
-i=Info.numero;
+        i=Info.numero;
+        break;
+    case 1:
+        i=86;
+        break;
+    case 2:
+        i=104;
+        break;
+    case 3:
+        i=-1;
+        break;
+    case 4:
+        i=91;
+        break;
+    case 5:
+        i=86;
+        raw=1;
+        break;
+    }
 
 fic=fopen(fichier,"rb");
 
@@ -4093,4 +4143,61 @@ if (fic!=NULL)
 free(liaison);
 
 LoadScreen();
+}
+
+void ViewSetup(void)
+{
+
+int res;
+
+//--- Internal Variable ---
+
+static char KKTmpX0=29;
+static int KKTmpY0=2;
+static int KKTmp9=5;
+static char KKTmpX12=16;
+static int KKTmpY12=6;
+
+//--- User Field ---
+
+static int KKField1;
+static int KKField2;
+static int KKField5;
+static char KKField9[6];
+
+struct TmtWin F = {-1,9,51,18,"Viewer"};
+
+struct Tmt T[] = {
+    { 1, 1, 9,&KKTmpX0,&KKTmpY0},
+    { 3, 2, 8,"Auto adjust viewer size",&KKField1},
+    { 3, 3, 8,"Save position in viewer",&KKField2},
+    { 2, 6, 2,NULL,NULL},
+    {17, 6, 3,NULL,NULL},
+    {34, 3,10,"DOS (CR/LF)",&KKField5},
+    {34, 4,10,"Unix (CR)",&KKField5},
+    {34, 5,10,"LF",&KKField5},
+    {34, 6,10,"User",&KKField5},
+    {43, 6, 1,KKField9,&KKTmp9},
+    {34, 7,10,"Mixed CR-LF",&KKField5},
+    {33, 2, 0,"Line Feed:",NULL},
+    {32, 1, 9,&KKTmpX12,&KKTmpY12}
+   };
+
+KKField1=ViewCfg->ajustview;
+KKField2=ViewCfg->saveviewpos;
+KKField5=5;
+sprintf(KKField9,"%d",ViewCfg->userfeed);
+
+res=WinTraite(T,13,&F,3);
+
+if (res==-1)
+    return;
+
+if (T[res].type==3)
+    return;
+
+ViewCfg->ajustview=KKField1;
+ViewCfg->saveviewpos=KKField2;
+ViewCfg->lnfeed=(KKField5-5);
+sscanf(KKField9,"%d",&(ViewCfg->userfeed));
 }

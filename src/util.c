@@ -177,7 +177,7 @@ for (n=0;n<DFen->nbrfic;n++)
 
 n=WinTraite(T,34,&F,0);
 
-if (n!=27)  // pas escape
+if (n!=-1)  // pas escape
     {
     if (T[n].type!=3)    // pas cancel
         for (n=0;n<DFen->nbrfic;n++)
@@ -323,7 +323,7 @@ if ((regs.h.al&64)==64)
         ChangeTaille(25);                          // Rafraichit l'ecran
         DFen->yl=(Cfg->TailleY)-4;
         DFen->Fen2->yl=(Cfg->TailleY)-4;
-        ChangeLine();
+        DFen->ChangeLine=1;
 
         DesinitScreen();
         Cfg->display=2;
@@ -691,7 +691,7 @@ l1=0;
 
 n=WinTraite(T,8,&F,0);
 
-if (n==27) return;
+if (n==-1) return;
 if (T[n].type==3) return;
 
 strcpy(buffer,"");

@@ -119,7 +119,7 @@ V.Mask=(struct PourMask**)GetMem(sizeof(struct PourMask*)*16);
 for (n=0;n<16;n++)
     V.Mask[n]=(struct PourMask*)GetMem(sizeof(struct PourMask));
 
-View(&V,argv[1]);
+View(&V,argv[1],0);
 
 Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;

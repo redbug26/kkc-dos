@@ -230,6 +230,21 @@ struct Tmt {
 \*--------------------------------------------------------------------*/
 
 int Puce(int x,int y,int lng,char p);
+
+/*--------------------------------------------------------------------*\
+|- Function:     int WinTraite(struct Tmt,int,struct TmtWin,int)      -|
+|-                                                                    -|
+|- Description:  Call a dialog box                                    -|
+|-                                                                    -|
+|- Input:        The description of the main box                      -|
+|-               The number of section                                -|
+|-               The description of all the sections                  -|
+|-               The first section                                    -|
+|-                                                                    -|
+|- Output:       The number of the select widget(ok,cancel or user)   -|
+|-               -1 if ESCape                                         -|
+\*--------------------------------------------------------------------*/
+
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F,int first);
 
 /*--------------------------------------------------------------------*\
@@ -368,7 +383,5 @@ void HelpTopic(char *);
 /*--------------------------------------------------------------------*\
 |- Personnal Function                                                 -|
 \*--------------------------------------------------------------------*/
-int __far Error_handler(unsigned deverr,unsigned errcode,
-                                                  unsigned far *devhdr);
-
+void LoadErrorHandler(void);   //--- Load the internal error handler ---
 

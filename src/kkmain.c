@@ -29,6 +29,7 @@ void LoadSel(int n);
 void AffFen(FENETRE *Fen);
 
 void SelectPlus(void);
+void SelectPlusMoins(void);
 void SelectMoins(void);
 void CreateKKD(void);
 void EditFile(char *s);
@@ -48,6 +49,9 @@ void HistCom(void);
 void AffLonger(void);
 
 void RBSetup(void);
+
+void SaveRawPage(void);
+
 
 /*--------------------------------------------------------------------*\
 |-  Declaration des variables                                         -|
@@ -82,6 +86,52 @@ extern int IOerr;
 
 struct kkconfig *KKCfg;
 struct kkfichier *KKFics;
+
+char QuitKKC=0;
+
+
+/*--------------------------------------------------------------------*\
+|- Gestion macros                                                     -|
+\*--------------------------------------------------------------------*/
+
+short FctStack[128];
+short NbrFunct;
+
+
+/*--------------------------------------------------------------------*\
+|- Init Function Stack                                                -|
+\*--------------------------------------------------------------------*/
+void InitFctStack(void)
+{
+NbrFunct=0;
+}
+
+/*--------------------------------------------------------------------*\
+|- Put a Function LIFO                                                -|
+\*--------------------------------------------------------------------*/
+void PutLIFOFct(int fct)
+{
+if (NbrFunct>128) return;
+FctStack[NbrFunct]=fct;
+NbrFunct++;
+}
+
+/*--------------------------------------------------------------------*\
+|- Get a Function LIFO                                                -|
+\*--------------------------------------------------------------------*/
+int GetLIFOFct(void)
+{
+if (NbrFunct==0) return 0;
+NbrFunct--;
+return FctStack[NbrFunct];
+}
+
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+
+
 
 
 void HelpOnError(void)
@@ -129,7 +179,7 @@ Path2Abs(Dir,"KKSELECT.TMP");
 n=WinTraite(T,5,&F,1);
 
 
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 strcpy(nom,Dir);
@@ -382,6 +432,12 @@ Fin();
 |- 84: ENTER                                                          -|
 |- 85: R‚solution de s‚curit‚                                         -|
 |- 86: Eject le support                                               -|
+|- 87: Pannel Menu                                                    -|
+|- 88: Previent le centre de contr“le que l'on veut quitter KKC       -|
+|- 89: Va dans l'autre fenˆtre                                        -|
+|- 90: Sauvegarde et affiche le fond avec le viewer ansi              -|
+|- 91: Appelle le mode console                                        -|
+|- 92: Selection ou deselectionne des fichiers                        -|
 \*--------------------------------------------------------------------*/
 
 void GestionFct(int fct)
@@ -433,7 +489,7 @@ switch(fct)
         switch(DFen->system)
             {
             case 0:
-                View(&(KKCfg->V),buffer);
+                View(&(KKCfg->V),buffer,0);
                 break;
             }
         break;
@@ -678,7 +734,7 @@ switch(fct)
     case 43:
         KKCfg->FenAct=(KKCfg->FenAct)&1;
         DFen=Fenetre[KKCfg->FenAct];
-        ChangeLine();                                  // Affichage Path
+        DFen->ChangeLine=1;                            // Affichage Path
         break;
     case 44:                               // Fenetre pour renomation ;)
         WinRename(DFen);
@@ -718,7 +774,7 @@ switch(fct)
         DFen->init=1;
         DFen=FenOld;
 
-        ChangeLine();                                  // Affichage Path
+        DFen->ChangeLine=1;                            // Affichage Path
         break;
     case 50:                          // Change le drive de la fenetre 2
         FenOld=DFen;
@@ -728,7 +784,7 @@ switch(fct)
         DFen->init=1;
         DFen=FenOld;
 
-        ChangeLine();                                  // Affichage Path
+        DFen->ChangeLine=1;                            // Affichage Path
         break;
     case 51:               // Va dans le repertoire d'o— l'on a lanc‚ KK
         CommandLine("#CD %s",Fics->LastDir);
@@ -759,7 +815,7 @@ switch(fct)
             {
             KKCfg->FenAct=0;
             DFen=Fenetre[KKCfg->FenAct];
-            ChangeLine();                              // Affichage Path
+            DFen->ChangeLine=1;                        // Affichage Path
             }
         break;
     case 57:
@@ -769,7 +825,7 @@ switch(fct)
             {
             KKCfg->FenAct=1;
             DFen=Fenetre[KKCfg->FenAct];
-            ChangeLine();                              // Affichage Path
+            DFen->ChangeLine=1;                        // Affichage Path
             }
         break;
     case 58:        // Change la fenˆtre avec la path de l'autre fenˆtre
@@ -857,13 +913,13 @@ switch(fct)
         break;
     case 72:                // Change le drive de la fenetre par default
         ChangeDrive();
-        ChangeLine();                                  // Affichage Path
+        DFen->ChangeLine=1;                            // Affichage Path
         break;
     case 73:
         ExecCom();
         break;
     case 74:
-        View(&(KKCfg->V),KKFics->temp);
+        View(&(KKCfg->V),KKFics->temp,0);
         break;
     case 75:                                   // Fenetre directory tree
         DFen=DFen->Fen2;
@@ -1031,6 +1087,32 @@ switch(fct)
     case 86:
         EjectCD(DFen);
         break;
+    case 87:
+        i=GestionBar(0);
+
+        if (i==20)
+            GestionFct(88);                                       // F10
+            else
+            GestionFct(i);
+        break;
+    case 88:
+        QuitKKC=1;
+        break;
+    case 89:
+        KKCfg->FenAct= (KKCfg->FenAct==1) ? 0:1;
+        DFen=Fenetre[KKCfg->FenAct];
+        DFen->ChangeLine=1; //--- Affichage path plus tard -------------
+        break;
+    case 90:
+        SaveRawPage();
+        GestionFct(27);
+        break;
+    case 91:
+        Console();
+        break;
+    case 92:
+        SelectPlusMoins();
+        break;
     }
 
 
@@ -1186,7 +1268,11 @@ switch (poscur)
    bar[3].Help=NULL;
    bar[4].Titre="Screen Saver             "; bar[4].fct=76;
    bar[4].Help=NULL;
-   nbmenu=5;
+   bar[5].Titre=NULL;                        bar[5].fct=0;
+   bar[5].Help=NULL;
+   bar[6].Titre="View/Save Background     "; bar[6].fct=90;
+   bar[6].Help=NULL;
+   nbmenu=7;
    break;
  case 5:
    bar[0].Titre="Configuration   ";   bar[0].fct=31;
@@ -1285,7 +1371,7 @@ struct Tmt T[] = {
 struct TmtWin F = {-1,5,36,12,"Selection of files"};
 
 n=WinTraite(T,5,&F,0);
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 for (n=0;n<DFen->nbrfic;n++)
@@ -1316,7 +1402,7 @@ struct TmtWin F = {-1,5,36,12,"Deselection of files"};
 
 n=WinTraite(T,5,&F,0);
 
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 for (n=0;n<DFen->nbrfic;n++)
@@ -1325,6 +1411,55 @@ for (n=0;n<DFen->nbrfic;n++)
         if (!WildCmp(DFen->F[n]->name,Select_Chaine))
             FicSelect(DFen,n,0);
 }
+
+
+void SelectPlusMoins(void)
+{
+int n;
+int res;
+
+//--- Internal Variable ---
+
+static int KKTmp0=32;
+static char KKTmpX1=32;
+static int KKTmpY1=1;
+
+//--- User Field ---
+
+static char KKField0[33];
+
+struct TmtWin F = {-1,5,46,11,"Select/Unselect"};
+
+struct Tmt T[] = {
+    {12, 2, 1,KKField0,&KKTmp0},
+    {11, 1, 9,&KKTmpX1,&KKTmpY1},
+    { 1, 4, 5,"    Select",NULL},
+    {16, 4, 5,"  Unselect",NULL},
+    {31, 4, 3,NULL,NULL},
+    { 1, 2, 0,"Selection:",NULL}
+   };
+
+strcpy(KKField0,"*.*");
+
+res=WinTraite(T,6,&F,0);
+
+if (res==-1) return;                                           // ESCape
+if (T[res].type==3) return;                                    // Cancel
+
+for (n=0;n<DFen->nbrfic;n++)
+    if ( (KKCfg->seldir==1) |
+                         ((DFen->F[n]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
+        if (!WildCmp(DFen->F[n]->name,KKField0))
+            {
+            if (res==3)
+                FicSelect(DFen,n,0);
+
+            if (res==2)
+                FicSelect(DFen,n,1);
+
+            }
+}
+
 
 /*--------------------------------------------------------------------*\
 |-                      Fenetre History Directory                     -|
@@ -1492,7 +1627,7 @@ int n;
 
 n=WinTraite(T,7,&F,0);
 
-if (n!=27)
+if (n!=-1)
     {
     if ((T[n].type==2) | (T[n].type==1))
         {
@@ -1534,7 +1669,7 @@ int n;
 
 n=WinTraite(T,5,&F,0);
 
-if (n!=27)
+if (n!=-1)
     if (T[n].type!=3)
         {
         CommandLine("#md %s",Dir);
@@ -1577,7 +1712,7 @@ int n;
 
 n=WinTraite(T,5,&F,0);
 
-if (n!=27)
+if (n!=-1)
     if (T[n].type!=3)
         EditFile(Dir);
 }
@@ -1605,7 +1740,7 @@ int n;
 
 n=WinTraite(T,5,&F,0);
 
-if (n!=27)
+if (n!=-1)
     if (T[n].type!=3)
         {
         strcpy(Name,DFen->Fen2->path);
@@ -2095,7 +2230,7 @@ do
     AffFen(DFen);
     } while(!fin);
 
-ChangeLine();
+DFen->ChangeLine=1;
 
 *c=car;
 *c2=car2;
@@ -2434,7 +2569,7 @@ strcpy(Temp,F1->path);
 Path2Abs(Temp,Dir);
 
 
-if (n!=27)
+if (n!=-1)
     if (T[n].type!=3)
         if (rename(Name,Temp)!=0)
             WinError("Couldn't rename file");
@@ -2445,6 +2580,8 @@ if (n!=27)
 \*--------------------------------------------------------------------*/
 void Gestion(void)
 {
+short fct;
+
 clock_t Cl,Cl_Start;
 BYTE car,car2;
 
@@ -2458,25 +2595,22 @@ Info->temps=clock()-Info->temps;
 
 do
 {
+do
+{
 KKCfg->scrrest=1;
 
-(KKCfg->noprompt)=(char)((KKCfg->noprompt)&126);
-                                            // Retire le dernier bit
-
-if ( (KKCfg->key==0) & (KKCfg->strash>=KKCfg->mtrash) &
-                                                (KKCfg->mtrash!=0) )
-    GestionFct(34);                 // Efface la trash si trop plein
+KKCfg->noprompt&=126;                       // Met le dernier bit … z‚ro
 
 if ( (KKCfg->key==0) & (KKCfg->FenAct>1) )
     {
-    GestionFct(43); //--- Active la fenetre principale -------------
+    GestionFct(43); //--- Active la fenetre principale -----------------
     }
     else
     {
     if (KKCfg->FenAct>1)
         {
         DFen=Fenetre[2];
-        ChangeLine();                              // Affichage Path
+        DFen->ChangeLine=1;                            // Affichage Path
         }
         else
         DFen=Fenetre[KKCfg->FenAct];
@@ -2487,13 +2621,8 @@ if (KKCfg->key==0)            //--- Switch if key buffer is void ---
     if (DFen->FenTyp==5)
         ViewFileID(DFen);
 
-    if ( (DFen->FenTyp!=0) &
-         (DFen->Fen2->FenTyp==0) )
-        {
-        KKCfg->FenAct= (KKCfg->FenAct==1) ? 0:1;
-        DFen=Fenetre[KKCfg->FenAct];
-        ChangeLine();         //--- Affichage Path -----------------
-        }
+    if ( (DFen->FenTyp!=0) & (DFen->Fen2->FenTyp==0) )
+        GestionFct(89);
     }
 
 if (Fenetre[1]->FenTyp==0)
@@ -2503,13 +2632,28 @@ if (Fenetre[1]->FenTyp==0)
     for (i=0;i<2;i++)
         AffFen(Fenetre[i]);
 
-Cl_Start=clock();
-Cl=clock();
+fct=GetLIFOFct();
+
+if (fct!=0)
+    GestionFct(fct);
+}
+while(fct!=0);
 
 
 if (KKCfg->key==0)
     {
+    if ((KKCfg->strash>=KKCfg->mtrash) & (KKCfg->mtrash!=0))
+        GestionFct(34);                 // Efface la trash si trop plein
+    }
+
+if (KKCfg->key==0)
+    {
+    Cl_Start=clock();
+    Cl=clock();
+
     c=0;
+
+    AffCmdLine();
 
     while ( (!KbHit()) & (c==0) )
         {
@@ -2551,7 +2695,13 @@ if (KKCfg->key==0)
                     {
                     n=(ym-1)/3;
                     if ( (n>=0) & (n<6) )
+                        {
+                        Cadre(40,1+n*3,49,3+n*3,2,
+                                             Cfg->col[56],Cfg->col[55]);
                         GestionFct(KKCfg->Nmenu[n]);
+                        Cadre(40,1+n*3,49,3+n*3,2,
+                                             Cfg->col[55],Cfg->col[56]);
+                        }
                     }
                 c=3;                       //--- On ne fait rien ---
                 }
@@ -2583,11 +2733,13 @@ if (KKCfg->key==0)
             if (DFen->Fen2->FenTyp==5) FenFileID(DFen->Fen2);
             }
 
-        if ( ((clock()-Cl)>Cfg->SaveSpeed*CLOCKS_PER_SEC)
-            & (Cfg->SaveSpeed!=0) )
-            GestionFct(76);
+        if (Cfg->SaveSpeed!=0)
+            {
+            if ((clock()-Cl)>Cfg->SaveSpeed*CLOCKS_PER_SEC)
+                GestionFct(76);
+            }
 
-        car=*Keyboard_Flag1;
+        car=*Keyboard_Flag1;  //--- Etat des shifts, ctrl et alt -------
 
         if ((car&1)==1)  MenuBar(1);
             else
@@ -2764,9 +2916,7 @@ if ( ((car3&255)==0) & (car3!=0) )
         if (bkey[n]==(car3/256))
             key=n+'a';
     if (key!=0)
-        {
         QuickSearch(key,&car,&car2);
-        }
     }
 
 
@@ -2776,15 +2926,8 @@ switch (car)
     case 0x01:                                                 // CTRL-A
         GestionFct(28);        break;
     case 0x02:                                                 // CTRL-B
-        i=GestionBar(0);
-
-        if (i==20)
-            car2=0x44;                                            // F10
-            else
-            GestionFct(i);
-        break;
-
-    case 0x03:
+        GestionFct(87);        break;
+    case 0x03:                                                 // CTRL-C
         break;
     case 0x04:                                                 // CTRL-D
         GestionFct(29);        break;
@@ -2793,19 +2936,13 @@ switch (car)
     case 0x06:                                                 // CTRL-F
         GestionFct(32);        break;
     case 0x09:                                           // TAB & CTRL-I
-        KKCfg->FenAct= (KKCfg->FenAct==1) ? 0:1;
-        DFen=Fenetre[KKCfg->FenAct];
-        ChangeLine();
-        break;
+        GestionFct(89);        break;
     case 0x0A:                                    // CTRL-ENTER & CTRL-J
-        GestionFct(30);
-        break;
+        GestionFct(30);        break;
     case 0x0C:                                                 // CTRL-L
-        GestionFct(63);
-        break;
+        GestionFct(63);        break;
     case 0x0D:                                         // ENTER & CTRL-M
-        GestionFct(84);
-        break;
+        GestionFct(84);        break;
     case 0x0F:                                                 // CTRL-O
         GestionFct(14);
         GestionFct(15);
@@ -2816,10 +2953,9 @@ switch (car)
 //        GestionFct(75);
         break;
     case 0x15:                                                 // CTRL-U
-        GestionFct(68);
-        break;
+        GestionFct(68);        break;
     case 0x19:                                                 // CTRL-Y
-        GestionFct(38);           break;
+        GestionFct(38);        break;
     case 27:                                                   // ESCAPE
         if (CommandLine("\r")==0)
             if (KKCfg->Esc2Close==1)
@@ -2835,8 +2971,7 @@ switch (car)
             GestionFct(16);
         break;
     case 236:                                                 // ALT-236
-        GestionFct(65);
-        break;
+        GestionFct(65);        break;
 //-Retour Switch car----------------------------------------------------
     default:                                    // default du switch car
         CommandLine("%c",car);
@@ -2902,8 +3037,6 @@ switch(car2)
         GestionFct(44);           break;
     case 0x5C:                                               // SHIFT-F9
         GestionFct(81);           break;
-    case 0x5D:                                              // SHIFT-F10
-        break;
     case 0x5E:                                                // CTRL-F1
         GestionFct(14);           break;
     case 0x5F:                                                // CTRL-F2
@@ -2960,35 +3093,19 @@ switch(car2)
         GestionFct(51);           break;
     case 0x8C:                                                // ALT-F12
         GestionFct(65);           break;
+    case 0x43:                                                     // F9
+        GestionFct(87);           break;
+    case 0x44:                                                    // F10
+        GestionFct(88);           break;
+    case 0x5D:                                              // SHIFT-F10
+        GestionFct(91);           break;
+
 
     case 0xB6:                                   //
     case 0xB7:                                   //  Windows 95 keyboard
     case 0xB8:                                   //
         break;
 
-/*    case 0x21:                                                  // ALT-F
-    case 0x19:                                                  // ALT-P
-    case 0x20:                                                  // ALT-D
-    case 0x1F:                                                  // ALT-S
-    case 0x14:                                                  // ALT-T
-    case 0x18:                                                  // ALT-O
-    case 0x23:                                                  // ALT-H
-        i=GestionBar(car2);
-        if (i==20)
-            car2=0x44;                                            // F10
-            else
-            GestionFct(i);
-        break;
-*/
-
-    case 0x43:                                                     // F9
-        i=GestionBar(0);
-
-        if (i==20)
-            car2=0x44;                                            // F10
-            else
-            GestionFct(i);
-        break;
 
     default:
         if (Cfg->debug==1)
@@ -2996,13 +3113,13 @@ switch(car2)
         break;
     }                                                   // switch (car2)
 
-if ( (car2==0x44) & (KKCfg->confexit==1) )
+if ( (QuitKKC) & (KKCfg->confexit==1) )
     {
     if (WinMesg("Quit KKC","Do you really want to quit KKC ?",1)!=0)
-        car2=0;
+        QuitKKC=0;
     }
 }
-while(car2!=0x44);      // F10
+while(!QuitKKC);
 }
 
 
@@ -3078,13 +3195,12 @@ if (strlen(suite+1)>120)    //-- La ligne de commande est trop grande --
     strcpy(suite+1,filename);
     }
 
-if (KKCfg->KeyAfterShell==0)
-    suite[0]='#';
+// if (KKCfg->KeyAfterShell==0)
+suite[0]='#';
 
 memcpy(SpecSortie,suite,256);
 Fin();
 }
-
 
 
 
@@ -3198,7 +3314,7 @@ ColLin(0,Cfg->TailleY-2,Cfg->TailleX,Cfg->col[63]); //-- Command Line --
 DFen->init=1;
 DFen->Fen2->init=1;
 
-ChangeLine();
+DFen->ChangeLine=1;
 
 MenuBar(4);
 }
@@ -3266,6 +3382,10 @@ for(t=0;t<NBWIN;t++)
 
     fwrite(&(Fen->scur),sizeof(short),1,fic);// Pos du fichier … l'ecran
     }
+
+fwrite(&NbrFunct,2,1,fic);
+if (NbrFunct!=0)
+    fwrite(FctStack,2,NbrFunct,fic);
 
 fclose(fic);
 }
@@ -3381,6 +3501,10 @@ for (t=0;t<NBWIN;t++)
         if (!stricmp(nom,DFen->F[n]->name))
             DFen->pcur=n;
     }
+
+fread(&NbrFunct,2,1,fic);
+if (NbrFunct!=0)
+    fread(FctStack,2,NbrFunct,fic);
 
 fclose(fic);
 
@@ -3574,6 +3698,7 @@ int n;
 char *LC;
 
 
+
 /*--------------------------------------------------------------------*\
 |- Initialisation du temps                                            -|
 \*--------------------------------------------------------------------*/
@@ -3590,7 +3715,6 @@ Cfg=(struct config*)GetMem(sizeof(struct config));
 
 Cfg->TailleX=(*(char*)(0x44A));
 Cfg->TailleY=(*(char*)(0x484))+1;
-
 
 InitScreen(0);
 
@@ -3635,16 +3759,11 @@ path=(char*)GetMem(256);
 |-                Lecture et verification des arguments               -|
 \*--------------------------------------------------------------------*/
 
-strcpy(ShellAdr+128,*argv);
 strcpy(path,*argv);
-for (n=strlen(path);n>0;n--)
-    {
-    if (path[n]==DEFSLASH)
-        {
-        path[n]=0;
-        break;
-        }
-    }
+
+LC=strrchr(path,DEFSLASH);
+if (LC!=NULL)
+    *LC=0;
 
 LC=*(argv+argc-1);
 
@@ -3659,11 +3778,11 @@ if (strncmp(LC,"6969",4))
     }
 
 
+
 /*--------------------------------------------------------------------*\
 |-                          Gestion des erreurs                       -|
 \*--------------------------------------------------------------------*/
-
-_harderr(Error_handler);
+LoadErrorHandler();
 
 signal(SIGBREAK,Signal_Handler);
 signal(SIGABRT,Signal_Handler);
@@ -3672,7 +3791,6 @@ signal(SIGILL,Signal_Handler);
 signal(SIGINT,Signal_Handler);
 signal(SIGSEGV,Signal_Handler);
 signal(SIGTERM,Signal_Handler);
-
 
 /*--------------------------------------------------------------------*\
 |-                      Initialisation des fichiers                   -|
@@ -3700,8 +3818,6 @@ KKCfg->_4dos=_4DOSverif();
     else */
 
 memset(KKCfg->HistDir,0,256);
-
-
 
 
 /*--------------------------------------------------------------------*\
@@ -3752,6 +3868,14 @@ if (LoadCfg()==-1)
     saveconfig=0;
     GestionFct(62);
     }
+
+if ((KKCfg->KeyAfterShell) & (LC[4]=='0'))
+    {
+    PrintAt(0,OldY-1,"Press a key to continue to return in "RBTitle);
+    ColLin(0,OldY-1,OldX,Cfg->col[4]);
+    Wait(0,0);
+    }
+
 
 /*--------------------------------------------------------------------*\
 |- Sauvegarde de l'ecran                                              -|
@@ -3872,12 +3996,8 @@ SwapLong(&(Fenetre[a]->x),&(Fenetre[b]->x));
 SwapLong(&(Fenetre[a]->y),&(Fenetre[b]->y));
 SwapLong(&(Fenetre[a]->xl),&(Fenetre[b]->xl));
 SwapLong(&(Fenetre[a]->yl),&(Fenetre[b]->yl));
-//SwapLong(&(Fenetre[a]->x2),&(Fenetre[b]->x2));
 SwapLong(&(Fenetre[a]->y2),&(Fenetre[b]->y2));
-//SwapLong(&(Fenetre[a]->xl2),&(Fenetre[b]->xl2));
 SwapLong(&(Fenetre[a]->yl2),&(Fenetre[b]->yl2));
-//SwapLong(&(Fenetre[a]->x3),&(Fenetre[b]->x3));
-//SwapLong(&(Fenetre[a]->y3),&(Fenetre[b]->y3));
 Fenetre[a]->init=1;
 Fenetre[b]->init=1;
 
@@ -3896,3 +4016,51 @@ if (KKCfg->FenAct==a)
 }
 
 
+void SaveRawPage(void)
+{
+FILE *fic;
+int n;
+static char CadreLength=70;
+static char Dir[70];
+static int DirLength=70;
+char nom[256];
+
+struct Tmt T[] =
+    { { 2,3,1, Dir, &DirLength},
+      {10,5,5,"    View     ",NULL},
+      {30,5,5,"  View/Save  ",NULL},
+      {50,5,5,"    Save     ",NULL},
+      { 2,2,0,"File to use: ",NULL},
+      { 1,1,4,&CadreLength,NULL} };
+
+struct TmtWin F = {-1,5,74,12,"Background"};
+
+strcpy(Dir,DFen->path);
+Path2Abs(Dir,"KKSCREEN.RAW");
+
+n=WinTraite(T,6,&F,1);
+
+if (n==-1) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+if (n==1)
+    strcpy(Dir,KKFics->temp);
+
+strcpy(nom,Dir);
+strcpy(Dir,DFen->path);
+Path2Abs(Dir,nom);
+
+if ((n==1) | (n==2) | (n==3))
+    {
+    fic=fopen(Dir,"wb");
+    if (fic==NULL)
+        {
+        WinError("File couldn't be created");
+        return;
+        }
+    fwrite(Screen_Buffer,OldX*OldY*2,1,fic);
+    fclose(fic);
+    }
+if ((n==1) | (n==2))
+    View(&(KKCfg->V),Dir,5);
+}

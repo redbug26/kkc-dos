@@ -204,7 +204,7 @@ for (i=0;i<F1->nbrfic;i++)
 
         switch(car)
             {
-            case 27:                                    // Touche ESCape
+            case -1:                                    // Touche ESCape
             case 3:
                 fin=1;
                 break;

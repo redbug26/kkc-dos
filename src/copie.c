@@ -180,7 +180,7 @@ memcpy(Dir,path,255);
 
 switch(WinTraite(T,5,&F,0))
     {
-    case 27:
+    case -1:
     case 1:
         FicEcrase=2;    // Cancel
     case 0:
@@ -214,7 +214,7 @@ switch(n)   {
     case 0:
         return 0;       // Replace
         break;
-    case 27:
+    case -1:
     case 1:
         return 1;       // Cancel
     case 2:
@@ -256,7 +256,7 @@ switch(WinTraite(T,7,&F,0))
     case 0:
         return 0;       // Replace
         break;
-    case 27:
+    case -1:
     case 1:
         return 1;       // Cancel
     case 2:
@@ -605,7 +605,7 @@ Path2Abs(temp,Dir);
 strcpy(Dir,temp);
 
 
-if (n!=27)  // pas escape
+if (n!=-1)  // pas escape
     {
     o=-1;
     for (m=0;m<strlen(Dir);m++)
@@ -682,7 +682,7 @@ if (((KKCfg->noprompt)&1)==0)
 
 Path2Abs(Dir,".");
 
-if (n!=27)  // pas escape
+if (n!=-1)  // pas escape
     {
     o=-1;
     for (m=0;m<strlen(Dir);m++)
@@ -1120,7 +1120,7 @@ memcpy(Dir,path,255);
 
 switch(WinTraite(T,5,&F,0))
     {
-    case 27:
+    case -1:
     case 1:
         FicEcrase=2;    // Cancel
     case 0:
@@ -1159,7 +1159,7 @@ switch(WinTraite(T,7,&F,0))
     case 0:
         return 0;                                             // Replace
         break;
-    case 27:
+    case -1:
     case 1:
         return 1;                                              // Cancel
     case 2:
@@ -1381,6 +1381,7 @@ int SelectFile(FENETRE *F1,int i)
 if (F1->F[i]->name[0]=='.') return 0;
 if (F1->F[i]->name[1]==':') return 0;
 if (F1->F[i]->name[1]=='*') return 0;
+if (F1->F[i]->name[0]=='*') return 0;
 
 if (((KKCfg->noprompt)&1)==0)
     {

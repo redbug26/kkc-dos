@@ -233,7 +233,7 @@ void MenuBar(char c)
 {
 static char bar[4][60]=
  {" Help  User  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
-  " ---- Attrib View  Edit  Host Rename ----  ----   Row  ---- ",//SHIFT
+  " ---- Attrib View  Edit  Host Rename ----  ----   Row Consol",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
   " Drv1  Drv2  FDiz FileID Path  Hist Search Type  Line  Disp "}; //ALT
 char Tbar[60];
@@ -383,10 +383,10 @@ WinTraite(T,5,&F,0);
 void Setup(void)
 {
 static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14,l15,l16,l17;
-static int l18;
+static int l18,l19;
 
 static char x1=32,x2=32,x3=32;
-static int y1=10,y2=2,y3=16;
+static int y1=9,y2=3,y3=16;
 
 struct Tmt T[] = {
       {40,17,2,NULL,NULL},                                      // le OK
@@ -409,12 +409,12 @@ struct Tmt T[] = {
       {5,16,8,"Save position in viewer",&l18},
       {5,17,8,"Load startup directory",&l17},
 
-
       {39,2,7, "Size Trash   ",&l1},
-      {39,3,7, "Ansi Speed   ",&l2},
+      {39,3,8, "Key After Shell",&l2},
+      {39,4,8,"Add selection function",&l19},
 
       {3,1,9,&x3,&y3},
-      {37,5,9,&x1,&y1},
+      {37,6,9,&x1,&y1},
       {37,1,9,&x2,&y2},
 
       {40, 8,5," Serial Port ",&l1},         // la gestion du port serie
@@ -428,7 +428,7 @@ struct TmtWin F = {-1,3,74,22,"Setup"};
 int n;
 
 l1=KKCfg->mtrash;
-l2=KKCfg->V.AnsiSpeed;
+l2=KKCfg->KeyAfterShell;
 l3=KKCfg->confexit;
 l4=KKCfg->pntrep;
 l5=KKCfg->logfile;
@@ -445,12 +445,13 @@ l15=KKCfg->esttime;
 l16=KKCfg->V.ajustview;
 l17=KKCfg->currentdir;
 l18=KKCfg->V.saveviewpos;
+l19=KKCfg->addselect;
 
 do
 {
-n=WinTraite(T,27,&F,0);
+n=WinTraite(T,28,&F,0);
 
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 if (T[n].type==5)
@@ -465,7 +466,7 @@ while(T[n].type==5);
 
 
 KKCfg->mtrash=l1;
-KKCfg->V.AnsiSpeed=l2;
+KKCfg->KeyAfterShell=l2;
 KKCfg->confexit=l3;
 KKCfg->pntrep=l4;
 KKCfg->logfile=l5;
@@ -482,6 +483,7 @@ KKCfg->esttime=l15;
 KKCfg->V.ajustview=l16;
 KKCfg->currentdir=l17;
 KKCfg->V.saveviewpos=l18;
+KKCfg->addselect=l19;
 
 SaveCfg();
 
@@ -550,7 +552,7 @@ strcpy(Usr,KKCfg->ExtUsr);
 
 n=WinTraite(T,14,&F,0);
 
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 strcpy(KKCfg->ExtTxt,Txt);
@@ -621,9 +623,9 @@ l2=Cfg->SaveSpeed;
 l3=KKCfg->sizewin;
 l4=KKCfg->pathdown;
 
-n=WinTraite(T,19,&F,0);
+n=WinTraite(T,20,&F,0);
 
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 switch(sw)
@@ -635,7 +637,8 @@ switch(sw)
 KKCfg->fentype=sy-4;
 Cfg->font=l1;
 Cfg->SaveSpeed=l2;
-KKCfg->sizewin=l3;
+if ((l3>=6) | (l3==0))
+    KKCfg->sizewin=l3;
 KKCfg->pathdown=l4;
 
 GestionFct(67);                                    // Rafraichit l'ecran
@@ -673,7 +676,7 @@ l5=Cfg->comstop;
 
 n=WinTraite(T,8,&F,0);
 
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 Cfg->comport=l1;
@@ -732,7 +735,7 @@ SplitMasque(KKCfg->V.Mask[14]->chaine,buffer[6],buffer[7]);
 
 n=WinTraite(T,18,&F,0);
 
-if (n==27) return;                                             // ESCape
+if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 KKCfg->V.Mask[11]->Ignore_Case=l1;
@@ -846,7 +849,7 @@ Path2Abs(path,"FILE_ID.DIZ");
 name=AccessAbsFile(path);  // Ajout GEDEON -----------------------------
 
 if (name!=NULL)
-    View(&(KKCfg->V),name);
+    View(&(KKCfg->V),name,4);
 
 DFen->init=1;
 }
@@ -1299,6 +1302,10 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
                     strcpy(ch1,"Drive       ");
                     strcpy(ch2," RELOAD ");
                     break;
+                case 92:
+                    strcpy(ch1,"(Un)select  ");
+                    strcpy(ch2,"Function");
+                    break;
                 default:
                     strcpy(ch1,"Unknow      ");
                     strcpy(ch2,"Function");
@@ -1422,6 +1429,9 @@ Fen2=Fen->Fen2;
 F=Fen2->F[Fen2->pcur];
 
 if ( ( (F->attrib & _A_SUBDIR)==_A_SUBDIR) & (F->name[0]=='.') )
+    return;
+
+if (F->name[0]=='*')
     return;
 
 if (Fen2->system!=0) return;

@@ -91,6 +91,8 @@ void Beep(void);
 void Font8x(int height);
 void InitSeg(void);
 
+int __far Error_handler(unsigned, unsigned, unsigned far *);
+
 
 /*--------------------------------------------------------------------*\
 |-  Fonction interne d'affichage                                      -|
@@ -2551,9 +2553,14 @@ if (i==nbr) i=0;
 LoadScreen();
 
 if (fin==1)
-    return i;
+    {
+    if ((T[i].type==2) | (T[i].type==3) | (T[i].type==5))
+        return i;
 
-return 27;                                                     // ESCAPE
+    return def;
+    }
+
+return -1;                                                     // ESCAPE
 }
 
 /*--------------------------------------------------------------------*\
@@ -2741,7 +2748,7 @@ void DefaultCfg(void)
 char defpal[48]=RBPALDEF;
 
 char defcol[64]={
-     7*16+6,14*16+6,13*16+8,14*16+2,7*16+5,1*16+8,1*16+2,14*16+7,7*16+4,
+     7*16+6,14*16+6,13*16+8,14*16+2,7*16+5,1*16+8,1*16+3,14*16+7,7*16+4,
    14*16+1,14*16+7,14*16+3,7*16+4,7*16+3,3*16+0,7*16+13,10*16+1,10*16+5,
   14*16+5,10*16+1,10*16+3,14*16+3,7*16+8,7*16+12,10*16+1,10*16+3,1*16+5,
        10*16+5,14*16+7,14*16+4,7*16+4,0,7*16+11,7*16+4,13*16+11,3*16+14,
@@ -2771,6 +2778,12 @@ Cfg->comspeed=19200;
 Cfg->combit=8;
 Cfg->comparity='N';
 Cfg->comstop=1;
+}
+
+
+void LoadErrorHandler(void)
+{
+_harderr(Error_handler);
 }
 
 /*--------------------------------------------------------------------*\

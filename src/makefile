@@ -8,7 +8,7 @@
 
 #.SILENT
 
-#DEBUG = 1
+DEBUG = 1
 
 CA = wasm
 CC = wcc386
@@ -45,7 +45,7 @@ ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
 
 CCOPTS = -wx -5r -fpc -zdp -d__WC32__ -mf -d3 -zm -od -dDEBUG -zp1
 AOPTS = /d1
-LOPTS = option stack=60000 debug all option caseexact option map
+LOPTS = option stack=60000 debug all option c option map
 LAOPTS = debug all
 
 #------------------------  En phase de release  ------------------------#
@@ -56,14 +56,14 @@ LAOPTS = debug all
 
 CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1 -zm
 # -obx  (watcom 11.0) chaipuqoui
-# -oneatx
+# -oneatx (prend bcp de taille)
 # quand on mets les optimisations, on peux plus faire un shell, pq ?
 
 # -zm: each function in a segment
 # option el : eliminate no referenced segment
 
 AOPTS =
-LOPTS = option stack=60000 option caseexact option map option el
+LOPTS = option stack=60000 option c option ver = 0.82 option el
 LAOPTS =
 
 !endif
@@ -81,7 +81,9 @@ kkmain.exe  : kkmain.obj     idf.lib  hard.lib    win.obj   gestion.obj &
                 view.obj  driver.obj ficidf.obj copie.obj    delete.obj &
               search.obj   kkfct.obj  util.obj reddies.obj longname.obj &
                rbdos.obj
-             $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
+             $(CL) system $(SYSTEM) $(LOPTS)  &
+                   option modname = 'Ketchup Killers Commander 0.82' &
+                   name $@ file {$<}
 
 kksetup.exe : kksetup.obj hard.lib idf.lib reddies.obj ficidf.obj &
               kkfct.obj rbdos.obj
@@ -97,6 +99,9 @@ kkfont.exe  : kkfont.obj hard.lib
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 edit.exe  : edit.obj hard.lib
+             $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
+
+kklist.exe : kklist.obj view.obj reddies.obj hard.lib idf.lib
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 kk.exe      : kk.obj
