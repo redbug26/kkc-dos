@@ -1,7 +1,6 @@
 /*--------------------------------------------------------------------*\
 |- gestion de lecture des fichiers dans les directories               -|
 \*--------------------------------------------------------------------*/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -11,6 +10,7 @@
 #include <io.h>
 #include <ctype.h>
 #include <dos.h>
+#include <time.h>
 
 #include "kk.h"
 
@@ -46,13 +46,7 @@ x=xarc+11;
 y=10;
 
 PrintAt(x,y,"    STOP    ");
-AffChr(x,y,16);
-AffChr(x+11,y,17);
-
-AffChr(x+12,y,220);
-ChrLin(x+1,y+1,12,223);
-
-ColLin(x,y,12,2*16+5);                                       // Couleur
+Puce(x,y,13,0);
 
 debarc=0;
 
@@ -1174,10 +1168,10 @@ ChangeLine();
 switch(toupper(DFen->path[0])-'A')
     {
     case 2:     //--- C: -----------------------------------------------
-        DFen->IDFSpeed=2*18;
+        DFen->IDFSpeed=CLOCKS_PER_SEC/2;
         break;
     default:
-        DFen->IDFSpeed=5*18;
+        DFen->IDFSpeed=CLOCKS_PER_SEC;
         break;
    }
 
@@ -1259,7 +1253,7 @@ Nbfic=0;
 
 
 SaveScreen();
-ColLin(0,0,80,1*16+4);
+ColLin(0,0,80,1*16+2);
 
 oldpos=3+1+256+4+4;
 

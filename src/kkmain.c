@@ -1382,8 +1382,8 @@ if (i!=0)
     max=i;
     if (max>Cfg->TailleY-4) max=Cfg->TailleY-4;
 
-    WinCadre(x-2,y-1,x+Mlen+1,y+max,0);
-    Window(x-1,y,x+Mlen,y+max-1,10*16+1);
+    WinCadre(x-2,y-1,x+Mlen+1,y+max,4+0);
+    Window(x-1,y,x+Mlen,y+max-1,14*16+7);
 
     prem=0;
 
@@ -1396,11 +1396,11 @@ if (i!=0)
     for (j=0;j<max;j++)
         PrintAt(x,y+j,"%-*s",Mlen,dir[j+prem]);
 
-    ColLin(x-1,y+(pos-prem),Mlen+2,4*16+0);
+    ColLin(x-1,y+(pos-prem),Mlen+2,7*16+4);
 
     car=Wait(0,0,0);
 
-    ColLin(x-1,y+(pos-prem),Mlen+2,10*16+1);
+    ColLin(x-1,y+(pos-prem),Mlen+2,14*16+7);
 
     if (car==0)
         {
@@ -1503,8 +1503,8 @@ if (i!=0)
     max=i;
     if (max>Cfg->TailleY-4) max=Cfg->TailleY-4;
 
-    WinCadre(x-2,y-1,x+Mlen+1,y+max,0);
-    Window(x-1,y,x+Mlen,y+max-1,10*16+1);
+    WinCadre(x-2,y-1,x+Mlen+1,y+max,4+0);
+    Window(x-1,y,x+Mlen,y+max-1,14*16+7);
 
     prem=0;
 
@@ -1517,11 +1517,11 @@ if (i!=0)
     for (j=0;j<max;j++)
         PrintAt(x,y+j,"%-*s",Mlen,com[j+prem]);
 
-    ColLin(x-1,y+(pos-prem),Mlen+2,7*16+5);
+    ColLin(x-1,y+(pos-prem),Mlen+2,7*16+4);
 
     car=Wait(0,0,0);
 
-    ColLin(x-1,y+(pos-prem),Mlen+2,0*16+1);
+    ColLin(x-1,y+(pos-prem),Mlen+2,14*16+7);
 
     switch(HI(car))
         {
@@ -2522,7 +2522,6 @@ do
                     int n;
 
                     n=(ym-1)/3;
-                    PrintAt(0,0,"(%d,%d)",ym,n);
                     if ( (n>=0) & (n<6) )
                         GestionFct(KKCfg->Nmenu[n]);
                     c=3;                       //--- On ne fait rien ---
@@ -2548,7 +2547,8 @@ do
                 if (DFen->Fen2->FenTyp==5) FenFileID(DFen->Fen2);
                 }
 
-            if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) )
+            if ( ((clock()-Cl)>Cfg->SaveSpeed*CLOCKS_PER_SEC)
+                & (Cfg->SaveSpeed!=0) )
                 GestionFct(76);
 
             car=*Keyboard_Flag1;
@@ -3582,6 +3582,15 @@ char *LC;
 /*--------------------------------------------------------------------*\
 |-                     Initialisation de l'ecran                      -|
 \*--------------------------------------------------------------------*/
+
+/*
+printf("char : %d\n",sizeof(char));
+printf("short: %d\n",sizeof(short));
+printf("long : %d\n",sizeof(long));
+printf("int  : %d\n",sizeof(int));
+printf("config : %d\n",sizeof(struct config));
+getch();
+*/
 
 Cfg=(struct config*)GetMem(sizeof(struct config));
 

@@ -50,7 +50,8 @@ char x,y,n,fin,joueur;
 char begin;  //--- Joueur qui a commenc‚ … ce tour ---------------------
 char nbr;    //--- Nombre de pion --------------------------------------
 
-char o,m=3;
+char o;
+int m=3;
 
 int cx,cy;
 

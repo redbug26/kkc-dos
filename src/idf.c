@@ -1596,7 +1596,7 @@ short i,j;
 i=0;    //--- navigation dans name -------------------------------------
 j=0;    //--- position dans buf ----------------------------------------
 
-while ( (name[i]==32) & (name[i]!=0) ) i++;
+while (name[i]==32) i++;
 
 if (name[i]!=0)
     while ((c=name[i])!=0)
@@ -1618,8 +1618,9 @@ if (name[i]!=0)
         }
 buf[j]=0;
 
-if (buf[j-1]==32)
-    buf[j-1]=0;
+j--;
+
+while (buf[j]==32) buf[j]=0,j--;
 
 strcpy(name,buf);
 }

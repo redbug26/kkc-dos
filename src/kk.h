@@ -223,7 +223,7 @@ extern int IOerr;
 #include "driver.h"
 #include "win.h"
 #include "longname.h"
-#include "p4.h"
+#include "rbdos.h"
 
 #ifdef DEBUG
 #define PUTSERR(__Ch) PrintAt(0,0,"DEBUG MODE ERROR: %s",__Ch);  getch()

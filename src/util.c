@@ -334,6 +334,29 @@ while (kbhit()) Wait(0,0,0);
 |- Gestion du menu F2                                                 -|
 \*--------------------------------------------------------------------*/
 
+char *GetLine(char *ligne,FILE *fic)
+{
+char *res;
+int n;
+
+do
+{
+res=fgets(ligne,256,fic);
+if (res==NULL) break;
+
+n=strlen(res)-1;
+
+while ( ( (res[n]==0x0D) | (res[n]==0x0A) ) & (n>=0) ) res[n]=0,n--;
+
+ClearSpace(res);
+
+if ( (res[0]!=';') & (res[0]!=0) ) break;
+}
+while(1);
+
+return res;
+}
+
 // Result:    1 --> fin
 
 int MenuGroup(char *groupe)
@@ -353,9 +376,8 @@ if (fic==NULL) return 1;
 //--- Recherche le menu "groupe" ---------------------------------------
 
 ok=0;
-while(fgets(ligne,256,fic)!=NULL)
+while(GetLine(ligne,fic)!=NULL)
     {
-    ClearSpace(ligne);
     if (!strnicmp(ligne,groupe,strlen(groupe)))
         {
         ok=1;
@@ -373,9 +395,8 @@ do
     {
     bar[nbr].fct=ftell(fic);
 
-    if (fgets(ligne,256,fic)==NULL) break;
+    if (GetLine(ligne,fic)==NULL) break;
 
-    ClearSpace(ligne);
     if (ligne[0]=='[')
         break;
 
@@ -388,6 +409,7 @@ do
             strcpy(bar[nbr].titre,"");
 
         *buf=0;
+        ClearSpace(ligne);
         if (strlen(ligne)>20) ligne[20]=0;
         strcat(bar[nbr].titre,ligne);
         nbr++;
@@ -415,8 +437,7 @@ while ((retour==1) | (retour==-1));
 if (retour==2)
     {
     fseek(fic,bar[n].fct,SEEK_SET);
-    fgets(ligne,256,fic);
-    ClearSpace(ligne);
+    GetLine(ligne,fic);
     buf=strchr(ligne,'[');
 
     if (buf!=NULL)
@@ -436,16 +457,16 @@ if (retour==2)
     fprintf(outfic,
           "@REM * Batch file created by Ketchup Killers Commander *\n");
     fprintf(outfic,
-          "@REM * for the menu                                    *\n");
+          "@REM * according to your user menu                     *\n");
     fprintf(outfic,
           "@REM *-------------------------------------------------*\n");
 
-    buf=strchr(ligne,'=');
-    fprintf(outfic,"@%s\n",buf+1);
+    buf=strchr(ligne,'=')+1;        // Il y a tjs un '=' sur cette ligne
+    ClearSpace(buf);
+    fprintf(outfic,"@%s\n",buf);
 
-    while(fgets(ligne,256,fic)!=NULL)
+    while(GetLine(ligne,fic)!=NULL)
         {
-        ClearSpace(ligne);
         if ( (ligne[0]=='[') | (strchr(ligne,'=')!=NULL) )
             break;
 

@@ -21,6 +21,11 @@
 #include "kk.h"
 #include "win.h"
 
+/*--------------------------------------------------------------------*\
+|- prototype interne                                                  -|
+\*--------------------------------------------------------------------*/
+int SortTest(const void *P1,const void *P2);
+
 
 void GetFreeMem(char *buffer);
 #pragma aux GetFreeMem = \
@@ -33,7 +38,7 @@ void GetFreeMem(char *buffer);
 /*--------------------------------------------------------------------*\
 |-   Fonction utilis‚e pour le classement des fichiers                -|
 \*--------------------------------------------------------------------*/
-int SortTest(void *P1,void *P2)
+int SortTest(const void *P1,const void *P2)
 {
 char *e1,*e2,e[4];
 short c1,c2,c3,c4;
@@ -150,7 +155,7 @@ return c;
 void SortFic(FENETRE *Fen)
 {
 if ((DFen->nfen>=2) | ((DFen->order&15)==0)) return;
-qsort(Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
+qsort((void*)Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
 }
 
 
@@ -883,10 +888,10 @@ if (!strnicmp(chaine,"#INIT",5))
     return 1;
     }
 
-if (!strnicmp(chaine,"#P4",3))
+/*if (!strnicmp(chaine,"#P4",3))
     {
     P4();  return 1;
-    }
+    }*/
 
 if (!strnicmp(chaine,"#MEM",4))
     {

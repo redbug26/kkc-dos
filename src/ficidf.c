@@ -19,7 +19,7 @@ static struct
     char *Filename;
     char *Titre;
     char *Meneur;
-    short ext;
+    signed short ext;
     short NoDir;
     char type;  // 0: Rien de particulier
                 // 1: Decompacteur
@@ -122,6 +122,8 @@ for (j=0;j<nbr;j++)
 
     fread(&(app[nbrappl].info),1,1,fic);       // Information sur player
 
+
+
     if ( (app[nbrappl].ext==numero) &
           (  (app[nbrappl].os==0) |
             ((app[nbrappl].os==1) & (KKCfg->_Win95==1)) )
@@ -171,8 +173,8 @@ if ( (nbrappl!=1) & (fin==0) )
 
     xx=(Cfg->TailleX-56)/2;
 
-    WinCadre(xx,m-1,xx+55,m+max,0);
-    Window(xx+1,m,xx+54,m+max-1,10*16+1);
+    WinCadre(xx,m-1,xx+55,m+max,0+4);
+    Window(xx+1,m,xx+54,m+max-1,14*16+7);
 
     PrintTo(24,1," Who? ");
     
@@ -200,7 +202,7 @@ if ( (nbrappl!=1) & (fin==0) )
         for (n=d;n<=lfin;n++)
             {
             col[n]=GetRCol(n,pos-prem);
-            AffRCol(n,pos-prem,1*16+4);     // 7
+            AffRCol(n,pos-prem,7*16+4);     // 7
             }
 
         car=Wait(0,0,0);

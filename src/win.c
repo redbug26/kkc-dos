@@ -160,7 +160,6 @@ switch (KKCfg->fentype)
         Fen->y2=y-2;
         Fen->yl2=Fen->yl-3;
 
-        ColLin(x,y,40,3*16+7);
         PrintAt(x,y,     "     Name    ³   Size   ³  Date  ³Time  ");
         for (i=1;i<yl-3;i++)
            PrintAt(x,y+i,"Û                                      Û");
@@ -384,9 +383,9 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
         if ((Fen->actif==1) & (n==(Fen->pcur)) )
             {
             if (Fen->F[n]->select==0)
-                col=1*16+6;
+                col=14*16+6;
                 else
-                col=13*16+2;
+                col=14*16+2;
             }
             else
             {
@@ -808,7 +807,7 @@ for (n=0;n<256;n++)
     }
 
 WinCadre(m,5,m+79,22,0);
-ColWin(m+1,6,m+78,21,10*16+5);
+ColWin(m+1,6,m+78,21,10*16+3);
 
 Wait(0,0,0);
 
@@ -1392,8 +1391,8 @@ if (Fen->init==1)
     }
 
 _dos_getdiskfree(toupper(Fen2->path[0])-'A'+1,&d);
-tfree=(d.avail_clusters)*(d.sectors_per_cluster);
-tfree=tfree*(d.bytes_per_sector)/1024;
+
+tfree=GetDiskFree(toupper(Fen2->path[0])-'A'+1)/1024;
 
 if ( (tfree!=oldfree) | (strcmp(oldpath,Fen2->path)!=0) )
     Fen->init=1;
@@ -1414,9 +1413,10 @@ if (strlen(Buf)>37) Buf+=(strlen(Buf)-37);
 ttotal=(d.total_clusters)*(d.sectors_per_cluster);
 ttotal=ttotal*(d.bytes_per_sector)/1024;
 
-R.w.ax=0x0900;
+/*
+R.w.ax=0x0900;     // PQ ICI ?
 int386(0x16,&R,&R);
-
+*/
 
 WindowsActif = windows( &HVer, &NVer );
 
@@ -1728,10 +1728,10 @@ static char vit1[64],vit2[64];
 
 int x,y;
 clock_t Cl;
-long Cl1,Cl2;
+long Cl1;
 char c;
 int n,m;
-double fvit1,fvit2;
+double fvit1;
 
 struct Tmt T[6] =  {
       {6,17,2,NULL,NULL},                                       // le OK
@@ -1752,50 +1752,28 @@ m=0;
 n=0;
 
 Cl=clock();
-while(clock()==Cl);                           //  met l'horloge au debut
 
-while((clock()-Cl)<270)
+for(n=0;n<500000;n++)
     {
     x=(rand()*(Cfg->TailleX))/RAND_MAX;
     y=(rand()*Cfg->TailleY)/RAND_MAX;
 
-    AffChr(x,y,c);
     if (m>10000) m=0,c=(rand()*80)/RAND_MAX+32;
-    n++;
     m++;
-    }
-Cl1=n;
-
-c=(rand()*80)/RAND_MAX+32;
-n=0;
-
-Cl=clock();
-while(clock()==Cl);                           //  met l'horloge au debut
-
-while((clock()-Cl)<270)
-    {
-    x=(rand()*(Cfg->TailleX))/RAND_MAX;
-    y=(rand()*Cfg->TailleY)/RAND_MAX;
 
     AffChr(x,y,c);
-    c++;
-    n++;
     }
-Cl2=n;
+Cl1=clock()-Cl;
 
 LoadScreen();
-
-SaveScreen();
          
-fvit1=(Cl1*CLOCKS_PER_SEC)/270;
-fvit2=(Cl2*CLOCKS_PER_SEC)/270;
+fvit1=(500000./Cl1)*CLOCKS_PER_SEC;
 
 sprintf(vit1,"%f characters/seconds",fvit1);
-sprintf(vit2,"%f characters/seconds",fvit2);
+sprintf(vit2,"? characters/seconds");
 
 n=WinTraite(T,6,&F,0);
 
-LoadScreen();
 }
 
 
@@ -1895,7 +1873,7 @@ for (i=0;(y+y1+1<Fen->yl) & (n<Fen2->nbrfic);i++,n++,y++)
     {
 // ------------------ Line Activity ------------------------------------
     if (n==(Fen2->pcur))
-        ColLin(x+x1,y+y1,38,1*16+5);
+        ColLin(x+x1,y+y1,38,1*16+6);
         else
         {
         if (Fen2->F[n]->info!=NULL)

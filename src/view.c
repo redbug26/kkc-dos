@@ -16,6 +16,9 @@
 #include "kk.h"
 #include "idf.h"
 
+void (*AnsiAffChr)(long x,long y,long c);
+void (*AnsiAffCol)(long x,long y,long c);
+
 
 static char ReadChar(void);
 
@@ -619,211 +622,157 @@ if (*argbuf && arglen)
 
 
 
-int ansi_out (char *buf)
+int ansi_out (char b)
 {
-int  arglen = 0, ansistate = NOTHING, x;
-char *b = buf, argbuf[MAXARGLEN] = "";
+static int  arglen = 0, ansistate = NOTHING, x;
+static char argbuf[MAXARGLEN] = "";
 
 
-char car;      //--- Gestion des SHIFT, CTRL ... -----------------------
-
-
-while (*b)
+switch (ansistate)
     {
-    tempo++;
-
-    do
-        {
-        car=*Keyboard_Flag1;
-        }
-    while ((car&1)==1);
-
-    if (touche!=1)
-        {
-        if (KbHit()) touche=Wait(0,0,0);
-        if ( (touche==27) | (touche==0x8D00) ) touche=1; else touche=0;
-        }
-        else
-        break;
-
-    if ( (tempo>=KKCfg->AnsiSpeed) & ((car&2)!=2) )
-        {
-        tempo=0;
-        
-        while ((clock()-Cl_Start)<1);
-        Cl_Start=clock();
-        }
-
-    switch (ansistate)
-        {
-        case NOTHING:
-            switch (*b)
-                {
-                case 27:
-                    ansistate = WASESCAPE;
-                    break;
-                case '\r':
-                    curx = 0;
-                    break;
-
-                case '\n':
-                    cury++;
-                    if (cury > maxy - 1)
-                        {
-                        ScrollUp();
-                        ColWin(0,maxy-1,maxx-1,maxy,curattr);
-                        ChrWin(0,maxy-1,maxx-1,maxy,32);
-                        cury--;
-                        }
-                    break;
-
-                case '\t':
-                    for (x = 0; x < tabspaces; x++)
-                        {
-                        AffChr(curx,cury,' ');
-                        AffCol(curx,cury,curattr);
-                              curx++;
-                              if (curx > maxx - 1)
-                              {
-                              curx = 0;
-                              cury++;
-                              if (cury > maxy - 1)
-                                    {
-                                    ScrollUp();
-                                    ChrWin(0,maxy-1,maxx-1,maxy,32);
-                                    ColWin(0,maxy-1,maxx-1,maxy,
-                                                               curattr);
-                                    cury--;
-                                    }
-                              }
-                        }
-                        break;
-
-                  case '\b':
-                        if (curx)
-                        {
-                              curx--;
-                        }
-                        break;
-
-                  case '\07':                  // usually a console bell
-                        putchar('\07');
-                        break;
-
-                  default:
-                        AffChr(curx,cury,*b);
-                        AffCol(curx,cury,curattr);
-                        curx++;
-                        if (curx > maxx - 1)
-                        {
-                              curx = 0;
-                              cury++;
-                              if (cury > maxy - 1)
-                              {
-                              ScrollUp();
-                              ChrWin(0,maxy-1,maxx-1,maxy,32);
-                              ColWin(0,maxy-1,maxx-1,maxy,curattr);
-                              cury--;
-                              }
-
-                        }
-                        break;
-                  }
-                  break;
-
-            case WASESCAPE:
-                  if (*b == '[')
-                  {
-                        ansistate = WASBRKT;
-                        arglen = 0;
-                        *argbuf = 0;
-                        break;
-                  }
-                  ansistate = NOTHING;
-                  break;
-
-            case WASBRKT:
-                  if (strchr(ansi_terminators, (int)*b))
-                  {
-                        switch ((int)*b)
-                        {
-                        case 'H': //--- set cursor position ------------
-                        case 'F':
-                              set_pos(argbuf,arglen,*b);
-                              break;
-
-                        case 'A': //--- up -----------------------------
-                              go_up(argbuf,arglen,*b);
-                              break;
-
-                        case 'B': //--- down ---------------------------
-                              go_down(argbuf,arglen,*b);
-                              break;
-
-                        case 'C':   /* right */
-                              go_right(argbuf,arglen,*b);
-                              break;
-
-                        case 'D':   /* left */
-                              go_left(argbuf,arglen,*b);
-                              break;
-
-                        case 'n':   /* report pos */
-                              report(argbuf,arglen,*b);
-                              break;
-
-                        case 's':   /* save pos */
-                              save_pos(argbuf,arglen,*b);
-                              break;
-
-                        case 'u':   /* restore pos */
-                              restore_pos(argbuf,arglen,*b);
-                              break;
-
-                        case 'J':   /* clear screen */
-                            ChrWin(0,0,maxx - 1,maxy - 1,32);
-                            ColWin(0,0,maxx - 1,maxy - 1,curattr);
-                            curx = cury = 0;
-                            break;
-
-                        case 'K':   /* delete to eol */
-                            ChrWin(curx,cury,maxx-1,cury,32);
-                            ColWin(curx,cury,maxx-1,cury,curattr);
-                            break;
-
-                        case 'm':   /* set video attribs */
-                              set_colors(argbuf,arglen,*b);
-                              break;
-
-                        case 'p':   /* keyboard redef -- disallowed */
-                              break;
-
-                        default:    /* unsupported */
-                              break;
-                        }
-                        ansistate = NOTHING;
-                        arglen = 0;
-                        *argbuf = 0;
-                  }
-                  else
-                  {
-                        if (arglen < MAXARGLEN)
-                        {
-                              argbuf[arglen] = *b;
-                              argbuf[arglen + 1] = 0;
-                              arglen++;
-                        }
-                  }
-                  break;
-
-            default:
-                WinError("Error of ANSI code");
+    case NOTHING:
+        switch (b)
+            {
+            case 27:
+                ansistate = WASESCAPE;
                 break;
-            }
-            b++;
-      }
+            case '\r':
+                curx = 0;
+                break;
 
-return ((int)b - (int)buf);
+            case '\n':
+                cury++;
+                break;
+
+            case '\t':
+                for (x = 0; x < tabspaces; x++)
+                    {
+                    AnsiAffChr(curx,cury,' ');
+                    AnsiAffCol(curx,cury,curattr);
+                          curx++;
+                          if (curx > maxx - 1)
+                          {
+                          curx = 0;
+                          cury++;
+                          }
+                    }
+                    break;
+
+              case '\b':
+                    if (curx)
+                    {
+                          curx--;
+                    }
+                    break;
+
+              case '\07':                  // usually a console bell
+                    putchar('\07');
+                    break;
+
+              default:
+                    AnsiAffChr(curx,cury,b);
+                    AnsiAffCol(curx,cury,curattr);
+                    curx++;
+                    if (curx > maxx - 1)
+                        {
+                        curx = 0;
+                        cury++;
+                        }
+                    break;
+              }
+              break;
+
+        case WASESCAPE:
+              if (b == '[')
+              {
+                    ansistate = WASBRKT;
+                    arglen = 0;
+                    *argbuf = 0;
+                    break;
+              }
+              ansistate = NOTHING;
+              break;
+
+        case WASBRKT:
+              if (strchr(ansi_terminators, (int)b))
+              {
+                    switch ((int)b)
+                    {
+                    case 'H': //--- set cursor position ------------
+                    case 'F':
+                          set_pos(argbuf,arglen,b);
+                          break;
+
+                    case 'A': //--- up -----------------------------
+                          go_up(argbuf,arglen,b);
+                          break;
+
+                    case 'B': //--- down ---------------------------
+                          go_down(argbuf,arglen,b);
+                          break;
+
+                    case 'C':   /* right */
+                          go_right(argbuf,arglen,b);
+                          break;
+
+                    case 'D':   /* left */
+                          go_left(argbuf,arglen,b);
+                          break;
+
+                    case 'n':   /* report pos */
+                          report(argbuf,arglen,b);
+                          break;
+
+                    case 's':   /* save pos */
+                          save_pos(argbuf,arglen,b);
+                          break;
+
+                    case 'u':   /* restore pos */
+                          restore_pos(argbuf,arglen,b);
+                          break;
+
+                    case 'J':   /* clear screen */
+                       // ChrWin(0,0,maxx - 1,maxy - 1,32);
+                       // ColWin(0,0,maxx - 1,maxy - 1,curattr);
+                        curx = cury = 0;
+                        break;
+
+                    case 'K':   /* delete to eol */
+                       // ChrWin(curx,cury,maxx-1,cury,32);
+                       // ColWin(curx,cury,maxx-1,cury,curattr);
+                        break;
+
+                    case 'm':   /* set video attribs */
+                          set_colors(argbuf,arglen,b);
+                          break;
+
+                    case 'p':   /* keyboard redef -- disallowed */
+                          break;
+
+                    default:    /* unsupported */
+                          break;
+                    }
+                    ansistate = NOTHING;
+                    arglen = 0;
+                    *argbuf = 0;
+              }
+              else
+              {
+                    if (arglen < MAXARGLEN)
+                    {
+                          argbuf[arglen] = b;
+                          argbuf[arglen + 1] = 0;
+                          arglen++;
+                    }
+              }
+              break;
+
+        default:
+            WinError("Error of ANSI code");
+            break;
+    }
+
+return cury;
 }
 
 
@@ -865,7 +814,7 @@ do
     {
     n=fread(buffer,1,16384,fic);
     memset(buffer+n,0,32768-n);
-    ansi_out(buffer);
+//    ansi_out(buffer);
     }
 while(n==16384);
 
@@ -2674,7 +2623,7 @@ while(i!=-1)
     {
     switch(i) {
         case 86:  // Ansi
-            i=AnsiView(fichier);
+            i=Ansi2View(fichier);
             break;
         case 91:  // Texte
             i=TxtView(fichier);
@@ -2810,7 +2759,7 @@ while ((y<=y2) | (ok==0) )
             if (trouve!=2)
                 {
                 if (trouve==1)
-                    c2=10*16+5;     // trouve
+                    c2=10*16+3;     // trouve
                     else
                     c2=10*16+4;
 
@@ -2896,114 +2845,71 @@ if (*srcch!=0)
 \*--------------------------------------------------------------------*/
 void ChangeMask(void)
 {
-int i,n;
-char s[16];
-int x1,y1,x2,y2,max;
-int pos,prem;
-int dernier;
-int c;
-char car,car2;
+int nbr;
+static struct barmenu bar[19];
+int retour,x,y,n,i,max;
 
-SaveScreen();
+char fin;
 
-n=0;
 max=0;
-pos=0;
+
+nbr=3;
 
 for(i=0;i<16;i++)
     if (strlen(Mask[i]->title)>0)
         {
-        if ( ((KKCfg->wmask)&15) ==i) pos=n;
-        s[n]=i;
-        n++;
+        bar[nbr].fct=i+3;
+
+        strcpy(bar[nbr].titre,Mask[i]->title);
+
+        if ( ((KKCfg->wmask)&15) ==i) n=nbr;
+
         if (strlen(Mask[i]->title)>max) max=strlen(Mask[i]->title);
+
+        nbr++;
         }
 
-x1=(82-max)/2;
-y1=((Cfg->TailleY)-2*n)/2;
+x=((Cfg->TailleX)-max)/2;
+y=((Cfg->TailleY)-2*(nbr-2))/2;
+if (y<2) y=2;
 
-x2=x1+max+3;
-y2=y1+(n+1)*2;
+do
+{
+sprintf(bar[0].titre,"ÄÄÄÄÄ Elite %3s ÄÄÄÄÄ",(KKCfg->wmask&64)==64 ? "ON" : "OFF");
+bar[0].fct=1;
 
-if (y1<0) y1=2;
-if (y2>Cfg->TailleY) y2=Cfg->TailleY-3;
+sprintf(bar[1].titre,"Mask %3s",(KKCfg->wmask&128)==128 ? "OFF" : "ON");
+bar[1].fct=2;
 
-WinCadre(x1,y1,x2,y2,0);
+bar[2].fct=0;
 
-Window(x1+1,y1+1,x2-1,y2-1,10*16+1);
-
-PrintAt(x1+1,y1+1,"Select Mask:");
-ColWin(x1+1,y1+1,x2-1,y1+1,10*16+5);
-
-prem=0;
-
-ColLin(0,(Cfg->TailleY)-1,Cfg->TailleX,1*16+8);
-ChrLin(0,(Cfg->TailleY)-1,Cfg->TailleX,32);
-
+fin=0;
 
 do
     {
-    PrintAt(1,(Cfg->TailleY)-1,"F8: Look %3s",
-                                  (KKCfg->wmask&64)==64 ? "ON" : "OFF");
-    PrintAt(17,(Cfg->TailleY)-1,"F9: Mask %3s",
-                                (KKCfg->wmask&128)==128 ? "OFF" : "ON");
-    PrintAt(40,(Cfg->TailleY)-1,"%-40s",Mask[s[pos]]->title);
+    retour=PannelMenu(bar,nbr,&n,&x,&y);
+    }
+while ( (retour==1) | (retour==-1) );
 
-    for (i=prem;i<n;i++)
+if (retour==2)
+    {
+    switch (bar[n].fct)
         {
-        if (pos==i)
-            ColLin(x1+2,y1+3+(i-prem)*2,max,1*16+5);
-            else
-            ColLin(x1+2,y1+3+(i-prem)*2,max,10*16+1);
-
-        PrintAt(x1+2,y1+3+(i-prem)*2,"%-*s",max,Mask[s[i]]->title);
-
-        if (y1+3+(i-prem+1)*2>=y2)
-            {
-            dernier=i;
-            break;
-            }
-        }
-
-    c=Wait(0,0,0);
-    car=LO(c);
-    car2=HI(c);
-
-    switch(car2)    {
-        case 0x47:
-            pos=0;
-            break;
-        case 0x4F:
-            pos=dernier;
-            break;
-        case 72:
-            pos--;
-            if (pos==-1) pos=0;
-            if (pos<prem) prem--;
-            break;
-        case 80:
-            pos++;
-            if (pos==n) pos--;
-            if (pos>dernier) prem++;
-            break;
-        case 0x42: // F8
+        case 1:
             KKCfg->wmask^=64;
             break;
-        case 0x43: // F9
+        case 2:
             KKCfg->wmask^=128;
             break;
+        default:
+            KKCfg->wmask=((KKCfg->wmask)&240)|(bar[n].fct-3);
+            fin=1;
         }
-    switch(car) {
-        case 13:
-            KKCfg->wmask=((KKCfg->wmask)&240)|s[pos];
-            break;
-        }
-
     }
-while ( (car!=27) & (car!=13) );
+}
+while ( (!fin) & (retour!=0) );
 
 
-LoadScreen();
 }
 
 /*--------------------------------------------------------------------*\
@@ -3163,6 +3069,324 @@ if ( (n==1) & (ok==1) )  //--- Fichier TEXTE ---------------------------
 
 if (ok==1)
     WinMesg("Print","The file is printed",0);
-
 }
 
+
+/*--------------------------------------------------------------------*\
+|- Gestion Ansi                                                       -|
+\*--------------------------------------------------------------------*/
+char *AnsiBuffer;
+int Ansi1,Ansi2;
+
+void BufAffChr(long x,long y,long c)
+{
+AnsiBuffer[y*160+x]=c;
+}
+
+void BufAffCol(long x,long y,long c)
+{
+AnsiBuffer[y*160+x+80]=c;
+}
+
+
+void StartAllPage(void)
+{
+AnsiAffChr=BufAffChr;
+AnsiAffCol=BufAffCol;
+
+AnsiBuffer=GetMem(160*1000);
+
+Ansi1=0;
+
+maxx=80;
+maxy=Cfg->TailleY;
+
+curx=0;
+cury=0;
+
+for (posn=0;posn<taille;posn++)
+    ansi_out(ReadChar());
+
+Ansi2=cury+1-Cfg->TailleY+2;
+}
+
+void DispAnsiPage(void)
+{
+int x,y;
+
+for(y=0;y<Cfg->TailleY;y++)
+    for(x=0;x<Cfg->TailleX;x++)
+        {
+        AffChr(x,y,AnsiBuffer[(y+Ansi1)*160+x]);
+        AffCol(x,y,AnsiBuffer[(y+Ansi1)*160+80+x]);
+        }
+}
+
+void CloseAllPage(void)
+{
+LibMem(AnsiBuffer);
+}
+
+
+/*--------------------------------------------------------------------*\
+|- Affichage ansi                                                     -|
+\*--------------------------------------------------------------------*/
+int Ansi2View(char *fichier)
+{
+clock_t cl,cl2;
+
+int xm,ym,zm;
+
+int aff,wrap;
+
+
+char autodown=0;
+char car;
+
+
+int code;
+int fin=0;
+
+int warp=0;
+
+int shift=0; // Vaut -1 si reaffichage de l'ecran
+             //       0 si pas de shift
+             //       1 si touche shiftee
+
+
+static char bar[81];
+
+
+int oldx,oldy;
+
+
+SaveScreen();
+PutCur(3,0);
+
+oldx=Cfg->TailleX;
+oldy=Cfg->TailleY;
+
+Cfg->TailleX=80;
+//Cfg->TailleY=25;
+
+TXTMode();
+
+StartAllPage();
+
+wrap=0;
+aff=1;
+
+
+/*--------------------------------------------------------------------*\
+|- Affichage de la bar                                                -|
+\*--------------------------------------------------------------------*/
+
+strcpy
+   (bar," Help  ----  ----  Text  ----  ----  ----  ----  ----  ---- ");
+
+
+
+Bar(bar);
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+cl=clock();
+
+do
+{
+
+/*--------------------------------------------------------------------*\
+|- Affichage d'une page                                               -|
+\*--------------------------------------------------------------------*/
+DispAnsiPage();
+
+/*--------------------------------------------------------------------*\
+|- Gestion des touches                                                -|
+\*--------------------------------------------------------------------*/
+
+zm=0;
+code=0;
+
+while ( (!KbHit()) & (zm==0) & (code==0) )
+{
+GetPosMouse(&xm,&ym,&zm);
+
+car=*Keyboard_Flag1;
+
+if ( ((car&1)==1) | ((car&2)==2) )
+    {
+    int prc;
+    char temp[132];
+
+    if (shift==0)
+        SaveScreen();
+
+    prc=(Ansi1*100)/Ansi2;
+
+    ColLin(0,0,Cfg->TailleX,1*16+2);
+
+    strncpy(temp,fichier,78);
+
+    temp[45]=0;
+
+    PrintAt(0,0,
+            "View: %-*s Col%3d %9d bytes %3d%% ",Cfg->TailleX-35,
+                                                  temp,warp,taille,prc);
+
+    Bar(bar);
+
+    if (shift!=1)
+        {
+        shift=2;
+        break;
+        }
+    shift=1;
+    }
+    else
+    if (shift==1)
+        {
+        shift=-1;
+        break;
+        }
+
+if (autodown)
+    {
+    while ((clock()-cl)<5);
+
+    cl2=clock()-cl;
+        
+    code=80*256;
+    cl=clock();
+    }
+}
+
+if ( (shift!=-1) & (shift!=2) )
+{
+if (KbHit())
+    {
+    autodown=0;
+    code=Wait(0,0,0);
+    }
+
+if (code==0)     //--- Pression bouton souris --------------------------
+    {
+    int button;
+
+    button=MouseButton();
+
+    if ((button&1)==1)     //--- gauche --------------------------------
+        {
+        int x,y;
+
+        x=MousePosX();
+        y=MousePosY();
+
+
+        if ( (x==Cfg->TailleX-1) & (y>=1) & (y<=Cfg->TailleY-1) )
+                                                      //-- Ascensceur --
+            {
+            posn=(taille*(y-1))/(Cfg->TailleY-2);
+            }
+            else
+            if (y==Cfg->TailleY-1)
+                if (Cfg->TailleX==90)
+                    code=(0x3B+(x/9))*256;
+                    else
+                    code=(0x3B+(x/8))*256;
+                else
+                {
+                if (y>(Cfg->TailleY)/2)
+                    code=80*256;
+                    else
+                    code=72*256;
+                ReleaseButton();
+                }
+        }
+
+    if ((button&2)==2)     //--- droite --------------------------------
+        {
+        code=27;
+        }
+    }
+
+switch(LO(code))
+    {
+    case 0:
+       switch(HI(code))   {
+            case 0x3B:  // F1
+                SaveScreen();
+                Cfg->TailleX=oldx;
+                Cfg->TailleY=oldy;
+
+                ChangeTaille(Cfg->TailleY);
+
+                HelpTopic("View");
+                Cfg->TailleX=80;
+//                Cfg->TailleY=oldy;
+
+                TXTMode();
+                LoadScreen();
+                break;
+            case 0x3E:  // --- F4 --------------------------------------
+                fin=91;
+
+            case 80:    // DOWN
+                Ansi1++;
+                break;
+            case 72:    // UP
+                if (Ansi1!=0)
+                    Ansi1--;
+                break;
+            case 0x51:    // PGDN
+                Ansi1+=10;
+                break;
+            case 0x49:    // PGUP
+                Ansi1-=10;
+                if (Ansi1<0) Ansi1=0;
+                break;
+            case 0x4F:    // END
+                Ansi1=Ansi2;
+                break;
+            case 0x47: // HOME
+                Ansi1=0;
+                break;
+            case 0x8D: // CTRL-UP
+                fin=-1;
+                break;
+            }
+        break;
+    case 32:
+    case 13:
+    case 27:
+        fin=-1;
+        break;
+    }
+
+}
+else
+{
+if (shift==-1)
+    {
+    shift=0;
+    LoadScreen();
+    }
+if (shift==2)
+    {
+    shift=1;
+    }
+}
+}
+while(!fin);
+
+CloseAllPage();
+
+Cfg->TailleX=oldx;
+Cfg->TailleY=oldy;
+
+ChangeTaille(Cfg->TailleY);
+
+LoadScreen();
+
+return fin;
+}

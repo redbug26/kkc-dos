@@ -1663,7 +1663,10 @@ do
         nbrdir=o;
         strcpy(dir[o-1],moi);
 
-        PrintAt(3,posy,"Found %s in %s",app[wok]->Titre,dir[o-1]);
+        if (app[wok]->Checksum==0)
+            PrintAt(3,posy,"? Found %s in %s",app[wok]->Titre,dir[o-1]);
+            else
+            PrintAt(3,posy,"Found %s in %s",app[wok]->Titre,dir[o-1]);
         posy++;
 
         if (posy>(Cfg->TailleY-3))
@@ -1921,12 +1924,12 @@ if (m<=54)
     return;
     }
 n=54;
-while ( (n!=0) & (chaine[n]!=32) )
+while ( (n!=0) & (str[n]!=32) )
     n--;
-memcpy(buf1,chaine,n);
+memcpy(buf1,str,n);
 buf1[n]=0;
 
-str=chaine+n+1;
+str+=n+1;
 m=strlen(str)-2;
 
 if (m<=54)
@@ -1937,13 +1940,27 @@ if (m<=54)
     return;
     }
 n=54;
-while ( (n!=0) & (chaine[n]!=32) )
+while ( (n!=0) & (str[n]!=32) )
     n--;
-memcpy(buf2,chaine,n);
+
+memcpy(buf2,str,n);
 buf2[n]=0;
 
-memcpy(buf3,chaine+n+1,m-n-3);
-buf3[m-n-3]=0;
+str+=n+1;
+m=strlen(str)-2;
+
+if (m<=54)
+    {
+    memcpy(buf3,str,m);
+    buf3[m]=0;
+    return;
+    }
+n=54;
+while ( (n!=0) & (str[n]!=32) )
+    n--;
+
+memcpy(buf3,str,n);
+buf3[n]=0;
 }
 
 void JoinMask(char *chaine,char *buf1)
@@ -2363,8 +2380,8 @@ switch (poscur)
     nbmenu=2;
     break;
  case 2:
-    strcpy(bar[0].titre,"Configuration Default");  bar[0].fct=10;
-    strcpy(bar[1].titre,"Editor/Viewer Config.");  bar[1].fct=11;
+    strcpy(bar[0].titre,"Config. Default");  bar[0].fct=10;
+    strcpy(bar[1].titre,"File setting");  bar[1].fct=11;
     strcpy(bar[2].titre,"");                       bar[2].fct=0;
 
     strcpy(bar[3].titre,"Load KKSETUP.INI");       bar[3].fct=5;

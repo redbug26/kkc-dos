@@ -14,7 +14,7 @@
 #define RBPALDEF   {43,37,30, 31,22,17,  0, 0, 0, 58,58,50, \
                     44,63,63, 63,63,21, 43,37,30,  0, 0, 0, \
                     63,63, 0, 63,63,63, 43,37,30, 63,20,20, \
-                    20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
+                    20,40,20,  0,40,40, 50,30,10,  0, 0, 0}
 
 #define WinError(_ErrMsg_) WinMesg("Error",_ErrMsg_,0)
 
@@ -25,39 +25,13 @@
 
 struct barmenu
         {
-        char titre[20];
+        char titre[32];
 //        char *help;
         int fct;
         };
 
 
-struct TmtWin
-     {
-     int x1,y1,x2,y2;
-     char *name;
-     };
 
-struct Tmt {
-     int x,y;
-     char type;
-     char *str;
-     int *entier;
-     };
-
-/* Tmt:
-  Type:  0 --> Title
-         1 --> String
-         2 --> [    OK     ]
-         3 --> [  CANCEL   ]
-         4 --> Cadre with length = *str, width = 2
-         5 --> Bouton personnalis‚ (13 bytes length)
-         6 --> Cadre with length = *str, width = 1
-         7 --> Integer (length = 9)
-         8 --> Switch
-         9 --> Cadre with length = *str, width = *entier
-        10 --> Switch Multiple
-
-*/
 
 
 struct config
@@ -230,6 +204,39 @@ void WinLine(int x1,int y1,int xl,int type);
 
 void SetPal(int x,char r,char g,char b);
 
+
+/*--------------------------------------------------------------------*\
+|- User Window                                                        -|
+\*--------------------------------------------------------------------*/
+
+struct TmtWin
+     {
+     int x1,y1,x2,y2;
+     char *name;
+     };
+
+struct Tmt {
+     int x,y;
+     char type;
+     char *str;
+     int *entier;
+     };
+
+/*--------------------------------------------------------------------*\
+  Type:  0 --> Title
+         1 --> String
+         2 --> [    OK     ]
+         3 --> [  CANCEL   ]
+         4 --> Cadre with length = *str, width = 2
+         5 --> Bouton personnalis‚ (13 bytes length)
+         6 --> Cadre with length = *str, width = 1
+         7 --> Integer (length = 9)
+         8 --> Switch
+         9 --> Cadre with length = *str, width = *entier
+        10 --> Switch Multiple
+\*--------------------------------------------------------------------*/
+
+int Puce(int x,int y,int lng,char p);
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F,int first);
 
 /*--------------------------------------------------------------------*\

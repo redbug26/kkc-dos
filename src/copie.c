@@ -423,23 +423,18 @@ if (ok==1)
         ok=0;
         else
         {
-        struct diskfree_t d;
         long tfree;
 
         size=filelength(fileno(inhand));
 
-        _dos_getdiskfree(toupper(outpath[0])-'A'+1,&d);
-
-        tfree=(d.avail_clusters)*(d.sectors_per_cluster);
-        tfree=tfree*(d.bytes_per_sector);
-
-        SizeMaxRecord=(d.bytes_per_sector);
+        tfree=GetDiskFree(toupper(outpath[0])-'A'+1);
 
         SizeMaxRecord=32*1024;
 
         if (tfree<size)
             {
             fclose(inhand);
+            PrintAt(0,0,"size: %d tfree: %d",size,tfree);
             if (WinError("No more place on drive")==1)
                 FicEcrase=2;
             ok=0;

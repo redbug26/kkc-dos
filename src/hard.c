@@ -53,6 +53,7 @@ static int _xw,_yw;                // position up left in window -------
 static int _xw2,_yw2;              // position bottom right in window --
 
 char _IntBuffer[256];              // Buffer interne multi usage -------
+char _IntBuffe2[256];              // Buffer interne multi usage -------
 
 char _RB_screen[256*128*2];
 
@@ -129,19 +130,19 @@ char *scrseg[50];
 
 void Cache_AffChr(long x,long y,long c)
 {
-if (*(_RB_screen+(y*256+x))!=(char)c)
+if (*(_RB_screen+((y<<8)+x))!=(char)c)
     {
     *(scrseg[y]+(x<<1))=(char)c;
-    *(_RB_screen+(y*256+x))=(char)c;
+    *(_RB_screen+((y<<8)+x))=(char)c;
     }
 }
 
 void Cache_AffCol(long x,long y,long c)
 {
-if (*(_RB_screen+(y*256+x)+256*128)!=(char)c)
+if (*(_RB_screen+((y<<8)+x)+256*128)!=(char)c)
     {
     *(scrseg[y]+(x<<1)+1)=(char)c;
-    *(_RB_screen+(y*256+x)+256*128)=(char)c;
+    *(_RB_screen+((y<<8)+x)+256*128)=(char)c;
     }
 }
 
@@ -171,7 +172,8 @@ while ( (!kbhit()) & (b==0) & (zm==0) )
     {
     GetPosMouse(&xm,&ym,&zm);
 
-    if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) )
+    if ( ((clock()-Cl)>Cfg->SaveSpeed*CLOCKS_PER_SEC)
+        & (Cfg->SaveSpeed!=0) )
         ScreenSaver();
     }
 
@@ -235,9 +237,9 @@ char _Ansi_cnv[]={0,5,0,2,3,7,6,4,3,1,6,1,2,0,0,0};
 
 void Ansi_AffCol(long x,long y,long c)
 {
-if (*(_RB_screen+(y*256+x)+256*128)!=(char)c)
+if (*(_RB_screen+((y<<8)+x)+256*128)!=(char)c)
     {
-    *(_RB_screen+(y*256+x)+256*128)=(char)c;
+    *(_RB_screen+((y<<8)+x)+256*128)=(char)c;
 
     Ansi_GenCol(x,y);
     Ansi_GenChr(x,y,GetChr(x,y));
@@ -248,15 +250,15 @@ void Ansi_AffChr(long x,long y,long c)
 {
 Ansi_GenCol(x,y);
 
-if (*(_RB_screen+(y*256+x))!=(char)c)
+if (*(_RB_screen+((y<<8)+x))!=(char)c)
         Ansi_GenChr(x,y,c);
 }
 
 void Ansi_GenCol(long x,long y)
 {
-if (*(_RB_screen+(y*256+x)+256*128)!=_Ansi_tcol)
+if (*(_RB_screen+((y<<8)+x)+256*128)!=_Ansi_tcol)
     {
-    _Ansi_tcol=*(_RB_screen+(y*256+x)+256*128);
+    _Ansi_tcol=*(_RB_screen+((y<<8)+x)+256*128);
 
     _Ansi_col1=_Ansi_cnv[_Ansi_tcol/16]+40;
     _Ansi_col2=_Ansi_cnv[_Ansi_tcol&15]+30;
@@ -269,7 +271,7 @@ void Ansi_GenChr(long x,long y,long c)
 {
 if (y<Cfg->TailleY-2)
     {
-    *(_RB_screen+(y*256+x))=(char)c;
+    *(_RB_screen+((y<<8)+x))=(char)c;
 
     switch(c)
         {
@@ -322,8 +324,8 @@ _yw2=bottom;
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
         {
-        *(_RB_screen+(j*256+i)+256*128)=(char)color;
-        *(_RB_screen+(j*256+i))=0;             // Pour le remettre apres
+        *(_RB_screen+((j<<8)+i)+256*128)=(char)color;
+        *(_RB_screen+((j<<8)+i))=0;             // Pour le remettre apres
         }
 
 for(j=top;j<=bottom;j++)
@@ -357,9 +359,9 @@ void Com_AffCol(long x,long y,long c)
 {
 if (y>=Cfg->TailleY-1) return;
 
-if (*(_RB_screen+(y*256+x)+256*128)!=(char)c)
+if (*(_RB_screen+((y<<8)+x)+256*128)!=(char)c)
     {
-    *(_RB_screen+(y*256+x)+256*128)=(char)c;
+    *(_RB_screen+((y<<8)+x)+256*128)=(char)c;
 
     *(scrseg[y]+(x<<1)+1)=(char)c;      // --------- Echo console ------
 
@@ -373,7 +375,7 @@ void Com_AffChr(long x,long y,long c)
 {
 if (y>=Cfg->TailleY-1) return;
 
-if (*(_RB_screen+(y*256+x))!=(char)c)
+if (*(_RB_screen+((y<<8)+x))!=(char)c)
     {
     Com_GenCol(x,y);
 
@@ -387,22 +389,22 @@ void Com_GenCol(long x,long y)
 {
 int n;
 
-if (*(_RB_screen+(y*256+x)+256*128)!=_Com_tcol)
+if (*(_RB_screen+((y<<8)+x)+256*128)!=_Com_tcol)
     {
-    _Com_tcol=*(_RB_screen+(y*256+x)+256*128);
+    _Com_tcol=*(_RB_screen+((y<<8)+x)+256*128);
 
     _Com_col1=_Com_cnv[_Com_tcol/16]+40;
     _Com_col2=_Com_cnv[_Com_tcol&15]+30;
 
-    sprintf(_IntBuffer,"\x1b[%d;%dm",_Com_col1,_Com_col2);
-    for (n=0;n<strlen(_IntBuffer);n++)
-        com_send_ch(_IntBuffer[n]);
+    sprintf(_IntBuffe2,"\x1b[%d;%dm",_Com_col1,_Com_col2);
+    for (n=0;n<strlen(_IntBuffe2);n++)
+        com_send_ch(_IntBuffe2[n]);
     }
 }
 
 void Com_GenChr(long x,long y,long c)
 {
-*(_RB_screen+(y*256+x))=(char)c;
+*(_RB_screen+((y<<8)+x))=(char)c;
 
 switch(c)
     {
@@ -488,9 +490,9 @@ void Com_GotoXY(long x,long y)
 {
 int n;
 
-sprintf(_IntBuffer,"\x1b[%d;%dH",y+1,x+1);
-for (n=0;n<strlen(_IntBuffer);n++)
-    com_send_ch(_IntBuffer[n]);
+sprintf(_IntBuffe2,"\x1b[%d;%dH",y+1,x+1);
+for (n=0;n<strlen(_IntBuffe2);n++)
+    com_send_ch(_IntBuffe2[n]);
 
 _Com_x=x;
 _Com_y=y;
@@ -511,9 +513,9 @@ int n;
 memset(_RB_screen+256*128,7,256*128);
 memset(_RB_screen,32,256*128);
 
-sprintf(_IntBuffer,"\x1b[0m\n\n\x1b[2J");
-for (n=0;n<strlen(_IntBuffer);n++)
-    com_send_ch(_IntBuffer[n]);
+sprintf(_IntBuffe2,"\x1b[0m\n\n\x1b[2J");
+for (n=0;n<strlen(_IntBuffe2);n++)
+    com_send_ch(_IntBuffe2[n]);
 }
 
 void Com_Window(long left,long top,long right,long bottom,long color)
@@ -529,8 +531,8 @@ _yw2=bottom;
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
         {
-        *(_RB_screen+(j*256+i)+256*128)=(char)color;
-        *(_RB_screen+(j*256+i))=0;             // Pour le remettre apres
+        *(_RB_screen+((j<<8)+i)+256*128)=(char)color;
+        *(_RB_screen+((j<<8)+i))=0;             // Pour le remettre apres
 
         *(scrseg[j]+(i<<1)+1)=(char)color;    // ------- Echo console --
         }
@@ -1466,17 +1468,23 @@ void Beep(void)
 \*--------------------------------------------------------------------*/
 void WinCadre(int x1,int y1,int x2,int y2,int type)
 {
-if ((type==1) | (type==0))
-    {
-    //--- Relief (surtout pour type==1) --------------------------------
-    ColLin(x1,y1,x2-x1+1,10*16+1);
-    ColCol(x1,y1+1,y2-y1,10*16+1);
+int type2;
+char col;
 
-    ColLin(x1+1,y2,x2-x1,10*16+3);
-    ColCol(x2,y1+1,y2-y1-1,10*16+3);
+col=(type&4)==4 ? 14 : 10;
+type2=type&3;
+
+if ((type2==1) | (type2==0))
+    {
+    //--- Relief (surtout pour type2==1) --------------------------------
+    ColLin(x1,y1,x2-x1+1,col*16+1);
+    ColCol(x1,y1+1,y2-y1,col*16+1);
+
+    ColLin(x1+1,y2,x2-x1,col*16+3);
+    ColCol(x2,y1+1,y2-y1-1,col*16+3);
 
     if (Cfg->UseFont==0)
-        switch(type)
+        switch(type2)
             {
             case 0:
                 AffChr(x1,y1,'Ú');
@@ -1504,7 +1512,7 @@ if ((type==1) | (type==0))
                 break;
             }
     else
-        switch(type)
+        switch(type2)
             {
             case 0:
                 AffChr(x1,y1,142);
@@ -1535,15 +1543,15 @@ if ((type==1) | (type==0))
     }
 else
     {
-    //--- Relief (surtout pour type==1) --------------------------------
-    ColLin(x1,y1,x2-x1+1,10*16+3);
-    ColCol(x1,y1+1,y2-y1,10*16+3);
+    //--- Relief (surtout pour type2==1) --------------------------------
+    ColLin(x1,y1,x2-x1+1,col*16+3);
+    ColCol(x1,y1+1,y2-y1,col*16+3);
 
-    ColLin(x1+1,y2,x2-x1,10*16+1);
-    ColCol(x2,y1+1,y2-y1-1,10*16+1);
+    ColLin(x1+1,y2,x2-x1,col*16+1);
+    ColCol(x2,y1+1,y2-y1-1,col*16+1);
 
     if (Cfg->UseFont==0)
-        switch(type)
+        switch(type2)
             {
             case 2:
             case 3:
@@ -1560,7 +1568,7 @@ else
                 break;
             }
         else
-        switch(type)
+        switch(type2)
             {
             case 2:
                 AffChr(x1,y1,139);
@@ -1928,7 +1936,7 @@ AffChr(x+lng-1,y,17);
 AffChr(x+lng,y,220);
 ChrLin(x+1,y+1,lng,223);
 
-ColLin(x,y,lng,2*16+5);                                       // Couleur
+ColLin(x,y,lng,7*16+4);                                       // Couleur
 
 if (p==1)
     while (r==0)
@@ -1980,7 +1988,7 @@ AffChr(x+lng-1,y,32);
 AffChr(x+lng,y,220);
 ChrLin(x+1,y+1,lng,223);
 
-ColLin(x,y,lng,2*16+3);                                       // Couleur
+ColLin(x,y,lng,14*16+7);                                      // Couleur
 
 return r;
 }
@@ -2160,7 +2168,7 @@ switch(T[i].type) {
         PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
         break;
     case 1:
-        ColLin(x1+T[i].x,y1+T[i].y,*(T[i].entier),1*16+5);
+        ColLin(x1+T[i].x,y1+T[i].y,*(T[i].entier),14*16+3);
         ChrLin(x1+T[i].x,y1+T[i].y,*(T[i].entier),32);
         PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
         break;
@@ -2186,7 +2194,7 @@ switch(T[i].type) {
         break;
     case 7:
         j=strlen(T[i].str)+2;
-        ColLin(x1+T[i].x+j,y1+T[i].y,9,1*16+5);
+        ColLin(x1+T[i].x+j,y1+T[i].y,9,14*16+3);
         PrintAt(x1+T[i].x,y1+T[i].y,"%s: %-9d",T[i].str,*(T[i].entier));
         break;
     case 8:
@@ -2253,7 +2261,7 @@ switch(T[i].type)
         direct=Switch(x1+T[i].x,y1+T[i].y,T[i].entier);
         break;
     case 10:
-        ColLin(x1+T[i].x+4,y1+T[i].y,strlen(T[i].str),7*16+4);
+        ColLin(x1+T[i].x+4,y1+T[i].y,strlen(T[i].str),10*16+3);
         direct=MSwitch(x1+T[i].x,y1+T[i].y,T[i].entier,i);
         ColLin(x1+T[i].x+4,y1+T[i].y,strlen(T[i].str),10*16+1);
         PrintAt(x1+T[i].x,y1+T[i].y,"(%c) %s",
@@ -2533,7 +2541,7 @@ memcpy(Cfg->palette,defcol,48);
 Cfg->TailleY=30;
 Cfg->font=1;
 
-Cfg->SaveSpeed=7200;
+Cfg->SaveSpeed=120;
 
 Cfg->crc=0x69;
 
@@ -2801,7 +2809,7 @@ int car=0;
 for (n=0;n<nbr;n++)
     let[n]=toupper(bar[n].titre[0]);
 
-ColLin(0,0,Cfg->TailleX,1*16+7);
+ColLin(0,0,Cfg->TailleX,14*16+7);
 ChrLin(0,0,Cfg->TailleX,32);
 
 
@@ -2827,15 +2835,15 @@ for (n=0;n<nbr;n++)
     if (n==c)
         {
         AffCol(x+j+n*i-1,0,7*16+4);
-        AffCol(x+j+n*i,0,7*16+5);
+        AffCol(x+j+n*i,0,7*16+3);
         ColLin(x+j+n*i+1,0,strlen(bar[n].titre),7*16+4);
         *xp=x+j+n*i;
         }
         else
         {
-        AffCol(x+j+n*i-1,0,1*16+7);
-        AffCol(x+j+n*i,0,1*16+5);
-        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),1*16+7);
+        AffCol(x+j+n*i-1,0,14*16+7);
+        AffCol(x+j+n*i,0,14*16+3);
+        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),14*16+7);
         }
 
     PrintAt(x+j+n*i,0,"%s",bar[n].titre);
@@ -2955,8 +2963,8 @@ SaveScreen();
 
 if ((*xp)<1) (*xp)=1;
 
-WinCadre(*xp-1,*yp-1,*xp+max,*yp+nbr,3);
-Window(*xp,*yp,*xp+max-1,*yp+nbr-1,10*16+4);
+WinCadre(*xp-1,*yp-1,*xp+max,*yp+nbr,4+3);
+Window(*xp,*yp,*xp+max-1,*yp+nbr-1,14*16+7);
 
 fin=0;
 
@@ -2970,21 +2978,21 @@ for (n=0;n<nbr;n++)
     if (bar[n].fct==0)
         {
         ChrLin(*xp,(*yp)+n,max,196);
-        ColLin(*xp,(*yp)+n,max,10*16+1);
+        ColLin(*xp,(*yp)+n,max,14*16+7);
         }
         else
         {
         PrintAt(*xp,(*yp)+n,"%s",bar[n].titre);
         col=1;
         if (n==*c)
-            couleur=1*16+7;  // 7
+            couleur=7*16+4;  // 7
             else
-            couleur=10*16+4;
+            couleur=14*16+7;  // 4
 
         for (i=0;i<strlen(bar[n].titre);i++)
             {
             if ( (col==1) & (toupper(bar[n].titre[i])==let[n]) )
-                AffCol((*xp)+i,(*yp)+n,(couleur&240)+5),col=0;
+                AffCol((*xp)+i,(*yp)+n,(couleur&240)+3),col=0;
                 else
                 AffCol((*xp)+i,(*yp)+n,couleur);
             }
