@@ -1,0 +1,27 @@
+# Compilers and options:
+
+CC = wcc386
+CL = wlink
+
+# Maximum optimization for speed
+# CCOPTS = -w3 -dDEBUG -5r -fpi -oneatx -s -zdp -d__WC32__ -zu
+# -zu fait       tout planter
+# -dDEBUG -d3    pour debugging
+# -mf            pour Model FLAT
+
+# -oneatx        pour optimization
+
+# en phase de debugging
+CCOPTS = -w9 -5r -fpi -zdp -d__WC32__ -dDEBUG -d3 -mf
+
+# en phase de release
+#CCOPTS = -w5 -5r -fpi -zdp -d__WC32__ -mf
+
+
+all : kk_kkrgr.exe
+
+kk_kkrgr.exe : kk_kkrgr.obj hard.obj
+        $(CL) @kk_kkrgr.wlk
+
+.c.obj:
+		$(CC) $* $(CCOPTS)

@@ -1,0 +1,17 @@
+# Compilers and options:
+
+CL = tlink
+CA = tasm
+
+CAOPTS = /zi
+# /zi for debug
+LAOPTS = /l /v
+# /l /v
+
+all : kk.exe
+
+kk.exe : kk.obj
+        $(CL) $* $(LAOPTS)
+
+.asm.obj:
+        $(CA) $* $(CAOPTS)

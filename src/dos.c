@@ -1,0 +1,94 @@
+// Dos-function
+#include <errno.h>
+
+#include <stdlib.h>
+#include <malloc.h>
+#include <dos.h>
+#include <string.h>
+#include <direct.h>
+
+#include "kk.h"
+
+
+
+
+// Retourne 1 si erreur
+
+int DOSlitfic(void)
+{
+struct find_t ff;
+
+struct file **Fic;
+unsigned error;
+char rech[256];
+
+Fic=DFen->F;
+
+strcpy(rech,DFen->path);
+if (rech[strlen(rech)-1]!='\\') strcat(rech,"\\");
+
+if ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
+    {
+    Fic[0]=malloc(sizeof(struct file));
+    Fic[0]->name=malloc(4);
+    memcpy(Fic[0]->name,rech,4);
+    Fic[0]->time=0;
+    Fic[0]->date=0;
+    Fic[0]->attrib=_A_SUBDIR;
+    Fic[0]->select=0;
+//    Fic[0]->to=NULL;
+    Fic[0]->size=0;
+    DFen->nbrfic=1;
+    }
+    else
+    {
+    DFen->nbrfic=0;
+    }
+
+strcat(rech,"*.*");
+
+DFen->pcur=0;
+DFen->scur=0;
+
+DFen->taillefic=0;
+DFen->nbrsel=0;
+
+DFen->taillesel=0;
+
+error=_dos_findfirst(rech,63,&ff);
+if (error==1)
+    return 1;           // Pas bien si unit‚ est !='A' et 'B'
+
+while (error==0) {
+    Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+    Fic[DFen->nbrfic]->name=malloc(strlen(ff.name)+1);
+    strcpy(Fic[DFen->nbrfic]->name,ff.name);
+	Fic[DFen->nbrfic]->time=ff.wr_time;
+	Fic[DFen->nbrfic]->date=ff.wr_date;
+	Fic[DFen->nbrfic]->attrib=ff.attrib;
+	Fic[DFen->nbrfic]->select=0;
+//    Fic[DFen->nbrfic]->to=NULL;
+	Fic[DFen->nbrfic]->size=ff.size;
+	DFen->taillefic+=Fic[DFen->nbrfic]->size;
+	DFen->nbrfic++;
+	error=_dos_findnext(&ff);
+	}
+
+DFen->init=1;
+
+InfoSupport();
+ChangeLine();
+
+return 0;
+}
+
+void InstallDOS(void)
+{
+getcwd(DFen->path,255);
+
+DFen->system=0;
+}
+
+
+
+

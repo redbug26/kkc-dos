@@ -1,0 +1,38 @@
+# Compilers and options:
+
+CC = wcc386
+CL = wlink
+
+# Maximum optimization for speed
+# CCOPTS = -w3 -dDEBUG -5r -fpi -oneatx -s -zdp -d__WC32__ -zu
+# -zu fait       tout planter
+# -dDEBUG -d3    pour debugging
+# -mf            pour Model FLAT
+# -s             pour enlever les checks stack overflow
+# -zm            chaque fonction est mise dans un segment different
+# -wx            tout les warning
+# -od            disable tous les optimisations
+# -5r -5s        pentium register, stack calling
+# -et            pentium profilling
+# -ou            unique adresse
+# -xst           save exception
+
+# -oneatx        pour optimization
+
+# en phase de debugging
+CCOPTS = -wx -5r -fpi -zdp -d__WC32__ -d3 -mf -zm -od
+
+# en phase de release
+#CCOPTS = -w5 -5r -fpi -zdp -d__WC32__ -mf
+
+
+ASM = tasm
+ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
+
+all : kkmain.exe
+
+kkmain.exe : demo.obj idf.obj hard.obj win.obj gestion.obj dos.obj driver.obj ficidf.obj copie.obj delete.obj search.obj help.obj view.obj
+                $(CL) @kkmain.wlk
+
+.c.obj:
+		$(CC) $* $(CCOPTS)

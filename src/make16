@@ -1,0 +1,22 @@
+# Compilers and options:
+
+CC = wcc
+CL = wlink
+
+# Maximum optimization for speed
+# CCOPTS = -w3 -dDEBUG -5r -fpi -oneatx -s -zdp -d__WC32__ -zu
+# -zu fait       tout planter
+# -dDEBUG -d3    pour debugging
+# -mf            pour Model FLAT
+
+# -oneatx        pour optimization
+
+CCOPTS = -w5 -fpi -s -zdp -oneatx -d3
+
+all : kk.exe
+
+kk.exe : shell.obj
+        $(CL) @kk.wlk
+
+.c.obj:
+		$(CC) $* $(CCOPTS)
