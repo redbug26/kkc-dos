@@ -21,7 +21,10 @@ int Deltree(char *path);
 
 int Del(char *s)
 {
-PrintAt(9,11,"Delete%58s",s);
+static char buffer[256];
+strcpy(buffer,s);
+buffer[58]=0;
+PrintTo(1,0,"Delete%58s",buffer);
 
 _dos_setfileattr(s,_A_NORMAL);
 
@@ -107,7 +110,7 @@ struct Tmt T[6] = {
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = { 3,10,76,17, "Delete" };
+struct TmtWin F = {-1,10,74,17, "Delete" };
 
 int n;
 
@@ -132,7 +135,7 @@ struct Tmt T[5] = {
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = { 3,10,76,17, "Error!" };
+struct TmtWin F = {-1,10,74,17, "Error!" };
 
 int n;
 
@@ -148,6 +151,7 @@ return n;
 void Delete(FENETRE *F1)                       // Delete Multiple
 {
 int i;
+int x1;
 
 char fin;
 char test;
@@ -159,9 +163,10 @@ struct file *F;
 
 SaveEcran();
 
-WinCadre(7,10,73,12,0);
-Window(8,11,72,11,10*16+1);
+x1=(Cfg->TailleX-66)/2;
 
+WinCadre(x1,10,x1+66,12,0);
+Window(x1+1,11,x1+65,11,10*16+1);
 
 
 if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') )

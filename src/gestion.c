@@ -26,6 +26,7 @@ void GetFreeMem(char *buffer);
 #pragma aux GetFreeMem = \
     "mov ax,0500h" \
 	"int 31h" \
+    modify [edi eax] \
 	parm [edi];
 
 
@@ -275,6 +276,7 @@ if (DFen->system==0)
                 case 35:    // ZIP
                 case 32:    // LHA
                 case 102:   // KKD
+                case 139:   // DFP
                     break;
                 default:
                     n=0;
@@ -299,6 +301,9 @@ if (DFen->system==0)
                         break;
                     case 32:    // LHA
                         DFen->system=4;
+                        break;
+                    case 139:   // DFP
+                        DFen->system=6;
                         break;
                     case 102:   // KKD
                         DFen->KKDdrive=0;
@@ -343,6 +348,9 @@ switch(DFen->system)
         break;
     case 5:
         err=KKDlitfic();
+        break;
+    case 6:
+        err=DFPlitfic();
         break;
     default:
         sprintf(nom,"ChangeDir on system: %d",DFen->system);
@@ -411,8 +419,7 @@ int j;
 
 j=0;
 
-// SaveEcran();
-ColLin(0,0,80,1*16+4);
+ColLin(0,0,Cfg->TailleX,1*16+4);
 
 while(1) {
     dir=&(Cfg->HistDir[j]);
@@ -437,7 +444,6 @@ while(1) {
 if (j<256)
     memset(&(Cfg->HistDir[j]),0,256-j);
 
-// ChargeEcran();
 }
 
 /*--------------------------------------------------------------------*\
@@ -803,7 +809,6 @@ memcpy(&(Cfg->HistCom[TabCom[i]]),chaine,strlen(chaine)+1);
 static int x0,py,xmax;    // position en X,Y ,X initial, Taille de X max
 static char str[256];                                // commande interne
 static int px;                                                // Chaipus
-static char flag;                 // direction flag pour plein de choses
 
 /*--------------------------------------------------------------------*\
 |-  Execution d'une commande                                          -|
@@ -824,25 +829,25 @@ if ( (chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (Cfg->logfile==1) )
 if (!stricmp(chaine,"CD -"))
     {
     ChangeDir(GetLastHistDir());
-    ChangeLine();      // Affichage Path
+    ChangeLine();                                      // Affichage Path
     return 1;
     }
 if (!strnicmp(chaine,"CD ",3))
     {
     ChangeDir(chaine+3);
-    ChangeLine();      // Affichage Path
+    ChangeLine();                                      // Affichage Path
     return 1;
     }
 if (!strnicmp(chaine,"CD..",4))
     {
     ChangeDir(chaine+2);
-    ChangeLine();      // Affichage Path
+    ChangeLine();                                      // Affichage Path
     return 1;
     }
 if (!strnicmp(chaine,"MD ",3))
     {
     MakeDir(chaine+3);
-    ChangeLine();      // Affichage Path
+    ChangeLine();                                      // Affichage Path
     return 1;
     }
 if (!strnicmp(chaine,"#INIT",5))
@@ -856,13 +861,8 @@ if (!strnicmp(chaine,"#MEM",4))
     static int a=0;
     int tail[12];
     a++;
-    GetFreeMem((void*)tail);  // inconsistent ?
+    GetFreeMem((void*)tail);                           // inconsistent ?
     PrintAt(0,0,"Memory: %20d octets     (%10d)",tail[0],a);
-    return 1;
-    }
-if (!strnicmp(chaine,"#DF",4))
-    {
-    sscanf(chaine+3,"%d",&flag);
     return 1;
     }
 
@@ -876,26 +876,27 @@ return 0;
 \*--------------------------------------------------------------------*/
 void ChangeLine(void)
 {
-int x1,m,n;
+int x1,m,n,v;
 
-if (DFen->nfen==2) return;      // Fenetre[2]
+if (DFen->nfen==2) return;
 
 x1=strlen(DFen->path)+1;
 m=strlen(str);
 
+v=xmax-2-x0;
+
 if ( ((x1+m)>75) & (x1>40) )
     {
-    n= (m>=(78-x0)) ? m-(78-x0) : 0;
-    PrintAt(x0,py,">%-*s",78-x0,str+n);
+    n= (m>=v) ? m-v : 0;
+    PrintAt(x0,py,">%-*s",v,str+n);
     GotoXY(x0+m-n+1,py);
     }
     else
     {
-    n= (m>=(79-(x0+x1))) ? m-(79-(x0+x1)) : 0;
-    PrintAt(x0,py,"%s>%-*s",DFen->path,79-x0-x1,str+n);
+    n= (m>=(v+1-x1)) ? m-(v+1-x1) : 0;
+    PrintAt(x0,py,"%s>%-*s",DFen->path,v+1-x1,str+n);
     GotoXY(x1+x0+m-n,py);
     }
-
 }
 
 
@@ -908,8 +909,6 @@ if ( ((x1+m)>75) & (x1>40) )
 |-                position initial du curseur et longueur             -|
 |-  #MEM                                                              -|
 |-                m‚moire restante                                    -|
-|-  #DF x                                                             -|
-|-                direction flag                                      -|
 \*--------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------*\

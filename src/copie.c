@@ -158,7 +158,7 @@ struct Tmt T[5] = {
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = { 3,8,76,15,"Copy" };
+struct TmtWin F = {-1,8,74,15,"Copy" };
 
 if (FicEcrase==1) return;
 
@@ -190,7 +190,7 @@ struct Tmt T[5] = {
       { 1,1,6,NULL,&CadreLength}
       };
 
-struct TmtWin F = { 3,8,76,14, "User Interrupt" };
+struct TmtWin F = {-1,8,74,14, "User Interrupt" };
 
 int n;
 
@@ -230,7 +230,7 @@ struct Tmt T[7] = {
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = { 3,8,76,15, "Copy" };
+struct TmtWin F = {-1,8,74,15, "Copy" };
 
 if (FicEcrase==1) return 0;
 
@@ -481,7 +481,7 @@ struct Tmt T[5] = {
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = { 3,10,76,17,"Copy" };
+struct TmtWin F = {-1,10,74,17,"Copy" };
 
 if (Nbrfic!=0)
     {
@@ -568,7 +568,7 @@ struct Tmt T[5] = {
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = {3,10,76,17,"Move"};
+struct TmtWin F = {-1,10,74,17,"Move"};
 
 memcpy(Dir,FTrash->path,255);
 
@@ -1029,7 +1029,7 @@ struct Tmt T[5] = {
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = { 3,8,76,15,"Move" };
+struct TmtWin F = {-1,8,74,15,"Move" };
 
 if (FicEcrase==1) return;
 
@@ -1065,7 +1065,7 @@ struct Tmt T[7] = {
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = { 3,8,76,15,"Move" };
+struct TmtWin F = {-1,8,74,15,"Move" };
 
 if (FicEcrase==1) return 0;
 

@@ -1,4 +1,3 @@
-
 /*--------------------------------------------------------------------*\
 |- Hard-function                                                      -|
 \*--------------------------------------------------------------------*/
@@ -51,6 +50,8 @@ static int _xm,_ym,_zm,_zmok;
 static int _dclik,_mclock;
 static char _charm;
 
+static int _xw,_yw;                        // position up left in window
+
 char _IntBuffer[256];
 
 char _RB_screen[256*128*2];
@@ -91,6 +92,9 @@ for(j=0;j<Cfg->TailleY;j++)
 void Norm_Window(int left,int top,int right,int bottom,short color)
 {
 int i,j;
+
+_xw=left;
+_yw=top;
 
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
@@ -138,6 +142,10 @@ clock_t Cl;
 
 int xm=0,ym=0,zm=0;
 
+char *pt;
+
+pt=(char*)0x41A;
+
 if ((x!=0) | (y!=0))
     GotoXY(x,y);
 
@@ -161,6 +169,7 @@ if ((b==0) & (zm==0))
     a=getch();
     if (a==0)
         return getch()*256+a;
+
     return a;
     }
 
@@ -290,6 +299,9 @@ cprintf("\x1b[0m\n\n\x1b[2J");
 void Ansi_Window(int left,int top,int right,int bottom,short color)
 {
 int i,j;
+
+_xw=left;
+_yw=top;
 
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
@@ -487,6 +499,9 @@ for (n=0;n<strlen(buffer);n++)
 void Com_Window(int left,int top,int right,int bottom,short color)
 {
 int i,j;
+
+_xw=left;
+_yw=top;
 
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
@@ -918,6 +933,7 @@ for (y=y3;y<=y3+(y2-y1);y++)
 char *_Ecran[10];
 char _EcranX[10],_EcranY[10];
 char _EcranD[10],_EcranF[10];
+char _EcranXW[10],_EcranYW[10];
 signed short _WhichEcran=0;
 
 void SaveEcran(void)
@@ -946,6 +962,9 @@ for (y=0;y<Cfg->TailleY;y++)
 
 WhereXY(&(_EcranX[_WhichEcran]),&(_EcranY[_WhichEcran]));
 GetCur(&(_EcranD[_WhichEcran]),&(_EcranF[_WhichEcran]));
+
+_EcranXW[_WhichEcran]=_xw;
+_EcranYW[_WhichEcran]=_yw;
 
 _WhichEcran++;
 }
@@ -986,14 +1005,106 @@ for (y=0;y<Cfg->TailleY;y++)
 GotoXY(_EcranX[_WhichEcran],_EcranY[_WhichEcran]);
 PutCur(_EcranD[_WhichEcran],_EcranF[_WhichEcran]);
 
+_xw=_EcranXW[_WhichEcran];
+_yw=_EcranYW[_WhichEcran];
+
 LibMem(_Ecran[_WhichEcran]);
 _Ecran[_WhichEcran]=NULL;
 }
 
+/*--------------------------------------------------------------------*\
+|- Fonction relative                                                  -|
+\*--------------------------------------------------------------------*/
+void AffRChr(char x,char y,char c)
+{
+AffChr(x+_xw,y+_yw,c);
+}
+
+void AffRCol(char x,char y,char c)
+{
+AffCol(x+_xw,y+_yw,c);
+}
+
+char GetRChr(short x,short y)
+{
+return GetChr(x+_xw,y+_yw);
+}
+
+char GetRCol(short x,short y)
+{
+return GetCol(x+_xw,y+_yw);
+}
+
+void ColRLin(int left,int top,int length,short color)
+{
+ColLin(left+_xw,top+_yw,length,color);
+}
+
+void ChrRLin(int left,int top,int length,short color)
+{
+ChrLin(left+_xw,top+_yw,length,color);
+}
+
+void ChrRCol(int left,int top,int length,short color)
+{
+ChrCol(left+_xw,top+_yw,length,color);
+}
+
+void ColRCol(int left,int top,int length,short color)
+{
+ColCol(left+_xw,top+_yw,length,color);
+}
+
+void ColRWin(int right,int top,int left,int bottom,short color)
+{
+ColWin(right+_xw,top+_yw,left+_xw,bottom+_yw,color);
+}
+
+void ChrRWin(int right,int top,int left,int bottom,short color)
+{
+ChrWin(right+_xw,top+_yw,left+_xw,bottom+_yw,color);
+}
+
+char InputTo(char colonne,char ligne,char *chaine, int longueur)
+{
+return InputAt(colonne+_xw,ligne+_yw,chaine,longueur);
+}
+
+/*--------------------------------------------------------------------*\
+|-  Fonction d'impression du texte relatif                            -|
+\*--------------------------------------------------------------------*/
+void PrintTo(int x,int y,char *string,...)
+{
+char sortie[256];      // Pas de raison que ca soit un static ici (ok ?)
+va_list arglist;
+
+char *suite;
+short xa,ya;
+
+suite=sortie;
+
+va_start(arglist,string);
+vsprintf(sortie,string,arglist);
+va_end(arglist);
+
+xa=x+_xw;
+ya=y+_yw;
+
+while (*suite!=0)
+    {
+    AffChr(xa,ya,*suite);
+    xa++;
+    suite++;
+    }
+}
 
 
 /*--------------------------------------------------------------------*\
-|-  Fonction d'impression du texte                                    -|
+|- Fonction Absolue                                                   -|
+\*--------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------*\
+|-  Fonction d'impression du texte absolu                             -|
 \*--------------------------------------------------------------------*/
 void PrintAt(int x,int y,char *string,...)
 {
@@ -1017,6 +1128,9 @@ while (*suite!=0)
     suite++;
     }
 }
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
 
 void Delay(long ms)
 {
@@ -1560,113 +1674,71 @@ if (Cfg->TailleX==80)                         // 9 bits normal -> 8 bits
 LibMem(pol);
 }
 
+/*--------------------------------------------------------------------*\
+|- Changement de mode texte                                           -|
+\*--------------------------------------------------------------------*/
+
+// Prototype
+
 void Mode25(void);
-#pragma aux Mode25 = \
-    "mov ax,3" \
-    "int 10h";
-
 void Mode50(void);
-#pragma aux Mode50 = \
-    "mov ax,3" \
-    "int 10h" \
-    "mov bx,0" \
-    "mov ax,1112h" \
-    "int 10h";
-
 void Mode30(void);
-#pragma aux Mode30 = \
-    "mov ax,3" \
-    "int 10h" \
-    "mov ax,1114h" \
-    "xor bl,bl" \
-    "int 10h" \
-    "mov dx,3cch" \
-    "in al,dx" \
-    "mov dl,0c2h" \
-    "or al,192" \
-    "out dx,al" \
-    "mov dx,3d4h" \
-    "mov al,11h" \
-    "out dx,al" \
-    "inc dx" \
-    "and al,112" \
-    "or al,12" \
-    "mov bl,al" \
-    "out dx,al" \
-    "dec dx" \
-    "mov ax,0B06h" \
-    "out dx,ax" \
-    "mov ax,3E07h" \
-    "out dx,ax" \
-    "mov ax,0EA10h" \
-    "out dx,ax" \
-    "mov ax,0DF12h" \
-    "out dx,ax" \
-    "mov ax,0E715h" \
-    "out dx,ax" \
-    "mov ax,0416h" \
-    "out dx,ax" \
-    "mov al,11h" \
-    "out dx,al" \
-    "inc dx" \
-    "mov al,bl" \
-    "out dx,al";
+void Mode90(void);
+void Mode80(void);
+
+
+// Fonction
+
+void Mode25(void)
+{
+union REGS R;
+
+R.w.ax=3;
+int386(0x10,&R,&R);
+}
+
+void Mode50(void)
+{
+union REGS R;
+
+R.w.ax=3;
+int386(0x10,&R,&R);
+
+R.w.bx=0;
+R.w.ax=0x1112;
+int386(0x10,&R,&R);
+}
+
+void Mode30(void)
+{
+union REGS R;
+short t;
+
+R.w.ax=3;
+int386(0x10,&R,&R);
+
+R.w.ax=0x1114;
+R.w.bx=0;
+int386(0x10,&R,&R);
+
+t=inp(0x3CC);
+outp(0x3C2,t|192);
+outp(0x3D4,0x11);
+t=(t&112)|12;
+outp(0x3D5,t);
+outpw(0x3D4,0xB06);
+outpw(0x3D4,0x3E07);
+outpw(0x3D4,0xEA10);
+outpw(0x3D4,0xDF12);
+outpw(0x3D4,0xE715);
+outpw(0x3D4,0x416);
+
+outp(0x3D4,0x11);
+outp(0x3D5,t);
+}
+
 
 void Mode90(void);
-
-/*
-#pragma aux Mode90 = \
-    "mov dx,03C4h" \
-    "mov ax,0100h" \
-    "out dx,ax" \
-    "inc ax" \
-    "out dx,ax" \
-    "mov dx,03CCh" \
-    "in al,dx" \
-    "and al,0F3h" \
-    "or al,4" \
-    "mov dx,03C2h" \
-    "out dx,al" \
-    "mov dx,03DAh" \
-    "in al,dx" \
-    "mov dx,03C0h" \
-    "mov al,13h" \
-    "out dx,al" \
-    "xor al,al" \
-    "out dx,al" \
-    "mov al,20h" \
-    "out dx,al" \
-    "out dx,al" \
-    "mov dx,03D4h" \
-    "mov al,11h" \
-    "out dx,al" \
-    "inc dx" \
-    "in al,dx" \
-    "and al,7Fh" \
-    "out dx,al" \
-    "dec dx" \
-    "mov ax,06B00h" \
-    "out dx,ax" \
-    "mov ax,05901h" \
-    "out dx,ax" \
-    "mov ax,05A02h" \
-    "out dx,ax" \
-    "mov ax,08E03h" \
-    "out dx,ax" \
-    "mov ax,06004h" \
-    "out dx,ax" \
-    "mov ax,08D05h" \
-    "out dx,ax" \
-    "mov ax,02D13h" \
-    "out dx,ax" \
-    "mov ah,al" \
-    "mov al,11h" \
-    "or ah,80h" \
-    "out dx,ax" \
-    "mov dx,03C4h" \
-    "mov ax,0300h" \
-    "out dx,ax";
-*/
 
 void Mode90(void)
 {
@@ -1711,18 +1783,18 @@ void Mode80(void)
 
 }
 
-void TXTMode(char lig)
+void TXTMode(void)
 {
 char *TX=(char*)0x44A;
 char *TY=(char*)0x484;
+char lig;
 
 Clr();
 
 if (Cfg->TailleX==0) Cfg->TailleX=80;
 if (Cfg->TailleY==0) Cfg->TailleY=25;
 
-if (lig==0)
-    lig=Cfg->TailleY;
+lig=Cfg->TailleY;
 
 Cfg->UseFont=0;
 switch (lig)
@@ -1748,16 +1820,19 @@ switch(Cfg->TailleX)
         break;
     }
 
-(*TX)=Cfg->TailleX;
-(*TY)=Cfg->TailleY-1;
+(*TX)=(char)(Cfg->TailleX);
+(*TY)=(char)(Cfg->TailleY-1);
 
 InitSeg();
 }
 
-void NoFlash(void)
+void LoadPal(void)
 {
 union REGS regs;
 int n;
+
+for(n=0;n<16;n++)
+    SetPal(n,Cfg->palette[n*3],Cfg->palette[n*3+1],Cfg->palette[n*3+2]);
 
 regs.w.ax=0x1003;
 regs.w.bx=0;
@@ -1770,15 +1845,6 @@ for (n=0;n<16;n++)
     regs.w.ax=0x1000;
     int386(0x10,&regs,&regs);
     }
-}
-
-
-void LoadPal(void)
-{
-int n;
-
-for(n=0;n<16;n++)
-    SetPal(n,Cfg->palette[n*3],Cfg->palette[n*3+1],Cfg->palette[n*3+2]);
 }
 
 void SetPal(char x,char r,char g,char b)
@@ -2038,66 +2104,85 @@ char direct;                                         // direction du tab
 int i,i2,j;
 int *adr;
 static char chaine[80];
+int x1,y1,x2,y2;
 
 SaveEcran();
 
-WinCadre(F->x1,F->y1,F->x2,F->y2,0);
-Window(F->x1+1,F->y1+1,F->x2-1,F->y2-1,10*16+1);
+x1=F->x1;
+y1=F->y1;
 
-PrintAt(F->x1+((F->x2-F->x1)-(strlen(F->name)))/2,F->y1,F->name);
+x2=F->x2;
+y2=F->y2;
+
+if (x1==-1)
+    {
+    x1=(Cfg->TailleX-F->x2)/2;
+    x2=x1+F->x2-1;
+    }
+
+if (y1==-1)
+    {
+    y1=(Cfg->TailleY-F->y2)/2;
+    y2=y1+F->y2-1;
+    }
+
+WinCadre(x1,y1,x2,y2,0);
+Window(x1+1,y1+1,x2-1,y2-1,10*16+1);
+
+PrintAt(x1+((x2-x1)-(strlen(F->name)))/2,y1,F->name);
 
 for(i=0;i<nbr;i++)
 switch(T[i].type) {
     case 0:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
+        PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
         break;
     case 1:
-        ColLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),1*16+5);
-        ChrLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),32);
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
+        ColLin(x1+T[i].x,y1+T[i].y,*(T[i].entier),1*16+5);
+        ChrLin(x1+T[i].x,y1+T[i].y,*(T[i].entier),32);
+        PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
         break;
     case 2:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"      OK     ");
-        Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
+        PrintAt(x1+T[i].x,y1+T[i].y,"      OK     ");
+        Puce(x1+T[i].x,y1+T[i].y,13,0);
         break;
     case 3:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"    CANCEL   ");
-        Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
+        PrintAt(x1+T[i].x,y1+T[i].y,"    CANCEL   ");
+        Puce(x1+T[i].x,y1+T[i].y,13,0);
         break;
     case 4:
-        WinCadre(F->x1+T[i].x,F->y1+T[i].y,
-                          *(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+3,1);
+        WinCadre(x1+T[i].x,y1+T[i].y,
+                          *(T[i].entier)+x1+T[i].x,y1+T[i].y+3,1);
         break;
     case 5:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
-        Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
+        PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
+        Puce(x1+T[i].x,y1+T[i].y,13,0);
         break;
     case 6:
-        WinCadre(F->x1+T[i].x,F->y1+T[i].y,
-                          *(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+2,2);
+        WinCadre(x1+T[i].x,y1+T[i].y,
+                          *(T[i].entier)+x1+T[i].x,y1+T[i].y+2,2);
         break;
     case 7:
         j=strlen(T[i].str)+2;
-        ColLin(F->x1+T[i].x+j,F->y1+T[i].y,9,1*16+5);
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"%s: %-9d",T[i].str,
+        ColLin(x1+T[i].x+j,y1+T[i].y,9,1*16+5);
+        PrintAt(x1+T[i].x,y1+T[i].y,"%s: %-9d",T[i].str,
                                                         *(T[i].entier));
         break;
     case 8:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"[%c] %s",
+        PrintAt(x1+T[i].x,y1+T[i].y,"[%c] %s",
                                    *(T[i].entier) ? 'X' : ' ',T[i].str);
         break;
     case 9:
-        WinCadre(F->x1+T[i].x,F->y1+T[i].y,
-            *(T[i].str)+F->x1+T[i].x+1,*(T[i].entier)+F->y1+T[i].y+1,2);
+        WinCadre(x1+T[i].x,y1+T[i].y,
+            *(T[i].str)+x1+T[i].x+1,*(T[i].entier)+y1+T[i].y+1,2);
         break;
     case 10:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,
+        PrintAt(x1+T[i].x,y1+T[i].y,
                     "(%c) %s",(*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
 
         break;
     case 11:
-        ChrLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),32);
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
+        ChrLin(x1+T[i].x,y1+T[i].y,*(T[i].entier),32);
+        PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
         break;
     }
 
@@ -2111,7 +2196,7 @@ for(i2=0;i2<nbr;i2++)   //--- Affichage a ne faire qu'une fois ---------
     switch(T[i2].type)
         {
         case 10:
-            PrintAt(F->x1+T[i2].x,F->y1+T[i2].y,"(%c) %s",
+            PrintAt(x1+T[i2].x,y1+T[i2].y,"(%c) %s",
                            (*(T[i2].entier)==i2) ? 'X' : ' ',T[i2].str);
             break;
         }
@@ -2124,32 +2209,32 @@ switch(T[i].type)
         break;
     case 11:
     case 1:
-        direct=InputAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str,
+        direct=InputAt(x1+T[i].x,y1+T[i].y,T[i].str,
                                                         *(T[i].entier));
         break;
     case 2:
-        direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
+        direct=Puce(x1+T[i].x,y1+T[i].y,13,1);
         break;
     case 3:
-        direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
+        direct=Puce(x1+T[i].x,y1+T[i].y,13,1);
         break;
     case 5:
-        direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
+        direct=Puce(x1+T[i].x,y1+T[i].y,13,1);
         break;
     case 7:
         sprintf(chaine,"%d",*(T[i].entier));
-        direct=InputAt(F->x1+T[i].x+strlen(T[i].str)+2,
-                                                 F->y1+T[i].y,chaine,9);
+        direct=InputAt(x1+T[i].x+strlen(T[i].str)+2,
+                                                 y1+T[i].y,chaine,9);
         sscanf(chaine,"%d",T[i].entier);
         break;
     case 8:
-        direct=Switch(F->x1+T[i].x,F->y1+T[i].y,T[i].entier);
+        direct=Switch(x1+T[i].x,y1+T[i].y,T[i].entier);
         break;
     case 10:
-        ColLin(F->x1+T[i].x+4,F->y1+T[i].y,strlen(T[i].str),7*16+4);
-        direct=MSwitch(F->x1+T[i].x,F->y1+T[i].y,T[i].entier,i);
-        ColLin(F->x1+T[i].x+4,F->y1+T[i].y,strlen(T[i].str),10*16+1);
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"(%c) %s",
+        ColLin(x1+T[i].x+4,y1+T[i].y,strlen(T[i].str),7*16+4);
+        direct=MSwitch(x1+T[i].x,y1+T[i].y,T[i].entier,i);
+        ColLin(x1+T[i].x+4,y1+T[i].y,strlen(T[i].str),10*16+1);
+        PrintAt(x1+T[i].x,y1+T[i].y,"(%c) %s",
                               (*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
         break;
     }
@@ -2185,7 +2270,7 @@ switch(direct)
     case 8:
         {
         int px,py,j,k;
-        int x1,x2,y1;
+        int xc1,xc2,yc1;
 
         px=MousePosX();
         py=MousePosY();
@@ -2193,25 +2278,25 @@ switch(direct)
         k=-1;
         for(j=0;j<nbr;j++)
             {
-            x1=F->x1+T[j].x;
-            x2=F->x1+T[j].x+(*(T[j].entier));
-            y1=F->y1+T[j].y;
+            xc1=x1+T[j].x;
+            xc2=x1+T[j].x+(*(T[j].entier));
+            yc1=y1+T[j].y;
 
             switch(T[j].type)
                 {
                 case 11:
                 case 1:
                 case 7:
-                    if ( (py==y1) & (px>=x1) & (px<x2) ) k=j;
+                    if ( (py==yc1) & (px>=xc1) & (px<xc2) ) k=j;
                     break;
                 case 2:
                 case 3:
                 case 5:
-                    if ( (px>=x1) & (px<x1+13) & (py==y1) ) k=j;
+                    if ( (px>=xc1) & (px<xc1+13) & (py==yc1) ) k=j;
                     break;
                 case 8:
                 case 10:
-                    if ( (px==x1+1) & (py==y1) ) k=j;
+                    if ( (px==xc1+1) & (py==yc1) ) k=j;
                     break;
                 }
             if (k!=-1) break;
@@ -2263,7 +2348,7 @@ struct Tmt T[4] = {
       { 2,2,0,Buffer,NULL}
       };
 
-struct TmtWin F = { 3,10,76,16, Buffer2};
+struct TmtWin F = {-1,10,74,16, Buffer2};
 
 l=strlen(erreur);
 
@@ -2388,10 +2473,22 @@ return j1;
 void DefaultCfg(void)
 {
 char defcol[48]=RBPALDEF;
+short Nm[]={72,68,42,40,3,63};
 
 Cfg->KeyAfterShell=0;
 
 memcpy(Cfg->palette,defcol,48);
+
+memcpy(Cfg->Qmenu,"ChgDrive"
+                  "  Swap  "
+                  "Go Trash"
+                  "QuickDir"
+                  " Select "
+                  "  Info  ",48);
+
+memcpy(Cfg->Nmenu,&Nm,8*sizeof(short));
+
+
 
 strcpy(Mask[0]->title,"C Style");
 strcpy(Mask[0]->chaine,      "asm break case cdecl char const continue "
@@ -2434,9 +2531,10 @@ strcpy(Mask[2]->chaine,"aaa aad aam aas adc add and arpl bound bsf bsr "
 Mask[1]->Ignore_Case=1;
 Mask[1]->Other_Col=1;
 
-strcpy(Mask[15]->title,"User Defined Style");
-strcpy(Mask[15]->chaine,      "ketchup killers redbug access dark angel "
-                   "marjorie katana ecstasy cray magic fred cobra z @");
+strcpy(Mask[15]->title,"Ketchup^Pulpe Style");
+strcpy(Mask[15]->chaine,      "ketchup killers redbug access darköangel "
+                   "off topy kennet typeöone pulpe "
+                   "marjorie katana ecstasy cray magicöfred cobra z @");
 Mask[15]->Ignore_Case=1;
 Mask[15]->Other_Col=1;
 
@@ -2503,9 +2601,9 @@ strcpy(Cfg->ExtTxt,"ASM BAS C CPP DIZ DOC H HLP HTM INI LOG NFO PAS TXT");
 Cfg->Enable_Txt=1;
 strcpy(Cfg->ExtBmp,"BMP GIF ICO JPG LBM PCX PIC PKM PNG RAW TGA TIF WMF WPG");
 Cfg->Enable_Bmp=1;
-strcpy(Cfg->ExtSnd,"IT IFF MID MOD MTM S3M VOC WAV XM RTM");
+strcpy(Cfg->ExtSnd,"IT IFF MID MOD MTM S3M VOC WAV XM RTM MXM");
 Cfg->Enable_Snd=1;
-strcpy(Cfg->ExtArc,"ARJ LHA RAR ZIP KKD");
+strcpy(Cfg->ExtArc,"ARJ LHA RAR ZIP KKD DFP");
 Cfg->Enable_Arc=1;
 strcpy(Cfg->ExtExe,"BAT BTM COM EXE PRG");
 Cfg->Enable_Exe=1;
@@ -2935,25 +3033,28 @@ if (car==0)
     {
     int xm,ym,button;
 
-    ym=MousePosY();
-    xm=MousePosX();
+    ym=MouseRPosY();
+    xm=MouseRPosX();
 
     button=MouseButton();
 
     if ((button&4)==4) car=13;
 
-    if ((button&2)==2) car=27;
+    if (((button&2)==2) | (ym<0) )
+                            car=27; // en esperant que la barre est en 0
 
     if ((button&1)==1)
         {
-        if ((*c)>ym-(*yp))
-            car=0x4800;
-        if ((*c)<ym-(*yp))
-            car=0x5000;
+        if ( (ym>=0) & (ym<nbr) )
+            {
+            if (bar[ym].fct!=0)
+                (*c)=ym;
+            }
 
-        if (xm<(*xp))
+        if (xm<0)
             car=0x4B00;
-        if (xm>(*xp+max-1))
+
+        if (xm>(max-1))
             car=0x4D00;
         }
 
@@ -2964,10 +3065,33 @@ do
     {
     switch(HI(car))
         {
-        case 0x48:  (*c)--; break;
-        case 0x4B:  fin=-1; car=27;  break;
-        case 0x4D:  fin=1;  car=27;  break;
-        case 0x50:  (*c)++; break;
+        case 0x48:     //--- UP ----------------------------------------
+            (*c)--;
+            break;
+        case 0x4B:     //--- LEFT --------------------------------------
+            fin=-1;
+            car=27;
+            break;
+        case 0x4D:     //--- RIGHT -------------------------------------
+            fin=1;
+            car=27;
+            break;
+        case 0x50:     //--- DOWN --------------------------------------
+            (*c)++;
+            break;
+        case 0x47:     //--- HOME --------------------------------------
+            for (n=0;n<nbr;n++)
+                if (bar[n].fct!=0)
+                    {
+                    (*c)=n;
+                    break;
+                    }
+            break;
+        case 0x4F:     //--- END ---------------------------------------
+            for (n=0;n<nbr;n++)
+                if (bar[n].fct!=0)
+                    (*c)=n;
+            break;
         }
 
     if (LO(car)!=0)
@@ -3392,6 +3516,8 @@ char type;                   //--- 1: Centre & highlighted -------------
                              //--- 2: Highlighted ----------------------
                              //--- 3: Marqueur pour topic aide ---------
 
+short x1;
+
 char chaine[256];
 
 long avant,apres,pres;
@@ -3399,8 +3525,11 @@ long avant,apres,pres;
 SaveEcran();
 PutCur(32,0);
 
-WinCadre(0,0,(Cfg->TailleX)-1,(Cfg->TailleY)-2,1);
-Window(1,1,78,(Cfg->TailleY)-3,10*16+1);
+
+x1=(Cfg->TailleX-80)/2;
+
+WinCadre(x1,0,x1+79,(Cfg->TailleY)-1,0);
+Window(x1+1,1,x1+78,(Cfg->TailleY)-2,10*16+1);
 
 pres=z;
 
@@ -3451,10 +3580,10 @@ while(1)
     if (type!=3)
         {
         y++;
-        x=1;
+        x=x1+1;
 
         if (hlp[n-1]==9)
-            while(x!=8)
+            while(x!=x1+8)
                 {
                 AffChr(x,y,SPACE);
                 x++;
@@ -3462,7 +3591,7 @@ while(1)
         if (type==1)
             {
             Hlp2Chaine(n,chaine);
-            while (x!=(78-strlen(chaine))/2+1)
+            while (x!=(78-strlen(chaine)+x1)/2+1)
                 {
                 AffChr(x,y,SPACE);
                 x++;
@@ -3480,7 +3609,7 @@ while(1)
                        AffChr(x,y,SPACE);
                        x++;
                        }
-                    while ((x&7)!=0);
+                    while (((x-x1)&7)!=0);
                     break;
                 case 0x0D:
                     break;
@@ -3492,16 +3621,16 @@ while(1)
             n++;
             }
 
-        ChrLin(x,y,(Cfg->TailleX)-1-x,SPACE);                 // Efface jusqu'a la fin
+        ChrLin(x,y,79-x+x1,SPACE);              // Efface jusqu'a la fin
 
         if (type!=0)                              // Couleur de la ligne
-            ColLin(1,y,78,10*16+5);
+            ColLin(x1+1,y,78,10*16+5);
             else
-            ColLin(1,y,78,10*16+1);
+            ColLin(x1+1,y,78,10*16+1);
 
         n++;
 
-        if (y==Cfg->TailleY-3)
+        if (y==Cfg->TailleY-2)
             {
             while(hlp[apres]!=0x0A) apres++;
             apres++;
@@ -3652,6 +3781,29 @@ strcat(Fics->log,"trash\\logfile");                     // logfile trash
 |- Gestion souris                                                     -|
 \*--------------------------------------------------------------------*/
 
+// Relatif
+
+int MouseRPosX(void)
+{
+return _xm-_xw;
+}
+
+int MouseRPosY(void)
+{
+return _ym-_yw;
+}
+
+void GetRPosMouse(int *x,int *y,int *button)
+{
+int x1,y1;
+GetPosMouse(&x1,&y1,button);
+
+(*x)=x1-_xw;
+(*y)=y1-_yw;
+}
+
+
+// Absolu
 
 int MousePosX(void)
 {
@@ -3770,6 +3922,20 @@ if (_zmok==0) _zm=0;         // Touche est relache si pas encore relache
 
 (*button)=_zm;
 
+}
+
+void InitFont(void)
+{
+switch (Cfg->TailleY)
+    {
+    case 50:
+        Font8x(8);
+        break;
+    case 25:
+    case 30:
+        Font8x(16);
+        break;
+    }
 }
 
 #ifdef DEBUG

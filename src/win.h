@@ -32,6 +32,8 @@ void Setup(void);
 
 extern int *TailleX;
 
+void RemplisVide(void);  // Remplissage du vide pour les plus de 80 col.
+
 /*--------------------------------------------------------------------*\
 |-  Fonction de la secret part                                        -|
 \*--------------------------------------------------------------------*/

@@ -39,8 +39,17 @@ int posy;
 
 void main(short argc,char **argv)
 {
+int OldX,OldY;
 int n;
 char *path;
+
+Cfg=GetMem(sizeof(struct config));
+
+OldX=(*(char*)(0x44A));
+OldY=(*(char*)(0x484))+1;
+
+Cfg->TailleX=OldX;
+Cfg->TailleY=OldY;                  // Initialisation de la taille ecran
 
 /*--------------------------------------------------------------------*\
 |-  Initialisation de l'ecran                                         -|
@@ -59,7 +68,6 @@ for (n=strlen(path);n>0;n--) {
     }
 
 
-Cfg=GetMem(sizeof(struct config));
 Fics=GetMem(sizeof(struct fichier));
 
 Cfg->_4dos=0;
@@ -79,20 +87,14 @@ Fics->help=GetMem(256);
 strcpy(Fics->help,path);
 strcat(Fics->help,"\\kkc.hlp");
 
-TXTMode(50);
-NoFlash();
+DefaultCfg();
 
-Font8x(8);
+Cfg->TailleY=50;
 
-SetPal(0, 43, 37, 30);
-SetPal(1, 31, 22, 17);
-SetPal(2, 63, 63, 63);
-SetPal(3, 58, 58, 50);
-SetPal(4, 44, 00, 21);
-SetPal(5, 63, 63, 21);
-SetPal(7,  0,  0,  0);
+TXTMode();
+InitFont();
 
-SetPal(10, 43, 37, 30);
+LoadPal();
 
 
 WinCadre(0,0,79,49,1);
@@ -114,9 +116,12 @@ KKR_Save();
 PrintAt(29,48,"Press a key to continue");
 ColLin(1,48,78,0*16+2);
 
-getch();
+Wait(0,0,0);
 
-TXTMode(50);
+Cfg->TailleX=OldX;
+Cfg->TailleY=OldY;
+
+TXTMode();
 }
 
 char KKR_Read(FILE *Fic)

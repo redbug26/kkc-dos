@@ -22,12 +22,9 @@ extern void (*GotoXY)(char x,char y);
 extern void (*WhereXY)(char *x,char *y);
 extern void(*Window)(int left,int top,int right,int bottom,short color);
 
-
-
-void TXTMode(char lig);                               // Nombre de ligne
-
+void TXTMode(void);
 void LoadPal(void);
-void NoFlash(void);
+void InitFont(void);
 
 void GetCur(char *x,char *y);
 void PutCur(char x,char y);
@@ -35,6 +32,13 @@ void PutCur(char x,char y);
 int ScreenSaver(void);
 
 void ScrollUp(void);
+
+void Pause(int n);
+void MoveText(int x1,int y1,int x2,int y2,int x3,int y4);
+
+/*--------------------------------------------------------------------*\
+|- Fonction absolue                                                   -|
+\*--------------------------------------------------------------------*/
 char GetChr(short x,short y);
 char GetCol(short x,short y);
 
@@ -44,11 +48,31 @@ void ChrCol(int left,int top,int length,short color);
 void ColCol(int left,int top,int length,short color);
 void ColWin(int right,int top,int left,int bottom,short color);
 void ChrWin(int right,int top,int left,int bottom,short color);
-void Pause(int n);
-void MoveText(int x1,int y1,int x2,int y2,int x3,int y4);
+
 void PrintAt(int x,int y,char *string,...);
 char InputAt(char colonne,char ligne,char *chaine, int longueur);
 
+/*--------------------------------------------------------------------*\
+|- Fonction relative                                                  -|
+\*--------------------------------------------------------------------*/
+char GetRChr(short x,short y);
+char GetRCol(short x,short y);
+
+void ColRLin(int left,int top,int length,short color);
+void ChrRLin(int left,int top,int length,short color);
+void ChrRCol(int left,int top,int length,short color);
+void ColRCol(int left,int top,int length,short color);
+void ColRWin(int right,int top,int left,int bottom,short color);
+void ChrRWin(int right,int top,int left,int bottom,short color);
+
+void PrintTo(int x,int y,char *string,...);
+char InputTo(char colonne,char ligne,char *chaine, int longueur);
+
+void AffRChr(char x,char y,char c);
+void AffRCol(char x,char y,char c);
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
 
 void Delay(long ms);
 
@@ -101,12 +125,12 @@ struct Tmt {
      };
 
 /* Tmt:
-  Type: 0 --> Titre
+  Type: 0 --> Title
         1 --> String
-        2 --> OK OK OK
+        2 -->   OK
         3 --> CANCEL
         4 --> Cadre de 4 de hauteur
-        5 --> Bouton personnalis‚
+        5 --> Bouton personnalis‚ (13 bytes length)
         6 --> Cadre de 3 de hauteur
         7 --> Entier (de 9 caracteres)
         8 --> Switch
@@ -176,6 +200,9 @@ struct config
      char ExtExe[64],Enable_Exe;
      char ExtUsr[64],Enable_Usr;
 
+     char Qmenu[48];
+     short Nmenu[8];
+
      char ajustview;
 
      char Esc2Close;   // vaut 1 si on doit fermer les fenˆtres avec ESC
@@ -191,8 +218,8 @@ struct config
      char overflow1;
 
      char HistCom[512];                            // History of command
-     char overflow2;                        // Vaut tjs 0 (pour overflow)
-     short posinhist;                   // Position in history of command
+     char overflow2;                       // Vaut tjs 0 (pour overflow)
+     short posinhist;                  // Position in history of command
 
      char extens[39];              // extension qui viennent tout devant
 
@@ -269,6 +296,10 @@ void GetPosMouse(int *xm,int *ym,int *button);
 int MousePosX(void);
 int MousePosY(void);
 int MouseButton(void);
+
+int MouseRPosX(void);
+int MouseRPosY(void);
+void GetRPosMouse(int *x,int *y,int *button);
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/

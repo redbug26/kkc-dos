@@ -20,6 +20,7 @@ static char **tabnom;
 static char **tabpath;
 static int *tabtime;
 static int *tabdate;
+static int *tabsize;
 
 static char *nomtemp;
 static int nbrmax;
@@ -79,15 +80,20 @@ void SchAffLine(int pos,int n)
 {
 char chaine[256];
 
-sprintf(chaine,"%-12s %02d/%02d/%2d %02d:%02d %48s",
-        tabnom[n],
+sprintf(chaine,"%-13s %9d %02d/%02d/%2d %02d:%02d %*s",
+        tabnom[n],tabsize[n],
         (tabdate[n]&31),(tabdate[n]>>5)&15,(tabdate[n]>>9)+80,
-        (tabtime[n]>>11)&31,(tabtime[n]>>5)&63,tabpath[n]);
-chaine[76]=0;
+        (tabtime[n]>>11)&31,(tabtime[n]>>5)&63,
+        Cfg->TailleX-42,tabpath[n]);
 
+chaine[13]=Cfg->Tfont;
+chaine[23]=Cfg->Tfont;
+chaine[32]=Cfg->Tfont;
+chaine[38]=Cfg->Tfont;
 
-PrintAt(3,pos,chaine);
+chaine[Cfg->TailleX-3]=0;
 
+PrintAt(1,pos," %s",chaine);
 }
 
 static touche;
@@ -122,7 +128,6 @@ PrintAt(0,0,"Go in  %-73s",TabRec[NbrRec-1]+m);
 CommandLine("#cd %s",TabRec[NbrRec-1]);
 
 
-
 strcpy(nom,TabRec[NbrRec-1]);
 
 /*--------------------------------------------------------------------*\
@@ -141,8 +146,6 @@ for (m=0;m<DFen->nbrfic;m++)
 
         if (IsDir(ff)) cont=0; // Not Subdir
         if ((error&0x08)==0x08) cont=0; // Not Subdir
-
-
 
 
         if ( ((SearchString[0])!=0) & (cont==1) & (DFen->system==0) )
@@ -174,6 +177,7 @@ for (m=0;m<DFen->nbrfic;m++)
                     strcpy(tabpath[n],tabpath[n-1]);
                     tabtime[n]=tabtime[n-1];
                     tabdate[n]=tabdate[n-1];
+                    tabsize[n]=tabsize[n-1];
                     }
 
                 strcpy(tabnom[pos],ff->name);
@@ -181,12 +185,15 @@ for (m=0;m<DFen->nbrfic;m++)
                 if (strlen(nom)==2) strcat(tabpath[pos],"\\");
                 tabtime[pos]=ff->time;
                 tabdate[pos]=ff->date;
+                tabsize[pos]=ff->size;
 
                 for (n=0;n<nbr;n++)
                     {
                     if (n>(Cfg->TailleY)-5) break;
                     SchAffLine(n+2,n);
                     }
+                if (nbr<Cfg->TailleY-5)
+                    WinLine(1,nbr+2,Cfg->TailleX-2,1);
                 }
             }
         }
@@ -279,7 +286,7 @@ struct Tmt T[18] = {
       };
 
 struct TmtWin F = {
-    3,4,76,19,
+    -1,4,73,19,
     "Search file(s)"};
 
 int n;
@@ -327,7 +334,7 @@ nbrmax=200;
 SaveEcran();
 PutCur(32,0);
 
-ColLin(0,0,80,1*16+4);
+ColLin(0,0,Cfg->TailleX,1*16+4);
 
 /*--------------------------------------------------------------------*\
 |-  Allocate Memory                                                   -|
@@ -346,14 +353,14 @@ for (n=0;n<nbrmax;n++)
 
 tabtime=GetMem(sizeof(int *)*nbrmax);
 tabdate=GetMem(sizeof(int *)*nbrmax);
+tabsize=GetMem(sizeof(int *)*nbrmax);
 
 /*--------------------------------------------------------------------*\
 |-  Setup of all                                                      -|
 \*--------------------------------------------------------------------*/
 
-WinCadre(0,1,79,(Cfg->TailleY)-2,1);
-ColWin(1,2,78,(Cfg->TailleY)-3,10*16+1);
-ChrWin(1,2,78,(Cfg->TailleY)-3,32);
+WinCadre(0,1,Cfg->TailleX-1,(Cfg->TailleY)-2,1);
+Window(1,2,Cfg->TailleX-2,(Cfg->TailleY)-3,10*16+1);
 
 touche=0;
 
@@ -361,20 +368,20 @@ DFen=TempFen;
 
 switch(sw)
     {
-    case 3: // Current drive
+    case 3: //--- Current drive ----------------------------------------
         sprintf(nom,"%c:\\",Fen->path[0]);
         CommandLine("#cd %s",nom);
         cherdate(nom);
         break;
-    case 4: // Current dir & subdir
+    case 4: //--- Current dir & subdir ---------------------------------
         strcpy(nom,Fen->path);
         cherdate(nom);
         break;
-    case 5: // Current dir
+    case 5: //--- Current dir ------------------------------------------
         strcpy(nom,Fen->path);
         cherdate(nom);
         break;
-    case 6: // all drive
+    case 6: //--- all drive --------------------------------------------
         for(n=0;n<26;n++)
             {
             if (VerifyDisk(n+1)==0)
@@ -385,7 +392,7 @@ switch(sw)
                 }
             }
         break;
-    case 7: // user defined drive
+    case 7: //--- user defined drive -----------------------------------
         for(n=0;n<strlen(Drive);n++)
             {
             m=toupper(Drive[n])-'A';
@@ -408,64 +415,70 @@ if (nbr==0)
     }
     else
     {
+    m=2;
 
-m=2;
+    d=1;
+    fin=Cfg->TailleX-2;
 
-d=1;
-fin=78;
+    prem=0;
+    pos=0;
 
-prem=0;
-pos=0;
-
-do
-    {
-    if (pos<0) pos=0;
-    if (pos>nbr-1) pos=nbr-1;
-
-    while (pos-prem<0)
-        prem--;
-    while (pos-prem>(Cfg->TailleY)-5)
-        prem++;
-
-    for (n=prem;n<nbr;n++)
+    do
         {
-        if ((n-prem+2)>(Cfg->TailleY)-3) break;
-        SchAffLine(n-prem+2,n);
-        }
+        char chaine[128];
 
-    for (n=d;n<=fin;n++)
-        AffCol(n,pos+m-prem,7*16+5);
+        if (pos<0) pos=0;
+        if (pos>nbr-1) pos=nbr-1;
 
-    a=getch();
+        while (pos-prem<0)
+            prem--;
+        while (pos-prem>(Cfg->TailleY)-5)
+            prem++;
 
-    for (n=d;n<=fin;n++)
-        AffCol(n,pos+m-prem,10*16+1);
-
-
-    if (a==0)   {
-        a=getch();
-        if (a==72)      pos--;
-        if (a==80)      pos++;
-        if (a==0x47)    pos=0;
-        if (a==0x4F)    pos=nbr-1;
-        if (a==0x51)    pos+=5;
-        if (a==0x49)    pos-=5;
-        }
-    }
-while ( (a!=27) & (a!=13) );
-
-
-ChargeEcran();
-
-if (a==13)
-    {
-    CommandLine("#CD %s",tabpath[pos]);
-
-    for (n=0;n<Fen->nbrfic;n++)
-        if (!stricmp(tabnom[pos],Fen->F[n]->name)) {
-            Fen->pcur=n;
-            Fen->scur=n;
+        for (n=prem;n<nbr;n++)
+            {
+            if ((n-prem+2)>(Cfg->TailleY)-3) break;
+            SchAffLine(n-prem+2,n);
             }
+
+        strcpy(chaine,tabpath[pos]);
+        chaine[Cfg->TailleX]=0;
+        PrintAt(0,0,"%-*s",Cfg->TailleX,chaine);
+
+        for (n=d;n<=fin;n++)
+            AffCol(n,pos+m-prem,7*16+5);
+
+        a=getch();
+
+        for (n=d;n<=fin;n++)
+            AffCol(n,pos+m-prem,10*16+1);
+
+        if (a==0)
+            {
+            a=getch();
+            if (a==72)      pos--;
+            if (a==80)      pos++;
+            if (a==0x47)    pos=0;
+            if (a==0x4F)    pos=nbr-1;
+            if (a==0x51)    pos+=5;
+            if (a==0x49)    pos-=5;
+            }
+        }
+    while ( (a!=27) & (a!=13) );
+
+
+    ChargeEcran();
+
+    if (a==13)
+        {
+        CommandLine("#CD %s",tabpath[pos]);
+
+        for (n=0;n<Fen->nbrfic;n++)
+            if (!stricmp(tabnom[pos],Fen->F[n]->name))
+                {
+                Fen->pcur=n;
+                Fen->scur=n;
+                }
         }
     }
 
@@ -473,6 +486,7 @@ if (a==13)
 |-  Free Memory                                                       -|
 \*--------------------------------------------------------------------*/
 
+free(tabsize);
 free(tabdate);
 free(tabtime);
 

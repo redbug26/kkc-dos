@@ -42,6 +42,11 @@ char LoadDefCfg;
 int crc32file(char *name,unsigned long *crc);  // Compute CRC-32 of file
 int FileComp(char *a,char *b);   // Comparaison entre 2 noms de fichiers
 
+void SearchPart(char *);            // Search in file .ini all the parts
+
+void InitMode(void);
+void ClearSpace(char *name);    //--- efface les espaces inutiles ------
+
 /*--------------------------------------------------------------------*\
 |- Pour Statistique;                                                  -|
 \*--------------------------------------------------------------------*/
@@ -63,7 +68,7 @@ char dir[MAXDIR][128];      // 50 directory diff‚rents de 128 caracteres
 short nbr;              // nombre d'application lu dans les fichiers KKR
 short nbrdir;
 
-char OldY;
+char OldX,OldY;
 
 FENETRE *Fenetre[NBWIN];
 
@@ -76,7 +81,7 @@ int GestionBar(void);
 
 char ShowYourPlayer(void);
 
-int posy;
+
 
 /*--------------------------------------------------------------------*
  -                          Gestion Message                           -
@@ -130,7 +135,7 @@ if (MesgY>(Cfg->TailleY-3))
     {
     MoveText(1,3,78,(Cfg->TailleY-3),1,2);
     MesgY--;
-    ChrLin(1,(Cfg->TailleY-3),78,32);
+    ChrLin(1,(Cfg->TailleY-3),Cfg->TailleX-2,32);
     }
 }
 
@@ -408,6 +413,7 @@ char GetDriveReady(char i);
 	"mov dl,ch" \
 	"mov ah,0Eh" \
 	"int 21h" \
+    modify [eax ebx ecx edx] \
 	parm [dl] \
     value [cl];
 
@@ -460,13 +466,13 @@ for (n=prem;n<nbrkey;n++)
     {
     if (K[n].ext[0]=='*')
         {
-        ChrLin(1,y,78,196);
+        ChrLin(1,y,Cfg->TailleX-2,196);
         PrintAt(4,y,"%s",K[n].format);
 
         if (y&1==1)
-            ColLin(1,y,78,10*16+3);
+            ColLin(1,y,Cfg->TailleX-2,10*16+3);
             else
-            ColLin(1,y,78,1*16+3);
+            ColLin(1,y,Cfg->TailleX-2,1*16+3);
         }
         else
         {
@@ -479,6 +485,9 @@ for (n=prem;n<nbrkey;n++)
             ColLin(44,y,29,10*16+5);
             ColLin(73,y,1, 10*16+3);
             ColLin(74,y,5, 10*16+3);
+            if (Cfg->TailleX!=80)
+                ColLin(79,y,Cfg->TailleX-80,10*16+3),
+                ChrLin(79,y,Cfg->TailleX-80,32);
             }
             else
             {
@@ -489,6 +498,9 @@ for (n=prem;n<nbrkey;n++)
             ColLin(44,y,29,1*16+5);
             ColLin(73,y,1, 1*16+3);
             ColLin(74,y,5, 1*16+3);
+            if (Cfg->TailleX!=80)
+                ColLin(79,y,Cfg->TailleX-80,1*16+3),
+                ChrLin(79,y,Cfg->TailleX-80,32);
             }
 
         PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,
@@ -526,8 +538,10 @@ switch(HI(car))
         break;
     }
 
-if (prem<0) prem=0;
-if (prem>nbrkey-(Cfg->TailleY-6)) prem=nbrkey-(Cfg->TailleY-6);
+if (prem<0)
+    prem=0;
+if (prem>nbrkey-(Cfg->TailleY-6))
+    prem=nbrkey-(Cfg->TailleY-6);
 
 }
 while (car!=27);
@@ -678,14 +692,13 @@ l=76/nbr;
 if (l>3) l=3;
 if (nbr<5) l=6;
 if (nbr<2) l=9;
-x=(80-(l*nbr))/2;
+x=(Cfg->TailleX-(l*nbr))/2;
 
 SaveEcran();
 PutCur(32,0);
 
 WinCadre(x-2,6,x+l*nbr+1,11,0);
-ColWin(x-1,7,x+l*nbr,10,0*16+1);
-ChrWin(x-1,7,x+l*nbr,10,32);
+Window(x-1,7,x+l*nbr,10,0*16+1);
 
 WinCadre(x-1,8,x+l*nbr,10,1);
 
@@ -850,8 +863,7 @@ if (i!=0)
     if (max>Cfg->TailleY-(y+1)-1) max=Cfg->TailleY-(y+1)-1;
 
     WinCadre(x-2,y-1,x+Mlen+1,y+max,0);
-    ColWin(x-1,y,x+Mlen,y+max-1,10*16+1);
-    ChrWin(x-1,y,x+Mlen,y+max-1,32);
+    Window(x-1,y,x+Mlen,y+max-1,10*16+1);
 
     prem=0;
 
@@ -959,6 +971,14 @@ IOerr=1;
 |-  Initialisation de l'ecran                                         -|
 \*--------------------------------------------------------------------*/
 
+Cfg=GetMem(sizeof(struct config));
+
+OldX=(*(char*)(0x44A));
+OldY=(*(char*)(0x484))+1;
+
+Cfg->TailleX=OldX;
+Cfg->TailleY=OldY;                  // Initialisation de la taille ecran
+
 InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 /*--------------------------------------------------------------------*\
@@ -966,8 +986,6 @@ InitScreen(0);                     // Initialise toutes les donn‚es HARD
 \*--------------------------------------------------------------------*/
 
 _harderr(Error_handler);
-
-OldY=(*(char*)(0x484))+1;
 
 path=GetMem(256);
 
@@ -996,7 +1014,6 @@ Fenetre[2]->F=GetMem(TOTFIC*sizeof(void *));
 Fenetre[3]=GetMem(sizeof(FENETRE));
 Fenetre[3]->F=GetMem(TOTFIC*sizeof(void *));
 
-Cfg=GetMem(sizeof(struct config));
 Fics=GetMem(sizeof(struct fichier));
 
 Mask=GetMem(sizeof(struct PourMask*)*16);
@@ -1019,8 +1036,6 @@ strcpy(Fics->help,path);
 strcat(Fics->help,"\\kksetup.hlp");
 
 
-
-
 /*--------------------------------------------------------------------*\
 |- Chargement de la configuration                                     -|
 \*--------------------------------------------------------------------*/
@@ -1036,7 +1051,6 @@ if (LoadCfg()==-1)
 
     LoadDefCfg=1;
     
-
     for (t=0;t<4;t++)
         {
         DFen=Fenetre[t];
@@ -1057,32 +1071,10 @@ if (LoadCfg()==-1)
 
         DFen->scur=0;
         }
-    LoadConfigFile();
+    LoadConfigFile("main");
     }
 
-TXTMode(Cfg->TailleY);
-NoFlash();
-
-switch (Cfg->TailleY)
-    {
-    case 50:
-        Font8x(8);
-        break;
-    case 25:
-    case 30:
-        Font8x(16);
-        break;
-    }
-
-WinCadre(0,1,79,(Cfg->TailleY-2),1);
-ChrWin(1,2,78,(Cfg->TailleY-3),32);
-ColWin(1,2,78,(Cfg->TailleY-3),10*16+1);
-ColLin(1,0,78,10*16+5);
-ChrLin(1,0,78,32);
-
-PrintAt(21,0,"Setup of Ketchup Killers Commander");
-
-LoadPal();
+InitMode();
 
 /*--------------------------------------------------------------------*\
 |- Autres configurations                                              -|
@@ -1094,11 +1086,6 @@ if (LoadDefCfg)
 /*--------------------------------------------------------------------*\
 |-  Gestion Message                                                   -|
 \*--------------------------------------------------------------------*/
-
-InitMessage();
-
-
-posy=3;
 
 strcpy(chaine,Fics->path);
 strcat(chaine,"\\trash");
@@ -1168,7 +1155,6 @@ if (fic==NULL)
     else
     fclose(fic);
 
-
 do
     {
     i=GestionBar();
@@ -1190,13 +1176,16 @@ if (strlen(PathOfKK)!=0)
 
 DispMessage("");
 
-
 DispMessage("Press a key to continue");
 
 Wait(0,0,0);
-TXTMode(OldY);
 
 SaveCfg();
+
+Cfg->TailleX=OldX;
+Cfg->TailleY=OldY;
+
+TXTMode();
 
 puts(RBTitle2);
 }
@@ -1212,8 +1201,8 @@ FILE *fic;
 SaveEcran();
 PutCur(32,0);
 
-ChrWin(1,3,78,(Cfg->TailleY-3),32);
-ColWin(1,3,78,(Cfg->TailleY-3),10*16+1);
+ChrWin(1,3,Cfg->TailleX-2,Cfg->TailleY-3,32);
+ColWin(1,3,Cfg->TailleX-2,Cfg->TailleY-3,10*16+1);
 
 nbr=0;
 
@@ -1299,8 +1288,8 @@ if (nbr>0)
     ColLin(1,(Cfg->TailleY-3),78,0*16+2);
 
     Wait(0,0,0);
-    ColWin(1,2,78,(Cfg->TailleY-3),0*16+1);
-    ChrWin(1,2,78,(Cfg->TailleY-3),32);  // '±'
+    ColWin(1,2,Cfg->TailleX-2,Cfg->TailleY-3,0*16+1);
+    ChrWin(1,2,Cfg->TailleX-2,Cfg->TailleY-3,32);  // '±'
 
     ChargeEcran();
 
@@ -1315,6 +1304,8 @@ if (nbr>0)
     }
 }
 
+int posy=3;
+
 char KKR_Read(FILE *Fic)
 {
 char Key[4];
@@ -1325,6 +1316,7 @@ char Meneur[255],SMeneur;
 char Filename[255],SFilename;
 int Checksum;
 short format;
+
 
 char Code;
 char fin;
@@ -1769,7 +1761,7 @@ return 0;
 
 
 
-void LoadConfigFile(void)
+void LoadConfigFile(char *part)
 {
 char buf[82];
 char buffer[32];
@@ -1777,12 +1769,14 @@ char section[32];
 char filename[32];
 int n,m;
 
-strcpy(section,"main");
+strcpy(section,part);
 strcpy(filename,"kksetup.ini");
 
 Cfg->wmask=get_private_profile_int(section,"mask",Cfg->wmask,filename);
 Cfg->TailleY=get_private_profile_int(section,"vsize",
                                                  Cfg->TailleY,filename);
+Cfg->TailleX=get_private_profile_int(section,"hsize",
+                                                 Cfg->TailleX,filename);
 Cfg->fentype=get_private_profile_int(section,"wintype",
                                                  Cfg->fentype,filename);
 Cfg->AnsiSpeed=get_private_profile_int(section,"ansispeed",
@@ -1810,6 +1804,24 @@ Cfg->combit=get_private_profile_int(section,"serial_databit",Cfg->combit
                                                              ,filename);
 get_private_profile_string(section,"serial_parity","N",buffer,16,
                                                               filename);
+Cfg->autoreload=get_private_profile_int(section,"autoreload",
+                                              Cfg->autoreload,filename);
+Cfg->verifhist=get_private_profile_int(section,"verifhist",
+                                               Cfg->verifhist,filename);
+Cfg->palafter=get_private_profile_int(section,"palafter",
+                                                Cfg->palafter,filename);
+Cfg->dispcolor=get_private_profile_int(section,"dispcolor",
+                                               Cfg->dispcolor,filename);
+Cfg->insdown=get_private_profile_int(section,"insdown",
+                                                 Cfg->insdown,filename);
+Cfg->seldir=get_private_profile_int(section,"seldir",
+                                                  Cfg->seldir,filename);
+Cfg->esttime=get_private_profile_int(section,"esttime",
+                                                 Cfg->esttime,filename);
+Cfg->ajustview=get_private_profile_int(section,"ajustview",
+                                               Cfg->ajustview,filename);
+Cfg->currentdir=get_private_profile_int(section,"loadstardir",
+                                              Cfg->currentdir,filename);
 
 switch(toupper(buffer[0]))
     {
@@ -1851,7 +1863,6 @@ for (n=11;n<15;n++)
     Mask[n]->Ignore_Case=get_private_profile_int(section,buffer,0,
                                                               filename);
     }
-
 
 
 DispMessage("Loading of KKSETUP.INI: OK");
@@ -1943,6 +1954,7 @@ strcpy(section,"current");
 strcpy(filename,"kksetup.ini");
 
 write_private_profile_int(section,"mask",Cfg->wmask,filename);
+write_private_profile_int(section,"hsize",Cfg->TailleX,filename);
 write_private_profile_int(section,"vsize",Cfg->TailleY,filename);
 write_private_profile_int(section,"wintype",Cfg->fentype,filename);
 write_private_profile_int(section,"ansispeed",Cfg->AnsiSpeed,filename);
@@ -1964,6 +1976,18 @@ write_private_profile_int(section,"serial_databit",Cfg->combit,
 sprintf(buffer,"%c",Cfg->comparity);
 write_private_profile_string(section,"serial_parity",buffer,filename);
 write_private_profile_int(section,"serial_stopbit",Cfg->comstop,
+                                                              filename);
+
+write_private_profile_int(section,"autoreload",Cfg->autoreload,
+                                                              filename);
+write_private_profile_int(section,"verifhist",Cfg->verifhist,filename);
+write_private_profile_int(section,"palafter",Cfg->palafter,filename);
+write_private_profile_int(section,"dispcolor",Cfg->dispcolor,filename);
+write_private_profile_int(section,"insdown",Cfg->insdown,filename);
+write_private_profile_int(section,"seldir",Cfg->seldir,filename);
+write_private_profile_int(section,"esttime",Cfg->esttime,filename);
+write_private_profile_int(section,"ajustview",Cfg->ajustview,filename);
+write_private_profile_int(section,"loadstardir",Cfg->currentdir,
                                                               filename);
 
 write_private_profile_string(section,"editor",Cfg->editeur,filename);
@@ -2113,6 +2137,9 @@ do
             ColLin(41,y,6, 12*16+3);
             ColLin(47,y,30,12*16+5);
             ColLin(77,y,1, 12*16+3);
+            if (Cfg->TailleX!=80)
+                ColLin(78,y,Cfg->TailleX-79,12*16+3),
+                ChrLin(78,y,Cfg->TailleX-79,32);
 
             ndir=IDF2_app.NoDir;
             strcpy(name,IDF2_app.Filename);
@@ -2127,6 +2154,9 @@ do
             ColLin(41,y,6, 10*16+3);
             ColLin(47,y,30,10*16+5);
             ColLin(77,y,1, 10*16+3);
+            if (Cfg->TailleX!=80)
+                ColLin(78,y,Cfg->TailleX-79,10*16+3),
+                ChrLin(78,y,Cfg->TailleX-79,32);
             }
         else
             {
@@ -2137,6 +2167,9 @@ do
             ColLin(41,y,6, 1*16+3);
             ColLin(47,y,30,1*16+5);
             ColLin(77,y,1, 1*16+3);
+            if (Cfg->TailleX!=80)
+                ColLin(78,y,Cfg->TailleX-79,1*16+3),
+                ChrLin(78,y,Cfg->TailleX-79,32);
             }
 
         PrintAt(1,y," %3s %-35s from %30s ",K[k].ext,IDF2_app.Titre,
@@ -2323,6 +2356,8 @@ return fin;
 
 void GestionFct(int i)
 {
+char buffer[256];
+
 switch(i)
     {
     case 0:
@@ -2330,7 +2365,7 @@ switch(i)
     case 1:
         SaveEcran();
         PutCur(32,0);
-        ChrWin(0,0,79,49,32);
+        ChrWin(0,0,Cfg->TailleX-1,Cfg->TailleY-1,32);
         Help();
         ChargeEcran();
         break;
@@ -2344,7 +2379,12 @@ switch(i)
         ApplSearch();
         break;
     case 5:
-        LoadConfigFile();
+        SearchPart(buffer);
+        if (buffer[0]!='*')
+            {
+            LoadConfigFile(buffer);
+            InitMode();
+            }
         break;
     case 6:
         PutInPath();
@@ -2616,4 +2656,84 @@ while(1)
 
     n++;
     }
+}
+
+
+/*--------------------------------------------------------------------*\
+|- Search Part in file .ini                                           -|
+\*--------------------------------------------------------------------*/
+void SearchPart(char *part)
+{
+char *filename="kksetup.ini";
+FILE *fic;
+char buffer[256];
+
+int x,y,n;
+
+struct barmenu bar[20];
+int nbmenu=0,retour;
+
+fic=fopen(filename,"rt");
+if (fic==NULL) return;
+
+while(fgets(buffer,256,fic)!=NULL)
+    {
+    buffer[strlen(buffer)-1]=0;          //--- Efface le ENTER ---------
+    ClearSpace(buffer);
+    buffer[22]=0;
+
+    if (buffer[0]=='[')
+        {
+        buffer[strlen(buffer)-1]=0;      //--- Efface le ENTER ---------
+        strcpy(bar[nbmenu].titre,buffer+1);
+        bar[nbmenu].fct=nbmenu+1;
+        nbmenu++;
+        if (nbmenu==20) break;
+        }
+    }
+fclose(fic);
+
+if (nbmenu>1)
+    {
+    DispMessage("Select the configuration");
+
+    x=45;
+    y=3;
+    n=0;
+
+    do
+        {
+        retour=PannelMenu(bar,nbmenu,&n,&x,&y);
+        }
+    while ((retour==1) | (retour==-1));
+
+    if (retour==2)
+        strcpy(part,bar[n].titre);
+        else
+        strcpy(part,"*");
+    }
+
+if (nbmenu==1)
+    strcpy(part,bar[n].titre);
+
+
+}
+
+
+void InitMode(void)
+{
+TXTMode();
+InitFont();
+
+WinCadre(0,1,Cfg->TailleX-1,(Cfg->TailleY-2),1);
+Window(1,2,Cfg->TailleX-2,(Cfg->TailleY-3),10*16+1);
+
+ColLin(1,0,Cfg->TailleX-2,10*16+5);
+ChrLin(1,0,Cfg->TailleX-2,32);
+
+PrintAt(21,0,"Setup of Ketchup Killers Commander");
+
+LoadPal();
+
+InitMessage();
 }

@@ -222,8 +222,8 @@ if (R.eax!=0x7100)
 
         strcpy(new,to);
 
-        PrintAt(0,0,"(%s,%s)",old,new);
-        Wait(0,0,0);
+//        PrintAt(0,0,"(%s,%s)",old,new);
+//        Wait(0,0,0);
 
         R.eax=0x7156;
         R.ds=DOSbuf1;

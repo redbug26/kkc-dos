@@ -30,6 +30,8 @@ int LHAlitfic(void);            //--- system 4 -------------------------
 
 int KKDlitfic(void);            //--- system 5 -------------------------
 
+int DFPlitfic(void);            //--- system 6 -------------------------
+
 void MakeKKD(FENETRE *Fen,char *ficname);
 
 

@@ -49,7 +49,7 @@ int AutoUpdate(void);
 
 void main(short argc,char **argv)
 {
-char OldY;
+int OldX,OldY;
 int n;
 char *path;
 
@@ -57,9 +57,15 @@ char *path;
 |-                    Initialisation de l'ecran                       -|
 \*--------------------------------------------------------------------*/
 
-InitScreen(0);                     // Initialise toutes les donn‚es HARD
+Cfg=GetMem(sizeof(struct config));
 
+OldX=(*(char*)(0x44A));
 OldY=(*(char*)(0x484))+1;
+
+Cfg->TailleX=OldX;
+Cfg->TailleY=OldY;                  // Initialisation de la taille ecran
+
+InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 path=GetMem(256);
 
@@ -106,24 +112,14 @@ Fics->help=GetMem(256);
 strcpy(Fics->help,path);
 strcat(Fics->help,"\\kkdesc.hlp");
 
-TXTMode(30);
-NoFlash();
-
-Font8x(16);
+DefaultCfg();
 
 Cfg->TailleY=30;
 
-SetPal(0, 43, 37, 30);
-SetPal(1, 31, 22, 17);
-SetPal(2, 0, 0, 0);
-SetPal(3, 58, 58, 50);
-SetPal(4, 44, 63, 63);
-SetPal(5, 63, 63, 21);
-SetPal(6,43,37,30);
-SetPal(7,  0,  0,  0);
-SetPal(10, 43, 37, 30);
-SetPal(15, 47, 41, 34);
+TXTMode();
+InitFont();
 
+LoadPal();
 
 strcpy(KKRname,argv[1]);
 for (n=strlen(KKRname);n>0;n--)  {
@@ -176,7 +172,11 @@ if (argc==4)
 
 Sauve();
 
-TXTMode(OldY);
+
+Cfg->TailleX=OldX;
+Cfg->TailleY=OldY;
+
+TXTMode();
 
 puts(RBTitle2);
 }
@@ -777,7 +777,7 @@ for (n=prem;n<nbrkey;n++)
         if (y&1==1)
             ColLin(1,y,78,10*16+3);
             else
-            ColLin(1,y,78,15*16+3);
+            ColLin(1,y,78,1*16+3);
         }
         else
         {
@@ -793,13 +793,13 @@ for (n=prem;n<nbrkey;n++)
             }
             else
             {
-            ColLin(1,y,4,  15*16+3);
-            ColLin(5,y,1,  15*16+3);
-            ColLin(6,y,32, 15*16+4);
-            ColLin(38,y,6, 15*16+3);
-            ColLin(44,y,29,15*16+5);
-            ColLin(73,y,1, 15*16+3);
-            ColLin(74,y,5, 15*16+3);
+            ColLin(1,y,4,  1*16+3);
+            ColLin(5,y,1,  1*16+3);
+            ColLin(6,y,32, 1*16+4);
+            ColLin(38,y,6, 1*16+3);
+            ColLin(44,y,29,1*16+5);
+            ColLin(73,y,1, 1*16+3);
+            ColLin(74,y,5, 1*16+3);
             }
 
         PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,K[n].format,
@@ -810,7 +810,7 @@ for (n=prem;n<nbrkey;n++)
 
 
     if (pres==n)
-        ColLin(1,y,78,2*16+1);
+        ColLin(1,y,78,12*16+1);
 
     y++;
 

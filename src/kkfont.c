@@ -269,8 +269,8 @@ while(car!=27);
 
 void main(short argc,char **argv)
 {
-short n;
-char OldY;
+int OldX,OldY;                         // To save the size of the screen
+int n;
 
 char *path;
 
@@ -278,9 +278,12 @@ char *path;
 |-  Initialisation de l'ecran                                         -|
 \*--------------------------------------------------------------------*/
 
-InitScreen(0);                     // Initialise toutes les donn‚es HARD
+Cfg=GetMem(sizeof(struct config));
 
+OldX=(*(char*)(0x44A));
 OldY=(*(char*)(0x484))+1;
+
+InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 path=GetMem(256);
 
@@ -292,8 +295,6 @@ for (n=strlen(path);n>0;n--) {
         }
     }
 
-
-Cfg=GetMem(sizeof(struct config));
 Fics=GetMem(sizeof(struct fichier));
 
 Mask=GetMem(sizeof(struct PourMask*)*16);
@@ -315,35 +316,15 @@ Fics->help=GetMem(256);
 strcpy(Fics->help,path);
 strcat(Fics->help,"\\kksetup.hlp");
 
+DefaultCfg();
 
 Cfg->TailleY=30;
 
+TXTMode();
 
-TXTMode(Cfg->TailleY);
-NoFlash();
+InitFont();
 
-switch (Cfg->TailleY)  {
-   case 50:
-        Font8x(8);
-        break;
-   case 25:
-   case 30:
-        Font8x(16);
-        break;
-   }
-
-SetPal(0, 43, 37, 30);
-SetPal(1, 31, 22, 17);
-SetPal(2, 0, 0, 0);
-SetPal(3, 58, 58, 50);
-SetPal(4, 44, 63, 63);
-SetPal(5, 63, 63, 21);
-SetPal(6,43,37,30);
-SetPal(7,  0,  0,  0);
-
-SetPal(10, 43, 37, 30);
-
-SetPal(15, 47, 41, 34);
+LoadPal();
 
 
 WinCadre(0,0,79,Cfg->TailleY-1,1);
@@ -352,7 +333,11 @@ ColWin(1,1,78,Cfg->TailleY-2,10*16+7);
 
 Font();
 
-TXTMode(OldY);
+
+Cfg->TailleX=OldX;
+Cfg->TailleY=OldY;
+
+TXTMode();
 }
 
 

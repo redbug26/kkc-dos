@@ -665,13 +665,20 @@ static char bar[4][60]=
   " Drv1  Drv2  FDiz FileID ----  Hist Search Type  Line  Disp "}; //ALT
 
 static signed char d=-1;
-int TY;
 
-TY=Cfg->TailleY;
+if ((Cfg->TailleX!=80) & ( (DFen->FenTyp!=2) | (DFen->Fen2->FenTyp!=2)))
+    {
+    time_t clock;
+    static char buffer[10];
+
+    clock=time(NULL);
+    strftime(buffer,9,"%H:%M:%S",localtime(&clock));
+
+    PrintAt(41,Cfg->TailleY-4,"%-8s",buffer);
+    }
 
 if (d==c) return;
 d=c;
-
 
 if (DFen->FenTyp==0)                                  // Fenetre Normale
 switch(c) {
@@ -687,6 +694,9 @@ switch(c) {
     case 3:
         AltMenu();
         d=-1;
+        break;
+    default:
+        c=0;
         break;
     }
 
@@ -716,10 +726,13 @@ for (i=0;i<10;i++)
         AffCol(n,TY,1*16+2);
         AffChr(n,TY,*(bar+i*6+j));
         }
+    if (Cfg->TailleX==90)
+        {
+        AffCol(n,TY,1*16+2);
+        AffChr(n,TY,32);
+        n++;
+        }
     }
-
-if (Cfg->TailleX!=80)
-    ColLin(80,TY,Cfg->TailleX-80,1*16+8);
 }
 
 /*--------------------------------------------------------------------*\
@@ -772,7 +785,7 @@ struct Tmt T[5] =
       { 1,1,4,NULL,&CadreLength},
       { 2,3,0,Buffer,NULL}  };
 
-struct TmtWin F = { 3,10,76,17,"Error!"};
+struct TmtWin F = {-1,10,74,17,"Error!"};
 
 l=strlen(s);
 
@@ -816,19 +829,11 @@ if (i==0)
     else
     Cfg->TailleY=i;
 
-TXTMode(Cfg->TailleY);
-NoFlash();
+TXTMode();
+InitFont();
 
-switch (Cfg->TailleY)
-    {
-    case 50:
-        Font8x(8);
-        break;
-    case 25:
-    case 30:
-        Font8x(16);
-        break;
-   }
+Fenetre[0]->yl=(Cfg->TailleY)-4;
+Fenetre[1]->yl=(Cfg->TailleY)-4;
 
 AfficheTout();
 
@@ -880,7 +885,7 @@ struct Tmt T[26] = {
       {55,10,5," Ext. Setup  ",&l4}         // la gestion des extensions
       };
 
-struct TmtWin F = {3,3,76,22,"Setup"};
+struct TmtWin F = {-1,3,74,22,"Setup"};
 
 int n;
 
@@ -978,7 +983,7 @@ struct Tmt T[7] = {
       {18,10,3,NULL,NULL}                                   // le CANCEL
       };
 
-struct TmtWin F = {3,5,76,18,"File Setup"};
+struct TmtWin F = {-1,5,74,18,"File Setup"};
 
 int n;
 char fin;
@@ -1051,7 +1056,7 @@ struct Tmt T[16] = {
       {50,14,3,NULL,NULL}                                   // le CANCEL
       };
 
-struct TmtWin F = {3,5,76,21,"Extension Setup"};
+struct TmtWin F = {-1,5,74,21,"Extension Setup"};
 
 int n;
 
@@ -1121,7 +1126,7 @@ struct Tmt T[16] = {
       {50,13,3,NULL,NULL}                                   // le CANCEL
       };
 
-struct TmtWin F = {3,5,76,20,"Window & Color"};
+struct TmtWin F = {-1,5,74,20,"Window & Color"};
 
 int n;
 
@@ -1174,7 +1179,7 @@ struct Tmt T[8] = {
       {18,10,3,NULL,NULL}                                   // le CANCEL
       };
 
-struct TmtWin F = {23,5,56,18,"Serial Setup"};
+struct TmtWin F = {-1,5,34,18,"Serial Setup"};
 
 int n;
 
@@ -1229,7 +1234,7 @@ struct Tmt T[18] = {
       { 1,12,1,buffer[7],&DirLength}
       };
 
-struct TmtWin F = {0,5,79,22,"Mask Setup"};
+struct TmtWin F = {-1,5,80,22,"Mask Setup"};
 
 int n;
 
@@ -1737,7 +1742,7 @@ struct Tmt T[6] =  {
       {25,4,0,vit2,NULL}
       };
 
-struct TmtWin F = {3,3,76,22,"Speed Test"};
+struct TmtWin F = {-1,3,74,22,"Speed Test"};
 
 SaveEcran();
 
@@ -1848,4 +1853,20 @@ for (i=0;(i<Fen2->yl2) & (n<Fen->nbrfic);i++,n++,y++)
     }
 }
 
+
+/*--------------------------------------------------------------------*\
+|- Remplis le vide si on est en mode 90 colonnes                      -|
+\*--------------------------------------------------------------------*/
+void RemplisVide(void)
+{
+if (Cfg->TailleX==80) return;
+
+WinCadre(80,0,Cfg->TailleX-1,2,3);
+PrintAt(81,1,"%*s",Cfg->TailleX-82,"KetchupK");
+
+WinCadre(80,3,Cfg->TailleX-1,Cfg->TailleY-2,2);
+Window(81,4,Cfg->TailleX-2,Cfg->TailleY-3,10*16+1);
+
+AffChr(Cfg->TailleX-2,Cfg->TailleY-3,3);
+}
 

@@ -1029,6 +1029,112 @@ fclose(fic);
 return fin;
 }
 
+/*--------------------------------------------------------------------*\
+|-                           FICHIER .DFP                             -|
+\*--------------------------------------------------------------------*/
+
+int DFPlitfic(void)
+{
+char key[13];
+
+ULONG pos;
+char fin;
+FILE *fic;
+
+int n,nbr,lng,deb;
+
+struct file **Fic;
+
+DFen->pcur=0;
+DFen->scur=0;
+
+DFen->taillefic=0;
+DFen->nbrfic=2;
+
+DFen->taillesel=0;
+DFen->nbrsel=0;
+
+Fic=DFen->F;
+
+Fic[0]=GetMem(sizeof(struct file));
+Fic[0]->name=GetMem(3);
+strcpy(Fic[0]->name,"..");
+
+Fic[0]->size=0;
+Fic[0]->time=0;
+Fic[0]->date=33;
+Fic[0]->attrib=0x10;
+Fic[0]->select=0;
+
+DFen->nbrfic=1;
+
+if (Cfg->pntrep==1)
+    {
+    Fic[1]=GetMem(sizeof(struct file));
+    Fic[1]->name=GetMem(2);
+    strcpy(Fic[1]->name,".");
+
+    Fic[1]->size=0;
+    Fic[1]->time=0;
+    Fic[1]->date=33;
+    Fic[1]->attrib=0x10;
+    Fic[1]->select=0;
+
+    DFen->nbrfic=2;
+    }
+
+fic=fopen(DFen->VolName,"rb");
+
+/*--------------------------------------------------------------------*\
+|-  Okay.                                                             -|
+\*--------------------------------------------------------------------*/
+
+pos=0;
+fin=0;
+
+fseek(fic,5,SEEK_SET);
+
+fread(&nbr,1,4,fic);
+
+for(n=0;n<nbr;n++)
+    {
+    fread(key,1,12,fic);
+    fread(&deb,1,4,fic);
+    fread(&lng,1,4,fic);
+
+    key[12]=0;
+
+    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+
+    Fic[DFen->nbrfic]->name=GetMem(strlen(key)+1);
+    memcpy(Fic[DFen->nbrfic]->name,key,strlen(key)+1);
+
+    Fic[DFen->nbrfic]->size=lng;
+
+    DFen->taillefic+=lng;
+
+    Fic[DFen->nbrfic]->time=0;
+    Fic[DFen->nbrfic]->date=0;
+
+    Fic[DFen->nbrfic]->attrib=0;
+
+    Fic[DFen->nbrfic]->select=0;
+
+    DFen->nbrfic++;
+    }
+
+fclose(fic);
+
+if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) &
+                                                    (DFen->nbrfic==1)) )
+    {
+    strcpy(DFen->path,DFen->VolName);
+    return 1;
+    }
+
+return 0;
+}
+
 
 /*--------------------------------------------------------------------*\
 |-  Dos-function                                                      -|

@@ -149,47 +149,53 @@ if (nbrappl==0)
 
 if ( (nbrappl!=1) & (fin==0) )
     {
+    int xx;
+
     SaveEcran();
 
     m=((Cfg->TailleY)-nbrappl)/2;
 
     if (m<2) m=2;
-    max=m+nbrappl;
+    max=nbrappl;
     if (max>Cfg->TailleY-3) max=Cfg->TailleY-3;
 
+    xx=(Cfg->TailleX-56)/2;
 
-    WinCadre(12,m-1,67,max,0);
-    Window(13,m,66,max-1,10*16+1);
+    WinCadre(xx,m-1,xx+55,m+max,0);
+    Window(xx+1,m,xx+54,m+max-1,10*16+1);
 
-    PrintAt(37,m-1," Who? ");
+    PrintTo(24,1," Who? ");
     
-    pos=m;
+    pos=0;
 	nbr=nbrappl;
 
-    d=14;
-    lfin=65;
+    d=1;
+    lfin=52;
 
     prem=0;
 
 	do	{
-        while (pos<m) pos=m;
-        while (pos>m+nbrappl-1) pos=m+nbrappl-1;
+        while (pos<0) pos=0;
+        while (pos>nbrappl-1) pos=nbrappl-1;
 
-        while (pos-prem<m) prem--;
+        while (pos-prem<0) prem--;
         while (pos-prem>max-1) prem++;
 
-        PrintAt(0,0,"%39s by %-37s",app[pos-m].Titre,app[pos-m].Meneur);
+        PrintAt(0,0,"%39s by %-37s",app[pos].Titre,app[pos].Meneur);
 
-        for(n=m;n<max;n++)
-            PrintAt(15,n,"%-49s",app[n-m+prem].Titre);
+        for(n=0;n<max;n++)
+            PrintTo(2,n,"%-49s",app[n+prem].Titre);
 
         for (n=d;n<=lfin;n++)
             {
-            col[n]=GetCol(n,pos-prem);
-            AffCol(n,pos-prem,7*16+4);
+            col[n]=GetRCol(n,pos-prem);
+            AffRCol(n,pos-prem,7*16+4);
             }
 
         car=Wait(0,0,0);
+
+        for (n=d;n<=lfin;n++)
+            AffRCol(n,pos-prem,col[n]);
 
         if (car==0)
             {
@@ -197,28 +203,28 @@ if ( (nbrappl!=1) & (fin==0) )
 
             button=MouseButton();
 
-            if ((button&1)==1)     //--- gauche --------------------------------
+            if ((button&1)==1)     //--- gauche ------------------------
                 {
                 int y;
 
-                y=MousePosY();
+                y=MouseRPosY();
 
-                if (y>(pos-prem))
+                if (y>=max)
                     car=80*256;
-                if (y<(pos-prem))
-                    car=72*256;
+                    else
+                    if (y<0)
+                        car=72*256;
+                        else
+                        pos=prem+y;
                 }
 
-            if ((button&2)==2)     //--- droite ---------------------------
+            if ((button&2)==2)     //--- droite ------------------------
                 car=27;
 
             if ((button&4)==4)
                 car=13;
             }
 
-
-        for (n=d;n<=lfin;n++)
-            AffCol(n,pos-prem,col[n]);
 
         if (LO(car)==0)
             {
@@ -231,10 +237,10 @@ if ( (nbrappl!=1) & (fin==0) )
                     pos++;
                     break;
                 case 0x47:
-                    pos=m;
+                    pos=0;
                     break;
                 case 0x4F:
-                    pos=m+nbr-1;
+                    pos=nbr-1;
                     break;
                 case 0x51:
                     pos+=5;
@@ -254,7 +260,7 @@ if ( (nbrappl!=1) & (fin==0) )
 	ChargeEcran();
 
     if (LO(car)==27) fin=3;
-	n=pos-m;
+    n=pos;
 	}
 	else
     {

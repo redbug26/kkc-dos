@@ -95,12 +95,14 @@ PutCur(3,0);
 Bar(" Help  ----  ----  Text  ----  ---- Search ----  ----  ---- ");
 
 
-Window(1,1,78,(Cfg->TailleY)-3,10*16+1);
+Window(1,1,Cfg->TailleX-2,(Cfg->TailleY)-3,10*16+1);
 WinCadre(0,3,9,(Cfg->TailleY)-2,2);
 WinCadre(10,3,58,(Cfg->TailleY)-2,2);
 WinCadre(59,3,76,(Cfg->TailleY)-2,2);
 WinCadre(77,3,79,(Cfg->TailleY)-2,2);
 WinCadre(0,0,79,2,3);
+
+RemplisVide();
 
 ChrCol(34,4,(Cfg->TailleY)-6,Cfg->Tfont);
 
@@ -760,7 +762,7 @@ maxy=Cfg->TailleY;
 ColWin(0,0,79,(Cfg->TailleY)-2,0*16+7);
 ChrWin(0,0,79,(Cfg->TailleY)-2,32);
 
-TXTMode(Cfg->TailleY);
+TXTMode();
 
 touche=0;
 
@@ -916,7 +918,7 @@ Bar(bar);
 |- Affichage de la fenetre                                            -|
 \*--------------------------------------------------------------------*/
 
-x=(Cfg->TailleX-xl)/2;                                          // centre le texte
+x=(Cfg->TailleX-xl)/2;                                // centre le texte
 y=(Cfg->TailleY-yl)/2;
 
 if (x<0) x=0;
@@ -942,7 +944,7 @@ if ( (x>0) & (y>0) & (x+xl<Cfg->TailleX) & (y+yl<Cfg->TailleY) )
         }
     }
 
-ColWin(x,y,x+xl-1,y+yl-1,10*16+1);
+ColWin(x,y,x+xl-1,y+yl-1,10*16+4);
 ChrWin(x,y,x+xl-1,y+yl-1,32);
 
 /*--------------------------------------------------------------------*\
@@ -1175,10 +1177,10 @@ if ( ((car&1)==1) | ((car&2)==2) )
     PrintAt(0,0,
             "View: %-45s Col%3d %9d bytes %3d%% ",temp,warp,taille,prc);
 
-    ColCol(79,1,Cfg->TailleY-2,1*16+2);
-    ChrCol(79,1,cur1-1,32);
-    ChrCol(79,cur1,cur2-cur1+1,219);
-    ChrCol(79,cur2+1,Cfg->TailleY-1-cur2,32);
+    ColCol(Cfg->TailleX-1,1,Cfg->TailleY-2,1*16+2);
+    ChrCol(Cfg->TailleX-1,1,cur1-1,32);
+    ChrCol(Cfg->TailleX-1,cur1,cur2-cur1+1,219);
+    ChrCol(Cfg->TailleX-1,cur2+1,Cfg->TailleY-1-cur2,32);
 
     if (shift!=1)
         {
@@ -1216,7 +1218,8 @@ if (code==0)     //--- Pression bouton souris --------------------------
         y=MousePosY();
 
 
-        if ( (x==79) & (y>=1) & (y<=Cfg->TailleY-1) ) //-- Ascensceur --
+        if ( (x==Cfg->TailleX-1) & (y>=1) & (y<=Cfg->TailleY-1) )
+                                                      //-- Ascensceur --
             {
             posn=(taille*(y-1))/(Cfg->TailleY-2);
             }
@@ -1230,7 +1233,7 @@ if (code==0)     //--- Pression bouton souris --------------------------
                     code=72*256;
         }
 
-    if ((button&2)==2)     //--- droite ---------------------------
+    if ((button&2)==2)     //--- droite --------------------------------
         {
         code=27;
         }
@@ -1281,7 +1284,7 @@ switch(LO(code))
                 break;
             case 0x43:  // F9
                 ChangeMask();
-                ColWin(x,y,x+xl-1,y+yl-1,10*16+1);
+                ColWin(x,y,x+xl-1,y+yl-1,10*16+4);
                 break;
             case 80:    // BAS
                 if (pasfini==1) break;
@@ -1423,7 +1426,7 @@ struct Tmt T[5] =
       { 1,1,4,NULL,&CadreLength} };
 
 struct TmtWin F =
-    { 3,10,76,17, "Search Text" };
+    { -1,10,74,17, "Search Text" };
 
 int a,n;
 char c1,c2;
@@ -1520,7 +1523,7 @@ struct Tmt T[8] =
       { 1,5,4,NULL,&CadreLength} };
 
 struct TmtWin F =
-    { 3,7,76,18, "Search Text/Hexa" };
+    {-1,7,74,18, "Search Text/Hexa" };
 
 int a,n,lng;
 char c1,c2;
@@ -1652,7 +1655,7 @@ char nlist;      // nombre de liste
 char listn[16];  // position dans liste
 char listt[16];  // type de liste
 
-short xpage=78;
+short xpage=Cfg->TailleX-2;
 
 struct Href *prem,*suiv,*rete;
 
@@ -1668,10 +1671,10 @@ char *ChrTxt;
 RB_IDF Info;
 
 
-ColTxt=GetMem(320000);
-memset(ColTxt,10*16+1,320000);
-ChrTxt=GetMem(320000);
-memset(ChrTxt,32,320000);
+ColTxt=GetMem(40000*Cfg->TailleX);
+memset(ColTxt,10*16+1,40000*Cfg->TailleX);
+ChrTxt=GetMem(40000*Cfg->TailleX);
+memset(ChrTxt,32,40000*Cfg->TailleX);
 
 
 fic=fopen(fichier,"rb");
@@ -1689,20 +1692,18 @@ if (taille==0) return -1;
 buffer=GetMem(32768);
 
 
-
 SaveEcran();
 PutCur(3,0);
 
 x=1;
 y=1;
 
-xl=78;
-yl=(Cfg->TailleY)-2;
+xl=Cfg->TailleX-2;
+yl=Cfg->TailleY-2;
 
 WinCadre(x-1,y-1,xl+1,yl,2);
 
-ColWin(x,y,xl,yl-1,10*16+1);
-ChrWin(x,y,xl,yl-1,32);
+Window(x,y,xl,yl-1,10*16+1);
 
 ColLin(0,yl+1,Cfg->TailleX,1*16+8);
 ChrLin(0,yl+1,Cfg->TailleX,32);
@@ -2096,7 +2097,6 @@ for (k=0;k<lentit;k++)
 
         if (j<=0) j=smot-1;
 
-        
 
         for(i=0;i<j;i++)
            {
@@ -2247,10 +2247,10 @@ if ( ((car&1)==1) | ((car&2)==2) )
 
     PrintAt(0,0,"View: %-52s %9d bytes %3d%% ",temp,taille,prc);
 
-    ColCol(79,1,Cfg->TailleY-2,1*16+2);
-    ChrCol(79,1,cur1-1,32);
-    ChrCol(79,cur1,cur2-cur1+1,219);
-    ChrCol(79,cur2+1,Cfg->TailleY-1-cur2,32);
+    ColCol(Cfg->TailleX-1,1,Cfg->TailleY-2,1*16+2);
+    ChrCol(Cfg->TailleX-1,1,cur1-1,32);
+    ChrCol(Cfg->TailleX-1,cur1,cur2-cur1+1,219);
+    ChrCol(Cfg->TailleX-1,cur2+1,Cfg->TailleY-1-cur2,32);
 
     shift=1;
     }
@@ -2516,13 +2516,14 @@ void Masque(short x1,short y1,short x2,short y2)
 {
 char *chaine;
 char chain2[132];
-short l,m1,m2;
+short m1,m2;
 
 unsigned char c,c2;
-short x,y;
+short x,y,l;
+short oldx,oldy,oldl;
 short xt[80],yt[80];
 
-char trouve;
+char cont,trouve=0;
 
 struct PourMask *CMask;
 
@@ -2539,11 +2540,10 @@ l=0;
 
 while(y<=y2)
     {
-    AffCol(x,y,10*16+9);
     c=GetChr(x,y);
 
     if ( ((c>='a') & (c<='z')) | ((c>='A') & (c<='Z')) | (c=='_') |
-                                                 ((c>='0') & (c<='9')) )
+          (c=='-') |                             ((c>='0') & (c<='9')) )
         {
         chain2[l]=c;
         xt[l]=x;
@@ -2555,13 +2555,18 @@ while(y<=y2)
         {
         if (l!=0)
             {
+            if (trouve==2)
+                cont=1;
+                else
+                cont=0;
+
             trouve=0;
             m1=0;
             m2=0;
 
-            while(chaine[m2]!='@')
+            while ( (chaine[m2]!='@') & (trouve==0) )
                 {
-                if (chaine[m2]==32)
+                if ((chaine[m2]==32) | ((chaine[m2]==246) & (cont==0)))
                     {
                     if (m2-m1==l)
                         {
@@ -2575,25 +2580,51 @@ while(y<=y2)
                             if (!strnicmp(chaine+m1,chain2,l))
                                 trouve=1;
                             }
+                        if ( (trouve==1) & (chaine[m2]==246) )
+                            {
+                            xt[l]=xt[l-1];
+                            yt[l]=yt[l-1];
+                            trouve=2;
+                            chain2[l]=246;
+                            oldl=l;
+                            oldx=x;
+                            oldy=y;
+                            l++;
+                            }
+                        if (m1!=0)
+                            {
+                            if (chaine[m1-1]==246)
+                                trouve=0;
+                            }
                         }
                     m1=m2+1;
                     }
                 m2++;
                 }
 
-
-            if (trouve==1)
-                c2=10*16+5;
-                else
-                c2=10*16+4;
-
-            while (l!=0)
+            if (trouve!=2)
                 {
-                l--;
-                AffCol(xt[l],yt[l],c2);
+                if (trouve==1)
+                    c2=10*16+5;     // trouve
+                    else
+                    c2=10*16+4;
+
+                if ( (trouve==0) & (cont==1) )
+                    {
+                    x=oldx;
+                    y=oldy;
+                    l=oldl;
+                    }
+
+                while (l!=0)
+                    {
+                    l--;
+                    AffCol(xt[l],yt[l],c2);
+                    }
+                l=0;
                 }
-            l=0;
             }
+        AffCol(x,y,10*16+9);
         }
 
 /*--------------------------------------------------------------------*\
@@ -2824,7 +2855,7 @@ struct Tmt T[3] = {
       {5,1,0,"Do you want copy this file ?",NULL}
       };
 
-struct TmtWin F = {18,4,61,9, "Print file"};
+struct TmtWin F = {-1,4,44,9, "Print file"};
 
 m=WinTraite(T,3,&F);
 
