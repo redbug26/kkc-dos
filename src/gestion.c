@@ -685,7 +685,7 @@ if ( (chaine[1]==':') & (chaine[0]!=0) )
         error=1;
     if (_dos_getdiskfree(nbrdrive,&d)!=0)
         error=1;
-    if (IOerr==1)
+    if (IOerr!=0)
         error=1;
 
     IOver=0;

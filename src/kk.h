@@ -1,3 +1,5 @@
+#define VERSION "0.20"
+
 #define ENTIER short
 
 #define CALLING __cdecl

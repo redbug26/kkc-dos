@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <bios.h>
 #include <io.h>
+#include <graph.h>
 #include <fcntl.h>
 #include <sys\types.h>
 #include <sys\stat.h>
@@ -34,6 +35,10 @@ void LoadSel(struct fenetre *F1,int n);
  * Declaration des variables *
  *---------------------------*/
 
+int OldCol;            // Ancienne couleur du texte
+char OldY,PosX,PosY;
+
+
 sig_atomic_t signal_count;
 
 char Select_Chaine[16]="*.*";
@@ -50,7 +55,7 @@ struct fenetre *Fenetre[2];
 struct fenetre *DFen;
 
 
-char *RBTitle="Ketchup Killers Commander V0.11 / RedBug";
+char *RBTitle="Ketchup Killers Commander V"VERSION" / RedBug";
 
 int IOver;
 int IOerr;
@@ -86,24 +91,77 @@ char GetDriveReady(char i);
 
 int __far Error_handler(unsigned deverr,unsigned errcode,unsigned far *devhdr)
 {
+int i,n,erreur[3];
+char car;
+
+switch(IOerr)
+    {
+    case 1:
+        return _HARDERR_IGNORE;
+    case 3:
+        return _HARDERR_FAIL;
+    }
+
 IOerr=1;
 
 if (IOver==1)
     return _HARDERR_FAIL;
 
-
 SaveEcran();
 
-WinCadre(29,9,48,14,0);
-ColWin(30,10,47,13,0*16+1);
-ChrWin(30,10,47,13,32);
+WinCadre(19,9,61,16,0);
+ColWin(20,10,60,15,10*16+4);
+ChrWin(20,10,60,15,32);
 
-PrintAt(31,10,"   ERROR (%04X,%04X)",errcode,deverr);
-PrintAt(31,12,"Press a key when");
-PrintAt(31,13,"  it is correct");
-Wait(0,0,0);
+PrintAt(23,10,"Disk Error: %s",((deverr&32768)==32768) ? "No":"Yes");
+
+PrintAt(23,11,"Position of error: ");
+switch((deverr&1536)/512)  {
+    case 0: PrintAt(42,11,"MS-DOS"); break;
+    case 1: PrintAt(42,11,"FAT"); break;
+    case 2: PrintAt(42,11,"Directory"); break;
+    case 3: PrintAt(42,11,"Data-area"); break;
+    }
+
+PrintAt(23,12,"Type of error: %s %04X",((deverr&256)==256) ? "Write":"Read",deverr);
+
+i=8192;
+n=0;
+
+for(n=0;n<3;n++)
+    {
+    if ((deverr&i)==i)
+        erreur[n]=1;
+        else
+        erreur[n]=0;
+    i=i/2;
+    }
+
+if (erreur[0]==1) PrintAt(25,14,"Ignore"),AffCol(25,14,10*16+5),WinCadre(24,13,31,15,2);
+if (erreur[1]==1) PrintAt(38,14,"Retry"),AffCol(38,14,10*16+5),WinCadre(37,13,43,15,2);
+if (erreur[2]==1) PrintAt(51,14,"Fail"),AffCol(51,14,10*16+5),WinCadre(50,13,55,15,2);
+
+IOerr=0;
+do
+{
+car=getch();
+
+if ( (car=='I') | (car=='i') & (erreur[0]==1) ) IOerr=1;
+if ( (car=='R') | (car=='r') & (erreur[1]==1) ) IOerr=2;
+if ( (car=='F') | (car=='f') & (erreur[2]==1) ) IOerr=3;
+
+}
+while (IOerr==0);
 
 ChargeEcran();
+
+switch(IOerr)
+    {
+    case 1:
+        return _HARDERR_IGNORE;
+    case 2:
+        return _HARDERR_RETRY;
+    }
 return _HARDERR_FAIL;
 }
 
@@ -128,16 +186,16 @@ char *titre="Palette configuration";
 
 char defcol[NBRS][48]={ {43,37,30, 31,22,17,  0, 0, 0, 58,58,50,
                       44,63,63, 63,63,21, 43,37,30,  0, 0, 0,
-                      63,63, 0, 63,63,63, 43,37,30,  0, 0, 0,
-                       0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0},
+                      63,63, 0, 63,63,63, 43,37,30, 63, 0, 0,
+                       0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0},
                      { 0, 0, 0, 43,43,43,  0, 0, 0, 63,63,63,
                       63,63,63, 63,63,21, 50,58,55,  0, 0,43,
-                      63,63, 0, 63,63,63,  0, 0,43,  0, 0, 0,
-                       0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0},
+                      63,63, 0, 63,63,63,  0, 0,43, 63, 0, 0,
+                       0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0},
                      {25,36,29, 36,18,15,  0, 0, 0, 49,39,45,
                       44,63,63, 42,37,63, 45,39,35,  0, 0, 0,
-                       0,63,63, 63,63,63, 25,36,29,  0, 0, 0,
-                       0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0} };
+                       0,63,63, 63,63,63, 25,36,29, 63, 0, 0,
+                       0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0} };
 
 char *Style[NBRS]={"Default Style","Norton Style","Cyan Style"};
 int posx[NBRS],posy[NBRS];
@@ -150,6 +208,7 @@ if (c>0)
     }
 
 SaveEcran();
+PutCur(32,0);
 
 WinCadre(0,0,79,(Cfg->TailleY)-2,2);
 ColWin(1,1,78,(Cfg->TailleY)-3,10*16+1);
@@ -637,9 +696,10 @@ if (i!=0)
     int car;
 
     SaveEcran();
+    PutCur(32,0);
 
     WinCadre(x-2,y-1,x+Mlen+1,y+i,0);
-    ColWin(x-1,y,x+Mlen,y+i-1,0*16+1);
+    ColWin(x-1,y,x+Mlen,y+i-1,10*16+1);
     ChrWin(x-1,y,x+Mlen,y+i-1,32);
 
     for (j=0;j<i;j++)
@@ -900,7 +960,7 @@ ChrLin(x,y,24,32);
 
 do
     {
-    c1=Wait(0,0,0);
+    c1=Wait(x+23,y,0);
 
     car=LO(c1);
     car2=HI(c1);
@@ -1080,7 +1140,7 @@ fic=fopen(Fics->temp,"wt");
 
 fprintf(fic,"%s\n",F1->F[F1->pcur]->name);
 
-fprintf(fic,"%d\n",F1->scur);   // position a l'ecran
+fprintf(fic,"%d\n",F1->pcur);   // position a l'ecran
 
 
 
@@ -1114,9 +1174,11 @@ j=1;
 for (i=0;i<F1->nbrfic;i++)
     if (!strncmp(nom,F1->F[i]->name,strlen(nom)))  {
         F1->pcur=i;
+
         j=0;
         break;
         }
+
 if (j==1)
     F1->pcur=F1->scur;
 
@@ -1161,7 +1223,7 @@ struct fenetre *FenOld;
 clock_t Cl_Start;
 char car,car2;
 
-short car3,c;
+unsigned short car3,c;
 
 int i;  // Compteur
 
@@ -1245,7 +1307,8 @@ do {
     switch(HI(c))   {
         case 0x3D:  // F3
         case 0x3E:  // F4
-        case 0x56:      // SHIFT-F3
+        case 0x56:  // SHIFT-F3
+        case 0x8D:  // CTRL-UP
             AccessFile();
             break;
         }
@@ -1256,7 +1319,7 @@ do {
     car3=0;
 
     for (i=0;i<DFen->nbrfic;i++)
-        if (!strncmp(Cfg->FileName,DFen->F[i]->name,strlen(Cfg->FileName)))  {
+        if (!strnicmp(Cfg->FileName,DFen->F[i]->name,strlen(Cfg->FileName)))  {
             DFen->pcur=i;
             DFen->scur=i;
             break;
@@ -1468,6 +1531,7 @@ do {
             LoadSel(DFen,0);
             break;
         case 0x56:      // SHIFT-F3
+        case 0x8D:      // CTRL-UP
             switch(DFen->system)    {
                 case 0:
                     View(DFen);
@@ -1583,7 +1647,7 @@ do {
         case 0xB6:  //
         case 0xB7:  //  Windows 95 keyboard
         case 0xB8:  //
-			   ErrWin95();
+//               ErrWin95();
 			   break;
 
         default:
@@ -1656,11 +1720,13 @@ PlaceDrive();
 for (n=0;n<8000;n++)
     Screen_Adr[n]=Screen_Buffer[n];
 
-GotoXY(0,(Cfg->TailleY)-1);
-
 if (Cfg->_4dos==1)  {
     _4DOSShistdir();
     }
+
+GotoXY(0,PosY);
+_settextcolor(OldCol);
+cprintf("%s\n",RBTitle);
 
 exit(1);
 }
@@ -2001,8 +2067,12 @@ void main(int argc,char **argv)
 {
 char *path;
 int n;
-
 char *LC;
+
+OldY=(*(char*)(0x484))+1;
+WhereXY(&PosX,&PosY);
+OldCol=_gettextcolor();
+
 
 /**************************
  - Initialise les buffers -
@@ -2029,8 +2099,9 @@ for (n=0;n<8000;n++)
 path=GetMem(256);
 
 /*****************************************
- - Lecture et verifiaction des arguments -
+ - Lecture et verification des arguments -
  *****************************************/
+
 
 strcpy(ShellAdr+128,*argv);
 strcpy(path,*argv);
@@ -2043,10 +2114,7 @@ for (n=strlen(path);n>0;n--) {
 
 LC=*(argv+argc-1);
 
-if (!strncmp(LC,"6969",4)) {
-    printf("%s\n",RBTitle);
-    }
-    else
+if (strncmp(LC,"6969",4))
     {
     printf("This program cannot be run in DOS mode\n");
     printf("This program cannot be run in WINDOWS mode\n");
@@ -2055,7 +2123,6 @@ if (!strncmp(LC,"6969",4)) {
     printf("This program required KK.EXE\n\n");
     exit(1);
     }
-
 
 
 /***********************
@@ -2121,7 +2188,7 @@ strcat(Fics->trash,"\\trash");      // repertoire trash
 Cfg->TailleY=50;
 
 ChangeType(4);
-Cfg->SaveSpeed=1800;
+Cfg->SaveSpeed=7200;
 
 Cfg->_4dos=0;
 _4DOSverif();
@@ -2190,6 +2257,7 @@ if (LoadCfg()==-1)
     }
 
 
+
 VerifHistDir();                 // Verifie l'history pour les repertoires
 
 ChangeTaille(Cfg->TailleY);     // Change de taille et affiche tout
@@ -2201,7 +2269,8 @@ Gestion();
  -  FIN  -
  *********/
 
-TXTMode(Cfg->TailleY);          // Retablit le mode texte normal
+TXTMode(OldY);          // Retablit le mode texte normal
+
 ShellAdr[0]=0;
 Fin();
 }

@@ -276,7 +276,7 @@ while (c!=27) {
 	  PrintAt(26,11,"*************************");
 	  PrintAt(26,12,"* WINDOWS 95 KEYBOARD ! *");
 	  PrintAt(26,13,"*************************");
-      if (kbhit()) c=LO(Wait(0,0,0));
+      if (kbhit()) c=getch();
 	  }
 
 AfficheTout();

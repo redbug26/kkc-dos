@@ -18,6 +18,9 @@ int Deltree(char *path);
 int Del(char *s)
 {
 _dos_setfileattr(s,_A_NORMAL);
+
+IOerr=0;
+
 return remove(s);
 }
 
@@ -48,6 +51,8 @@ while(error==0)  {
         }
     error=_dos_findnext(&ff);
     }
+
+IOerr=0;
 
 return rmdir(path);
 }
@@ -141,6 +146,8 @@ char car;
 char inpath[128];
 
 struct file *F;
+
+
 
 if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') ) {
     F1->F[F1->pcur]->select=1;

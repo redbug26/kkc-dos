@@ -240,7 +240,7 @@ IOerr=0;
 if (ok==1)
     {
     outhand=fopen(outpath,"wb");
-    if ( (outhand==NULL) | (IOerr==1) )
+    if ( (outhand==NULL) | (IOerr!=0) )
         {
         ProtFile(outpath);
         fclose(inhand);
@@ -266,8 +266,12 @@ if (ok==1)
 
     while (Taille>0)
         {
+        IOerr=0;
         TailleEnreg=fread(buffer,1,TailleEnreg,inhand);
+        if (IOerr==3) { ok=1; break; }
+        IOerr=0;
         fwrite(buffer,1,TailleEnreg,outhand);
+        if (IOerr==3) { ok=1; break; }
         Taille-=TailleEnreg;
         TailleRest+=TailleEnreg;
         PrintAt(12,9,"Copying %9d of %9d",TailleRest,size);

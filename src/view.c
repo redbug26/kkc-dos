@@ -20,9 +20,11 @@
 #include "win.h"
 #include "kk.h"
 
-int HexView(char *fichier);
+int HexaView(char *fichier);
+int TextView(char *fichier);
+int HtmlView(char *fichier);
 
-int HexView(char *fichier)
+int HexaView(char *fichier)
 {
 FILE *fic;
 int x,y,z,k,kl,ks;
@@ -170,6 +172,9 @@ switch(LO(car))   {
             case 0x43:  // F9
                 fin=86;
                 break;
+            case 0x8D:  // CTRL-UP
+                fin=-1;
+                break;
             default:
                 break;
             }
@@ -191,6 +196,8 @@ while(fin==0);
 ChargeEcran();
 
 free(buffer);
+
+fclose(fic);
 
 return fin;
 }
@@ -486,8 +493,8 @@ while (*b)
 
     if (touche!=1)
         {
-        touche=_bios_keybrd(0x1);
-        touche=touche/256;
+        if (kbhit()) touche=Wait(0,0,0);
+        if ( (touche==27) | (touche=0x8D00) ) touche=1; else touche=0;
         }
         else
         break;
@@ -733,6 +740,514 @@ return (-1);
 }
 
 
+int TextView(char *fichier)
+{
+FILE *fic;
+
+long n,taille;
+
+char *buffer;
+
+int xl,yl;
+int x,y;
+
+char car;
+
+
+fic=fopen(fichier,"rb");
+
+if (fic==NULL)
+    {
+    PrintAt(0,0,"Error on file '%s'",fichier);
+    WinError("Couldn't open file");
+    return -1;
+    }
+taille=filelength(fileno(fic));
+
+if (taille==0) return -1;
+
+if (taille>4000) return 0;
+
+buffer=GetMem(32768);
+
+fread(buffer,32768,1,fic);
+
+fclose(fic);
+
+x=0;
+y=0;
+xl=0;
+
+for (n=0;n<taille;n++)
+    switch(buffer[n])  {
+        case 13:
+            x=0;
+            y++;
+            break;
+        case 10:
+            break;
+        default:
+            x++;
+            if (x>xl) xl=x;
+            break;
+        }
+
+if (x==0)
+    yl=y-1;
+    else
+    yl=y;
+xl--;
+
+if ( (xl>=78) | (yl>=(Cfg->TailleY-2)) )
+    {
+    free(buffer);
+    return 0;
+    }
+
+SaveEcran();
+PutCur(3,0);
+
+x=(80-xl)/2;
+y=(Cfg->TailleY-yl)/2;
+
+WinCadre(x-1,y-1,x+xl+1,y+yl+1,3);
+
+ChrWin(x,y,x+xl,y+yl,32);
+ColWin(x,y,x+xl,y+yl,10*16+1);
+
+xl=x;
+yl=y;
+
+for (n=0;n<taille;n++)
+    {
+    car=buffer[n];
+
+    switch(car)  {
+        case 13:
+            car=0;
+            xl=x;
+            yl++;
+            break;
+        case 10:
+            car=0;
+            break;
+        case 'Š':   car=232; break;
+        case '‚':   car=233; break;
+        case 'ˆ':   car=234; break;
+        case '‰':   car=235; break;
+
+        case '…':   car=224; break;
+        case ' ':   car=225; break;
+        case 'ƒ':   car=226; break;
+        case '„':   car=227; break;
+
+        default:
+            break;
+        }
+
+    if (car!=0)
+        {
+        AffChr(xl,yl,car);
+        xl++;
+        }
+    }
+
+Wait(0,0,0);
+
+ChargeEcran();
+
+free(buffer);
+
+return -1;
+}
+
+int HtmlView(char *fichier)
+{
+FILE *fic;
+char titre[64];
+
+char mot[128];  // phrase a ecrire
+char motc[128]; // couleur de cette phrase
+short smot;     // Taille du mot
+
+long n,taille;
+
+char *buffer;
+
+long debut;     // position du <
+long code;      // position du &
+
+char aff;       // vaut 1 si il faut ecrire
+char prev;      // vaut 1 si la derniere commande est enter
+
+short yp;    // position virtuelle sur ecran
+short xl,yl,ye;
+short x,y;
+
+unsigned char col;
+
+unsigned char tabcol[32];
+short nbrcol;
+
+char car;
+
+int i,j;        // Compteur
+
+char bold,ital,unde;
+char pre;
+
+
+char *ColTxt;
+char *ChrTxt;
+
+ColTxt=GetMem(320000);
+memset(ColTxt,10*16+1,320000);
+ChrTxt=GetMem(320000);
+memset(ChrTxt,32,320000);
+
+
+fic=fopen(fichier,"rb");
+
+if (fic==NULL)
+    {
+    PrintAt(0,0,"Error on file '%s'",fichier);
+    WinError("Couldn't open file");
+    return -1;
+    }
+taille=filelength(fileno(fic));
+
+if (taille==0) return -1;
+
+buffer=GetMem(32768);
+
+fread(buffer,32768,1,fic);
+
+fclose(fic);
+
+SaveEcran();
+PutCur(3,0);
+
+if (taille>32768) taille=32768;
+
+x=1;
+y=1;
+
+xl=78;
+yl=(Cfg->TailleY)-2;
+
+WinCadre(x-1,y-1,xl+1,yl+1,2);
+
+ChrWin(x,y,xl,yl,32);
+ColWin(x,y,xl,yl,10*16+1);
+
+//---------------------------------------------------//
+
+bold=0;
+ital=0;
+unde=0;
+
+nbrcol=0;
+tabcol[0]=10;
+
+debut=0;
+code=0;
+
+prev=1;
+
+yp=0;
+
+aff=0;
+
+smot=0;
+
+pre=0;
+
+for (n=0;n<taille;n++)
+    {
+    car=buffer[n];
+
+    if ( (debut==0) & (code==0) )
+    switch(car)  {
+        case 10:
+            if (pre==0)
+                car=13;
+                else
+                aff=1,car=0;
+            break;
+        case 13:
+            car=0;
+            break;
+        case 'Š':
+            car=232; break;
+        case '‚':
+            car=233; break;
+        case 'ˆ':
+            car=234; break;
+        case '‰':
+            car=235; break;
+
+        case '‡':
+            car=231; break;
+
+        case '…':
+            car=224; break;
+        case ' ':
+            car=225; break;
+        case 'ƒ':
+            car=226; break;
+        case '„':
+            car=227; break;
+
+        case '<':
+            debut=n+1;
+            break;
+
+        case '&':
+            code=n+1;
+            break;
+
+        default:
+            break;
+        }
+
+    if (debut!=0)
+    switch(car)  {
+        case '>':
+            memcpy(titre,buffer+debut,64);
+            if (n-debut<64)
+                {
+                titre[n-debut]=0;
+
+                if (!stricmp(titre,"TITLE"))  nbrcol++,tabcol[nbrcol]=2,aff=1;
+                if (!strnicmp(titre,"H1",2))  nbrcol++,tabcol[nbrcol]=2,aff=1;
+                if (!strnicmp(titre,"H2",2))  nbrcol++,tabcol[nbrcol]=3,aff=1;
+                if (!strnicmp(titre,"H3",2))  nbrcol++,tabcol[nbrcol]=4,aff=1;
+                if (!strnicmp(titre,"H4",2))  nbrcol++,tabcol[nbrcol]=5,aff=1;
+                if (!strnicmp(titre,"H5",2))  nbrcol++,tabcol[nbrcol]=6,aff=1;
+                if (!strnicmp(titre,"H6",2))  nbrcol++,tabcol[nbrcol]=6,aff=1;
+                if (!stricmp(titre,"STRONG")) bold++;    // GRAS ON
+                if (!stricmp(titre,"B"))      bold++;    // GRAS ON
+                if (!stricmp(titre,"EM"))     ital++;    // ITALIQUE ON
+                if (!stricmp(titre,"U"))      unde++;    // UNDERLINE ON
+
+                if (!stricmp(titre,"/STRONG")) bold--;    // GRAS OFF
+                if (!stricmp(titre,"/B"))      bold--;    // GRAS OFF
+                if (!stricmp(titre,"/EM"))     ital--;    // ITALIQUE OFF
+                if (!stricmp(titre,"/U"))      unde--;    // UNDERLINE OFF
+                
+                if (!stricmp(titre,"/TITLE")) nbrcol--,aff=2;
+                if (!stricmp(titre,"/H1")) nbrcol--,aff=1;
+                if (!stricmp(titre,"/H2")) nbrcol--,aff=1;
+                if (!stricmp(titre,"/H3")) nbrcol--,aff=1;
+                if (!stricmp(titre,"/H4")) nbrcol--,aff=1;
+                if (!stricmp(titre,"/H5")) nbrcol--,aff=1;
+                if (!stricmp(titre,"/H6")) nbrcol--,aff=1;
+                if (!stricmp(titre,"LI"))  aff=1;
+                if (!stricmp(titre,"BR"))  aff=1;        // C‚sure forc‚e
+                if (!stricmp(titre,"P")) aff=1;         // fin de paragraphe
+                if (!stricmp(titre,"OL"))  aff=1;
+                if (!stricmp(titre,"/OL")) aff=1;
+                if (!stricmp(titre,"UL"))  aff=1;
+                if (!stricmp(titre,"/UL")) aff=1;
+
+                if (!stricmp(titre,"DL")) aff=1;
+                if (!stricmp(titre,"DT")) aff=1;
+                if (!stricmp(titre,"DD")) aff=1;
+                if (!stricmp(titre,"/DL")) aff=1;
+                if (!stricmp(titre,"/DT")) aff=1;
+                if (!stricmp(titre,"/DD")) aff=1;
+
+                if (!stricmp(titre,"PRE")) pre++;
+                if (!stricmp(titre,"/PRE")) pre--;
+                }
+
+            debut=0;
+            car=0;
+            break;
+        default:
+            break;
+        }
+
+    if (code!=0)
+    switch(car)  {
+        case ';':
+            car=0;
+            memcpy(titre,buffer+code,64);
+            if (n-code<64)
+                {
+                titre[n-code]=0;
+
+                if (!stricmp(titre,"AMP")) car='&';
+                if (!stricmp(titre,"EGRAVE")) car=232;
+                if (!stricmp(titre,"EACUTE")) car=233;
+                if (!stricmp(titre,"ECIRC")) car=234;
+
+                if (!stricmp(titre,"AGRAVE")) car=224;
+                if (!stricmp(titre,"AACUTE")) car=225;
+                if (!stricmp(titre,"ACIRC")) car=226;
+
+                if (!stricmp(titre,"CCEDIL")) car=231;
+                if (!stricmp(titre,"NBSP")) car=32;
+
+                
+                if (!stricmp(titre,"LT")) car='<';
+                if (!stricmp(titre,"GT")) car='>';
+                }
+
+            code=0;
+            break;
+        default:
+            break;
+        }
+
+    if (nbrcol<0)
+        {
+        WinError("HTML Code error");
+        return -1;
+        }
+
+    col=tabcol[nbrcol]*16+1;
+
+    if (bold!=0) col=(col&240)+11;
+    if (ital!=0) col=(col&240)+12;
+    if (unde!=0) col=(col&240)+13;
+
+
+
+    if ( (car!=0) & (debut==0) & (code==0) )
+        {
+        if ( (pre==0) & (car==13) & (smot==0) ) car=0;
+        if ( (pre==0) & (car==13) ) car=32;
+
+//        if ( (pre==0) & (smot!=0) & (mot[smot-1]==32) & (car==32) ) car=0;
+
+        
+
+        if (car!=0)
+            {
+            mot[smot]=car;
+            motc[smot]=col;
+            smot++;
+            }
+        }
+
+    if (smot>78)
+        {
+        j=smot-1;
+        while ( (j>=0) & (mot[j]!=32) ) j--;
+
+        if (j<=0) j=smot-1;
+
+        for(i=0;i<j;i++)
+           {
+           ChrTxt[i+yp*78]=mot[i];
+           ColTxt[i+yp*78]=motc[i];
+           }
+
+        for(i=j+1;i<smot;i++)   // +1 car on passe l'espace
+            {
+            mot[i-j-1]=mot[i];
+            motc[i-j-1]=motc[i];
+            }
+
+        smot-=(j+1);
+
+        yp++;
+        }
+
+    while (aff!=0)
+        {
+        switch (aff)
+            {
+            case 1:
+                j=0;
+                break;
+            case 2:
+                j=(78-smot)/2;
+                break;
+            }
+
+        for(i=0;i<smot;i++)
+           {
+           ChrTxt[(i+j)+yp*78]=mot[i];
+           ColTxt[(i+j)+yp*78]=motc[i];
+           }
+
+        smot=0;
+
+        yp++;
+
+        break;
+        }
+    aff=0;
+
+    if (yp>398) break;
+    }
+
+code=0;
+
+// yp= limitte end
+
+ye=0;
+
+do
+{
+for (i=y;i<yl;i++)
+    for(j=x;j<xl;j++)
+        {
+        AffChr(j,i,ChrTxt[(j-x)+(i-y+ye)*78]);
+        AffCol(j,i,ColTxt[(j-x)+(i-y+ye)*78]);
+        }
+
+code=Wait(0,0,0);
+
+switch(LO(code))   {
+    case 0:
+        switch(HI(code))   {
+            case 80:    // BAS
+                ye++;
+                break;
+            case 72:    // HAUT
+                ye--;
+                break;
+            case 0x51:  // PGDN
+                ye+=20;
+                break;
+            case 0x49:  // PGUP
+                ye-=20;
+                break;
+            case 0x47:  // HOME
+                ye=0;
+                break;
+            case 0x4F:  // END
+                ye=yp-(yl-y);
+                break;
+            default:
+                break;
+            }
+        break;
+    default:
+        break;
+    }
+
+if (ye<0) ye=0;
+if (ye>yp-yl+y) ye=yp-yl+y;
+}
+while ((code!=27) & (code!=0x8D00));
+
+
+ChargeEcran();
+
+free(buffer);
+
+free(ColTxt);
+free(ChrTxt);
+
+return -1;
+}
+
+
+
 void View(struct fenetre *F)
 {
 char *fichier;
@@ -750,8 +1265,14 @@ while(i!=-1)
         case 86: //Ansi
             i=AnsiView(fichier);
             break;
+        case 91: //View text
+            i=TextView(fichier);
+            break;
+        case 104: // HTML
+            i=HtmlView(fichier);
+            break;
         default:
-            i=HexView(fichier);
+            i=HexaView(fichier);
             break;
         }
     }

@@ -16,6 +16,8 @@
 
 #include "idf.h"
 
+#include "hard.h"
+
 struct key K[nbrkey]=	{
 {  {"C64S tap"},
 		8,
@@ -741,6 +743,16 @@ struct key K[nbrkey]=	{
  - structures … traiter en dernier ressort -
  *******************************************/
 
+{  {0,0},                             // Clef
+        0,                            // Longueur de la clef
+        0,                            // Position de la clef dans le fichier
+        "HTML File",                  // Nom du format
+        "HTM",                        // Extension du format
+        "",                           // Createur du format
+        104,                          // Numero du format (unique)
+        1,                            // vaut la clef doit ˆtre verifie par proc
+        0,                            // vaut 1 si il existe un lien vers une proc
+        6},                           // type de fichier (1: module, 4: image, 3:executable, 6:other, 2:sample, 5:anim)
 {  {0,0},
         2,
         0,
@@ -799,6 +811,7 @@ short Infoswg(struct info *Info);
 short Infoams(struct info *Info);
 short Infot64(struct info *Info);
 short Infop00(struct info *Info);
+short Infohtm(struct info *Info);
 
 
 ULONG ReadLng(struct info *Info,ULONG position,char type);
@@ -979,7 +992,6 @@ void Traitefic(char *nomfic,struct info *Info)
 short n;
 short handle;
 short err;
-short txt;
 
 char path[256];
 
@@ -987,7 +999,6 @@ char path[256];
 
 short trv=-1;     // vaut -1 tant que l'on a rien trouv‚
 
-txt=0;
 
 // buffer=malloc(32768);
 
@@ -1073,6 +1084,7 @@ if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) ) {
 				case 68: err=Infoams(Info); break;
 				case 76: err=Infot64(Info); break;
                 case 91: err=Infotxt(Info); break;
+                case 104:err=Infohtm(Info); break;
 				default:
 						sprintf(Info->format,"Pingouin %d",K[n].numero);
 						trv=1;
@@ -2553,6 +2565,7 @@ for (pos=0;pos<Info->sizebuf;pos++) {
 						(a!=12) &				// passage de page
 						(a!=9) &				// tabulation
 						(a!=0) &				// erreur buffer
+                        (a!=2) &                // la petite tˆte
 						(a!=26)) {				// fin de fichier
 //						cprshortf("%d",Info->buffer[pos]);
 						return 1;
@@ -2607,5 +2620,43 @@ Info->fullname[32]=0;
 if (pos>999) Info->fullname[0]=0;
 
 return 0;
+}
+
+short Infohtm(struct info *Info)
+{
+unsigned short n,d;
+char *buf;
+char titre[64];
+
+buf=Info->buffer;
+
+d=0;
+for(n=0;n<32768;n++)
+    {
+    switch(buf[n])  {
+        case 10:
+        case 13:
+            break;
+        case '<':
+            d=n+1;
+            break;
+        case '>':
+            if (d==0) return 1;
+            memcpy(titre,buf+d,32);
+            if (n-d<64)
+                {
+                titre[n-d]=0;
+                if (!stricmp(titre,"HTML")) return 0;
+                if (!stricmp(titre,"TITLE")) return 0;
+                d=0;
+                }
+            break;
+        default:
+            if (d==0) return 1;
+            break;
+        }
+    }
+
+return 1;
 }
 
