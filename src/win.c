@@ -741,13 +741,13 @@ void YouMad(char *s)
 {
 int x,l;
 static char Buffer[70];
-static int CadreLength=71;
+static char CadreLength=70;
 
 struct Tmt T[5] =
     { {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 2,2,0,"You are MAD!",NULL},
-      { 1,1,4,NULL,&CadreLength},
+      { 1,1,4,&CadreLength,NULL},
       { 2,3,0,Buffer,NULL}  };
 
 struct TmtWin F = {-1,10,74,17,"Error!"};
@@ -759,7 +759,7 @@ if (x>25) x=25;
 
 l=(Cfg->TailleX)-2*x;
 
-CadreLength=l+1;
+CadreLength=l;
 
 F.x1=x-2;
 F.x2=x+l+1;
@@ -771,7 +771,7 @@ T[1].x=(3*l/4)-6;
 
 strcpy(Buffer,s);
 
-WinTraite(T,5,&F);
+WinTraite(T,5,&F,0);
 }
 
 
@@ -878,7 +878,7 @@ l18=KKCfg->saveviewpos;
 
 do
 {
-n=WinTraite(T,27,&F);
+n=WinTraite(T,27,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -933,73 +933,7 @@ UseCfg();
 
 }
 
-void FileSetup(void)
-{
-char buffer[256];
 
-static char Edit[64],View[64];
-static int DirLength=63;
-
-
-struct Tmt T[7] = {
-      { 8,3,1,View,&DirLength},
-      { 8,5,1,Edit,&DirLength},
-      { 1,3,0, "Viewer:",NULL},
-      { 1,5,0, "Editor:",NULL},
-      
-      { 3,7,5," Auto Editor ",NULL}, // Copy All
-
-      {3,10,2,NULL,NULL},                                       // le OK
-      {18,10,3,NULL,NULL}                                   // le CANCEL
-      };
-
-struct TmtWin F = {-1,5,74,18,"File Setup"};
-
-int n;
-char fin;
-
-strcpy(Edit,KKCfg->editeur);
-strcpy(View,KKCfg->vieweur);
-
-do
-{
-fin=1;
-
-n=WinTraite(T,7,&F);
-
-if (n==27) return;                                             // ESCape
-if (T[n].type==3) return;                                      // Cancel
-
-if (n==4)
-    {
-    static char dest[256];
-    static int i;
-
-    i=FicIdf(dest,buffer,91,2);
-    CommandLine(dest);
-
-    switch(i)
-        {
-        case 0:
-            strcpy(Edit,buffer);
-            break;
-        case 1:
-            WinError("Run Main Setup before");
-            break;  //--- error ----------------------------------------
-        case 2:
-            WinError("No player found");
-            break;  //--- no player ------------------------------------
-        case 3:
-            break; //--- Escape ----------------------------------------
-        }
-    fin=0;
-    }
-}
-while(!fin);
-
-strcpy(KKCfg->editeur,Edit);
-strcpy(KKCfg->vieweur,View);
-}
 
 void ExtSetup(void)
 {
@@ -1044,7 +978,7 @@ strcpy(Arc,KKCfg->ExtArc);
 strcpy(Exe,KKCfg->ExtExe);
 strcpy(Usr,KKCfg->ExtUsr);
 
-n=WinTraite(T,14,&F);
+n=WinTraite(T,14,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -1111,7 +1045,7 @@ sy=KKCfg->fentype+4;
 l1=Cfg->font;
 l2=Cfg->SaveSpeed;
 
-n=WinTraite(T,16,&F);
+n=WinTraite(T,16,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -1159,7 +1093,7 @@ l3=Cfg->combit;
 sprintf(Dir,"%c",Cfg->comparity);
 l5=Cfg->comstop;
 
-n=WinTraite(T,8,&F);
+n=WinTraite(T,8,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -1218,7 +1152,7 @@ SplitMasque(Mask[12]->chaine,buffer[2],buffer[3]);
 SplitMasque(Mask[13]->chaine,buffer[4],buffer[5]);
 SplitMasque(Mask[14]->chaine,buffer[6],buffer[7]);
 
-n=WinTraite(T,18,&F);
+n=WinTraite(T,18,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -1763,7 +1697,7 @@ fvit2=(Cl2*CLOCKS_PER_SEC)/270;
 sprintf(vit1,"%f characters/seconds",fvit1);
 sprintf(vit2,"%f characters/seconds",fvit2);
 
-n=WinTraite(T,6,&F);
+n=WinTraite(T,6,&F,0);
 
 LoadScreen();
 }

@@ -98,7 +98,7 @@ return i;
 \*--------------------------------------------------------------------*/
 int FenDelete(char *dest)
 {
-static int CadreLength=71;
+static char CadreLength=70;
 static int Dir[256];
 
 struct Tmt T[6] = {
@@ -107,7 +107,7 @@ struct Tmt T[6] = {
       {55,5,3,NULL,NULL},
       { 5,3,0,Dir,NULL},
       { 5,2,0,"Delete file",NULL},
-      { 1,1,4,NULL,&CadreLength}
+      { 1,1,4,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,10,74,17, "Delete" };
@@ -116,7 +116,7 @@ int n;
 
 memcpy(Dir,dest,255);
 
-n=WinTraite(T,6,&F);
+n=WinTraite(T,6,&F,0);
 
 return n;
 
@@ -124,7 +124,7 @@ return n;
 
 int DelErr(char *dest)
 {
-static int CadreLength=71;
+static char CadreLength=70;
 static int Dir[256];
 
 struct Tmt T[5] = {
@@ -132,7 +132,7 @@ struct Tmt T[5] = {
       {45,5,3,NULL,NULL},
       { 5,3,0,Dir,NULL},
       { 5,2,0,"Couldn't delete file",NULL},
-      { 1,1,4,NULL,&CadreLength}
+      { 1,1,4,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,10,74,17, "Error!" };
@@ -141,7 +141,7 @@ int n;
 
 memcpy(Dir,dest,255);
 
-n=WinTraite(T,5,&F);
+n=WinTraite(T,5,&F,0);
 
 return n;
 

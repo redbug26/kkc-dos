@@ -9,6 +9,8 @@ char *GetLastHistDir(void);
 
 char *GetLastHistCom(void);
 
+void ExecCom(void);
+
 void ChangeLine(void);
 int CommandLine(char *string,...);
 int Run(char *chaine);
@@ -21,3 +23,5 @@ void History2Line(char *src,char *dest);
 void Line2History(char *src);
 
 int IsDir(struct file *f);
+
+

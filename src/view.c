@@ -1593,14 +1593,14 @@ void SearchTxt(void)
 {
 static char Dir[70];
 static int DirLength=70;
-static int CadreLength=71;
+static char CadreLength=70;
 
 struct Tmt T[5] =
     { { 2,3,1,Dir,&DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 5,2,0,"Search for:",NULL},
-      { 1,1,4,NULL,&CadreLength} };
+      { 1,1,4,&CadreLength,NULL} };
 
 struct TmtWin F =
     { -1,10,74,17, "Search Text" };
@@ -1623,7 +1623,7 @@ do
 
 posn++;
 
-n=WinTraite(T,5,&F);
+n=WinTraite(T,5,&F,0);
 
 if ( (n!=0) & (n!=1) ) return;
 
@@ -1687,7 +1687,7 @@ void SearchHexa(void)
 {
 static char Text[70],Hexa[70];
 static int DirLength=70;
-static int CadreLength=71;
+static char CadreLength=70;
 
 struct Tmt T[8] =
     { { 2,3,1,Hexa,&DirLength},
@@ -1696,8 +1696,8 @@ struct Tmt T[8] =
       {45,9,3,NULL,NULL},
       { 5,6,0,"Search for text:",NULL},
       { 5,2,0,"Search for hexa:",NULL},
-      { 1,1,4,NULL,&CadreLength},
-      { 1,5,4,NULL,&CadreLength} };
+      { 1,1,4,&CadreLength,NULL},
+      { 1,5,4,&CadreLength,NULL} };
 
 struct TmtWin F =
     {-1,7,74,18, "Search Text/Hexa" };
@@ -1708,7 +1708,7 @@ int testhexa=0;
 
 a=posn;
 
-n=WinTraite(T,8,&F);
+n=WinTraite(T,8,&F,0);
 
 if ( (n!=0) & (n!=1) ) return;
 
@@ -3086,7 +3086,7 @@ sw=0;
 l1=1;
 pp=8;
 
-m=WinTraite(T,17,&F);
+m=WinTraite(T,17,&F,0);
 
 if (m==27)  //--- escape -----------------------------------------------
     return;
@@ -3125,6 +3125,6 @@ if (n==1)   //--- Fichier TEXTE ----------------------------------------
     while(1);
     }
 
-WinMesg("Print","The file is printed");
+WinMesg("Print","The file is printed",0);
 }
 

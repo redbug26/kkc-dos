@@ -248,7 +248,7 @@ static int l1;
 static int DirLength=68;
 static int DriveLen=26;
 static int StrLen=40;
-static int CadreLength=69;
+static char CadreLength=68;
 
 static char x1=26,x2=40,x3=40;
 static int y1=6,y2=2,y3=2;
@@ -259,7 +259,7 @@ char SearchOld[80];
 struct Tmt T[18] = {
       { 3,3,1,SearchName,&DirLength},    // 0
       { 6,2,0,"Filename",NULL},
-      { 2,1,4,NULL,&CadreLength},
+      { 2,1,4,&CadreLength,NULL},
       { 3,6,10, "Current drive",&sw},
       { 3,7,10, "Current dir & subdir",&sw},
       { 3,8,10, "Only current directory",&sw},
@@ -288,7 +288,7 @@ strcpy(SearchOld,SearchName);
 
 l1=KKCfg->enterkkd;
 
-n=WinTraite(T,18,&F);
+n=WinTraite(T,18,&F,0);
 
 if (n!=27)  // pas escape
     {

@@ -125,6 +125,7 @@ struct kkconfig
 
      char editeur[64];               // ligne de commande pour l'editeur
      char vieweur[64];               // ligne de commande pour le viewer
+     char ssaver[64];          // ligne de commande pour le screen saver
 
      char ExtTxt[64],Enable_Txt;
      char ExtBmp[64],Enable_Bmp;
@@ -216,4 +217,8 @@ extern int IOerr;
 
 #define NBWIN 4
 
+/*--------------------------------------------------------------------*\
+|- prototype de kkfct.c                                               -|
+\*--------------------------------------------------------------------*/
 void DefaultKKCfg(void);
+void FileSetup(void);

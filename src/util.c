@@ -146,7 +146,7 @@ for (n=0;n<DFen->nbrfic;n++)
     }
 
 
-n=WinTraite(T,34,&F);
+n=WinTraite(T,34,&F,0);
 
 if (n!=27)  // pas escape
     {

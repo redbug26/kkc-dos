@@ -80,6 +80,11 @@ ColWin(0,0,79,49,7);
 ChrWin(0,0,79,49,32);
 GotoXY(0,0);
 
+if (argc==2)
+    {
+    if (argv[1][1]=='?') argc=1;
+    }
+
 if (  (argc!=2) & (argc!=4) )
     {
     puts("KKDESC");

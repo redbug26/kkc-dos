@@ -918,9 +918,21 @@ struct key K[nbrkey]=   {
     "DFP",
     "Pascal Bestebroer",
     139,0,0,3},
+{  {"RBKK_VENUS"},
+    10,
+    0,
+    "ScreenSaver",
+    "RBI",
+    "Ketchup Multimedia",143,0,0,6},
+{  {0xCC,0xDD,0x59,0x13,0x61},
+    5,
+    0,
+    "Watcom help file",
+    "IHP",
+    "Watcom",144,0,1,6},
 
 
-// Dernier employe: 142
+// Dernier employe: 144
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -1118,6 +1130,7 @@ short Infohsi(RB_IDF *Info);
 short Infoprc(RB_IDF *Info);
 short Infodbf2(RB_IDF *Info);
 short Infodbf3(RB_IDF *Info);
+short Infoihp(RB_IDF *Info);
 
 
 void ClearSpace(char *name);    //--- efface les espaces inutiles ------
@@ -1419,6 +1432,7 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case 137:err=Infoprc(Info); break;
             case 140:err=Infodbf2(Info); break;
             case 141:err=Infodbf3(Info); break;
+            case 144:err=Infoihp(Info); break;
             default:     //--- Ca serait une erreur de ma part alors ---
                 sprintf(Info->format,"Pingouin %d",K[n].numero);
                 trv=1;
@@ -1555,6 +1569,13 @@ ReadStr(Info,0,Info->fullname,20);
 
 sprintf(Info->info, "%3d /%3d /%3d",instr,buf[950],chnl);
 strcpy(Info->Tinfo,"Inst/Patt/Chnl");
+
+return 0;
+}
+
+short Infoihp(RB_IDF *Info)
+{
+ReadStr(Info,0x3A,Info->fullname,32);
 
 return 0;
 }

@@ -33,10 +33,9 @@
 
 void Fin(void);
 
+void WinSelect(FENETRE *Fen);
 void SaveSel(FENETRE *F1);
 void LoadSel(int n);
-
-void ExecCom(void);
 
 void AffFen(FENETRE *Fen);
 
@@ -52,6 +51,7 @@ sig_atomic_t signal_count;
 
 char *SpecMessy=NULL;
 char SpecSortie[256];
+char saveconfig=1;
 
 char Select_Chaine[32]="*.*";
 
@@ -94,6 +94,87 @@ char GetDriveReady(char i);
     modify [eax ebx ecx edx] \
     parm [dl] \
     value [cl];
+
+/*--------------------------------------------------------------------*\
+|- Gestion des selections                                             -|
+\*--------------------------------------------------------------------*/
+void WinSelect(FENETRE *Fen)
+{
+FILE *fic;
+int i,n;
+static char CadreLength=70;
+static char Dir[70];
+static int DirLength=70;
+char nom[256];
+
+struct Tmt T[] =
+    { { 2,3,1, Dir, &DirLength},
+      {15,5,5,"    LOAD     ",NULL},
+      {45,5,5,"     SAVE    ",NULL},
+      { 2,2,0,"Would you load/save selection in",NULL},
+      { 1,1,4,&CadreLength,NULL} };
+
+struct TmtWin F = {-1,5,74,12,"Load/Save Selection"};
+
+strcpy(Dir,Fen->path);
+Path2Abs(Dir,"KKSELECT.TMP");
+
+n=WinTraite(T,5,&F,1);
+
+if (n==27) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+if (n==1)
+    {
+    fic=fopen(Dir,"rt");
+    if (fic==NULL)
+        {
+        WinError("File don't exist");
+        return;
+        }
+    while(!feof(fic))
+        {
+        fgets(nom,256,fic);
+        nom[strlen(nom)-1]=0;
+
+        for(i=0;i<Fen->nbrfic;i++)
+            {
+            if (!WildCmp(Fen->F[i]->name,nom))
+                {
+                switch(n)
+                    {
+                    case 0:
+                        FicSelect(i,1);                        // Select
+                        break;
+                    case 1:
+                        FicSelect(i,2);             // Inverse Selection
+                        break;
+                    }
+                }
+            }
+        }
+    fclose(fic);
+    }
+
+if (n==2)
+    {
+    fic=fopen(Dir,"wt");
+    if (fic==NULL)
+        {
+        WinError("File couldn't be created");
+        return;
+        }
+    for(i=0;i<Fen->nbrfic;i++)
+        {
+        if ((Fen->F[i]->select)==1)
+            fprintf(fic,"%s\n",Fen->F[i]->name);
+        }
+    fclose(fic);
+    }
+
+
+}
+
 
 
 /*--------------------------------------------------------------------*\
@@ -487,6 +568,9 @@ LoadScreen();
 |- 73: Execute une commande redirige vers le fichier temporaire       -|
 |- 74: Affiche le fichier temporaire                                  -|
 |- 75: Directory tree                                                 -|
+|- 76: Screen Saver                                                   -|
+|- 77: Support prot‚ge, lance l'installation                          -|
+|- 78: Sauve ou charge une selection                                  -|
 \*--------------------------------------------------------------------*/
 
 void GestionFct(int fct)
@@ -618,7 +702,7 @@ switch(fct)
         ChangePalette(0);
         break;
     case 18:                                                    // About
-        WinMesg("About",RBTitle" /RedBug");
+        WinMesg("About",RBTitle" /RedBug",0);
         break;
     case 19:                                    // Select temporary file
         for (i=0;i<DFen->nbrfic;i++)
@@ -985,6 +1069,29 @@ switch(fct)
 
         DFen=DFen->Fen2;
         break;
+    case 76:
+        if (KKCfg->ssaver[0]!=0)
+            CommandLine("#%s",KKCfg->ssaver);
+        else
+            ScreenSaver();
+        break;
+    case 77:
+        WinError("Access Denied");
+        SpecMessy="You must copy files on no write protected support";
+        memset(SpecSortie,0,256);
+        saveconfig=0;
+        Fin();
+        break;
+    case 78:
+        WinSelect(DFen);
+        if (KKCfg->autoreload==1)
+            {
+            DFen=DFen->Fen2;
+            GestionFct(27);
+            }
+        GestionFct(43);   // Active la fenetre principal (KKCfg->FenAct)
+        GestionFct(27);         //--- Reload ---------------------------
+        break;
     }
 
 
@@ -1102,7 +1209,8 @@ switch (poscur)
    strcpy(bar[1].titre,"Select temporary File   ý");  bar[1].fct=19;
    strcpy(bar[2].titre,"                         ");  bar[2].fct=0;
    strcpy(bar[3].titre,"ASCII Table        CTRL-A");  bar[3].fct=28;
-   nbmenu=4;
+   strcpy(bar[4].titre,"Screen Saver             ");  bar[4].fct=76;
+   nbmenu=5;
    break;
  case 5:
    strcpy(bar[0].titre,"Configuration      ");   bar[0].fct=31;
@@ -1177,7 +1285,7 @@ struct Tmt T[] = {
 
 struct TmtWin F = {-1,5,36,11,"Selection of files"};
 
-n=WinTraite(T,3,&F);
+n=WinTraite(T,3,&F,0);
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
@@ -1204,7 +1312,7 @@ struct Tmt T[] = {
 
 struct TmtWin F = {-1,5,36,11,"Deselection of files"};
 
-n=WinTraite(T,3,&F);
+n=WinTraite(T,3,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -1444,20 +1552,20 @@ void WinCD(void)
 {
 static char Dir[70];
 static int DirLength=70;
-static int CadreLength=71;
+static char CadreLength=70;
 
 struct Tmt T[5] =
       { { 2,3,1, Dir, &DirLength},
         {15,5,2,NULL,NULL},
         {45,5,3,NULL,NULL},
         { 5,2,0,"Change to which directory",NULL},
-        { 1,1,4,NULL,&CadreLength} };
+        { 1,1,4,&CadreLength,NULL} };
 
 struct TmtWin F = {-1,10,74,17, "Change Directory" };
 
 int n;
 
-n=WinTraite(T,5,&F);
+n=WinTraite(T,5,&F,0);
 
 if (n!=27)
     if (T[n].type!=3)
@@ -1473,20 +1581,20 @@ void CreateDirectory(void)
 {
 static char Dir[70];
 static int DirLength=70;
-static int CadreLength=71;
+static char CadreLength=70;
 
 struct Tmt T[5] =
     { { 2,3,1,Dir,&DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 5,2,0,"Name the directory to be created",NULL},
-      { 1,1,4,NULL,&CadreLength} };
+      { 1,1,4,&CadreLength,NULL} };
 
 struct TmtWin F = {-1,10,74,17, "Create Directory" };
 
 int n;
 
-n=WinTraite(T,5,&F);
+n=WinTraite(T,5,&F,0);
 
 if (n!=27)
     if (T[n].type!=3)
@@ -1496,40 +1604,6 @@ if (n!=27)
         }
 }
 
-/*--------------------------------------------------------------------*\
-|-                      Execute command                               -|
-\*--------------------------------------------------------------------*/
-
-void ExecCom(void)
-{
-static char Dir[70];
-static int DirLength=70;
-static int CadreLength=71;
-
-struct Tmt T[] =
-    { { 2,3,1,Dir,&DirLength},
-      { 7,5,2,NULL,NULL},
-      {30,5,5," Last result ",NULL},
-      {53,5,3,NULL,NULL},
-      { 5,2,0,"Enter the command:",NULL},
-      { 1,1,4,NULL,&CadreLength} };
-
-struct TmtWin F = {-1,10,74,17, "Execute command" };
-
-int n;
-
-n=WinTraite(T,6,&F);
-
-if (n!=27)
-    {
-    if (T[n].type==5)                          // Le bouton personnalis‚
-        GestionFct(74);
-
-    if (T[n].type!=3)
-        if (strlen(Dir)!=0)
-            CommandLine("#%s >%s",Dir,Fics->temp);
-    }
-}
 
 /*--------------------------------------------------------------------*\
 |-                             Edit File                              -|
@@ -1549,20 +1623,20 @@ void EditNewFile(void)
 {
 static char Dir[70];
 static int DirLength=70;
-static int CadreLength=71;
+static char CadreLength=70;
 
 struct Tmt T[5] =
     { { 2,3,1,Dir,&DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 5,2,0,"Name the file to be edited",NULL},
-      { 1,1,4,NULL,&CadreLength} };
+      { 1,1,4,&CadreLength,NULL} };
 
 struct TmtWin F = {-1,10,74,17, "Edit New File" };
 
 int n;
 
-n=WinTraite(T,5,&F);
+n=WinTraite(T,5,&F,0);
 
 if (n!=27)
     if (T[n].type!=3)
@@ -1577,20 +1651,20 @@ void CreateKKD(void)
 static char Name[256];
 static char Dir[70];
 static int DirLength=70;
-static int CadreLength=71;
+static char CadreLength=70;
 
 struct Tmt T[5] =
     { { 2,3,1,Dir,&DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 5,2,0,"Name the KKD file to be created",NULL},
-      { 1,1,4,NULL,&CadreLength} };
+      { 1,1,4,&CadreLength,NULL} };
 
 struct TmtWin F = {-1,10,74,17,"Create KKD File" };
 
 int n;
 
-n=WinTraite(T,5,&F);
+n=WinTraite(T,5,&F,0);
 
 if (n!=27)
     if (T[n].type!=3)
@@ -1989,7 +2063,7 @@ do
         car=0;
         }
 
-    if (car==8) //--- BACKSPACE ----------------------------------------
+    if ( (car==8) & (lng!=0) ) //--- BACKSPACE -------------------------
         lng--,fin=0;
 
     if (car2==80) //--- BAS --------------------------------------------
@@ -2196,6 +2270,8 @@ FILE *fic;
 int i;
 
 fic=fopen(Fics->temp,"wt");
+if (fic==NULL)
+    GestionFct(77);
 
 fprintf(fic,"%s\n",F1->F[F1->pcur]->name);
 
@@ -2246,7 +2322,7 @@ while(!feof(fic))
 
     for(i=0;i<DFen->nbrfic;i++)
         {
-        if (!stricmp(DFen->F[i]->name,nom))
+        if (!WildCmp(DFen->F[i]->name,nom))
             {
             switch(n)
                 {
@@ -2271,14 +2347,14 @@ void WinRename(FENETRE *F1,FENETRE *F2)
 static char Dir[70];
 static char Name[256],Temp[256];
 static int DirLength=70;
-static int CadreLength=71;
+static char CadreLength=70;
 
 struct Tmt T[5] = {
       { 2,3,1, Dir, &DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 5,2,0,"Move/rename file to",NULL},
-      { 1,1,4,NULL,&CadreLength}
+      { 1,1,4,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,10,74,17,"Move/rename"};
@@ -2291,7 +2367,7 @@ Path2Abs(Dir,F1->F[DFen->pcur]->name);
 strcpy(Name,F1->path);
 Path2Abs(Name,F1->F[DFen->pcur]->name);
 
-n=WinTraite(T,5,&F);
+n=WinTraite(T,5,&F,0);
 
 strcpy(Temp,F1->path);
 Path2Abs(Temp,Dir);
@@ -2449,7 +2525,7 @@ do
                 }
 
             if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) )
-                c=ScreenSaver();
+                GestionFct(76);
 
             car=*Keyboard_Flag1;
 
@@ -2481,13 +2557,20 @@ do
             case 0x8D:  //--- CTRL-UP ----------------------------------
                 if (!strcmp(DFen->F[DFen->pcur]->name,".."))
                     {
+                    car=0;
                     for (i=0;i<DFen->nbrfic;i++)
                        if (!strnicmp("FILE_ID.DIZ",DFen->F[i]->name,13))
                             {
                             DFen->pcur=i;
                             DFen->scur=i;
+                            car=1;
                             break;
                             }
+                    if (car==0)
+                        {
+                        c=0;
+                        WinError("No FILE_ID.DIZ found");
+                        }
                     }
                 break;
             case 0x85:  //--- F11 --------------------------------------
@@ -2578,6 +2661,15 @@ do
 //-Switch car3 (BIOS_KEYBOARD)------------------------------------------
     switch (car3)
     {
+    case 0xE0:                                          // Extended code
+        switch(car)
+            {
+            case '/':           // '/' --> Sauve ou charge une selection
+                GestionFct(78);
+                car=car2=0;
+                break;
+            }
+        break;
     case 0x37:                              // '*' --> Inverse selection
         GestionFct(2);
         car=car2=0;
@@ -2900,7 +2992,8 @@ void Fin(void)
 {
 int n;
 
-SaveCfg();
+if (saveconfig)
+    SaveCfg();
 
 PlaceDrive();
 
@@ -3079,6 +3172,9 @@ for (t=0;t<NBWIN;t++)
     KKCfg->FenTyp[t]=Fenetre[t]->FenTyp;
 
 fic=fopen(Fics->CfgFile,"wb");
+if (fic==NULL)
+    GestionFct(77);
+
 fwrite((void*)Cfg,sizeof(struct config),1,fic);
 
 fwrite((void*)KKCfg,sizeof(struct kkconfig),1,fic);

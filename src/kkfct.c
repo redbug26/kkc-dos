@@ -106,6 +106,7 @@ KKCfg->esttime=1;
 
 KKCfg->editeur[0]=0;
 KKCfg->vieweur[0]=0;
+KKCfg->ssaver[0]=0;
 
 KKCfg->Esc2Close=0;
 
@@ -136,4 +137,99 @@ KKCfg->saveviewpos=1;
 KKCfg->wmask=15;                                      // RedBug preference
 
 KKCfg->AnsiSpeed=133;
+}
+
+void FileSetup(void)
+{
+char buffer[256];
+
+static char Edit[64],View[64],SSaver[64];
+static int DirLength=63;
+
+
+struct Tmt T[10] = {
+      { 8,3,1,View,&DirLength},
+      { 8,5,1,Edit,&DirLength},
+      { 8,7,1,SSaver,&DirLength},
+      { 1,3,0, "Viewer:",NULL},
+      { 1,5,0, "Editor:",NULL},
+      { 1,7,0, "SSaver:",NULL},
+      
+      { 3,9,5," Auto Editor ",NULL},
+      {18,9,5," Auto SSaver ",NULL},
+
+      {3,12,2,NULL,NULL},                                       // le OK
+      {18,12,3,NULL,NULL}                                   // le CANCEL
+      };
+
+struct TmtWin F = {-1,5,74,20,"File Setup"};
+
+int n;
+char fin;
+
+strcpy(Edit,KKCfg->editeur);
+strcpy(View,KKCfg->vieweur);
+strcpy(SSaver,KKCfg->ssaver);
+
+do
+{
+fin=1;
+
+n=WinTraite(T,10,&F,0);
+
+if (n==27) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+if (n==6)
+    {
+    static char dest[256];
+    static int i;
+
+    i=FicIdf(dest,buffer,91,2);
+
+    switch(i)
+        {
+        case 0:
+            strcpy(Edit,buffer);
+            break;
+        case 1:
+            WinError("Run Main Setup before");
+            break;  //--- error ----------------------------------------
+        case 2:
+            WinError("No editor found");
+            break;  //--- no player ------------------------------------
+        case 3:
+            break; //--- Escape ----------------------------------------
+        }
+    fin=0;
+    }
+if (n==7)
+    {
+    static char dest[256];
+    static int i;
+
+    i=FicIdf(dest,buffer,143,2);
+
+    switch(i)
+        {
+        case 0:
+            strcpy(SSaver,buffer);
+            break;
+        case 1:
+            WinError("Run Main Setup before");
+            break;  //--- error ----------------------------------------
+        case 2:
+            WinError("No screen saver found");
+            break;  //--- no player ------------------------------------
+        case 3:
+            break; //--- Escape ----------------------------------------
+        }
+    fin=0;
+    }
+}
+while(!fin);
+
+strcpy(KKCfg->editeur,Edit);
+strcpy(KKCfg->vieweur,View);
+strcpy(KKCfg->ssaver,SSaver);
 }

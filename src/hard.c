@@ -164,7 +164,7 @@ while ( (!kbhit()) & (b==0) & (zm==0) )
     GetPosMouse(&xm,&ym,&zm);
 
     if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) )
-        b=ScreenSaver();
+        ScreenSaver();
     }
 
 if (zm!=0) _zmok=0;
@@ -1402,26 +1402,17 @@ return retour;
 /*--------------------------------------------------------------------*\
 |-                           Screen Saver                             -|
 \*--------------------------------------------------------------------*/
-int ScreenSaver(void)
+void ScreenSaver(void)
 {
-char a;
-int b;
-
 inp(0x3DA);
 inp(0x3BA);
 outp(0x3C0,0);
 
-a=getch();
-if (a==0)
-    b=getch()*256+a;
-    else
-    b=a;
+while(!kbhit());
 
 inp(0x3DA);
 inp(0x3BA);
 outp(0x3C0,0x20);
-
-return b;
 }
 
 /*--------------------------------------------------------------------*\
@@ -2114,7 +2105,7 @@ return r;
 |-   Retourne 27 si escape                                            -|
 |-   Retourne numero de la liste sinon                                -|
 \*--------------------------------------------------------------------*/
-int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F)
+int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F,int first)
 {
 char fin;                                              // si =0 continue
 char direct;                                         // direction du tab
@@ -2168,7 +2159,7 @@ switch(T[i].type) {
         break;
     case 4:
         WinCadre(x1+T[i].x,y1+T[i].y,
-                          *(T[i].entier)+x1+T[i].x,y1+T[i].y+3,1);
+                                 *(T[i].str)+x1+T[i].x+1,y1+T[i].y+3,1);
         break;
     case 5:
         PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
@@ -2176,13 +2167,12 @@ switch(T[i].type) {
         break;
     case 6:
         WinCadre(x1+T[i].x,y1+T[i].y,
-                          *(T[i].entier)+x1+T[i].x,y1+T[i].y+2,2);
+                                 *(T[i].str)+x1+T[i].x+1,y1+T[i].y+2,2);
         break;
     case 7:
         j=strlen(T[i].str)+2;
         ColLin(x1+T[i].x+j,y1+T[i].y,9,1*16+5);
-        PrintAt(x1+T[i].x,y1+T[i].y,"%s: %-9d",T[i].str,
-                                                        *(T[i].entier));
+        PrintAt(x1+T[i].x,y1+T[i].y,"%s: %-9d",T[i].str,*(T[i].entier));
         break;
     case 8:
         PrintAt(x1+T[i].x,y1+T[i].y,"[%c] %s",
@@ -2190,7 +2180,7 @@ switch(T[i].type) {
         break;
     case 9:
         WinCadre(x1+T[i].x,y1+T[i].y,
-            *(T[i].str)+x1+T[i].x+1,*(T[i].entier)+y1+T[i].y+1,2);
+                  *(T[i].str)+x1+T[i].x+1,*(T[i].entier)+y1+T[i].y+1,2);
         break;
     case 10:
         PrintAt(x1+T[i].x,y1+T[i].y,
@@ -2205,7 +2195,7 @@ switch(T[i].type) {
 
 fin=0;
 direct=1;
-i=0;
+i=first;
 
 while (fin==0) {
 
@@ -2342,38 +2332,83 @@ return 27;                                                     // ESCAPE
 |-  1 -> Cancel                                                       -|
 |-  0 -> OK                                                           -|
 \*--------------------------------------------------------------------*/
-int WinMesg(char *mesg,char *erreur)
+int WinMesg(char *title,char *msg,char info)
 {
-int l;
-static char Buffer[70],Buffer2[70];
-static int CadreLength;
+int d,n,lng;
+static char Buffer2[70];
 
-struct Tmt T[4] = {
+static int width;
+static char length;
+char ok;
+char *Mesg[5];
+
+struct Tmt T[8] = {
       { 0,4,2,NULL,NULL},                                          // OK
       { 0,4,3,NULL,NULL},                                      // CANCEL
-      { 1,1,6,NULL,&CadreLength},
-      { 2,2,0,Buffer,NULL}
+      { 1,1,9,&length,&width},
+      { 2,2,0,NULL,NULL},
+      { 2,3,0,NULL,NULL},
+      { 2,4,0,NULL,NULL},
+      { 2,5,0,NULL,NULL},
+      { 2,6,0,NULL,NULL}
       };
-
+int nbr=0;
 struct TmtWin F = {-1,10,0,16, Buffer2};
 
-l=max(strlen(mesg),strlen(erreur))+3;
-if (l<31) l=31;
+lng=0;
+d=0;
+for(n=0;n<=strlen(msg);n++)
+    {
+    if ((msg[n]==0) | (msg[n]=='\n'))
+        {
+        Mesg[nbr]=GetMem(n-d+1);
+        memcpy(Mesg[nbr],msg+d,n-d);
+        Mesg[nbr][n-d]=0;
+        if (n-d>lng) lng=n-d;
+        d=n+1;
+        T[nbr+3].str=Mesg[nbr];
+        nbr++;
+        }
+    }
+d=nbr;
 
-CadreLength=l-2;
+T[0].y=nbr+3;
+T[1].y=nbr+3;
+F.y2=nbr+15;
 
-F.x2=l+1;
+lng=max(lng,strlen(title))+3;
+if (lng<31) lng=31;
 
-T[0].x=(l/4)-5;
-T[1].x=(3*l/4)-6;
 
-strcpy(Buffer,erreur);
-strcpy(Buffer2,mesg);
+length=lng-3;
+width=nbr;
 
-if (WinTraite(T,4,&F)==0)
-    return 0;
+F.x2=lng+1;
+
+T[0].x=(lng/4)-5;
+T[1].x=(3*lng/4)-6;
+
+if ((info&7)==1)
+    {
+    T[0].str="     YES     ";
+    T[1].str="      NO     ";
+    T[0].type=5;
+    T[1].type=5;
+    }
+
+nbr+=3;
+
+strcpy(Buffer2,title);
+
+if (WinTraite(T,nbr,&F,info>>4)==0)
+    ok=0;
     else
-    return 1;
+    ok=1;
+
+for(n=0;n<d;n++)
+    LibMem(Mesg[n]);
+
+return ok;
 }
 
 /*--------------------------------------------------------------------*\
@@ -2879,12 +2914,10 @@ for (n=0;n<nbr;n++)
     do
         {
         let[n]=toupper(bar[n].titre[i]);
+        fin=1;
         if (let[n]!=0)
-            {
-            fin=1;
             for (m=0;m<n;m++)
                 if (let[m]==let[n]) fin=0,i++;
-            }
         }
     while(fin==0);
     }
@@ -2966,7 +2999,7 @@ if (car==0)
             car=0x4D00;
         }
 
-    _zmok=1;                                     // On relache le bouton
+    ReleaseButton();
     }
 
 do
@@ -3573,6 +3606,7 @@ if (nbrkey==0)
                 c=80*256;
                 else
                 c=72*256;
+            ReleaseButton();
             }
         if ((button&2)==2)     //--- droite ----------------------------
             c=27;
@@ -3753,7 +3787,7 @@ _charm=0;
 
 _dclik=0;
 
-_zmok=1;        // Bouton relach‚
+ReleaseButton();
 }
 
 

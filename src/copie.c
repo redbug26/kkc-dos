@@ -148,7 +148,7 @@ return i;
 \*--------------------------------------------------------------------*/
 void ProtFile(char *path)
 {
-static int CadreLength=71;
+static char CadreLength=70;
 static int Dir[256];
 
 struct Tmt T[5] = {
@@ -156,7 +156,7 @@ struct Tmt T[5] = {
       {45,5,3,NULL,NULL},
       { 5,3,0,Dir,NULL},
       { 5,2,0,"Couldn't create file",NULL},
-      { 1,1,4,NULL,&CadreLength}
+      { 1,1,4,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,8,74,15,"Copy" };
@@ -165,7 +165,7 @@ if (FicEcrase==1) return;
 
 memcpy(Dir,path,255);
 
-switch(WinTraite(T,5,&F))
+switch(WinTraite(T,5,&F,0))
     {
     case 27:
     case 1:
@@ -181,21 +181,21 @@ switch(WinTraite(T,5,&F))
 \*--------------------------------------------------------------------*/
 int UserInt(void)
 {
-static int CadreLength=71;
+static char CadreLength=70;
 
 struct Tmt T[5] = {
       {5,4,5, "     Yes     ",NULL}, // Copy
       {22,4,5,"     No      ",NULL}, // No replace
       {56,4,3,NULL,NULL},
       { 5,2,0,"Do you will copy this file ?",NULL},
-      { 1,1,6,NULL,&CadreLength}
+      { 1,1,6,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,8,74,14, "User Interrupt" };
 
 int n;
 
-n=WinTraite(T,5,&F);
+n=WinTraite(T,5,&F,0);
 
 switch(n)   {
     case 0:
@@ -218,7 +218,7 @@ return 0;
 
 int FileExist(char *path)
 {
-static int CadreLength=71;
+static char CadreLength=70;
 static int Dir[256];
 
 struct Tmt T[7] = {
@@ -228,7 +228,7 @@ struct Tmt T[7] = {
       {56,5,3,NULL,NULL},
       { 5,3,0,Dir,NULL},
       { 5,2,0,"Overwrite file ?",NULL},
-      { 1,1,4,NULL,&CadreLength}
+      { 1,1,4,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,8,74,15, "Copy" };
@@ -237,7 +237,7 @@ if (FicEcrase==1) return 0;
 
 memcpy(Dir,path,255);
 
-switch(WinTraite(T,7,&F))
+switch(WinTraite(T,7,&F,0))
     {
     case 0:
         return 0;       // Replace
@@ -363,37 +363,45 @@ ok=1;
 
 MaskCnv(outpath);
 
+if (!WildCmp(inpath,outpath))
+    {
+    WinError("Source & Destination are the same");
+    ok=0;
+    }
+
 PrintAt(9,5,"From %59s",inpath);
 PrintAt(9,6,"To   %59s",outpath);
 
-inhand=fopen(inpath,"rb");
-if (inhand==NULL)
-    ok=0;
-    else
+if (ok==1)
     {
-    struct diskfree_t d;
-    long tfree;
-
-    size=filelength(fileno(inhand));
-
-    _dos_getdiskfree(toupper(outpath[0])-'A'+1,&d);
-
-    tfree=(d.avail_clusters)*(d.sectors_per_cluster);
-    tfree=tfree*(d.bytes_per_sector);
-
-    SizeMaxRecord=(d.bytes_per_sector);
-
-    SizeMaxRecord=32*1024;
-
-    if (tfree<size)
-        {
-        fclose(inhand);
-        if (WinError("No more place on drive")==1)
-            FicEcrase=2;
+    inhand=fopen(inpath,"rb");
+    if (inhand==NULL)
         ok=0;
+        else
+        {
+        struct diskfree_t d;
+        long tfree;
+
+        size=filelength(fileno(inhand));
+
+        _dos_getdiskfree(toupper(outpath[0])-'A'+1,&d);
+
+        tfree=(d.avail_clusters)*(d.sectors_per_cluster);
+        tfree=tfree*(d.bytes_per_sector);
+
+        SizeMaxRecord=(d.bytes_per_sector);
+
+        SizeMaxRecord=32*1024;
+
+        if (tfree<size)
+            {
+            fclose(inhand);
+            if (WinError("No more place on drive")==1)
+                FicEcrase=2;
+            ok=0;
+            }
         }
     }
-
 
 if (ok==1)
     {
@@ -470,7 +478,7 @@ return ok;
 int FenCopie(FENETRE *F1,FENETRE *FTrash)
 {
 static int DirLength=70;
-static int CadreLength=71;
+static char CadreLength=70;
 static int n,m,o;
 static char buffer[80];
 
@@ -479,7 +487,7 @@ struct Tmt T[5] = {
       {15,5,2,NULL,NULL},           // le OK
       {45,5,3,NULL,NULL},           // le CANCEL
       { 5,2,0,buffer,NULL},
-      { 1,1,4,NULL,&CadreLength}
+      { 1,1,4,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,10,74,17,"Copy" };
@@ -502,9 +510,14 @@ memcpy(Dir,FTrash->path,255);
 
 n=0;
 if (((KKCfg->noprompt)&1)==0)
-    n=WinTraite(T,5,&F);
+    n=WinTraite(T,5,&F,0);
 
 Path2Abs(Dir,".");
+
+strcpy(temp,F1->path);
+Path2Abs(temp,Dir);
+strcpy(Dir,temp);
+
 
 if (n!=27)  // pas escape
     {
@@ -512,12 +525,13 @@ if (n!=27)  // pas escape
     for (m=0;m<strlen(Dir);m++)
         if ( (Dir[m]=='\\') | (Dir[m]=='/') ) o++;
 
-    if (o==-1)
+/*    if (o==-1)
         {
         strcpy(temp,F1->path);
         Path2Abs(temp,Dir);
         strcpy(Dir,temp);
         }
+*/
 
     strcpy(temp,"*.*");
 
@@ -557,7 +571,7 @@ return 0;       // Erreur
 int FenMove(FENETRE *F1,FENETRE *FTrash)
 {
 static int DirLength=70;
-static int CadreLength=71;
+static char CadreLength=70;
 static char Dir[256];
 static int n,m,o;
 
@@ -566,7 +580,7 @@ struct Tmt T[5] = {
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 5,2,0,"Move files to",NULL},
-      { 1,1,4,NULL,&CadreLength}
+      { 1,1,4,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,10,74,17,"Move"};
@@ -575,7 +589,7 @@ memcpy(Dir,FTrash->path,255);
 
 n=0;
 if (((KKCfg->noprompt)&1)==0)
-    n=WinTraite(T,5,&F);
+    n=WinTraite(T,5,&F,0);
 
 Path2Abs(Dir,".");
 
@@ -1019,7 +1033,7 @@ return i;
 \*--------------------------------------------------------------------*/
 void ProtFileM(char *path)
 {
-static int CadreLength=71;
+static char CadreLength=70;
 static int Dir[256];
 
 struct Tmt T[5] = {
@@ -1027,7 +1041,7 @@ struct Tmt T[5] = {
       {45,5,3,NULL,NULL},
       { 5,3,0,Dir,NULL},
       { 5,2,0,"Couldn't create file",NULL},
-      { 1,1,4,NULL,&CadreLength}
+      { 1,1,4,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,8,74,15,"Move" };
@@ -1036,7 +1050,7 @@ if (FicEcrase==1) return;
 
 memcpy(Dir,path,255);
 
-switch(WinTraite(T,5,&F))
+switch(WinTraite(T,5,&F,0))
     {
     case 27:
     case 1:
@@ -1053,7 +1067,7 @@ switch(WinTraite(T,5,&F))
 \*--------------------------------------------------------------------*/
 int FileExistM(char *path)
 {
-static int CadreLength=71;
+static char CadreLength=70;
 static int Dir[256];
 
 struct Tmt T[7] = {
@@ -1063,7 +1077,7 @@ struct Tmt T[7] = {
       {56,5,3,NULL,NULL},
       { 5,3,0,Dir,NULL},
       { 5,2,0,"Overwrite file ?",NULL},
-      { 1,1,4,NULL,&CadreLength}
+      { 1,1,4,&CadreLength,NULL}
       };
 
 struct TmtWin F = {-1,8,74,15,"Move" };
@@ -1072,7 +1086,7 @@ if (FicEcrase==1) return 0;
 
 memcpy(Dir,path,255);
 
-switch(WinTraite(T,7,&F))
+switch(WinTraite(T,7,&F,0))
     {
     case 0:
         return 0;                                             // Replace
@@ -1341,9 +1355,7 @@ CommandLine("#cd %s",path);
 
 if (FenCopie(F1,FTrash)==0) return;
 
-
-if (!strcmp(F1->path,FTrash->path))
-    return;
+// if (!strcmp(F1->path,FTrash->path))  return;
 
 switch(F1->system)
     {

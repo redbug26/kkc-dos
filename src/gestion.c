@@ -323,7 +323,7 @@ if (DFen->system==0)
                 else
                 {
                 if (IOver==0)
-                    WinMesg("Invalid Path",nom2);
+                    WinMesg("Invalid Path",nom2,0);
 //                strcpy(DFen->path,GetLastHistDir());
                 }
             }
@@ -394,7 +394,7 @@ if (err==0)
             if (!stricmp(DFen->F[n]->name,nom))
                 {
                 DFen->pcur=n;
-                DFen->scur=(DFen->yl)/2;   // Centrage du nom
+                DFen->scur=(DFen->yl)/2;              // Centrage du nom
                 }
         }
     }
@@ -803,7 +803,7 @@ do
     for (k=0;k<i;k++)
         {
         if (!strnicmp(chaine,
-                           &(KKCfg->HistCom[TabCom[k]]),strlen(chaine)+1))
+                         &(KKCfg->HistCom[TabCom[k]]),strlen(chaine)+1))
             {
             a=k+1;
             break;
@@ -892,6 +892,44 @@ return 0;
 }
 
 
+/*--------------------------------------------------------------------*\
+|-                      Execute command                               -|
+\*--------------------------------------------------------------------*/
+
+void ExecCom(void)
+{
+static char Dir[70];
+static int DirLength=70;
+static char CadreLength=70;
+
+struct Tmt T[] =
+    { { 2,3,1,Dir,&DirLength},
+      { 7,5,2,NULL,NULL},
+      {30,5,5," Last result ",NULL},
+      {53,5,3,NULL,NULL},
+      { 5,2,0,"Enter the command:",NULL},
+      { 1,1,4,&CadreLength,NULL} };
+
+struct TmtWin F = {-1,10,74,17, "Execute command" };
+
+int n;
+
+strcpy(Dir,str);
+Dir[69]=0;
+
+n=WinTraite(T,6,&F,0);
+
+if (n!=27)
+    {
+    if (T[n].type==5)                          // Le bouton personnalis‚
+        GestionFct(74);
+
+    if (T[n].type!=3)
+        if (strlen(Dir)!=0)
+            CommandLine("#%s >%s",Dir,Fics->temp);
+    }
+}
+
 
 /*--------------------------------------------------------------------*\
 |-  Affichage de la ligne de commande                                 -|
@@ -920,7 +958,6 @@ if ( ((x1+m)>75) & (x1>40) )
     GotoXY(x1+x0+m-n,py);
     }
 }
-
 
 /*--------------------------------------------------------------------*\
 |-  affiche le message en command line                                -|

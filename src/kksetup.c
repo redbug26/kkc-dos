@@ -2247,7 +2247,7 @@ do
         fread(dir,1,128,fic);
         dir[128]=0;
 
-        WinMesg(name,dir);
+        WinMesg(name,dir,0);
         }
 
     if (prem<0) prem=0;
@@ -2394,7 +2394,7 @@ switch(i)
         LoadScreen();
         break;
     case 2:
-        WinMesg("About",RBTitle);
+        WinMesg("About",RBTitle,0);
         break;
     case 3:
         IdfListe();
@@ -2584,77 +2584,12 @@ int n;
 
 sy=0;
 
-n=WinTraite(T,5,&F);
+n=WinTraite(T,5,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 DefaultConfig(sy);
-}
-
-/*--------------------------------------------------------------------*\
-|- Editeur par default                                                -|
-\*--------------------------------------------------------------------*/
-void FileSetup(void)
-{
-static char buffer[256],dest[256];
-
-static char Edit[64],View[64];
-static int DirLength=63;
-
-
-struct Tmt T[7] = {
-      { 8,3,1,View,&DirLength},
-      { 8,5,1,Edit,&DirLength},
-      { 1,3,0, "Viewer:",NULL},
-      { 1,5,0, "Editor:",NULL},
-      
-      { 3,7,5," Auto Editor ",NULL}, // Copy All
-
-      {3,10,2,NULL,NULL},                                       // le OK
-      {18,10,3,NULL,NULL}                                   // le CANCEL
-      };
-
-struct TmtWin F = {3,5,76,18,"File Setup"};
-
-int n;
-char fin;
-
-strcpy(Edit,KKCfg->editeur);
-strcpy(View,KKCfg->vieweur);
-
-do
-{
-fin=1;
-
-n=WinTraite(T,7,&F);
-
-if (n==27) return;                                             // ESCape
-if (T[n].type==3) return;                                      // Cancel
-
-if (n==4)
-    {
-    switch(FicIdf(dest,buffer,91,2))
-        {
-        case 0:
-            strcpy(Edit,buffer);
-            break;
-        case 1:
-            WinError("Run Main Setup before");
-            break;  //--- error ----------------------------------------
-        case 2:
-            WinError("No player found");
-            break;  //--- no player ------------------------------------
-        case 3:
-            break; //--- Escape ----------------------------------------
-        }
-    fin=0;
-    }
-}
-while(!fin);
-
-strcpy(KKCfg->editeur,Edit);
-strcpy(KKCfg->vieweur,View);
 }
 
 /*--------------------------------------------------------------------*\
@@ -2812,7 +2747,7 @@ strcpy(Msg2,path);
 sprintf(Msg3,"is %s of",app->Titre);
 sprintf(Msg4,"%s",app->Meneur);
 
-switch(WinTraite(T,9,&F))
+switch(WinTraite(T,9,&F,0))
     {
     case 0:
         (*Verif)=1;     // Yes

@@ -250,7 +250,7 @@ if ( (nbrappl!=1) & (fin==0) )
                     pos-=5;
                     break;
                 case 0x86:
-                    WinMesg("Info. on dir",app[pos-m].dir);       // F12
+                    WinMesg("Info. on dir",app[pos-m].dir,0);     // F12
                     break;
                 }
 			}

@@ -16,7 +16,7 @@
                     63,63, 0, 63,63,63, 43,37,30, 63,20,20, \
                     20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
 
-#define WinError(_ErrMsg_) WinMesg("Error",_ErrMsg_)
+#define WinError(_ErrMsg_) WinMesg("Error",_ErrMsg_,0)
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
@@ -47,12 +47,12 @@ struct Tmt {
          1 --> String
          2 --> [    OK     ]
          3 --> [  CANCEL   ]
-         4 --> Cadre with width = 4, length = *str
+         4 --> Cadre with length = *str, width = 2
          5 --> Bouton personnalis‚ (13 bytes length)
-         6 --> Cadre with width = 3, length = *str
+         6 --> Cadre with length = *str, width = 1
          7 --> Integer (length = 9)
          8 --> Switch
-         9 --> Cadre with width = *str, length = *entier
+         9 --> Cadre with length = *str, width = *entier
         10 --> Switch Multiple
 
 */
@@ -153,7 +153,7 @@ void DesinitScreen(void);
 void GetCur(char *x,char *y);
 void PutCur(char x,char y);
 
-int ScreenSaver(void);
+void ScreenSaver(void);
 
 void ScrollUp(void);
 
@@ -216,8 +216,19 @@ void WinLine(int x1,int y1,int xl,int type);
 
 void SetPal(int x,char r,char g,char b);
 
-int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F);
-int WinMesg(char *,char *);
+int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F,int first);
+
+/*--------------------------------------------------------------------*\
+|- Display a user window with title 'title' and message 'msg'.        -|
+|- A message could contains several lines (just insert '\n').         -|
+|- The 4 high bits of 'info' contains the start position for button.  -|
+|- The 4 low bits contains the info about the button                  -|
+|-   0: button "OK" & "CANCEL"                                        -|
+|-   1: button "YES" & "NO"                                           -|
+|- return value:  the number of the button                            -|
+\*--------------------------------------------------------------------*/
+
+int WinMesg(char *title,char *msg,char info);
 
 int Gradue(int x,int y,int length,int from,int to,int total);
 
