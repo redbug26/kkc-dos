@@ -69,6 +69,8 @@ struct player {
     short ext;                                     // Numero d'extension
     short pres;             // 0 si pas trouv‚ sinon numero du directory
     char type;
+    char os;
+    char info;
     } *app[5000];
 
 char dir[MAXDIR][128];      // 50 directory diff‚rents de 128 caracteres
@@ -1099,7 +1101,7 @@ if (LoadDefCfg)
 \*--------------------------------------------------------------------*/
 
 strcpy(chaine,Fics->path);
-strcat(chaine,"\\trash");
+Path2Abs(chaine,"trash");
 if (mkdir(chaine)==0)
     {
     DispMessage("Creation of the trash directory '%s': OK",chaine);
@@ -1277,8 +1279,6 @@ if (nbr>0)
                 fwrite(&sn,1,1,fic);
                 fwrite(a,sn,1,fic);
 
-
-
                 a=app[n]->Titre;
                 sn=strlen(a);
                 fwrite(&sn,1,1,fic);
@@ -1292,7 +1292,16 @@ if (nbr>0)
                 fwrite(&(app[n]->ext),2,1,fic);      // Numero de format
                 fwrite(&(app[n]->pres),2,1,fic);     // Numero directory
 
-                fwrite(&(app[n]->type),1,1,fic);     // Numero directory
+                fwrite(&(app[n]->type),1,1,fic);          // Numero type
+
+                fwrite(&(app[n]->os),1,1,fic);// Numero operating system
+
+                if (app[n]->Checksum==0)
+                    app[n]->info=0;
+                    else
+                    app[n]->info=1;
+
+                fwrite(&(app[n]->info),1,1,fic);  // Information fichier
                 }
 
         fwrite(&nbrdir,1,2,fic);
@@ -1328,7 +1337,7 @@ int posy=3;
 char KKR_Read(FILE *Fic)
 {
 char Key[4];
-char KKType;
+char KKType,KKos;
 char Comment[255],SComment;
 char Titre[255],STitre;
 char Meneur[255],SMeneur;
@@ -1399,6 +1408,8 @@ if (!strncmp(Key,"KKRB",4))
 
             app[nbr]->type=KKType;
 
+            app[nbr]->os=KKos;
+
             nbr++;
             break;
         case 6:                                        // Fin de fichier
@@ -1416,9 +1427,13 @@ if (!strncmp(Key,"KKRB",4))
             SMeneur=strlen(Meneur);
 
             KKType=0;
+            KKos=0;
             break;
-        case 8:                                              // Checksum
+        case 8:                                     // type du programme
             fread(&KKType,1,1,Fic);
+            break;
+        case 9:                                      // Operating system
+            fread(&KKos,1,1,Fic);
             break;
         }
     }
@@ -1784,10 +1799,11 @@ KKCfg->hidfil=get_private_profile_int(section,"hiddenfile",
 KKCfg->logfile=get_private_profile_int(section,"logfile",
                                                KKCfg->logfile,filename);
 Cfg->font=get_private_profile_int(section,"font",Cfg->font,filename);
-Cfg->debug=get_private_profile_int(section,"debug",
-                                                   Cfg->debug,filename);
+Cfg->debug=get_private_profile_int(section,"debug",Cfg->debug,filename);
+KKCfg->confexit=get_private_profile_int(section,"confexit",
+                                              KKCfg->confexit,filename);
 KKCfg->mtrash=get_private_profile_int(section,"sizetrash",
-                                                  KKCfg->mtrash,filename);
+                                                KKCfg->mtrash,filename);
 Cfg->display=get_private_profile_int(section,"display",
                                                  Cfg->display,filename);
 Cfg->comport=get_private_profile_int(section,"serial_port",
@@ -1976,6 +1992,7 @@ write_private_profile_int(section,"hiddenfile",KKCfg->hidfil,filename);
 write_private_profile_int(section,"logfile",KKCfg->logfile,filename);
 write_private_profile_int(section,"font",Cfg->font,filename);
 write_private_profile_int(section,"debug",Cfg->debug,filename);
+write_private_profile_int(section,"confexit",KKCfg->confexit,filename);
 write_private_profile_int(section,"sizetrash",KKCfg->mtrash,filename);
 write_private_profile_int(section,"display",Cfg->display,filename);
 
@@ -2048,6 +2065,8 @@ struct {
     char type;  // 0: Rien de particulier
                 // 1: Decompacteur
                 // 2: Compacteur
+    char os;
+    char info;
     char dir[128];
     } IDF2_app;
 
@@ -2061,6 +2080,7 @@ FILE *fic;
 short prem,paff,j,k,nbr;
 int car,y;
 char di;    //--- Ne sert … rien ---------------------------------------
+char info;
 
 int ndir;
 char name[256],dir[129];
@@ -2117,7 +2137,9 @@ do
 
         fseek(fic,2,SEEK_CUR);                       // Numero de format
         fseek(fic,2,SEEK_CUR);                       // Numero directory
-        fseek(fic,1,SEEK_CUR);
+        fseek(fic,1,SEEK_CUR);                            // Numero type
+        fseek(fic,1,SEEK_CUR);                              // Numero OS
+        fread(&info,1,1,fic);                                    // info
         }
 
     for (j=paff;j<nbr;j++)
@@ -2147,7 +2169,11 @@ do
 
         fread(&(IDF2_app.NoDir),2,1,fic);            // Numero directory
 
-        fread(&(IDF2_app.type),1,1,fic);             // Numero directory
+        fread(&(IDF2_app.type),1,1,fic);                  // Numero type
+
+        fread(&(IDF2_app.os),1,1,fic);        // Numero operating system
+
+        fread(&(IDF2_app.info),1,1,fic);    // information sur le player
 
         for(k=0;k<nbrkey;k++)
             if (K[k].numero == IDF2_app.ext) break;
@@ -2167,6 +2193,7 @@ do
 
             ndir=IDF2_app.NoDir;
             strcpy(name,IDF2_app.Filename);
+            info=IDF2_app.info;
             }
         else
         if (y&1==1)
@@ -2218,6 +2245,9 @@ do
 
         fseek(fic,2,SEEK_CUR);                       // Numero de format
         fseek(fic,2,SEEK_CUR);                       // Numero directory
+
+        fseek(fic,1,SEEK_CUR);
+        fseek(fic,1,SEEK_CUR);
         fseek(fic,1,SEEK_CUR);
 
         j++;
@@ -2246,6 +2276,11 @@ do
         fseek(fic,(ndir-1)*128,SEEK_CUR);
         fread(dir,1,128,fic);
         dir[128]=0;
+
+        if (info==1)
+            strcat(dir,"\nPlayer without doubt");
+            else
+            strcat(dir,"\nPlayer with a doubt");
 
         WinMesg(name,dir,0);
         }

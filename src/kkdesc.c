@@ -32,7 +32,7 @@ char *VERSION_KKR;
 
 char buf[256];
 
-char KKType;
+char KKType,KKos;
 
 int NbrFormat;
 
@@ -215,6 +215,14 @@ code=4;     // checksum
 fwrite(&code,1,1,fic);
 fwrite(&Checksum,4,1,fic);
 
+code=8;
+fwrite(&code,1,1,fic);
+fwrite(&KKType,1,1,fic);
+
+code=9;
+fwrite(&code,1,1,fic);
+fwrite(&KKos,1,1,fic);
+
 code=1;     // titre
 a=Titre;
 
@@ -341,6 +349,13 @@ if (!strncmp(Key,"KKRB",4))
             SMeneur=strlen(Meneur);
 
             KKType=0;
+            KKos=0;
+            break;
+        case 8:                                     // type du programme
+            fread(&KKType,1,1,Fic);
+            break;
+        case 9:                                      // Operating system
+            fread(&KKos,1,1,Fic);
             break;
         }
     }
@@ -749,8 +764,8 @@ PrintAt(32,0,"Describe player");
 ColLin(32,0,20,10*16+3);
 
 PrintAt(2,(Cfg->TailleY-1),
-                          "F1: Help   F3: Information   F7: Compute CRC"
-                                    "   ESC: Quit & Save Modification");
+                          "F1: Help  F3: Information  F6:OS  F7: Compute CRC"
+                                    "  ESC: Quit & Save Modification");
 
 prem=0;
 pres=0;
@@ -761,6 +776,8 @@ if (Checksum==0)
     PrintAt(68,0,"            ");
     else
     PrintAt(68,0,"CRC:%08X",Checksum);
+
+PrintAt(0,0,"%-10s",KKos ? "Windows" : "DOS");
 
 PrintAt(0,1,"%-38s by %38s",Titre,Meneur);
 
@@ -878,6 +895,9 @@ switch(HI(car))
             strcpy(buf,"*.*");
         if (Seekfile(10,10,buf)==0)
             crc32file(buf,&Checksum);
+        break;
+    case 0x40:      // F6  (Operating system)
+        KKos=(KKos==0) ? 1 : 0;
         break;
     }
 

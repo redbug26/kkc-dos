@@ -24,6 +24,9 @@ static struct
     char type;  // 0: Rien de particulier
                 // 1: Decompacteur
                 // 2: Compacteur
+    char os;    // 0: DOS
+                // 1: WINDOWS
+    char info;
     char dir[128];
     } app[50];
 
@@ -113,9 +116,16 @@ for (j=0;j<nbr;j++)
 
     fread(&(app[nbrappl].NoDir),2,1,fic);            // Numero directory
 
-    fread(&(app[nbrappl].type),1,1,fic);             // Numero directory
+    fread(&(app[nbrappl].type),1,1,fic);                  // Numero type
 
-    if (app[nbrappl].ext==numero)
+    fread(&(app[nbrappl].os),1,1,fic);        // Numero operating system
+
+    fread(&(app[nbrappl].info),1,1,fic);       // Information sur player
+
+    if ( (app[nbrappl].ext==numero) &
+          (  (app[nbrappl].os==0) |
+            ((app[nbrappl].os==1) & (KKCfg->_Win95==1)) )
+         )
         {
         app[nbrappl].Filename=GetMem(strlen(Filename)+1);
         strcpy(app[nbrappl].Filename,Filename);
@@ -357,11 +367,19 @@ for (j=0;j<nbr;j++)
     fread(Meneur,n,1,fic);
 
     fread(&(app[nbrappl].ext),2,1,fic);              // Numero de format
+
     fread(&(app[nbrappl].NoDir),2,1,fic);            // Numero directory
 
-    fread(&(app[nbrappl].type),1,1,fic);             // Numero directory
+    fread(&(app[nbrappl].type),1,1,fic);                  // Numero type
 
-    if (app[nbrappl].ext==numero)
+    fread(&(app[nbrappl].os),1,1,fic);        // Numero operating system
+
+    fread(&(app[nbrappl].info),1,1,fic);       // Information sur player
+
+    if ( (app[nbrappl].ext==numero) &
+          (  (app[nbrappl].os==0) |
+            ((app[nbrappl].os==1) & (KKCfg->_Win95==1)) )
+       )
         {
         app[nbrappl].Filename=GetMem(strlen(Filename)+1);
         strcpy(app[nbrappl].Filename,Filename);
@@ -388,7 +406,6 @@ for(n=0;n<nbrdir;n++)
 
 fclose(fic);
 
-
 if (nbrappl==0)
     {
 	PUTSERR("No player for this file !");
@@ -396,8 +413,13 @@ if (nbrappl==0)
 	}
     else
     {
-    strcpy(name,app[0].dir);
-    strcat(name,app[0].Filename);
+    i=0;
+    for(n=0;n<nbrappl;n++)
+        if (app[n].info==1)
+            i=n;
+
+    strcpy(name,app[i].dir);
+    strcat(name,app[i].Filename);
     }
 
 for (j=0;j<nbrappl;j++)

@@ -142,6 +142,8 @@ struct kkconfig
      char cnvhist;         // 1: si on convertit a chaque fois l'history
      char esttime;                 // estime le temps pendant la copie ?
 
+     char confexit;      // vaut 1: si on doit confirmer avant de sortir
+
     //--- Variable pour le viewer --------------------------------------
 
      char warp;                    // 0: pas de warp, 1: word, 2: entier

@@ -6,15 +6,17 @@
 
 data      segment para 'DATA'       ;D‚finition du segment de donn‚es
 
-prgname   db 128 dup (0)            ;Nom du programme … appeler
+prgname   db 256 dup (0)            ;Nom du programme … appeler
 prgpara   db "/c "
 prgtrue   db 256 dup (0)            ;Les paramŠtres sont transmis au Prg
+                                    ; toujours KKMAIN
 
 prgpos    dw 0                      ; longueur de la path
 
 prgparas  db "/c "
 prgsys    db 256 dup (0)
 kkmainp   db "kkmain 69690",0
+kkmainp1  db "kkmain 6969",0
 
 Scomspec  db "COMSPEC=",0
 
@@ -38,13 +40,13 @@ exec proc far
           call ComsPec
           call InitPath
 
-;          mov  ah,09h                      ;Afficher le message d'invite
+;          mov  ah,09h                     ;Afficher le message d'invite
 ;          mov  dx,offset startmes
 ;          int  21h
 
           call setfree                    ;Lib‚rer la m‚moire inutilis‚e
 
-          call kkmain
+          call kkmaind
 
           mov  dx,offset prgname                ;Offset nom de programme
           mov  si,offset prgpara          ;Offset de ligne d'instruction
@@ -56,12 +58,16 @@ boucle:
 ;------------------------
           call System
 
+;          mov si,offset prgsys
+;          cmp byte ptr[si],0
+;          je fin
+
           cmp al,0
           je fin
 
           mov  dx,offset prgname                ;Offset nom de programme
-          mov  si,offset prgparas               ;Offset de ligne d'instruction
-          call exeprg                           ;Appeler le programme
+          mov  si,offset prgparas         ;Offset de ligne d'instruction
+          call exeprg                              ;Appeler le programme
 
 ; Rappel de KKMAIN
 ;------------------
@@ -185,14 +191,14 @@ exeend:   ret                                       ;Retour … l'appelant
 rangss    dw ?                 ;Re‡oit SS pendant l'appel du programme
 rangsp    dw ?                 ;Re‡oit SP pendant l'appel du programme
 
-parblock  equ this word        ;Bloc de paramŠtres pour la fonction EXEC
-          dw 0                                ;Mˆme bloc d'environnement
+;parblock  equ this word       ;Bloc de paramŠtres pour la fonction EXEC
+parblock  dw 0                                ;Mˆme bloc d'environnement
           dw offset comline ;Adresses d'offset et de segment de la ligne
           dw seg code                                         ;convertie
           dd 0                               ;Pas de donn‚es dans PSP #1
           dd 0                               ;Pas de donn‚es dans PSP #2
 
-comline   db 128 dup (?)        ;Re‡oit la ligne d'instruction convertie
+comline   db 256 dup (?)        ;Re‡oit la ligne d'instruction convertie
 
 exeprg endp
 
@@ -243,6 +249,25 @@ kkmain proc near
         ret
 kkmain endp
 
+kkmaind proc near
+        pusha
+        push es
+
+        push ds
+        pop es
+
+        mov si,offset kkmainp1
+        mov di,offset prgtrue
+        add di,[prgpos]
+        mov cx,256
+        sub cx,[prgpos]
+        rep movsb
+
+        pop es
+        popa
+        ret
+kkmaind endp
+
 ComsPec proc near
         pusha
         push es
@@ -253,10 +278,10 @@ ComsPec proc near
 
         mov ah,62h
         int 21h
-        mov es,bx       ; get segment of PSP
+        mov es,bx                                   ; get segment of PSP
 
         mov si,2Ch
-        mov ax,es:[si]  ; get segment of environment
+        mov ax,es:[si]                      ; get segment of environment
 
         mov es,ax
         xor ax,ax
@@ -265,7 +290,7 @@ ComsPec proc near
 Com0:
         mov si,offset scomspec
 Com1:
-        lodsb           ; al=ds:si
+        lodsb                                                 ; al=ds:si
         cmp al,0
         je Com4
         scasb
@@ -288,8 +313,8 @@ Com4:
 
         mov di,offset prgname
 
-        mov cx,128
-        rep movsb               ;es:di=ds:si
+        mov cx,256
+        rep movsb                                          ; es:di=ds:si
 
         push es
         pop ds
@@ -308,10 +333,10 @@ InitPath proc near
 
         mov ah,62h
         int 21h
-        mov es,bx       ; get segment of PSP
+        mov es,bx                                   ; get segment of PSP
 
         mov si,2Ch
-        mov ax,es:[si]  ; adresse de la ligne de commande
+        mov ax,es:[si]                 ; adresse de la ligne de commande
         push ax
 
         mov es,ax
@@ -326,7 +351,7 @@ oui:
         cmp es:[di],al
         jnz oui
 
-        or ch,80h
+        or ch,80h               ; marjo
         neg cx
 
         add cx,2
@@ -351,11 +376,11 @@ oui:
         std
         mov al,'\'
         mov cx,7FFFh
-        repnz scasb             ; es:di
+        repnz scasb                                              ; es:di
         inc di
         inc di
 
-        mov es:byte ptr[di],0     ; prgtrue contient la path
+        mov es:byte ptr[di],0                 ; prgtrue contient la path
         sub di,offset prgtrue
         mov es:[prgpos],di
 
@@ -367,6 +392,8 @@ oui:
         ret
 InitPath endp
 
+; affiche DX
+;-----------------------------------------------------------------------
 Displaye proc near
         pusha
         push ds
@@ -376,7 +403,8 @@ Displaye proc near
 
         mov ah,40h
         mov bx,1
-        mov cx,80h
+        mov cx,320
+
         int 21H
 
         mov bx,dx

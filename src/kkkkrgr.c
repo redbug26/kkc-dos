@@ -27,6 +27,8 @@ struct player {
     unsigned long Checksum;
     short ext;                                     // Numero d'extension
     short pres;             // 0 si pas trouv‚ sinon numero du directory
+    char type;
+    char os;
     } *app[5000];
 
 char dir[100][256];         // 50 directory diff‚rents de 128 caracteres
@@ -36,6 +38,8 @@ short nbr;              // nombre d'application lu dans les fichiers KKR
 void Search(char *nom);
 
 int posy;
+
+char kkos,kktype;
 
 void main(short argc,char **argv)
 {
@@ -190,6 +194,9 @@ if (!strncmp(Key,"KKRB",4))
             app[nbr]->ext=format;
             app[nbr]->pres=0;
 
+            app[nbr]->type=kktype;
+            app[nbr]->os=kkos;
+
             nbr++;
             break;
         case 6:                                        // Fin de fichier
@@ -205,7 +212,17 @@ if (!strncmp(Key,"KKRB",4))
             SFilename=strlen(Filename);
             STitre=strlen(Titre);
             SMeneur=strlen(Meneur);
+
+            kkos=0;
+            kktype=0;
             break;
+        case 8:
+            fread(&kktype,1,1,Fic);
+            break;
+        case 9:
+            fread(&kkos,1,1,Fic);
+            break;
+
         }
     }
     while(fin==0);
@@ -315,6 +332,14 @@ sa=strlen(a);
 fwrite(&code,1,1,fic);
 fwrite(&sa,1,1,fic);
 fwrite(a,sa,1,fic);
+
+code=8;
+fwrite(&code,1,1,fic);
+fwrite(&(app[n]->type),1,1,fic);
+
+code=9;
+fwrite(&code,1,1,fic);
+fwrite(&(app[n]->os),1,1,fic);
 
 do  {
     code=5;

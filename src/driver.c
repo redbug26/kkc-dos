@@ -253,6 +253,7 @@ if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0)
                                                   & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
+    Path2Abs(DFen->path,"..");
     return 1;
     }
 
@@ -420,6 +421,7 @@ if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
                                                     (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
+    Path2Abs(DFen->path,"..");
     return 1;
     }
 
@@ -518,7 +520,7 @@ fic=fopen(DFen->VolName,"rb");
 pos=0;
 fin=0;
 
-while(!fin)
+while(fin==0)
 {
 fseek(fic,pos,SEEK_SET);
 
@@ -528,7 +530,18 @@ if (fread(&Header,sizeof(struct ZIPHeader),1,fic)!=1)
     break;
     }
 
-fread(nom,Header.FNameLen,1,fic);
+if (Header.FNameLen>255)
+    {
+    fin=2;
+    break;
+    }
+
+if (fread(nom,Header.FNameLen,1,fic)!=1)
+    {
+    fin=1;
+    break;
+    }
+
 nom[Header.FNameLen]=0;
 
 strcpy(Nomarch,nom);
@@ -620,10 +633,11 @@ pos=ftell(fic)+Header.PackSize+Header.ExtraField;
 
 fclose(fic);
 
-if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0)
-                                                  & (DFen->nbrfic==1)) )
+if ( (fin==2) | ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) |
+                              ((KKCfg->pntrep==0) & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
+    Path2Abs(DFen->path,"..");
     return 1;
     }
 
@@ -822,6 +836,7 @@ if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
                                                     (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
+    Path2Abs(DFen->path,"..");
     return 1;
     }
 
@@ -1024,7 +1039,10 @@ if (fin==0)
     while(KKD_desc.next!=0);
     }
     else
+    {
     strcpy(DFen->path,DFen->VolName);
+    Path2Abs(DFen->path,"..");
+    }
 
 fclose(fic);
 
@@ -1131,6 +1149,7 @@ if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
                                                     (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
+    Path2Abs(DFen->path,"..");
     return 1;
     }
 

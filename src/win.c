@@ -823,7 +823,7 @@ struct Tmt T[] = {
       {55,17,3,NULL,NULL},                                  // le CANCEL
 
       {5, 2,8,"Convert History",&l7},
-      {5, 3,8,"Debug",&l3},
+      {5, 3,8,"Confirmation before exiting",&l3},
       {5, 4,8,"Point SubDir",&l4},
       {5, 5,8,"LogFile",&l5},
       {5, 6,8,"ESC to close windows",&l6},
@@ -859,7 +859,7 @@ int n;
 
 l1=KKCfg->mtrash;
 l2=KKCfg->AnsiSpeed;
-l3=Cfg->debug;
+l3=KKCfg->confexit;
 l4=KKCfg->pntrep;
 l5=KKCfg->logfile;
 l6=KKCfg->Esc2Close;
@@ -896,7 +896,7 @@ while(T[n].type==5);
 
 KKCfg->mtrash=l1;
 KKCfg->AnsiSpeed=l2;
-Cfg->debug=l3;
+KKCfg->confexit=l3;
 KKCfg->pntrep=l4;
 KKCfg->logfile=l5;
 KKCfg->Esc2Close=l6;
@@ -1508,8 +1508,21 @@ if (k==-1)
 
 if (l!=Fen->Fen2->F[i]->size)
     {
+    char msg[]="Error with archiver \n";
+    int p;
+
     OldFen=DFen;
     DFen=Fen->Fen2;
+
+    p=0;
+    fic=fopen(path,"wb");
+    for(n=0;n<DFen->F[i]->size;n++,p++)
+        {
+        if (p==21) p=0;
+        fputc(msg[p],fic);
+        }
+    fclose(fic);
+
     AccessFile(k);
     DFen=OldFen;
     }

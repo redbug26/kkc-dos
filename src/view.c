@@ -850,8 +850,7 @@ SaveScreen();
 maxx=80;
 maxy=Cfg->TailleY;
 
-ColWin(0,0,79,(Cfg->TailleY)-2,0*16+7);
-ChrWin(0,0,79,(Cfg->TailleY)-2,32);
+Window(0,0,Cfg->TailleX-1,(Cfg->TailleY)-2,0*16+7);
 
 TXTMode();
 
@@ -1849,7 +1848,7 @@ RB_IDF Info;
 
 
 ColTxt=GetMem(40000*Cfg->TailleX);
-memset(ColTxt,10*16+1,40000*Cfg->TailleX);
+memset(ColTxt,1*16+10,40000*Cfg->TailleX);
 ChrTxt=GetMem(40000*Cfg->TailleX);
 memset(ChrTxt,32,40000*Cfg->TailleX);
 
@@ -1880,11 +1879,10 @@ yl=Cfg->TailleY-2;
 
 WinCadre(x-1,y-1,xl+1,yl,2);
 
-Window(x,y,xl,yl-1,10*16+1);
+Window(x,y,xl,yl-1,1*16+10);
 
 ColLin(0,yl+1,Cfg->TailleX,1*16+8);
 ChrLin(0,yl+1,Cfg->TailleX,32);
-
 
 
 /*--------------------------------------------------------------------*\
@@ -1904,7 +1902,7 @@ ital=0;
 unde=0;
 
 nbrcol=0;
-tabcol[0]=10*16+1;
+tabcol[0]=1*16+10;
 
 debut=0;
 code=0;
@@ -2732,7 +2730,7 @@ while ((y<=y2) | (ok==0) )
 \*--------------------------------------------------------------------*/
 
     if ( ((c>='a') & (c<='z')) | ((c>='A') & (c<='Z')) | (c=='_') |
-          (c=='-') |                             ((c>='0') & (c<='9')) )
+                                                 ((c>='0') & (c<='9')) )
         {
         chain2[l]=c;
         xt[l]=x;

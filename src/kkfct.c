@@ -20,6 +20,7 @@ memcpy(KKCfg->Qmenu,"ChgDrive"
 
 memcpy(KKCfg->Nmenu,&Nm,8*sizeof(short));
 
+KKCfg->confexit=1;
 
 strcpy(Mask[0]->title,"C Style");
 strcpy(Mask[0]->chaine,      "asm break case cdecl char const continue "
@@ -64,7 +65,7 @@ Mask[1]->Other_Col=1;
 
 strcpy(Mask[15]->title,"Ketchup^Pulpe Style");
 strcpy(Mask[15]->chaine,      "ketchup killers redbug access darköangel "
-                   "off topy kennet typeöone pulpe "
+                   "off topy kennet typeöone pulpe tyby djamm vatin "
                    "marjorie katana ecstasy cray magicöfred cobra z @");
 Mask[15]->Ignore_Case=1;
 Mask[15]->Other_Col=1;

@@ -2137,7 +2137,7 @@ if (y1==-1)
 WinCadre(x1,y1,x2,y2,0);
 Window(x1+1,y1+1,x2-1,y2-1,10*16+1);
 
-PrintAt(x1+((x2-x1)-(strlen(F->name)))/2,y1,F->name);
+PrintAt(x1+((x2-x1+1)-(strlen(F->name)))/2,y1,F->name);
 
 for(i=0;i<nbr;i++)
 switch(T[i].type) {

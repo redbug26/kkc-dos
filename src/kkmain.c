@@ -52,6 +52,8 @@ sig_atomic_t signal_count;
 char *SpecMessy=NULL;
 char SpecSortie[256];
 char saveconfig=1;
+//char placedrive=1;
+//char placepath=1;
 
 char Select_Chaine[32]="*.*";
 
@@ -134,24 +136,12 @@ if (n==1)
         }
     while(!feof(fic))
         {
-        fgets(nom,256,fic);
+        if (fgets(nom,256,fic)==NULL) break;
         nom[strlen(nom)-1]=0;
 
         for(i=0;i<Fen->nbrfic;i++)
-            {
             if (!WildCmp(Fen->F[i]->name,nom))
-                {
-                switch(n)
-                    {
-                    case 0:
-                        FicSelect(i,1);                        // Select
-                        break;
-                    case 1:
-                        FicSelect(i,2);             // Inverse Selection
-                        break;
-                    }
-                }
-            }
+                FicSelect(i,1);                                // Select
         }
     fclose(fic);
     }
@@ -439,7 +429,7 @@ signal_count++;
 SpecMessy="You have pressed on Control Break :(";
 
 memset(SpecSortie,0,256);
-
+saveconfig=0;
 Fin();
 }
 
@@ -1078,6 +1068,7 @@ switch(fct)
     case 77:
         WinError("Access Denied");
         SpecMessy="You must copy files on no write protected support";
+
         memset(SpecSortie,0,256);
         saveconfig=0;
         Fin();
@@ -2353,15 +2344,15 @@ struct Tmt T[5] = {
       { 2,3,1, Dir, &DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
-      { 5,2,0,"Move/rename file to",NULL},
+      { 5,2,0,"Rename file to",NULL},
       { 1,1,4,&CadreLength,NULL}
       };
 
-struct TmtWin F = {-1,10,74,17,"Move/rename"};
+struct TmtWin F = {-1,10,74,17,"Rename"};
 
 int n;
 
-strcpy(Dir,F2->path);
+strcpy(Dir,F1->path);
 Path2Abs(Dir,F1->F[DFen->pcur]->name);
 
 strcpy(Name,F1->path);
@@ -2946,7 +2937,13 @@ do
                PrintAt(78,0,"%02X",car2);
         break;
     }                                                   // switch (car2)
+
+if ( (car2==0x44) & (KKCfg->confexit==1) )
+    {
+    if (WinMesg("Quit KKC","Do you really want to quit KKC ?",1)!=0)
+        car2=0;
     }
+}
 while(car2!=0x44);      // F10
 }
 
@@ -2959,6 +2956,9 @@ void Shell(char *string,...)
 char sortie[256];
 va_list arglist;
 char *suite;
+// int n,m,l;
+// unsigned ndrv;
+// static char Ch[256];
 
 suite=sortie;
 
@@ -2966,11 +2966,64 @@ va_start(arglist,string);
 vsprintf(sortie,string,arglist);
 va_end(arglist);
 
+/*
+for(n=1;n<strlen(suite);n++)
+    if (suite[n]==32)
+        {
+        m=n;
+        break;
+        }
+l=0;
+for(n=1;n<m;n++)
+    if (suite[n]=='\\')
+        l=n;
+
+if (l!=0)
+    {
+    strcpy(Ch,suite);
+    Ch[l]=0;
+    if (Ch[2]==':')
+        {
+        _dos_setdrive(toupper(Ch[1])-'A'+1,&ndrv);
+        placedrive=0;
+        }
+    chdir(Ch+1);
+    strcpy(suite+1,suite+l+1);
+    WinMesg(Ch+1,suite,0);
+    placepath=0;
+    }
+*/
+
+if (strlen(suite+1)>120)    //-- La ligne de commande est trop grande --
+    {
+    static char filename[256];
+    FILE *fic;
+
+    strcpy(filename,Fics->trash);
+    Path2Abs(filename,"z.bat");
+
+    fic=fopen(filename,"wt");
+    fprintf(fic,
+          "@REM *-------------------------------------------------*\n");
+    fprintf(fic,
+          "@REM * Batch file created by Ketchup Killers Commander *\n");
+    fprintf(fic,
+          "@REM * when command line is too high                   *\n");
+    fprintf(fic,
+          "@REM *-------------------------------------------------*\n");
+
+    fprintf(fic,"@%s\n",suite+1);
+    fclose(fic);
+
+//    WinError("command line too high");
+
+    strcpy(suite+1,filename);
+    }
+
 if (KKCfg->KeyAfterShell==0)
     suite[0]='#';
 
 memcpy(SpecSortie,suite,256);
-
 Fin();
 }
 
@@ -2980,7 +3033,10 @@ void PlaceDrive(void)
 {
 unsigned ndrv;
 
+//if (placedrive)
 _dos_setdrive(toupper(DFen->path[0])-'A'+1,&ndrv);
+
+//if (placepath)
 chdir(DFen->path);
 }
 
@@ -3010,11 +3066,14 @@ if (KKCfg->_4dos==1)
 
 GotoXY(0,PosY);
 
-#ifdef DEBUG
-    cprintf("%s / RedBug (DEBUG MODE)\n\r",RBTitle);
-#else
-    cprintf("%s / RedBug\n\r",RBTitle);
-#endif
+if (*SpecSortie==0)
+    {
+    #ifdef DEBUG
+        cprintf("%s / RedBug (DEBUG MODE)\n\r",RBTitle);
+    #else
+        cprintf("%s / RedBug\n\r",RBTitle);
+    #endif
+    }
 
 if (SpecMessy!=NULL)
     cprintf("\n\r%s\n\r",SpecMessy);
@@ -3043,7 +3102,7 @@ for(n=0;n<NBWIN;n++)
         Fenetre[n]->x=Cfg->TailleX-40;
     }
 
-PrintAt(0,0,"%-40s%40s",RBTitle,"RedBug");
+PrintAt(0,0,"%-40s%*s",RBTitle,Cfg->TailleX-40,"RedBug");
 ColLin( 0,0,40,1*16+5);
 ColLin(40,0,(Cfg->TailleX)-40,1*16+3);
 ColLin(0,(Cfg->TailleY)-2,Cfg->TailleX,5);
@@ -3702,6 +3761,7 @@ Gestion();
 \*--------------------------------------------------------------------*/
 
 memset(SpecSortie,0,256);
+
 
 Fin();
 }

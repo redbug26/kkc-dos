@@ -340,6 +340,7 @@ for(n=0;n<DFen->nbrfic;n++)
         LibMem(DFen->F[n]->info);
     LibMem(DFen->F[n]->name);
     LibMem(DFen->F[n]);
+    DFen->nbrfic=0;
     }
 
 /*--------------------------------------------------------------------*\
