@@ -43,7 +43,7 @@ ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
 #-----------------------------------------------------------------------#
 !ifdef DEBUG
 
-CCOPTS = -wx -5r -fpc -zdp -d__WC32__ -mf -d3 -zm -od -dDEBUG
+CCOPTS = -wx -5r -fpc -zdp -d__WC32__ -mf -d3 -zm -od -dDEBUG -zp1
 AOPTS = /d1
 LOPTS = option stack=60000 debug all option caseexact option map
 LAOPTS = debug all
@@ -52,11 +52,14 @@ LAOPTS = debug all
 #-----------------------------------------------------------------------#
 !else
 
-CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s
+#zp1 alignement
+
+CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1
+# -obx  (watcom 11.0) chaipuqoui
 # -oneatx
 # quand on mets les optimisations, on peux plus faire un shell, pq ?
 AOPTS =
-LOPTS = option stack=60000 option caseexact
+LOPTS = option stack=60000 option caseexact option map
 LAOPTS =
 
 !endif
@@ -67,12 +70,13 @@ LAOPTS =
 #-----------------------------------------------------------------------#
 
 all : kk.exe kkmain.exe kksetup.exe kkdesc.exe kkkkrgr.exe kkfont.exe &
-      idf.lib hard.lib
+      idf.lib hard.lib readme.exe
 #      edit.exe
 
 kkmain.exe  : kkmain.obj     idf.lib  hard.lib    win.obj   gestion.obj &
-              view.obj    driver.obj ficidf.obj copie.obj    delete.obj &
-              search.obj   kkfct.obj  util.obj reddies.obj longname.obj
+                view.obj  driver.obj ficidf.obj copie.obj    delete.obj &
+              search.obj   kkfct.obj  util.obj reddies.obj longname.obj &
+               rbdos.obj
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 kksetup.exe : kksetup.obj hard.lib idf.lib reddies.obj ficidf.obj &
@@ -94,6 +98,8 @@ edit.exe  : edit.obj hard.lib
 kk.exe      : kk.obj
              $(CL) $(LAOPTS) name $@ file {$<}
 
+readme.exe  : readme.obj
+             $(CL) $(LAOPTS) name $@ file {$<}
 
 .asm.obj:
          $(CA) $* $(AOPTS)

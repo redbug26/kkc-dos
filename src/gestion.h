@@ -21,6 +21,7 @@ void SortFic(FENETRE *Fen);
 
 void History2Line(char *src,char *dest);
 void Line2History(char *src);
+void Line2PrcLine(char *s,char *chaine);
 
 int IsDir(struct file *f);
 

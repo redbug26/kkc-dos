@@ -22,6 +22,13 @@
 
 void ClearSpace(char *name);    //--- efface les espaces inutiles ------
 
+
+/*--------------------------------------------------------------------*\
+|- Prototype local                                                    -|
+\*--------------------------------------------------------------------*/
+char *GetLine(char *ligne,FILE *fic);
+
+
 /*--------------------------------------------------------------------*\
 |- Buffer global                                                      -|
 \*--------------------------------------------------------------------*/
@@ -236,6 +243,7 @@ if (n!=27)  // pas escape
 return 1;                                                      // Erreur
 }
 
+#ifdef DOOR
 void ServerMode(void)
 {
 union REGS regs;
@@ -328,11 +336,83 @@ if (ok==0)
 
 while (kbhit()) Wait(0,0,0);
 }
-
+#endif
 
 /*--------------------------------------------------------------------*\
+|----------------------------------------------------------------------|
 |- Gestion du menu F2                                                 -|
+|----------------------------------------------------------------------|
 \*--------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------*\
+|- Insertion d'un batch dans une section                              -|
+\*--------------------------------------------------------------------*/
+char MenuInsert(char *section,char *titre,char *buffer)
+{
+static char buf1[256],buf2[256];
+char tmp_name[15];
+FILE *infic,*outfic;
+char ok=0;
+int n;
+
+infic=fopen(KKFics->menu,"rt");
+if (infic==NULL)
+    {
+    outfic=fopen(KKFics->menu,"wt");
+    if (outfic==NULL) return 0;
+    fprintf(outfic,"%s\n%s = %s\n",section,titre,buffer);
+    fclose(outfic);
+    return 1;
+    }
+
+tmpnam(tmp_name);
+outfic=fopen(tmp_name,"wt");
+if (outfic==NULL)
+    {
+    fclose(infic);
+    return 0;
+    }
+
+while (fgets(buf2,256,infic)!=NULL)
+    {
+    memcpy(buf1,buf2,256);
+    ClearSpace(buf1);
+    fprintf(outfic,"%s",buf2);
+
+    if (!strnicmp(buf1,section,strlen(section)))
+        {
+        fprintf(outfic,"%s = %s\n",titre,buffer);
+        ok=1;
+        }
+    }
+
+if (ok==0)
+    fprintf(outfic,"%s\n%s = %s\n",section,titre,buffer);
+
+
+fclose(outfic);
+fclose(infic);
+
+strcpy(buf1,KKFics->menu);
+
+for (n=0;n<strlen(buf1);n++)
+    {
+    if (buf1[n]=='.')
+        {
+        buf1[n]=0;
+        break;
+        }
+    }
+strcat(buf1,".bak");
+
+unlink(buf1);
+rename(KKFics->menu,buf1);
+rename(tmp_name,KKFics->menu);
+
+return 1;
+}
+
+
 
 char *GetLine(char *ligne,FILE *fic)
 {
@@ -357,7 +437,9 @@ while(1);
 return res;
 }
 
-// Result:    1 --> fin
+/*--------------------------------------------------------------------*\
+|-  Result:    1 --> fin                                              -|
+\*--------------------------------------------------------------------*/
 
 int MenuGroup(char *groupe)
 {
@@ -463,14 +545,16 @@ if (retour==2)
 
     buf=strchr(ligne,'=')+1;        // Il y a tjs un '=' sur cette ligne
     ClearSpace(buf);
-    fprintf(outfic,"@%s\n",buf);
+    History2Line(buf,buffer);
+    fprintf(outfic,"@%s\n",buffer);
 
     while(GetLine(ligne,fic)!=NULL)
         {
         if ( (ligne[0]=='[') | (strchr(ligne,'=')!=NULL) )
             break;
 
-        fprintf(outfic,"@%s\n",ligne);
+        History2Line(ligne,buffer);
+        fprintf(outfic,"@%s\n",buffer);
         }
 
     fclose(outfic);
@@ -485,6 +569,9 @@ fclose(fic);
 return 1;
 }
 
+/*--------------------------------------------------------------------*\
+|- Menu                                                               -|
+\*--------------------------------------------------------------------*/
 void Menu(void)
 {
 char res[256];
@@ -499,4 +586,72 @@ do
 while(r==0);
 
 }
+
+/*--------------------------------------------------------------------*\
+|- Creation d'un nouveau titre                                        -|
+\*--------------------------------------------------------------------*/
+void MenuCreat(char *titbuf,char *buf,char *path)
+{
+static char title[34],section[34],line[80];
+static int lng=32;
+static int l1;
+static int x1=42,y1=2;
+
+int n;
+char buffer[256],buf2[256],enter[64];
+
+struct Tmt T[] = {
+      { 6, 7,2,NULL,NULL},                                      // le OK
+      {27, 7,3,NULL,NULL},                                  // le CANCEL
+
+      {12, 2,1,title, &lng},
+      { 2, 2,0,"Title:   ",NULL},
+      {12, 3,1,section, &lng},
+      { 2, 3,0,"Section: ",NULL},
+
+      { 1, 1,9,&x1,&y1},
+
+      { 1, 5,8,"Change to current directory",&l1}
+
+    };
+
+struct TmtWin F = {-1,5,46,14,"New User Menu"};
+
+
+strncpy(title,titbuf,32);
+strcpy(section,"[Main]");
+Line2PrcLine(buf,line);
+
+l1=0;
+
+n=WinTraite(T,8,&F,0);
+
+if (n==27) return;
+if (T[n].type==3) return;
+
+strcpy(buffer,"");
+
+memset(enter,32,80);
+enter[strlen(title)+3]=0;
+
+if (l1==1)
+    {
+    sprintf(buf2,"%c:\n",path[0]);
+    strcat(buffer,buf2);
+
+    strcat(buffer,enter);
+    sprintf(buf2,"cd %s\n",path+2);
+    strcat(buffer,buf2);
+
+    strcat(buffer,enter);
+    }
+
+sprintf(buf2,"%s\n",line);
+strcat(buffer,line);
+
+
+MenuInsert(section,title,buffer);
+}
+
+
 

@@ -18,13 +18,13 @@
 #include "idf.h"
 
 struct key K[nbrkey]=   {
-{  {"C64S tap"},
-        8,
+{  {""},
+        0,
         0,
         "C64S tape file",
         "T64",
         "",
-        76,0,1,6},
+        76,1,1,6},
 {  {"UC2"},
         3,
         0,
@@ -573,7 +573,7 @@ struct key K[nbrkey]=   {
         "OS2 Icon",
         "ICO",
         "IBM Corp.",82,0,0,4},
-{  {0x43,0x36,0x34,0x46,0x69,0x6C,0x65},
+{  {"C64File"},
         7,
         0,
         "C64 file",
@@ -995,10 +995,20 @@ struct key K[nbrkey]=   {
     "Atari Disk DUMP",
     "ST",
     "ATARI",155,0,0,6},
-    
+{  {0x01,0x20,0x05,0x50,0x05,0xC0,0x01    }, // ú úPúúú
+    7,
+    0x165,
+    "MoonBlaster music",
+    "MBM",
+    "",156,0,1,1},  // Format MSX --------------------------------------
+{  {"USLM"    },
+    4,
+    0,
+    "Useless Module",
+    "USM",
+    "Useless",157,0,1,1},  // By FreddyV -------------------------------
 
-
-// Dernier employe: 155
+// Dernier employe: 157
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -1196,6 +1206,8 @@ short Infoamf(RB_IDF *Info);
 short Infopkm(RB_IDF *Info);
 short Infogb(RB_IDF *Info);
 short Infoptm(RB_IDF *Info);
+short Infombm(RB_IDF *Info);
+short Infousm2(RB_IDF *Info);
 short Infohtm(RB_IDF *Info);
 short Inforaw(RB_IDF *Info);
 short Infoits(RB_IDF *Info);
@@ -1444,16 +1456,23 @@ strcpy(path,Info->path);
 fic=fopen(path,"rb");
 if (fic==NULL) return;
 
-memset(buffer,0,32768U);
-
-fread(buffer,32768U,1,fic);
-
 n=0;    //--- recherche dans tous les formats --------------------------
 
 memset(Info,0,sizeof(RB_IDF));
 strcpy(Info->path,path);
 Info->fic=fic;
 Info->posfic=0L;
+
+memset(buffer,0,32768U);
+
+Info->sizemax=fread(buffer,1,32768,fic);
+if (Info->sizemax==0)
+    {
+    strcpy(Info->format,"Null File");
+    strcpy(Info->fullname,"Unknow");
+
+    return;
+    }
 
 GetFile(Info->path,Info->filename);
 
@@ -1543,6 +1562,8 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case 144:err=Infoihp(Info); break;
             case 145:err=Infosmd(Info); break;
             case 146:err=Infobin(Info); break;
+            case 156:err=Infombm(Info); break;
+            case 157:err=Infousm2(Info); break;
             default:     //--- Ca serait une erreur de ma part alors ---
                 sprintf(Info->format,"Pingouin %d",K[n].numero);
                 trv=1;
@@ -1684,7 +1705,7 @@ strcat(Info->format," module");
 ReadStr(Info,0,Info->fullname,20);
 
 sprintf(Info->info, "%3d /%3d /%3d",instr,buf[950],chnl);
-strcpy(Info->Tinfo,"Inst/Patt/Chnl");
+strcpy(Info->Tinfo,"Inst/Lngt/Chnl");
 
 return 0;
 }
@@ -1746,8 +1767,8 @@ ReadStr(Info,43,Info->composer,20);
 //      L'octet suivant est le nombre de sample (MAXSAMPLE)
 
 /* strcpy(Info[3].help,"INFO");
-sprintf(Info[3].txt, "%3d /%3d /%3d",instr,buf[950],chnl);
-strcpy(Info[3].title,"Inst/Patt/Chnl"); */
+sprintf(Info->message[0], "%3d /%3d /%3d",instr,buf[950],chnl);
+strcpy(Info->message[0],"Inst/Patt/Chnl"); */
 
 return 0;
 }
@@ -3078,9 +3099,19 @@ ReadStr(Info,0x04,Info->fullname,32);
 return 0;
 }
 
-short Infousm(RB_IDF *Info)
+short Infousm2(RB_IDF *Info)
 {
-ReadStr(Info,0x04,Info->fullname,32);
+int instr,patt,chnl;
+
+instr=ReadInt(Info,46,1);
+patt=ReadInt(Info,44,1);
+chnl=ReadInt(Info,42,1);
+
+sprintf(Info->info, "%3d /%3d /%3d",instr,patt,chnl);
+strcpy(Info->Tinfo,"Inst/Patt/Chnl");
+
+ReadStr(Info,6,Info->fullname,32);
+
 return 0;
 }
 
@@ -3432,13 +3463,23 @@ return 0;
 
 short Infot64(RB_IDF *Info)
 {
+
+ReadStr(Info,0,tampon,14);
+if ( (memcmp(tampon,"C64S tape file",14)!=0) &
+     (memcmp(tampon,"C64 tape image",14)!=0) ) return 1;
+
 ReadStr(Info,0x28,Info->fullname,24);
 return 0;
 }
 
+/*--------------------------------------------------------------------*\
+|- 00  08  C64File (null terminated)                                  -|
+|- 08  17  File Name (null terminated)                                -|
+|- 25  01  Record Size. P00 = 0                                       -|
+\*--------------------------------------------------------------------*/
 short Infop00(RB_IDF *Info)
 {
-ReadStr(Info,0x08,Info->fullname,18);
+ReadStr(Info,0x08,Info->fullname,17);
 return 0;
 }
 
@@ -3460,66 +3501,100 @@ ReadStr(Info,0,Info->fullname,28);
 return 0;
 }
 
+short Infombm(RB_IDF *Info)
+{
+ReadStr(Info,0xCF,Info->fullname,40);
+return 0;
+}
+
+short Infousm(RB_IDF *Info)
+{
+ReadStr(Info,4,Info->fullname,32);
+
+return 0;
+}
+
 short Infotxt(RB_IDF *Info)
 {
-unsigned short pos,i;
+unsigned short pos;
 unsigned char a;
 
 /*--------------------------------------------------------------------*\
 |-  Recherche de la valeur texte par statistique                      -|
 \*--------------------------------------------------------------------*/
-/*
+
 unsigned short tab[256];
 short ord[256];
 short i,j,n;
 char col[]=" etanoris-hdlc";
-short val=0;
+int val=0;
+unsigned char c;
+unsigned short nm;
 
-for (n=0;n<256;n++) {
-        tab[n]=0;
-        ord[n]=n;
-        }
+nm=0;
 
-for (pos=0;pos<Info->sizebuf;pos++)
-                tab[Info->buffer[pos]]++;
+for (n=0;n<256;n++)
+    {
+    tab[n]=0;
+    ord[n]=n;
+    }
+
+for (pos=0;pos<Info->sizemax;pos++)
+    {
+    c=Info->buffer[pos];
+    if ((c>='A') & (c<='Z')) c=c+'a'-'A';
+    tab[c]++;
+    }
+
+for(i=32;i<126;i++)
+    nm+=tab[i];
+nm+=tab[10]+tab[13];
 
 for (i=0;i<256;i++)
-        for(j=i;j<256;j++)
-                if (tab[ord[i]]<tab[ord[j]]) {
-                        n=ord[i];
-                        ord[i]=ord[j];
-                        ord[j]=n;
-                        }
+    for(j=i;j<256;j++)
+        if (tab[ord[i]]<tab[ord[j]])
+            {
+            n=ord[i];
+            ord[i]=ord[j];
+            ord[j]=n;
+            }
 
-for (i=0;i<15;i++)      {
-        for (n=0;n<15;n++)
-                if (ord[i]==col[n])             {
-                        val+=100+((50*abs(i-n))/15);
-                        break;
-                        }
+for (i=0;i<15;i++)
+    {
+    for (n=0;n<15;n++)
+        if (ord[i]==col[n])
+            {
+            val+=100+((50*abs(i-n))/15);
+            break;
+            }
+    }
+
+sprintf(Info->message[1]," %d,%d/%d",val,nm,Info->sizemax);
+
+val=((val/15)*nm)/Info->sizemax;
+if (val<50)
+    {
+    for (pos=0;pos<Info->sizebuf;pos++)
+        {
+        a=(unsigned char)(Info->buffer[pos]);
+        if ((a<32) &
+            (a!=10) & (a!=13) &          //--- passage de ligne --------
+            (a!=12) &                    //--- passage de page ---------
+            (a!=17) &
+            (a!=16) &
+            (a!=9) &                     //--- tabulation --------------
+            (a!=0) &                     //--- erreur buffer -----------
+            (a!=2) &                     //--- la petite tˆte ----------
+            (a!=3) &                     //--- le petit coeur ----------
+            (a!=26))
+            {                            //--- fin de fichier ----------
+            // cprintf("%d",Info->buffer[pos]);
+            return 1;
+            }
         }
+    }
 
-val=val/15;
-if (val<50) return 1; */
-
-
-for (pos=0;pos<Info->sizebuf;pos++) {
-                a=(unsigned char)(Info->buffer[pos]);
-                if ((a<32) &
-                        (a!=10) & (a!=13) &          // passage de ligne
-                        (a!=12) &                     // passage de page
-                        (a!=17) &
-                        (a!=16) &
-                        (a!=9) &                           // tabulation
-                        (a!=0) &                        // erreur buffer
-                        (a!=2) &                       // la petite tˆte
-                        (a!=3) &                       // le petit coeur
-                        (a!=26)) {                     // fin de fichier
-                        // cprintf("%d",Info->buffer[pos]);
-                        return 1;
-                        }
-                }
-
+sprintf(Info->message[0]," English probability:         %3d %%",val);
 
 SplitName(Info->filename,NULL,Info->ext);
 

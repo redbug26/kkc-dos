@@ -26,6 +26,8 @@
 
 #include "hard.h"
 
+#define DOOR 1
+
 /*--------------------------------------------------------------------*\
 |- variable globale                                                   -|
 \*--------------------------------------------------------------------*/
@@ -217,7 +219,7 @@ int386(0x10,&regs,&regs);
 }
 
 
-
+#ifdef DOOR
 /*--------------------------------------------------------------------*\
 |-                       Affichage par code Ansi                      -|
 \*--------------------------------------------------------------------*/
@@ -826,7 +828,7 @@ modem_open=0;
 
 LibMem(modem_buffer);
 }
-
+#endif
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
@@ -2734,6 +2736,7 @@ while(1)
     {
     case 0:
         return 1;
+#ifdef DOOR
     case 1:
         Clr();
         PrintAt(0,0,"Try Ansi Mode");
@@ -2772,6 +2775,7 @@ while(1)
         Clr=Com_Clr;
         Window=Com_Window;
         return 1;
+#endif
     default:
         return 0;
     }
@@ -2779,6 +2783,7 @@ while(1)
 
 void DesinitScreen(void)
 {
+#ifdef DOOR
 switch (Cfg->display)
     {
     case 0:
@@ -2790,6 +2795,7 @@ switch (Cfg->display)
         com_close();
         break;
     }
+#endif
 }
 
 /*--------------------------------------------------------------------*\
@@ -3104,6 +3110,7 @@ void SubTopic(long z);
 void Page(long z);
 void Hlp2Chaine(long pos,char *chaine);
 
+void HelpInterTopic(char *topic);
 
 /*--------------------------------------------------------------------*\
 |- variable interne                                                   -|
@@ -3114,8 +3121,12 @@ static long NbrMain;
 static long NdxSubTopic[16][512];
 static long NbrSub[16];
 
+static long RefX[32],RefY[32],RefLng[32],RefPosF[32],RefPos[32],NRef;
+
 static long lng;
 char *hlp;
+
+char help_fin;
 
 /*--------------------------------------------------------------------*\
 |- Lit la ligne suivant jusque … la fin                               -|
@@ -3155,6 +3166,8 @@ for(i=0;i<16;i++)
     for(j=0;j<512;j++)
         NdxSubTopic[i][j]=0;
     }
+
+help_fin=0;
 
 fic=fopen(Fics->help,"rb");
 lng=filelength(fileno(fic));
@@ -3202,15 +3215,27 @@ LibMem(hlp);
 void HelpTopic(char *topic)
 {
 FILE *fic;
-char buffer[80];
 
-long n;
+help_fin=0;
 
 fic=fopen(Fics->help,"rb");
 lng=filelength(fileno(fic));
 hlp=(char*)GetMem(lng);
 fread(hlp,1,lng,fic);
 fclose(fic);
+
+HelpInterTopic(topic);
+
+LibMem(hlp);
+}
+
+/*--------------------------------------------------------------------*\
+|- Aide sur un topic en particulier                                   -|
+\*--------------------------------------------------------------------*/
+void HelpInterTopic(char *topic)
+{
+char buffer[80];
+long n;
 
 n=0;
 while(n<lng)
@@ -3226,8 +3251,6 @@ while(n<lng)
     while (hlp[n]!=0x0A) n++;
     n++;
     }
-
-LibMem(hlp);
 }
 
 /*--------------------------------------------------------------------*\
@@ -3370,7 +3393,7 @@ x2=x1+max+3;
 y2=y1+(NbrSub[z]+1)*2;
 
 if (y1<0) y1=2;
-if (y2>Cfg->TailleY) y2=Cfg->TailleY-3;
+if (y2>=(Cfg->TailleY-1)) y2=Cfg->TailleY-3;
 
 SaveScreen();
 
@@ -3479,7 +3502,7 @@ void Page(long z)
 char car,car2;
 unsigned int c;
 
-long n;
+long m,n;
 
 int nbrkey;
 
@@ -3488,12 +3511,23 @@ long x,y;
 char type;                   //--- 1: Centre & highlighted -------------
                              //--- 2: Highlighted ----------------------
                              //--- 3: Marqueur pour topic aide ---------
+char col;
 
 long x1;
 
 char chaine[256];
 
 long avant,apres,pres;
+
+char ref[64];
+int lref;
+int cref;
+
+char str[64];
+int lstr;
+
+if (help_fin==1)
+    return;
 
 SaveScreen();
 PutCur(32,0);
@@ -3508,6 +3542,8 @@ pres=z;
 
 nbrkey=0;
 
+cref=0;
+
 do
 {
 n=pres;
@@ -3518,6 +3554,8 @@ y=0;
 
 while(hlp[n]!=0x0A) n++;
 n++;
+
+NRef=0;
 
 while(1)
     {
@@ -3571,35 +3609,82 @@ while(1)
                 }
             }
 
+        if (type!=0)                              // Couleur de la ligne
+            col=10*16+3;
+            else
+            col=10*16+1;
+
+        ref[0]=0;
+        lref=-1;
+
+
         while(hlp[n]!=0x0A)
             {
             if (n>lng) break;           // Autre type -> fin d'affichage
+
+            lstr=1;
+            str[0]=hlp[n];
+
             switch(hlp[n])
                 {
                 case 0x09:
-                    do
-                       {
-                       AffChr(x,y,SPACE);
-                       x++;
-                       }
-                    while (((x-x1)&7)!=0);
+                    lstr=(x1-x)&7;
+                    if (lstr==0) lstr=8;
+                    memset(str,SPACE,lstr);
                     break;
                 case 0x0D:
+                    lstr=0;
                     break;
+                case '<':
+                    RefX[NRef]=x;
+                    RefY[NRef]=y;
+                    RefPos[NRef]=n+1;
+
+                    lref=0;
+                    lstr=0;
+                    col=14*16+6;
+                    break;
+                case '>':
+                    if (lref==-2)
+                        {
+                        RefLng[NRef]=n-RefPosF[NRef]-2;
+                        NRef++;
+                        lref=-1;
+                        lstr=0;
+                        if (type!=0)              // Couleur de la ligne
+                            col=10*16+3;
+                        else
+                            col=10*16+1;
+                        }
+                    break;
+                case ';':
+                    if (lref>=0)
+                        {
+                        RefPosF[NRef]=n-1;
+                        lref=-2;
+                        lstr=0;
+                        }
                 default:
-                    AffChr(x,y,hlp[n]);
-                    x++;
+                    if (lref>=0)
+                        {
+                        ref[lref]=hlp[n];
+                        lref++;
+                        lstr=0;
+                        }
                     break;
                     }
+
+            for(m=0;m<lstr;m++)
+                {
+                AffChr(x,y,str[m]);
+                AffCol(x,y,col);
+                x++;
+                }
             n++;
             }
 
+        ColLin(x,y,79-x+x1,10*16+1);
         ChrLin(x,y,79-x+x1,SPACE);              // Efface jusqu'a la fin
-
-        if (type!=0)                              // Couleur de la ligne
-            ColLin(x1+1,y,78,10*16+5);
-            else
-            ColLin(x1+1,y,78,10*16+1);
 
         n++;
 
@@ -3617,6 +3702,18 @@ while(1)
         }
     }
 
+if (cref>=NRef) cref=0;
+
+for(m=0;m<NRef;m++)
+    {
+    if (cref==m)
+        col=14*16+3;
+        else
+        col=14*16+6;
+
+    ColLin(RefX[m],RefY[m],RefLng[m],col);
+    }
+
 if (kbhit()!=0) nbrkey=0;
 
 if (nbrkey==0)
@@ -3631,15 +3728,30 @@ if (nbrkey==0)
 
         if ((button&1)==1)     //--- gauche ----------------------------
             {
-            int y;
+            int x,y;
 
+            x=MousePosX();
             y=MousePosY();
 
-            if (y>(Cfg->TailleY)/2)
-                c=80*256;
-                else
-                c=72*256;
-            ReleaseButton();
+            for(m=0;m<NRef;m++)
+                {
+                if ((y==RefY[m]) & (x>=RefX[m]) & (x<RefX[m]+RefLng[m]))
+                    {
+                    cref=m;
+                    c=13;
+                    }
+                }
+
+            if (c==0)
+                {
+                if (y==Cfg->TailleY-1)
+                    c=80*256;
+
+                if (y==0)
+                    c=72*256;
+
+                ReleaseButton();
+                }
             }
         if ((button&2)==2)     //--- droite ----------------------------
             c=27;
@@ -3665,8 +3777,32 @@ if (pres!=z)
         avant=z;
     }
 
+switch(car)
+    {
+    case 9:
+        cref++;
+        break;
+    case 13:
+        if (cref<NRef)
+            {
+            memcpy(str,hlp+RefPos[cref],RefPosF[cref]-RefPos[cref]+1);
+            str[RefPosF[cref]-RefPos[cref]+1]=0;
+            HelpInterTopic(str);
+            }
+        break;
+    }
+
 switch(car2)
     {
+    case 0x0F:  //--- SHIFT-TAB ----------------------------------------
+        cref--;
+        if (cref<0)
+            {
+            cref=NRef-1;
+            if (cref<0)
+                cref=0;
+            }
+        break;
     case 80:    //--- BAS ----------------------------------------------
         pres=apres;
         break;
@@ -3701,7 +3837,12 @@ switch(car2)
             else
             nbrkey=0;
         break;
+    case 0x44:  //--- F10 ----------------------------------------------
+        help_fin=1;
+        break;
     }
+
+if (help_fin) break;
 }
 while ( (c!=27) & (c!=0x8D00) );
 

@@ -31,22 +31,26 @@ void StartWinArc(void)
 {
 int x,y;
 
-SaveScreen();
+if (((KKCfg->noprompt)&1)==0)
+    {
+    SaveScreen();
 
-xarc=(Cfg->TailleX-30)/2;
+    xarc=(Cfg->TailleX-30)/2;
 
-Window(xarc,6,xarc+31,11,10*16+1);
-WinCadre(xarc-1,5,xarc+32,12,0);
+    Window(xarc,6,xarc+31,11,10*16+1);
+    WinCadre(xarc-1,5,xarc+32,12,0);
 
-WinCadre(xarc+1,6,xarc+30,8,1);
+    WinCadre(xarc+1,6,xarc+30,8,1);
 
-PrintAt(xarc+8,5,"Reading Archive");
+    PrintAt(xarc+8,5,"Reading Archive");
 
-x=xarc+11;
-y=10;
+    x=xarc+11;
+    y=10;
 
-PrintAt(x,y,"    STOP    ");
-Puce(x,y,13,0);
+    PrintAt(x,y,"    STOP    ");
+    Puce(x,y,13,0);
+    }
+
 
 debarc=0;
 
@@ -95,14 +99,18 @@ int InterWinArc(int debut,int nbr,int n)
 {
 if (n!=0) LngCopy=n;
 
-PrintAt(xarc+4,9,"%3d files found   %3d %%",nbr,(debut*100)/LngCopy);
-
-debarc=LongGradue(xarc+2,7,28,debarc,debut,LngCopy);
-
-if (KbHit())
+if (((KKCfg->noprompt)&1)==0)
     {
-    if (Wait(0,0,0)==13) return 1;
+    PrintAt(xarc+4,9,"%3d files found  %4d %%",nbr,(debut*100)/LngCopy);
+
+    debarc=LongGradue(xarc+2,7,28,debarc,debut,LngCopy);
+
+    if (KbHit())
+        {
+        if (Wait(0,0,0)==13) return 1;
+        }
     }
+
 return 0;
 }
 
@@ -111,7 +119,10 @@ void CloseWinArc(void)
 {
 fclose(fic);
 
-LoadScreen();
+if (((KKCfg->noprompt)&1)==0)
+    {
+    LoadScreen();
+    }
 }
 
 

@@ -38,6 +38,14 @@ struct kkconfig *KKCfg;
 struct PourMask **Mask;
 
 /*--------------------------------------------------------------------*\
+|- Fake MenuCreat pour ficidf                                         -|
+\*--------------------------------------------------------------------*/
+void MenuCreat(char *titbuf,char *buf,char *path)
+{
+
+}
+
+/*--------------------------------------------------------------------*\
 |- prototype                                                          -|
 \*--------------------------------------------------------------------*/
 
@@ -357,8 +365,7 @@ while( 1 )
         fprintf(wfp,"%s=%s\n",entry,buffer);      // Clean up and rename
         fclose(rfp);
         fclose(wfp);
-        unlink(file_name);
-        rename(tmp_name,file_name);
+        
         return(1);
         }
 
@@ -711,10 +718,10 @@ x=(Cfg->TailleX-(l*nbr))/2;
 SaveScreen();
 PutCur(32,0);
 
-WinCadre(x-2,6,x+l*nbr+1,11,0);
-Window(x-1,7,x+l*nbr,10,0*16+1);
+WinCadre(x-2,6,x+l*nbr+1,11,4);
+Window(x-1,7,x+l*nbr,10,14*16+7);
 
-WinCadre(x-1,8,x+l*nbr,10,1);
+WinCadre(x-1,8,x+l*nbr,10,4+1);
 
 PrintAt(x,7,"Select the drive");
 
@@ -729,9 +736,9 @@ for (n=0;n<26;n++)
         drive[n]=m;
         AffChr(m,9,n+'A');
         if (lstdrv[n]==0)
-            AffCol(drive[n],9,0*16+1);
+            AffCol(drive[n],9,14*16+7);
             else
-            AffCol(drive[n],9,2*16+1);
+            AffCol(drive[n],9,7*16+4);
         m+=l;
         }
         else
@@ -745,8 +752,10 @@ for (n=0;n<26;n++)
 i=-1;
 car=DROITE*256;
 
-do	{
-    do {
+do
+    {
+    do
+        {
         if ( (LO(car)==32) & (drive[i]!=0) )
             {
             if (lstdrv[i]==0)
@@ -762,10 +771,16 @@ do	{
             car=9;
             }
 
-        if (lstdrv[i]==0)
-            AffCol(drive[i],9,0*16+1);
-            else
-            AffCol(drive[i],9,2*16+1);
+        if (i>=0)
+            {
+            if (drive[i]!=0)
+                {
+                if (lstdrv[i]==0)
+                    AffCol(drive[i],9,14*16+7);
+                else
+                    AffCol(drive[i],9,7*16+4);
+                }
+            }
 
         if (HI(car)==GAUCHE) i--;
         if (HI(car)==DROITE) i++;
@@ -774,9 +789,8 @@ do	{
 
         if (i==26) i=0;
         if (i<0) i=25;
-        } while (drive[i]==0);
-
-
+        }
+    while (drive[i]==0);
 
     xx=2;
     yy=13;
@@ -798,16 +812,16 @@ do	{
         }
 
     if (lstdrv[i]==0)
-        AffCol(drive[i],9,1*16+5);
+        AffCol(drive[i],9,14*16+3);
         else
-        AffCol(drive[i],9,2*16+5);
+        AffCol(drive[i],9,7*16+3);
 
     car=Wait(0,0,0);
 
     if (lstdrv[i]==0)
-        AffCol(drive[i],9,0*16+1);
+        AffCol(drive[i],9,14*16+7);
         else
-        AffCol(drive[i],9,2*16+1);
+        AffCol(drive[i],9,7*16+7);
 
 } while ( (LO(car)!=27) & (LO(car)!=13));
 
@@ -1313,11 +1327,9 @@ if (nbr>0)
         }
 
     PrintAt((Cfg->TailleX-22)/2,(Cfg->TailleY-3),"Press a key to continue");
-    ColLin(1,(Cfg->TailleY-3),78,0*16+2);
+    ColLin(1,(Cfg->TailleY-3),(Cfg->TailleX-2),10*16+3);
 
     Wait(0,0,0);
-    ColWin(1,2,Cfg->TailleX-2,Cfg->TailleY-3,0*16+1);
-    ChrWin(1,2,Cfg->TailleX-2,Cfg->TailleY-3,32);  // '±'
 
     LoadScreen();
 

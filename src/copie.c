@@ -403,13 +403,13 @@ char ok;
 
 ok=1;
 
-PrintAt(0,1,"%40s%40s",inpath,outpath);
+// PrintAt(0,1,"%40s%40s",inpath,outpath);
 
 MaskCnv(outpath);
 
 if (!WildCmp(inpath,outpath))
     {
-    PrintAt(0,0,"%40s%40s",inpath,outpath);
+//    PrintAt(0,0,"%40s%40s",inpath,outpath);
     WinError("Source & Destination are the same");
     ok=0;
     }
@@ -581,8 +581,8 @@ if (n!=27)  // pas escape
         {
         if (!strcmp(Dir,F1->path)) return 1;
 
-        if (FTrash->system==0)
-            {
+//        if (FTrash->system==0)
+//            {
             if (chdir(Dir)!=0)
                 {
                 strcpy(temp,Dir);
@@ -595,7 +595,7 @@ if (n!=27)  // pas escape
                 FileinPath(Dir,temp);
                 Path2Abs(Dir,"..");
                 }
-            }
+//            }
 
         DFen=FTrash;
         CommandLine("#cd %s",Dir);
@@ -719,7 +719,8 @@ strcpy(nom,F2->path+strlen(F2->VolName));
 
 if (PlayerIdf(player,30)==0)
     {
-    CommandLine("#%s a -ep1 -std %s @%s %s",player,F2->VolName,
+    KKCfg->scrrest=0;
+    CommandLine("#%s a -ep1 -std %s @%s %s >nul",player,F2->VolName,
                                                         Fics->temp,nom);
     }
 }
@@ -777,7 +778,8 @@ fclose(fic);
 
 if (PlayerIdf(player,34)==0)
     {
-    CommandLine("#%s %c -std -y %s @%s %s",player,option,
+    KKCfg->scrrest=0;
+    CommandLine("#%s %c -std -y %s @%s %s >nul",player,option,
                                        F1->VolName,Fics->temp,F2->path);
     }
 }
@@ -838,7 +840,8 @@ fclose(fic);
 
 if (PlayerIdf(player,35)==0)
     {
-    CommandLine("#%s -%c -o %s @%s %s",player,option,F1->VolName,
+    KKCfg->scrrest=0;
+    CommandLine("#%s -%c -o %s @%s %s >nul",player,option,F1->VolName,
                                                    Fics->temp,F2->path);
     }                    // Overwrite newer file
 }
@@ -895,7 +898,8 @@ for(i=0;i<F1->nbrfic;i++)
 fclose(fic);
 if (PlayerIdf(player,30)==0)
     {
-    CommandLine("#%s %c -P -y %s %s !%s",player,option,F1->VolName,
+    KKCfg->scrrest=0;
+    CommandLine("#%s %c -P -y %s %s !%s >nul",player,option,F1->VolName,
                                                    F2->path,Fics->temp);
     }
 }
@@ -953,7 +957,8 @@ for(i=0;i<F1->nbrfic;i++)
 fclose(fic);
 if (PlayerIdf(player,32)==0)
     {
-    CommandLine("#%s %c -a %s -w%s @%s",player,option,F1->VolName,
+    KKCfg->scrrest=0;
+    CommandLine("#%s %c -a %s -w%s @%s >nul",player,option,F1->VolName,
                         F2->path,Fics->temp);
     }
 }

@@ -569,73 +569,97 @@ switch(DFen->system)
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
+void Line2PrcLine(char *s,char *chaine)
+{
+int n,m;
+static char path[256],path2[256];
+
+strcpy(path,DFen->path);
+strcat(path,"\\");
+strcpy(path2,DFen->Fen2->path);
+strcat(path2,"\\");
+
+chaine[0]=0;    m=n=0;
+
+while(s[n]!=0)
+    {
+    if (!strnicmp(s+n,path,2))
+        {
+        strcat(chaine+m,"!:");
+        m+=2;
+        n+=2;
+        }
+    else
+    if (!strnicmp(s+n,path2+2,strlen(path2)-2))
+        {
+        strcat(chaine+m,"$\\");
+        m+=2;
+        n+=strlen(path2)-2;
+        }
+    else
+    if (!strnicmp(s+n,path+2,strlen(path)-2))
+        {
+        strcat(chaine+m,"!\\");
+        m+=2;
+        n+=strlen(path)-2;
+        }
+    else
+    if (!strnicmp(s+n,path2+2,strlen(path2)-3))
+        {
+        strcat(chaine+m,"$/");
+        m+=2;
+        n+=strlen(path2)-3;
+        }
+    else
+    if (!strnicmp(s+n,path+2,strlen(path)-3))
+        {
+        strcat(chaine+m,"!/");
+        m+=2;
+        n+=strlen(path)-3;
+        }
+    else
+    if (!strnicmp(s+n,DFen->F[DFen->pcur]->name,
+                                 strlen(DFen->F[DFen->pcur]->name)))
+        {
+        strcat(chaine+m,"!.!");
+        m+=3;
+        n+=strlen(DFen->F[DFen->pcur]->name);
+        }
+    else
+    if (!strnicmp(s+n,path2,2))
+        {
+        strcat(chaine+m,"$:");
+        m+=2;
+        n+=2;
+        }
+    else
+    if (!strnicmp(s+n,DFen->Fen2->F[DFen->Fen2->pcur]->name,
+                     strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name)))
+        {
+        strcat(chaine+m,"$.$");
+        m+=3;
+        n+=strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name);
+        }
+    else
+       {
+       chaine[m]=s[n];
+       m++;
+       n++;
+       }
+    chaine[m]=0;
+    }
+}
+
 /*--------------------------------------------------------------------*\
 |- Gestion history                                                    -|
 \*--------------------------------------------------------------------*/
 void Line2History(char *s)
 {
-int n,m;
 char chaine[256];
 
 if (KKCfg->cnvhist==1)
     {
-    chaine[0]=0;
-    m=n=0;
-
-    while(s[n]!=0)
-        {
-        if (!strnicmp(s+n,DFen->path,2))
-            {
-            strcat(chaine+m,"!:");
-            m+=2;
-            n+=2;
-            }
-        else
-        if (!strnicmp(s+n,DFen->Fen2->path+2,
-                                            strlen(DFen->Fen2->path)-2))
-            {
-            strcat(chaine+m,"$\\");
-            m+=2;
-            n+=strlen(DFen->Fen2->path)-2;
-            }
-        else
-        if (!strnicmp(s+n,DFen->path+2,strlen(DFen->path)-2))
-            {
-            strcat(chaine+m,"!\\");
-            m+=2;
-            n+=strlen(DFen->path)-2;
-            }
-        else
-        if (!strnicmp(s+n,DFen->F[DFen->pcur]->name,
-                                     strlen(DFen->F[DFen->pcur]->name)))
-            {
-            strcat(chaine+m,"!.!");
-            m+=3;
-            n+=strlen(DFen->F[DFen->pcur]->name);
-            }
-        else
-        if (!strnicmp(s+n,DFen->Fen2->path,2))
-            {
-            strcat(chaine+m,"$:");
-            m+=2;
-            n+=2;
-            }
-        else
-        if (!strnicmp(s+n,DFen->Fen2->F[DFen->Fen2->pcur]->name,
-                         strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name)))
-            {
-            strcat(chaine+m,"$.$");
-            m+=3;
-            n+=strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name);
-            }
-        else
-           {
-           chaine[m]=s[n];
-           m++;
-           n++;
-           }
-        chaine[m]=0;
-        }
+    Line2PrcLine(s,chaine);
     PutInHistCom(chaine);
     }
     else
@@ -661,6 +685,14 @@ else
 if (!strnicmp(s+n,"!\\",2))
     {
     memcpy(chaine+m,DFen->path+2,strlen(DFen->path)-2);
+    m+=strlen(DFen->path)-1;
+    chaine[m-1]='\\';
+    n+=2;
+    }
+else
+if (!strnicmp(s+n,"!/",2))
+    {
+    memcpy(chaine+m,DFen->path+2,strlen(DFen->path)-2);
     m+=strlen(DFen->path)-2;
     n+=2;
     }
@@ -681,6 +713,14 @@ if (!strnicmp(s+n,"$:",2))
     }
 else
 if (!strnicmp(s+n,"$\\",2))
+    {
+    memcpy(chaine+m,DFen->Fen2->path+2,strlen(DFen->Fen2->path)-2);
+    m+=strlen(DFen->Fen2->path)-1;
+    chaine[m-1]='\\';
+    n+=2;
+    }
+else
+if (!strnicmp(s+n,"$/",2))
     {
     memcpy(chaine+m,DFen->Fen2->path+2,strlen(DFen->Fen2->path)-2);
     m+=strlen(DFen->Fen2->path)-2;
@@ -941,7 +981,10 @@ if (n!=27)
 
     if (T[n].type!=3)
         if (strlen(Dir)!=0)
+            {
+            KKCfg->scrrest=0;
             CommandLine("#%s >%s",Dir,Fics->temp);
+            }
     }
 }
 

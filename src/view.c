@@ -24,7 +24,9 @@ static char ReadChar(void);
 
 void RefreshBar(char *bar);
 
+void ChangeTrad(void);
 void ChangeMask(void);
+int ChangeLnFeed(void);
 void Masque(short x1,short y1,short x2,short y2);
 
 void SavePosition(char *fichier,int posn);
@@ -38,6 +40,7 @@ int HtmlView(char *fichier,char *liaison);
 static char *Keyboard_Flag1=(char*)0x417;
 
 
+static char xor;
 
 static FILE *fic;
 static long taille;
@@ -79,8 +82,22 @@ if (posn-pos<0)
     fread(view_buffer,32768,1,fic);
     }
 
-return view_buffer[posn-pos];
+return xor^view_buffer[posn-pos];
 }
+
+char ReadNextChar(void)
+{
+char car;
+long l;
+
+l=posn;
+posn++;
+car=ReadChar();
+posn=l;
+
+return xor^car;
+}
+
 
 /*--------------------------------------------------------------------*\
 |- Load position of viewing in posdeb                                 -|
@@ -183,7 +200,7 @@ int fin=0; //--- Code de retour ----------------------------------------
 SaveScreen();
 PutCur(3,0);
 
-Bar(" Help  ----  ----  Text  ----  ---- Search ----  ----  ---- ");
+Bar(" Help  ----  ----  Text  ----  ---- Search ----  ----  Quit ");
 
 Window(1,1,Cfg->TailleX-2,(Cfg->TailleY)-3,10*16+1);
 WinCadre(0,3,9,(Cfg->TailleY)-2,2);
@@ -315,6 +332,7 @@ switch(LO(car))   {
             case 0x43:  // --- F9 --------------------------------------
                 fin=86;
                 break;
+            case 0x44:  // --- F10 -------------------------------------
             case 0x8D:  // --- CTRL-UP ---------------------------------
                 fin=-1;
                 break;
@@ -839,19 +857,6 @@ switch(KKCfg->warp)      //--- F2 --------------------------------------
     case 2: memcpy(bar+6,"WoWrap",6); break;
     }
 
-switch(KKCfg->cnvtable)  //--- F6 --------------------------------------
-    {
-    case 0: memcpy(bar+30," Norm ",6); break;
-    case 1: memcpy(bar+30,"  BBS ",6); break;
-    case 2: memcpy(bar+30," Latin",6); break;
-    }
-
-switch(KKCfg->autotrad)  //--- F5 --------------------------------------
-    {
-    case 0: memcpy(bar+24,"NoAuto",6); break;
-    case 1: memcpy(bar+24," Auto ",6); break;
-    }
-
 }
 
 void AutoTrad(void)
@@ -946,18 +951,30 @@ if (KKCfg->ajustview)
     int xm=0,ym=0;
     int n;
 
+    char vb;
+    long posold;
+
     x=0;
+    posold=posn;
 
     for (n=0;n<((taille<32768) ? taille:32768);n++)
         {
+        posn=n;
+        vb=ReadChar();
+
+        if ( ((vb==13) & (ReadNextChar()==10) & (KKCfg->lnfeed==0)) |
+             ((vb==13) & (KKCfg->lnfeed==1)) |
+             ((vb==10) & (KKCfg->lnfeed==2)) |
+             ((vb==10) & (KKCfg->lnfeed==4)) |
+             ((vb==KKCfg->userfeed) & (KKCfg->lnfeed==3)) )
+             {
+             x=0;
+             ym++;
+             if (KKCfg->lnfeed==0) n++;
+             }
+        else
         switch(view_buffer[n])
             {
-            case 10:
-                x=0;
-                ym++;
-                break;
-            case 13:
-                break;
             case 9:
                 lchaine=x/8;
                 lchaine=lchaine*8+8;
@@ -967,6 +984,8 @@ if (KKCfg->ajustview)
             case 32:
                 x++;
                 break;
+            case 13:
+                if (KKCfg->lnfeed==4) break;
             default:
                 x++;
                 if (x>xm) xm=x;
@@ -974,6 +993,8 @@ if (KKCfg->ajustview)
             }
         if (x>Cfg->TailleX) ym++,x=0;
         }
+
+    posn=posold;
     ym++;
 
     if (xm>=((Cfg->TailleX)-1))
@@ -992,18 +1013,6 @@ if (KKCfg->ajustview)
     yl=Cfg->TailleY-1;
     }
 
-/*--------------------------------------------------------------------*\
-|- Affichage de la bar                                                -|
-\*--------------------------------------------------------------------*/
-
-strcpy
-   (bar," Help Nowrap ----  Hexa  ----  ---- Search Print Mask  ---- ");
-
-
-
-RefreshBar(bar);
-
-Bar(bar);
 
 /*--------------------------------------------------------------------*\
 |- Affichage de la fenetre                                            -|
@@ -1037,6 +1046,19 @@ if ( (x>0) & (y>0) & (x+xl<Cfg->TailleX) & (y+yl<Cfg->TailleY) )
 
 ColWin(x,y,x+xl-1,y+yl-1,10*16+4);
 ChrWin(x,y,x+xl-1,y+yl-1,32);
+
+/*--------------------------------------------------------------------*\
+|- Affichage de la bar                                                -|
+\*--------------------------------------------------------------------*/
+
+strcpy
+   (bar," Help NowrapLnFeed Hexa  Zoom  Trad Search Print Mask  Quit ");
+
+
+
+RefreshBar(bar);
+
+Bar(bar);
 
 /*--------------------------------------------------------------------*\
 |- Garde la position pr‚c‚dente                                       -|
@@ -1076,28 +1098,37 @@ do
 
     chaine[0]=ReadChar();
 
-    switch(chaine[0])
+    if ( ((chaine[0]==13) & (ReadNextChar()==10) & (KKCfg->lnfeed==0)) |
+         ((chaine[0]==13) & (KKCfg->lnfeed==1)) |
+         ((chaine[0]==10) & (KKCfg->lnfeed==2)) |
+         ((chaine[0]==10) & (KKCfg->lnfeed==4)) |
+         ((chaine[0]==KKCfg->userfeed) & (KKCfg->lnfeed==3)) )
         {
-        case 10:
-            w1=tpos;
-            aff=1;
-            break;
-        case 9:
-            lchaine=(x2-x)/8;
-            lchaine=lchaine*8+8;
-            lchaine-=(x2-x);
-            if (lchaine>0)
-                memset(chaine,32,lchaine);
-            break;
-        case 13:
-            lchaine=0;
-            chaine[0]=0;
-            break;
-
-        default:
-            chaine[0]=CnvASCII(KKCfg->cnvtable,chaine[0]);
-            break;
+        if (KKCfg->lnfeed==0) posn++;
+        w1=tpos;
+        aff=1;
         }
+        else
+        switch(chaine[0])
+            {
+            case 9:
+                lchaine=(x2-x)/8;
+                lchaine=lchaine*8+8;
+                lchaine-=(x2-x);
+                if (lchaine>0)
+                    memset(chaine,32,lchaine);
+                break;
+            case 13:
+                if (KKCfg->lnfeed==4)
+                    {
+                    lchaine=0;
+                    chaine[0]=0;
+                    }
+                break;
+            default:
+                chaine[0]=CnvASCII(KKCfg->cnvtable,chaine[0]);
+                break;
+            }
 
     for(m=0;m<lchaine;m++)
         {
@@ -1347,58 +1378,61 @@ switch(LO(code))
     {
     case 0:
        switch(HI(code))   {
-            case 0x3B:  // F1
+            case 0x54:
+                Decrypt();
+                break;
+            case 0x3B:  //--- F1 ---------------------------------------
                 HelpTopic("View");
                 break;
-            case 0x3C:  // F2
+            case 0x3C:  //--- F2 ---------------------------------------
                 if (autowarp==1) break;
                 KKCfg->warp++;
                 if (KKCfg->warp==3) KKCfg->warp=0;
                 RefreshBar(bar);
                 Bar(bar);
                 break;
-            case 0x40:  // F6
-                KKCfg->cnvtable++;
-                if (KKCfg->cnvtable==3) KKCfg->cnvtable=0;
-                RefreshBar(bar);
-                Bar(bar);
+            case 0x3D:  //--- F3 ---------------------------------------
+                fin=ChangeLnFeed();
                 break;
-            case 0x3F:  // F5
-                KKCfg->autotrad^=1;
+            case 0x3E:  //--- F4 ---------------------------------------
+                fin=-2;     //--- N'importe quoi -----------------------
+                break;
+            case 0x3F:  //--- F5 ---------------------------------------
+                KKCfg->ajustview^=1;
+                fin=91;
+                break;
+            case 0x40:  //--- F6 ---------------------------------------
+                ChangeTrad();
+
                 if (KKCfg->autotrad)
                     AutoTrad();
-                RefreshBar(bar);
-                Bar(bar);
                 break;
-            case 0x3E:  // F4
-                fin=-2;
-                break;
-            case 0x41:  // F7
+            case 0x41:  //--- F7 ---------------------------------------
                 SearchTxt();
                 break;
-            case 0x42:  // F8
+            case 0x42:  //--- F8 ---------------------------------------
                 Print(fichier,1);
                 break;
-            case 0x4D:  // RIGHT
+            case 0x4D:  //--- RIGHT ------------------------------------
                 warp+=8;
                 break;
-            case 0x4B:  // LEFT
+            case 0x4B:  //--- LEFT -------------------------------------
                 warp-=8;
                 break;
-            case 0x74:  // CTRL RIGHT
+            case 0x74:  //--- CTRL RIGHT -------------------------------
                 warp+=40;
                 break;
-            case 0x73:  // CTRL LEFT
+            case 0x73:  //--- CTRL LEFT --------------------------------
                 warp-=40;
                 break;
-            case 0x77:  // CTRL HOME
+            case 0x77:  //--- CTRL HOME --------------------------------
                 warp=0;
                 break;
-            case 0x43:  // F9
+            case 0x43:  //--- F9 ---------------------------------------
                 ChangeMask();
                 ColWin(x,y,x+xl-1,y+yl-1,10*16+4);
                 break;
-            case 80:    // DOWN
+            case 80:    //--- DOWN -------------------------------------
                 if (pasfini==1) break;
                 m=0;
                 do
@@ -1410,14 +1444,22 @@ switch(LO(code))
                         break;
                         }
                     car=ReadChar();
-                    if (car==0x0A) { posn++; break; }
-                    if ((car!=0x0A) & (car!=0x0D)) m++;
+                    if ( ((car==10) & (KKCfg->lnfeed==0)) |
+                         ((car==13) & (KKCfg->lnfeed==1)) |
+                         ((car==10) & (KKCfg->lnfeed==2)) |
+                         ((car==10) & (KKCfg->lnfeed==4)) |
+                         ((car==KKCfg->userfeed) & (KKCfg->lnfeed==3)))
+                        {
+                        posn++;
+                        break;
+                        }
+                    if ((car!=10) & (car!=13)) m++;
                     if ((m>=xl) & (KKCfg->warp!=0)) break;
                     }
                 while(1);
 
                 break;
-            case 72:    // UP
+            case 72:    //--- UP ---------------------------------------
                 if (posn==0) break;
                 posn--;
                 m=0;
@@ -1431,18 +1473,22 @@ switch(LO(code))
                         break;
                         }
                     car=ReadChar();
-                    if (car==0x0A)
+                    if ( ((car==10) & (KKCfg->lnfeed==0)) |
+                         ((car==13) & (KKCfg->lnfeed==1)) |
+                         ((car==10) & (KKCfg->lnfeed==2)) |
+                         ((car==10) & (KKCfg->lnfeed==4)) |
+                         ((car==KKCfg->userfeed) & (KKCfg->lnfeed==3)))
                         {
                         if (posn!=0) posn++;
                         break;
                         }
-                    if ((car!=0x0A) & (car!=0x0D)) m++;
+                    if ((car!=10) & (car!=13)) m++;
                     if ((m>xl-1) & (KKCfg->warp!=0)) break;
                     }
                 while(1);
 
                 break;
-            case 0x51:    // PGDN
+            case 0x51:    //--- PGDN -----------------------------------
                 for (m=0;m<yl;m++)
                 {
                 if (pasfini==1) break;
@@ -1455,11 +1501,11 @@ switch(LO(code))
                         break;
                         }
                     }
-                while(ReadChar()!=0x0A);
+                while(ReadChar()!=10);
                 posn++;
                 }
                 break;
-            case 0x49:    // PGUP
+            case 0x49:    //--- PGUP -----------------------------------
                 for (m=0;m<yl;m++)
                 {
                 if (posn==0) break;
@@ -1471,11 +1517,11 @@ switch(LO(code))
                     if (posn==0)
                         break;
                     }
-                while(ReadChar()!=0x0A);
+                while(ReadChar()!=10);
                 if (posn!=0) posn++;
                 }
                 break;
-            case 0x4F:    // END
+            case 0x4F:    //--- END ------------------------------------
                 posn=taille;
                 for (m=0;m<yl;m++)
                     {
@@ -1488,14 +1534,15 @@ switch(LO(code))
                         if (posn==0)
                             break;
                         }
-                    while(ReadChar()!=0x0A);
+                    while(ReadChar()!=10);
                     if (posn!=0) posn++;
                     }
                 break;
-            case 0x47: // HOME
+            case 0x47:  //--- HOME -------------------------------------
                 posn=0;
                 break;
-            case 0x8D: // CTRL-UP
+            case 0x44:  //--- F10 --------------------------------------
+            case 0x8D:  //--- CTRL-UP ----------------------------------
                 fin=-1;
                 break;
             }
@@ -1567,7 +1614,7 @@ do
         break;
         }
     }
-    while(ReadChar()!=0x0A);
+    while(ReadChar()!=10);
 
 posn++;
 
@@ -1623,7 +1670,7 @@ do
     posn--;
     if (posn==0) return;
     }
-while(ReadChar()!=0x0A);
+while(ReadChar()!=10);
 if (posn!=0) posn++;
 }
 
@@ -2581,6 +2628,7 @@ static char buffer[256];
 char *fichier,*liaison;
 short i;
 
+xor=0;
 
 if (F->FenTyp!=0) return;
 
@@ -2621,7 +2669,8 @@ if (fic==NULL)
 
 while(i!=-1)
     {
-    switch(i) {
+    switch(i)
+        {
         case 86:  // Ansi
             i=Ansi2View(fichier);
             break;
@@ -2853,12 +2902,12 @@ char fin;
 
 max=0;
 
-nbr=3;
+nbr=4;
 
 for(i=0;i<16;i++)
     if (strlen(Mask[i]->title)>0)
         {
-        bar[nbr].fct=i+3;
+        bar[nbr].fct=i+10;
 
         strcpy(bar[nbr].titre,Mask[i]->title);
 
@@ -2875,13 +2924,89 @@ if (y<2) y=2;
 
 do
 {
-sprintf(bar[0].titre,"ÄÄÄÄÄ Elite %3s ÄÄÄÄÄ",(KKCfg->wmask&64)==64 ? "ON" : "OFF");
+sprintf(bar[0].titre,"Elite %3s",(KKCfg->wmask&64)==64 ? "ON" : "OFF");
 bar[0].fct=1;
 
 sprintf(bar[1].titre,"Mask %3s",(KKCfg->wmask&128)==128 ? "OFF" : "ON");
 bar[1].fct=2;
 
-bar[2].fct=0;
+bar[2].fct=3;
+
+bar[3].fct=0;
+
+
+fin=0;
+
+do
+    {
+    sprintf(bar[2].titre,"Xor %02X",xor);
+
+    retour=PannelMenu(bar,nbr,&n,&x,&y);
+
+    if ((bar[n].fct==3) & (retour!=2))
+        xor+=retour;
+    }
+while ( (retour==1) | (retour==-1) );
+
+if (retour==2)
+    {
+    switch (bar[n].fct)
+        {
+        case 1:
+            KKCfg->wmask^=64;
+            break;
+        case 2:
+            KKCfg->wmask^=128;
+            break;
+        case 3:
+            break;
+        default:
+            KKCfg->wmask=((KKCfg->wmask)&240)|(bar[n].fct-10);
+            fin=1;
+        }
+    }
+}
+while ( (!fin) & (retour!=0) );
+}
+
+/*--------------------------------------------------------------------*\
+|- Changement du filtre pour l'affichage du texte                     -|
+\*--------------------------------------------------------------------*/
+void ChangeTrad(void)
+{
+int nbr;
+static struct barmenu bar[5];
+int retour,x,y,n,max;
+
+char fin;
+
+max=0;
+
+nbr=5;
+
+x=((Cfg->TailleX)-max)/2;
+y=((Cfg->TailleY)-2*(nbr-2))/2;
+if (y<2) y=2;
+
+n=0;
+if (KKCfg->autotrad) n=4;
+    else
+    while (KKCfg->cnvtable!=(bar[n].fct)-1)
+        n++;
+
+sprintf(bar[0].titre,"Normal %c",KKCfg->cnvtable==0 ? 15 : 32);
+bar[0].fct=1;
+
+sprintf(bar[1].titre,"BBS    %c",KKCfg->cnvtable==1 ? 15 : 32);
+bar[1].fct=2;
+
+sprintf(bar[2].titre,"Latin  %c",KKCfg->cnvtable==2 ? 15 : 32);
+bar[2].fct=3;
+
+bar[3].fct=0;
+
+sprintf(bar[4].titre,"%s",KKCfg->autotrad ? "Auto" : "No Auto");
+bar[4].fct=10;
 
 fin=0;
 
@@ -2896,19 +3021,73 @@ if (retour==2)
     switch (bar[n].fct)
         {
         case 1:
-            KKCfg->wmask^=64;
-            break;
         case 2:
-            KKCfg->wmask^=128;
+        case 3:
+            KKCfg->cnvtable=bar[n].fct-1;
+            KKCfg->autotrad=0;
+            break;
+        case 10:
+            KKCfg->autotrad^=1;
             break;
         default:
-            KKCfg->wmask=((KKCfg->wmask)&240)|(bar[n].fct-3);
-            fin=1;
+            break;
         }
     }
 }
-while ( (!fin) & (retour!=0) );
 
+/*--------------------------------------------------------------------*\
+|- Changement du Line Feed pour le passage … la ligne                 -|
+\*--------------------------------------------------------------------*/
+int ChangeLnFeed(void)
+{
+int nbr;
+static struct barmenu bar[5];
+int retour,x,y,n;
+
+nbr=5;
+
+x=((Cfg->TailleX)-10)/2;
+y=((Cfg->TailleY)-2*(nbr-2))/2;
+if (y<2) y=2;
+
+strcpy(bar[0].titre,"DOS (CR/LF)");
+bar[0].fct=1;
+
+strcpy(bar[1].titre,"Unix (LF)");
+bar[1].fct=3;
+
+strcpy(bar[2].titre,"CR");
+bar[2].fct=2;
+
+strcpy(bar[3].titre,"Mixed (CR-LF)");
+bar[3].fct=5;
+
+bar[4].fct=4;
+
+n=0;
+
+while (KKCfg->lnfeed!=(bar[n].fct)-1)
+    n++;
+
+do
+    {
+    sprintf(bar[4].titre,"User Line Feed: $%02X",KKCfg->userfeed);
+
+    retour=PannelMenu(bar,nbr,&n,&x,&y);
+    if ((bar[n].fct==4) & (retour!=2))
+        KKCfg->userfeed+=retour;
+    }
+while ( (retour==1) | (retour==-1) );
+
+if (retour==2)
+    {
+    KKCfg->lnfeed=(bar[n].fct)-1;
+    }
+
+if (retour==0)
+    return 0;
+    else
+    return 91;  //--- Viewer TeXTe -------------------------------------
 
 }
 
@@ -3182,7 +3361,7 @@ aff=1;
 \*--------------------------------------------------------------------*/
 
 strcpy
-   (bar," Help  ----  ----  Text  ----  ----  ----  ----  ----  ---- ");
+   (bar," Help  ----  ----  Text  ----  ----  ----  ----  ----  Quit ");
 
 
 
@@ -3351,6 +3530,7 @@ switch(LO(code))
             case 0x47: // HOME
                 Ansi1=0;
                 break;
+            case 0x44:  // --- F10 -------------------------------------
             case 0x8D: // CTRL-UP
                 fin=-1;
                 break;
@@ -3389,4 +3569,77 @@ ChangeTaille(Cfg->TailleY);
 LoadScreen();
 
 return fin;
+}
+
+void Decrypt(void)
+{
+unsigned short tab[256];
+short ord[256];
+short i,j,k,n;
+char col[]=" etanoris-hdlc";
+short val;
+
+char *buffer;
+int tbuf;
+
+int kbest,xval;
+
+kbest=0;
+xval=0;
+
+buffer=GetMem(Cfg->TailleX*Cfg->TailleY);
+tbuf=0;
+
+for(j=0;j<Cfg->TailleY;j++)
+    for(i=0;i<Cfg->TailleX;i++)
+        {
+        buffer[tbuf]=GetChr(i,j);
+        tbuf++;
+        }
+
+
+for(k=0;k<256;k++)
+{
+val=0;
+
+for(i=0;i<256;i++)
+    tab[i]=0;
+
+for(i=0;i<256;i++)
+    ord[i]=i;
+
+for (i=0;i<tbuf;i++)
+    tab[(buffer[i])^k]++;
+
+for (i=0;i<256;i++)
+    for(j=i;j<256;j++)
+        if (tab[ord[i]]<tab[ord[j]])
+            {
+            n=ord[i];
+            ord[i]=ord[j];
+            ord[j]=n;
+            }
+
+for (i=0;i<15;i++)
+    for (n=0;n<15;n++)
+        if (ord[i]==col[n])
+            {
+            val+=100+((50*abs(i-n))/15);
+            break;
+            }
+
+if (val>xval)
+    {
+    xval=val;
+    kbest=k;
+    }
+}
+
+xor=kbest;
+
+sprintf(buffer,"Try XOR %d",kbest);
+WinError(buffer);
+
+LibMem(buffer);
+
 }

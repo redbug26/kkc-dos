@@ -16,9 +16,12 @@
 #define ulong unsigned long
 #define uchar unsigned char
 
+#define DOOR 1
+
 struct kkfichier
      {
      char *menu;                                              // kkc.mnu
+     char *ficscreen;                                         // kkc.scr
      };
 
 extern struct kkfichier *KKFics;
@@ -166,9 +169,14 @@ struct kkconfig
      char saveviewpos;                // Save position of file in viewer
      unsigned char wmask;             // C'est quel masque kon emploie ?
 
+     char lnfeed;                // 0: CR/LF  1:CR  2:LF  3:user 4:CR|LF
+     char userfeed;                                       // Si lnfeed=3
+
      long AnsiSpeed;
 
     //--- Don't look this ----------------------------------------------
+
+     char scrrest;
 
      long mtrash;                          // taille maximum de la trash
      long FenAct;                         // Quelle fenˆtre est active ?

@@ -2,7 +2,7 @@
 #define uchar  unsigned char
 #define ushort unsigned short
 
-#define nbrkey 161
+#define nbrkey 163
         // number of format + 6
 
 /*--------------------------------------------------------------------*\
@@ -51,6 +51,7 @@ typedef struct __idfinfo
    ushort sizebuf;                                     // size of buffer
    FILE *fic;
    ulong posfic;
+   ulong sizemax;                             // taille r‚elle du buffer
 } RB_IDF;
 
 

@@ -20,6 +20,8 @@ memcpy(KKCfg->Qmenu,"ChgDrive"
 
 memcpy(KKCfg->Nmenu,&Nm,8*sizeof(short));
 
+KKCfg->scrrest=1;
+
 KKCfg->confexit=1;
 
 KKCfg->dispath=0;
@@ -84,7 +86,7 @@ KKCfg->overflow1=0;
 KKCfg->overflow2=0;
 
 KKCfg->autoreload=1;
-KKCfg->verifhist=1;
+KKCfg->verifhist=0;
 
 KKCfg->noprompt=0;
 
@@ -136,7 +138,10 @@ KKCfg->cnvtable=0;                                      // Table Ketchup
 KKCfg->autotrad=0;
 KKCfg->ajustview=1;
 KKCfg->saveviewpos=1;
-KKCfg->wmask=15;                                      // RedBug preference
+KKCfg->wmask=15;                                    // RedBug preference
+
+KKCfg->lnfeed=4;                                                // CR/LF
+KKCfg->userfeed=0;
 
 KKCfg->AnsiSpeed=133;
 }

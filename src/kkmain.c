@@ -47,6 +47,7 @@ void CreateDirectory(void);
 void WinCD(void);
 void HistDir(void);
 void WinRename(FENETRE *F1);
+void SwitchScreen(void);
 void ChangeType(char n);
 void ChangeDrive(void);
 void EditNewFile(void);
@@ -116,6 +117,25 @@ char GetDriveReady(int i);
     parm [edx] \
     value [cl];
 
+
+void HelpOnError(void)
+{
+static char buf[3][81];
+int i,j;
+
+for(j=0;j<3;j++)
+    {
+    for(i=0;i<80;i++)
+        buf[j][i]=Screen_Buffer[(i+(PosY-j-1)*OldX)*2];
+    buf[j][80]=0;
+    }
+
+if  ( (!strncmp(buf[2],"Stub exec failed:",17)) &
+      (!strncmp(buf[1],"dos4gw.exe",10)) &
+      (!strncmp(buf[0],"No such file or directory",25)) )
+        HelpTopic("dos4gw");
+}
+
 /*--------------------------------------------------------------------*\
 |- Gestion des selections                                             -|
 \*--------------------------------------------------------------------*/
@@ -142,8 +162,13 @@ Path2Abs(Dir,"KKSELECT.TMP");
 
 n=WinTraite(T,5,&F,1);
 
+
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
+
+strcpy(nom,Dir);
+strcpy(Dir,Fen->path);
+Path2Abs(Dir,nom);
 
 if (n==1)
     {
@@ -180,11 +205,51 @@ if (n==2)
         }
     fclose(fic);
     }
-
-
 }
 
+/*--------------------------------------------------------------------*\
+|- Change le type d'affichage                                         -|
+\*--------------------------------------------------------------------*/
+void SwitchScreen(void)
+{
+int nbr;
+static struct barmenu bar[3];
+int retour,x,y,n;
 
+nbr=3;
+
+sprintf(bar[0].titre,"Normal Mode ");
+bar[0].fct=1;
+
+sprintf(bar[1].titre,"Ansi Mode   ");
+bar[1].fct=2;
+
+sprintf(bar[2].titre,"Doorway Mode");
+bar[2].fct=3;
+
+x=((Cfg->TailleX)-10)/2;
+y=((Cfg->TailleY)-2*(nbr-2))/2;
+
+n=0;
+
+do
+    {
+    retour=PannelMenu(bar,nbr,&n,&x,&y);
+
+    if (retour==2)
+        {
+        DesinitScreen();
+        Cfg->display=bar[n].fct-1;
+        if (InitScreen(Cfg->display)) break;
+        }
+    }
+while (retour!=0);
+
+if (retour!=0)
+    {
+    UseCfg();
+    }
+}
 
 /*--------------------------------------------------------------------*\
 |-  Other Procedures                                                  -|
@@ -426,15 +491,161 @@ if (n<16)
 
     if (n<0)        n=ntot;
     if (n>ntot)     n=0;
-
     }
 }
 while(car!=27);
 
 
 LoadScreen();
-
 }
+
+/*--------------------------------------------------------------------*\
+|-  Other Procedures                                                  -|
+|-   c=0 --> change from selection                                    -|
+|-     1 --> default set of color                                     -|
+|-     2 --> norton set                                               -|
+\*--------------------------------------------------------------------*/
+/*
+void ChangePalette2(char c)
+{
+int dx;
+
+int i,j,m,n;
+
+int car;
+
+char *titre="Palette configuration";
+
+#define NBRS 4
+
+char defcol[NBRS][48]={ RBPALDEF ,
+                     { 0, 0, 0, 42,42,42,  0, 0, 0, 63,63,63,
+                      63,63,63, 63,63,32, 42,63,63,  0, 0,43,
+                      63,63, 0, 63,63,63,  0, 0,43, 57,63, 0,
+                      30,60,30,  0,40,63,  0, 0, 0,  0, 0, 0},
+                     {25,36,29, 36,18,15,  0, 0, 0, 49,39,45,
+                      44,63,63, 42,37,63, 45,39,35,  0, 0, 0,
+                       0,63,63, 63,63,63, 25,36,29, 63, 0, 0,
+                       0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0},
+                     {42,37,63, 14,22,17,  0, 0, 0, 58,58,50,
+                      18, 1,36, 63,63,21, 58,42,49, 16,16,32,
+                      63,63, 0, 63,63,63, 43,37,63, 63,20,20,
+                      20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
+                       };
+
+char *Style[NBRS]={"Default Style","Norton Style","Cyan Style",
+                                                             "Venus "};
+
+if (c>0)
+    {
+    memcpy(Cfg->palette,defcol[c-1],48);
+    LoadPal();
+    return;
+    }
+
+SaveScreen();
+PutCur(32,0);
+
+dx=(Cfg->TailleX-72)/2;
+
+WinCadre(dx  ,2,dx+71,21,0);
+Window  (dx+1,3,dx+70,20,10*16+1);
+
+WinCadre(dx+1, 3,dx+34, 7,2);
+
+WinCadre(dx+35,3,dx+35+3+2*16,20,2);
+
+
+for(n=0;n<16;n++)
+    {
+    for(m=0;m<16;m++)
+        {
+        PrintAt(dx+37+m*2,4+n,"%02d",n);
+        ColLin(dx+37+m*2,4+n,2,n*16+m);
+        }
+    }
+
+
+n=0;
+m=0;
+
+do
+{
+//i=Cfg->palette[n*3+m];
+//if (i!=0) i--;
+
+for(i=0;i<3;i++)
+    {
+    j=Cfg->palette[n*3+i]/2;
+
+    ChrLin(dx+2,4+i,j,32);
+    AffChr(dx+2+j,4+i,0xDD+((Cfg->palette[n*3+i])&1));
+    ChrLin(dx+3+j,4+i,31-j,32);
+    if (i==m)
+        ColLin(dx+2,4+i,32,10*16+3);
+        else
+        ColLin(dx+2,4+i,32,10*16+1);
+    }
+
+
+AffChr(dx+36,4+n,16);
+AffChr(dx+69,4+n,17);
+
+car=Wait(0,0,0);
+
+AffChr(dx+36,4+n,32);
+AffChr(dx+69,4+n,32);
+
+switch(HI(car))
+    {
+    case 0x47:                                               // HOME
+        Cfg->palette[n*3+m]=0;
+        LoadPal();
+        break;
+    case 0X4F:                                                // END
+        Cfg->palette[n*3+m]=63;
+        LoadPal();
+        break;
+    case 80:                                                  // bas
+        m++;
+        break;
+    case 72:                                                 // haut
+        m--;
+        break;
+    case 0x4B:                                             // gauche
+        if (Cfg->palette[n*3+m]!=0)
+            Cfg->palette[n*3+m]--;
+        LoadPal();
+        break;
+    case 0x4D:                                             // droite
+        if (Cfg->palette[n*3+m]!=63)
+            Cfg->palette[n*3+m]++;
+        LoadPal();
+        break;
+    case 0xF:
+        n--;
+        break;
+    }
+
+switch(LO(car))
+    {
+    case 9:
+        n++;
+        break;
+    }
+
+if (m==3) n++,m=0;
+if (m<0)  n--,m=2;
+
+if (n<0) n=15;
+if (n>15) n=0;
+}
+while(car!=27);
+
+
+LoadScreen();
+}
+*/
 
 /*--------------------------------------------------------------------*\
 |-  Programme de setup                                                -|
@@ -581,6 +792,7 @@ LoadScreen();
 |- 77: Support prot‚ge, lance l'installation                          -|
 |- 78: Sauve ou charge une selection                                  -|
 |- 79: Appelle le menu F2                                             -|
+|- 80: Help on Error                                                  -|
 \*--------------------------------------------------------------------*/
 
 void GestionFct(int fct)
@@ -974,17 +1186,12 @@ switch(fct)
         EditNewFile();
         break;
     case 60:
-        DesinitScreen();
-        do
-            {
-            Cfg->display++;
-            if (Cfg->display>16) Cfg->display=0;
-            }
-        while(!InitScreen(Cfg->display));
-        UseCfg();
+        SwitchScreen();
         break;
     case 61:
+#ifdef DOOR
         ServerMode();
+#endif
         break;
     case 62:                                                  // KKSETUP
         strcpy(buffer,Fics->path);
@@ -1112,6 +1319,9 @@ switch(fct)
         break;
     case 79:
         Menu();
+        break;
+    case 80:
+        HelpOnError();
         break;
     }
 
@@ -1298,17 +1508,20 @@ if (KKCfg->fentype>4) KKCfg->fentype=1;
 
 void SelectPlus(void)
 {
-static int DirLength=32;
+static int DirLength=32,Width=2;
+static char CadreLength=32;
 int n;
 
 struct Tmt T[] = {
-     { 2,2,1,Select_Chaine,&DirLength},
-     { 3,4,2,NULL,NULL},                                       // le OK
-     {20,4,3,NULL,NULL} };                                 // le CANCEL
+     { 2,3,1,Select_Chaine,&DirLength},
+     { 3,5,2,NULL,NULL},                                       // le OK
+     {20,5,3,NULL,NULL},                                   // le CANCEL
+     { 3,2,0,"File Mask",NULL},
+     { 1,1,9,&CadreLength,&Width} };
 
-struct TmtWin F = {-1,5,36,11,"Selection of files"};
+struct TmtWin F = {-1,5,36,12,"Selection of files"};
 
-n=WinTraite(T,3,&F,0);
+n=WinTraite(T,5,&F,0);
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
@@ -1325,17 +1538,20 @@ for (n=0;n<DFen->nbrfic;n++)
 
 void SelectMoins(void)
 {
-static int DirLength=32;
+static int DirLength=32,Width=2;
+static char CadreLength=32;
 int n;
 
 struct Tmt T[] = {
-     { 2,2,1,Select_Chaine,&DirLength},
-     { 3,4,2,NULL,NULL},                                       // le OK
-     {20,4,3,NULL,NULL} };                                 // le CANCEL
+     { 2,3,1,Select_Chaine,&DirLength},
+     { 3,5,2,NULL,NULL},                                       // le OK
+     {20,5,3,NULL,NULL},                                   // le CANCEL
+     { 3,2,0,"File Mask",NULL},
+     { 1,1,9,&CadreLength,&Width} };
 
-struct TmtWin F = {-1,5,36,11,"Deselection of files"};
+struct TmtWin F = {-1,5,36,12,"Deselection of files"};
 
-n=WinTraite(T,3,&F,0);
+n=WinTraite(T,5,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -1525,27 +1741,30 @@ if (i!=0)
 
     switch(HI(car))
         {
-        case 72:                                                   // UP
+        case 72:      //--- UP -----------------------------------------
             pos--;
             if (pos==-1) pos=i-1;
             break;
-        case 80:                                                 // DOWN
+        case 80:      //--- DOWN ---------------------------------------
             pos++;
             if (pos==i) pos=0;
             break;
-        case 0x47:                                               // HOME
+        case 0x47:    //--- HOME ---------------------------------------
             pos=0;
             break;
-        case 0x4F:                                                // END
+        case 0x4F:    //--- END ----------------------------------------
             pos=i-1;
             break;
-        case 0x49:                                               // PGUP
+        case 0x49:    //--- PGUP ---------------------------------------
             pos-=5;
             if (pos<0) pos=0;
             break;
-        case 0x51:                                               // PGDN
+        case 0x51:    //--- PGDN ---------------------------------------
             pos+=5;
             if (pos>=i) pos=i-1;
+            break;
+        case 0x3C:    //--- F2 -----------------------------------------
+            MenuCreat(com[pos],com[pos],DFen->path);
             break;
         }
     }
@@ -1606,7 +1825,7 @@ static char Dir[70];
 static int DirLength=70;
 static char CadreLength=70;
 
-struct Tmt T[5] =
+struct Tmt T[] =
     { { 2,3,1,Dir,&DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
@@ -1969,7 +2188,7 @@ x=(40-(l*nbr))/2+DFen->x;
 SaveScreen();
 
 WinCadre(x-2,6,x+l*nbr+1,11,0);
-Window(x-1,7,x+l*nbr,10,0*16+1);
+Window(x-1,7,x+l*nbr,10,10*16+1);
 
 WinCadre(x-1,8,x+l*nbr,10,1);
 
@@ -2013,7 +2232,7 @@ do  {
     AffCol(drive[i],9,1*16+5);
 
     car=Wait(0,0,0);
-    AffCol(drive[i],9,0*16+1);
+    AffCol(drive[i],9,10*16+1);
 
 } while (LO(car)!=13);
 
@@ -2040,8 +2259,8 @@ x=DFen->Fen2->x+3;
 y=DFen->Fen2->y+3;
 
 WinCadre(x-1,y-1,x+24,y+1,0);
-ColLin(x,y,24,0*16+1);
 ChrLin(x,y,24,32);
+ColLin(x,y,24,10*16+1);
 
 if (lng!=0)
     if (chaine[lng-1]!='*')
@@ -2282,13 +2501,19 @@ return 0;                                                          // OK
 }
 
 
+/*--------------------------------------------------------------------*\
+|- Sauvegarde selection en m‚moire                                    -|
+\*--------------------------------------------------------------------*/
+char *pcurname;
+char **selname;
+int F1pcur,F1scur,F1nbrsel;
 
 /*--------------------------------------------------------------------*\
 |-  Sauvegarde la selection sur disque                                -|
 \*--------------------------------------------------------------------*/
 void SaveSel(FENETRE *F1)
 {
-struct file *F;
+/*struct file *F;
 FILE *fic;
 int i;
 
@@ -2309,6 +2534,35 @@ for(i=0;i<F1->nbrfic;i++)
         fprintf(fic,"%s\n",F->name);
     }
 fclose(fic);
+*/
+
+struct file *F;
+int i,j;
+
+pcurname=GetMem(strlen(F1->F[F1->pcur]->name)+1);
+strcpy(pcurname,F1->F[F1->pcur]->name);
+
+F1pcur=F1->pcur;
+F1scur=F1->scur;
+F1nbrsel=F1->nbrsel;
+
+if (F1nbrsel!=0)
+    {
+    selname=GetMem(sizeof(char*)*F1->nbrsel);
+    j=0;
+
+    for(i=0;i<F1->nbrfic;i++)
+        {
+        F=F1->F[i];
+
+        if ((F->select)==1)
+            {
+            selname[j]=GetMem(strlen(F->name)+1);
+            strcpy(selname[j],F->name);
+            j++;
+            }
+        }
+    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -2316,6 +2570,7 @@ fclose(fic);
 \*--------------------------------------------------------------------*/
 void LoadSel(int n)
 {
+/*
 char nom[256];
 FILE *fic;
 int i,j;
@@ -2360,6 +2615,53 @@ while(!feof(fic))
         }
     }
 fclose(fic);
+*/
+
+
+char nom[256];
+int i,j;
+
+strcpy(nom,pcurname);
+LibMem(pcurname);
+
+DFen->pcur=F1pcur;
+DFen->scur=F1scur;
+
+j=1;
+for (i=0;i<DFen->nbrfic;i++)
+    if (!strncmp(nom,DFen->F[i]->name,strlen(nom)))
+        {
+        DFen->pcur=i;
+
+        j=0;
+        break;
+        }
+
+if (F1nbrsel!=0)
+    {
+    for(j=0;j<F1nbrsel;j++)
+        {
+        strcpy(nom,selname[j]);
+        LibMem(selname[j]);
+
+        for(i=0;i<DFen->nbrfic;i++)
+            {
+            if (!WildCmp(DFen->F[i]->name,nom))
+                {
+                switch(n)
+                    {
+                    case 0:
+                        FicSelect(i,1);                        // Select
+                        break;
+                    case 1:
+                        FicSelect(i,2);             // Inverse Selection
+                        break;
+                    }
+                }
+            }
+        }
+    LibMem(selname);
+    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -2424,6 +2726,8 @@ Info->temps=clock()-Info->temps;
 
 do
     {
+    KKCfg->scrrest=1;
+
     (KKCfg->noprompt)=(char)((KKCfg->noprompt)&126);
                                                 // Retire le dernier bit
 
@@ -2858,6 +3162,8 @@ do
         GestionFct(12);           break;
     case 0x42:                                                     // F8
         GestionFct(13);           break;
+    case 0x54:                                               // SHIFT-F1
+        GestionFct(80);           break;
     case 0x55:                                               // SHIFT-F2
         GestionFct(39);           break;
     case 0x56:                                               // SHIFT-F3
@@ -2909,7 +3215,7 @@ do
         GestionFct(48);           break;
     case 0x70:                                                 // ALT-F9
         GestionFct(47);           break;
-    case 0x71:                                                 // ALT-F9
+    case 0x71:                                                // ALT-F10
         GestionFct(60);           break;
     case 0x73:                                              // CTRL LEFT
         GestionFct(41);           break;
@@ -2940,7 +3246,8 @@ do
     case 0xB6:                                   //
     case 0xB7:                                   //  Windows 95 keyboard
     case 0xB8:                                   //
-        GestionFct(69);
+//        MenuInsert("[Main]","Test","cd \\src\\kkcom\ndir");
+//        GestionFct(69);
         break;
 
     case 0x2F:                                                  // ALT-V
@@ -3084,6 +3391,18 @@ void Fin(void)
 {
 int n;
 
+if ( (KKCfg->scrrest==0) & (saveconfig) )
+    {
+    int x;
+
+    x=(Cfg->TailleX-14)/2;
+
+    Window(x,9,x+13,9,10*16+1);
+    WinCadre(x-1,8,x+14,10,0);
+
+    PrintAt(x+1,9,"Please  Wait");
+    }
+
 if (saveconfig)
     SaveCfg();
 
@@ -3092,10 +3411,31 @@ PlaceDrive();
 Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;
 
-TXTMode();                              // Retablit le mode texte normal
+if ( (KKCfg->scrrest) & (saveconfig) )
+    {
+    TXTMode();                          // Retablit le mode texte normal
 
-for (n=0;n<8000;n++)
-    Screen_Adr[n]=Screen_Buffer[n];
+    for (n=0;n<8000;n++)
+        Screen_Adr[n]=Screen_Buffer[n];
+    }
+    else
+    {
+    FILE *fic;
+
+    fic=fopen(KKFics->ficscreen,"wb");
+    if (fic==NULL)
+        WinError("It's bizarre ?!");
+
+    fwrite(&OldX,1,sizeof(OldX),fic);
+    fwrite(&OldY,1,sizeof(OldY),fic);
+
+    fwrite(&PosX,1,sizeof(PosX),fic);
+    fwrite(&PosY,1,sizeof(PosY),fic);
+
+    fwrite(Screen_Buffer,1,8000,fic);
+
+    fclose(fic);
+    }
 
 if (KKCfg->_4dos==1)
     _4DOSShistdir();
@@ -3141,7 +3481,7 @@ for(n=0;n<NBWIN;n++)
 PrintAt(0,0,"%-40s%*s",RBTitle,Cfg->TailleX-40,"RedBug");
 ColLin( 0,0,40,1*16+5);
 ColLin(40,0,(Cfg->TailleX)-40,1*16+3);
-ColLin(0,(Cfg->TailleY)-2,Cfg->TailleX,5);
+ColLin(0,(Cfg->TailleY)-2,Cfg->TailleX,0*16+5);
 
 DFen->init=1;
 DFen->Fen2->init=1;
@@ -3594,15 +3934,24 @@ getch();
 
 Cfg=(struct config*)GetMem(sizeof(struct config));
 
+InitScreen(0);                     // Initialise toutes les donn‚es HARD
+
+
+/*--------------------------------------------------------------------*\
+|- Sauvegarde de l'ecran                                              -|
+\*--------------------------------------------------------------------*/
+Screen_Buffer=(char*)GetMem(8000);
+
 OldX=(*(char*)(0x44A));
 OldY=(*(char*)(0x484))+1;
 
+WhereXY(&PosX,&PosY);
+
+for (n=0;n<8000;n++)
+    Screen_Buffer[n]=Screen_Adr[n];
+
 Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;                  // Initialisation de la taille ecran
-
-InitScreen(0);                     // Initialise toutes les donn‚es HARD
-
-WhereXY(&PosX,&PosY);
 
 /*--------------------------------------------------------------------*\
 |- Initialisation du temps                                            -|
@@ -3631,10 +3980,6 @@ Mask=(struct PourMask**)GetMem(sizeof(struct PourMask*)*16);
 for (n=0;n<16;n++)
     Mask[n]=(struct PourMask*)GetMem(sizeof(struct PourMask));
 
-Screen_Buffer=(char*)GetMem(8000);
-
-for (n=0;n<8000;n++)
-    Screen_Buffer[n]=Screen_Adr[n];
 
 path=(char*)GetMem(256);
 
@@ -3695,6 +4040,10 @@ Path2Abs(Fics->help,"kkc.hlp");
 KKFics->menu=(char*)GetMem(256);
 strcpy(KKFics->menu,Fics->trash);
 Path2Abs(KKFics->menu,"kkc.mnu");
+
+KKFics->ficscreen=(char*)GetMem(256);
+strcpy(KKFics->ficscreen,Fics->trash);
+Path2Abs(KKFics->ficscreen,"kkc.scr");
 
 
 /*--------------------------------------------------------------------*\
@@ -3767,6 +4116,29 @@ if (LoadCfg()==-1)
     remove(Fics->CfgFile);
     saveconfig=0;
     GestionFct(62);
+    }
+
+/*--------------------------------------------------------------------*\
+|- Sauvegarde de l'ecran                                              -|
+\*--------------------------------------------------------------------*/
+
+if (KKCfg->scrrest==0)
+    {
+    FILE *fic;
+
+    fic=fopen(KKFics->ficscreen,"rb");
+    if (fic==NULL)
+        WinError("It's bizarre ?!");
+
+    fread(&OldX,1,sizeof(OldX),fic);
+    fread(&OldY,1,sizeof(OldY),fic);
+
+    fread(&PosX,1,sizeof(PosX),fic);
+    fread(&PosY,1,sizeof(PosY),fic);
+
+    fread(Screen_Buffer,1,8000,fic);
+
+    fclose(fic);
     }
 
 /*--------------------------------------------------------------------*\

@@ -69,7 +69,7 @@ static char Meneur[256];
 
 int FicIdf(char *dest,char *name,int numero,int kefaire)
 {
-char fin=0;
+char ok,fin=0;
 int j,i,n,m;
 
 int car,nbrappl;
@@ -262,7 +262,19 @@ if ( (nbrappl!=1) & (fin==0) )
                     pos-=5;
                     break;
                 case 0x86:
-                    WinMesg("Info. on dir",app[pos-m].dir,0);     // F12
+                    WinMesg("Info. on dir",app[pos].dir,0);     // F12
+                    break;
+                case 0x3B:    //--- F1 ---------------------------------
+                    HelpTopic("FicIdf");
+                    break;
+                case 0x3C:    //--- F2 ---------------------------------
+                    ok=1;
+                    strcpy(Filename,app[pos].Filename);
+                    for(n=0;n<strlen(Filename);n++)
+                        if (Filename[n]=='!') ok=0;
+                    if (ok==1)
+                        strcat(Filename," !:!\\!.!");
+                    MenuCreat(app[pos].Titre,Filename,app[pos].dir);
                     break;
                 }
 			}

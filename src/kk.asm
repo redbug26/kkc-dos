@@ -51,13 +51,18 @@ boucle:
 ;--- Appel commande systeme --------------------------------------------
 ;-----------------------------------------------------------------------
     call System      ; Pr‚pare l'execution du programme voulu par KKMAIN
-
     cmp al,0
     je fin
+
+;    mov si,offset prgsys
+;    mov al,[si]
+;    cmp al,0
+;    je fin
 
     mov dx,offset prgname                       ;Offset nom de programme
     mov si,offset prgparas                ;Offset de ligne d'instruction
     call exeprg                                    ;Appeler le programme
+
 
 ;--- Rappel de KKMAIN --------------------------------------------------
 ;-----------------------------------------------------------------------

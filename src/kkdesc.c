@@ -17,6 +17,7 @@
 
 
 char *RBTitle2="Ketchup Killers Descriptor V"VERSION" / RedBug";
+char *RBTitle3="Ketchup Killers Help V"VERSION" / RedBug";
 
 extern struct key K[nbrkey];
 
@@ -80,10 +81,44 @@ ColWin(0,0,79,49,7);
 ChrWin(0,0,79,49,32);
 GotoXY(0,0);
 
+if (argc==3)
+    {
+    if (!stricmp(argv[1],"/KKHELP"))
+        {
+        SetDefaultPath(path);
+
+        Fics->help=GetMem(256);
+        strcpy(Fics->help,path);
+        strcat(Fics->help,"\\");
+        strcat(Fics->help,argv[2]);
+
+        DefaultCfg();
+
+        InitMouse();
+
+        Cfg->TailleY=30;
+
+        TXTMode();
+        InitFont();
+
+        LoadPal();
+        Help();
+
+        Cfg->TailleX=OldX;
+        Cfg->TailleY=OldY;
+
+        TXTMode();
+
+        puts(RBTitle3);
+        exit(1);
+        }
+    }
+
 if (argc==2)
     {
     if (argv[1][1]=='?') argc=1;
     }
+
 
 if (  (argc!=2) & (argc!=4) )
     {

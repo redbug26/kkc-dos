@@ -372,6 +372,8 @@ tabsize=GetMem(sizeof(int)*nbrmax);
 
 Bar(" Help  ----  View  ----  ----  ----  ---- Delete ----  ---- ");
 
+(KKCfg->noprompt)=(char)((KKCfg->noprompt)|1);
+
 WinCadre(0,1,Cfg->TailleX-1,(Cfg->TailleY)-2,1);
 Window(1,2,Cfg->TailleX-2,(Cfg->TailleY)-3,10*16+1);
 
