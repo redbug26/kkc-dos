@@ -62,6 +62,7 @@ static char temp[256];
 static char bufton[32];
 static long SizeMaxRecord;
 static char noselect;              // prend le celui qui est highlighted
+static int chgattr=0;
 extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
 
 
@@ -493,6 +494,15 @@ if ( (ok==1) & (fin==0) )      //--- Mise a l'heure --------------------
     _dos_setftime(handle,d,t);
     _dos_close(handle);
 
+    if (chgattr)
+        {
+        unsigned attrib;
+
+        _dos_getfileattr(inpath,&attrib);
+        _dos_setfileattr(outpath,attrib);
+        }
+
+
     if (KKCfg->_Win95==1)
         UpdateLongName(inpath,outpath);
     }
@@ -524,15 +534,19 @@ static char CadreLength=70;
 static int n,m,o;
 static char buffer[80];
 
-struct Tmt T[5] = {
+struct Tmt T[] = {
       { 2,3,1,Dir,&DirLength},
-      {15,5,2,NULL,NULL},           // le OK
-      {45,5,3,NULL,NULL},           // le CANCEL
+      { 5,6,8,"Keep attribut",&chgattr},
+      {15,8,2,NULL,NULL},           // le OK
+      {45,8,3,NULL,NULL},           // le CANCEL
       { 5,2,0,buffer,NULL},
-      { 1,1,4,&CadreLength,NULL}
+      { 1,1,4,&CadreLength,NULL},
+      { 1,5,6,&CadreLength,NULL}
       };
 
-struct TmtWin F = {-1,10,74,17,"Copy" };
+struct TmtWin F = {-1,10,74,20,"Copy" };
+
+chgattr=0;
 
 if (Nbrfic!=0)
     {
@@ -552,7 +566,7 @@ memcpy(Dir,FTrash->path,255);
 
 n=0;
 if (((KKCfg->noprompt)&1)==0)
-    n=WinTraite(T,5,&F,0);
+    n=WinTraite(T,7,&F,0);
 
 Path2Abs(Dir,".");
 
@@ -1199,11 +1213,11 @@ SaveScreen();
 
 xcop=(Cfg->TailleX-66)/2;
 
-WinCadre(xcop,4,xcop+65,12,0);
-Window(xcop+1,5,xcop+64,11,10*16+1);
+Cadre(xcop,4,xcop+65,12,0,Cfg->col[55],Cfg->col[56]);
+Window(xcop+1,5,xcop+64,11,Cfg->col[16]);
 
 PrintAt(xcop+2,7,"Current");
-WinCadre(xcop+2,8,xcop+63,11,2);
+Cadre(xcop+2,8,xcop+63,11,2,Cfg->col[55],Cfg->col[56]);
 
 j1=0;
 j2=0;
@@ -1315,22 +1329,22 @@ xcop=(Cfg->TailleX-66)/2;
 
 if (Nbrfic!=0)
     {
-    WinCadre(xcop,4,xcop+65,17,0);
-    Window(xcop+1,5,xcop+64,16,10*16+1);
+    Cadre(xcop,4,xcop+65,17,0,Cfg->col[55],Cfg->col[56]);
+    Window(xcop+1,5,xcop+64,16,Cfg->col[16]);
 
     PrintAt(xcop+2,7,"Current");
-    WinCadre(xcop+2,8,xcop+63,11,2);
+    Cadre(xcop+2,8,xcop+63,11,2,Cfg->col[55],Cfg->col[56]);
 
     PrintAt(xcop+2,12,"Total");
-    WinCadre(xcop+2,13,xcop+63,16,2);
+    Cadre(xcop+2,13,xcop+63,16,2,Cfg->col[55],Cfg->col[56]);
     }
     else
     {
-    WinCadre(xcop,4,xcop+65,12,0);
-    Window(xcop+1,5,xcop+64,11,10*16+1);
+    Cadre(xcop,4,xcop+65,12,0,Cfg->col[55],Cfg->col[56]);
+    Window(xcop+1,5,xcop+64,11,Cfg->col[16]);
 
     PrintAt(xcop+2,7,"Current");
-    WinCadre(xcop+2,8,xcop+63,11,2);
+    Cadre(xcop+2,8,xcop+63,11,2,Cfg->col[55],Cfg->col[56]);
     }
 
 j1=0;
@@ -1412,8 +1426,8 @@ SaveScreen();
 
 x=(Cfg->TailleX-30)/2;
 
-Window(x,6,x+31,10,10*16+1);
-WinCadre(x-1,5,x+32,11,0);
+Window(x,6,x+31,10,Cfg->col[16]);
+Cadre(x-1,5,x+32,11,0,Cfg->col[55],Cfg->col[56]);
 
 PrintAt(x+10,6,"Please Wait");
 PrintAt(x+4,7,"Computing size of files");
@@ -1556,22 +1570,22 @@ xcop=(Cfg->TailleX-66)/2;
 
 if (Nbrfic!=0)
     {
-    WinCadre(xcop,4,xcop+65,17,0);
-    Window(xcop+1,5,xcop+64,16,10*16+1);
+    Cadre(xcop,4,xcop+65,17,0,Cfg->col[55],Cfg->col[56]);
+    Window(xcop+1,5,xcop+64,16,Cfg->col[16]);
 
     PrintAt(xcop+2,7,"Current");
-    WinCadre(xcop+2,8,xcop+63,11,2);
+    Cadre(xcop+2,8,xcop+63,11,2,Cfg->col[55],Cfg->col[56]);
 
     PrintAt(xcop+2,12,"Total");
-    WinCadre(xcop+2,13,xcop+63,16,2);
+    Cadre(xcop+2,13,xcop+63,16,2,Cfg->col[55],Cfg->col[56]);
     }
     else
     {
-    WinCadre(xcop,4,xcop+65,12,0);
-    Window(xcop+1,5,xcop+64,11,10*16+1);
+    Cadre(xcop,4,xcop+65,12,0,Cfg->col[55],Cfg->col[56]);
+    Window(xcop+1,5,xcop+64,11,Cfg->col[16]);
 
     PrintAt(xcop+2,7,"Current");
-    WinCadre(xcop+2,8,xcop+63,11,2);
+    Cadre(xcop+2,8,xcop+63,11,2,Cfg->col[55],Cfg->col[56]);
     }
 
 j1=0;
@@ -1669,22 +1683,22 @@ xcop=(Cfg->TailleX-66)/2;
 
 if (Nbrfic!=0)
     {
-    WinCadre(xcop,4,xcop+65,17,0);
-    Window(xcop+1,5,xcop+64,16,10*16+1);
+    Cadre(xcop,4,xcop+65,17,0,Cfg->col[55],Cfg->col[56]);
+    Window(xcop+1,5,xcop+64,16,Cfg->col[16]);
 
     PrintAt(xcop+2,7,"Current");
-    WinCadre(xcop+2,8,xcop+63,11,2);
+    Cadre(xcop+2,8,xcop+63,11,2,Cfg->col[55],Cfg->col[56]);
 
     PrintAt(xcop+2,12,"Total");
-    WinCadre(xcop+2,13,xcop+63,16,2);
+    Cadre(xcop+2,13,xcop+63,16,2,Cfg->col[55],Cfg->col[56]);
     }
     else
     {
-    WinCadre(xcop,4,xcop+65,12,0);
-    Window(xcop+1,5,xcop+64,11,10*16+1);
+    Cadre(xcop,4,xcop+65,12,0,Cfg->col[55],Cfg->col[56]);
+    Window(xcop+1,5,xcop+64,11,Cfg->col[16]);
 
     PrintAt(xcop+2,7,"Current");
-    WinCadre(xcop+2,8,xcop+63,11,2);
+    Cadre(xcop+2,8,xcop+63,11,2,Cfg->col[55],Cfg->col[56]);
     }
 
 

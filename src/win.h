@@ -36,14 +36,13 @@ extern int *TailleX;
 
 void RemplisVide(void);  // Remplissage du vide pour les plus de 80 col.
 
-void GetVolume(char disk,char *volume);
+
 
 /*--------------------------------------------------------------------*\
 |-  Fonction de la secret part                                        -|
 \*--------------------------------------------------------------------*/
 
 void WinInfo(FENETRE **Fenetre);
-short windows(short *HVersion, short *NVersion );
 void FenInfo(FENETRE *Fen);
 void PacNoe(void);
 

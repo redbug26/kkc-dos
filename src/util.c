@@ -253,8 +253,8 @@ char ok=0;
 
 SaveScreen();
 
-WinCadre(19,4,61,11,0);
-Window(20,5,60,10,10*16+4);
+Cadre(19,4,61,11,0,Cfg->col[55],Cfg->col[56]);
+Window(20,5,60,10,Cfg->col[16]);
 
 PrintAt(35,5,"Server Mode");
 

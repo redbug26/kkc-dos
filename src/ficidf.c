@@ -175,8 +175,8 @@ if ( (nbrappl!=1) & (fin==0) )
 
     xx=(Cfg->TailleX-56)/2;
 
-    WinCadre(xx,m-1,xx+55,m+max,0+4);
-    Window(xx+1,m,xx+54,m+max-1,14*16+7);
+    Cadre(xx,m-1,xx+55,m+max,0,Cfg->col[46],Cfg->col[47]);
+    Window(xx+1,m,xx+54,m+max-1,Cfg->col[28]);
 
     PrintTo(24,1," Who? ");
     
@@ -204,7 +204,7 @@ if ( (nbrappl!=1) & (fin==0) )
         for (n=d;n<=lfin;n++)
             {
             col[n]=GetRCol(n,pos-prem);
-            AffRCol(n,pos-prem,7*16+4);     // 7
+            AffRCol(n,pos-prem,Cfg->col[30]);     // 7
             }
 
         car=Wait(0,0,0);

@@ -28,14 +28,6 @@ int SortTest(const void *P1,const void *P2);
 void ClearAllSpace(char *name);
 
 
-void GetFreeMem(char *buffer);
-#pragma aux GetFreeMem = \
-    "mov ax,0500h" \
-	"int 31h" \
-    modify [edi eax] \
-	parm [edi];
-
-
 /*--------------------------------------------------------------------*\
 |-   Fonction utilis‚e pour le classement des fichiers                -|
 \*--------------------------------------------------------------------*/
@@ -416,7 +408,7 @@ switch(DFen->system)
 }
 while(err==1);
 
-strupr(DFen->path);
+StrUpr(DFen->path);
 
 SortFic(DFen);  
 
@@ -478,13 +470,13 @@ int j;
 
 j=0;
 
-ColLin(0,0,Cfg->TailleX,1*16+4);
+ColLin(0,0,Cfg->TailleX,Cfg->col[6]);
 
 while(1) {
     dir=&(KKCfg->HistDir[j]);
     if ( (dir[0]==0) | (j>=256) ) break;
 
-    dir=strupr(dir);
+    dir=StrUpr(dir);
 
     IOver=1;
     IOerr=0;
@@ -821,7 +813,7 @@ while(1) {
     dir=&(KKCfg->HistCom[j]);
     if ( (dir[0]==0) | (j>=512) ) break;
 
-    dir=strupr(dir);
+    dir=StrUpr(dir);
 
     IOver=1;
     IOerr=0;
@@ -964,11 +956,7 @@ if (!strnicmp(chaine,"#INIT",5))
 
 if (!strnicmp(chaine,"#MEM",4))
     {
-    static int a=0;
-    int tail[12];
-    a++;
-    GetFreeMem((void*)tail);                           // inconsistent ?
-    PrintAt(0,0,"Memory: %20d octets     (%10d)",tail[0],a);
+    PrintAt(0,0,"Memory: %20d octets",FreeMem());
     return 1;
     }
 

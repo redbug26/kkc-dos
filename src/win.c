@@ -3,18 +3,20 @@
 \*--------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
-#include <dos.h>
-#include <direct.h>
-#include <ctype.h>
-#include <bios.h>
-#include <io.h>
 #include <fcntl.h>
-#include <sys\types.h>
-#include <sys\stat.h>
+#include <ctype.h>
+
+
+#include <dos.h>
+// #include <direct.h>
+// #include <bios.h>
+// #include <io.h>
+// #include <conio.h>
+// #include <sys\types.h>
+// #include <sys\stat.h>
 
 #include "kk.h"
 
@@ -25,6 +27,13 @@ static char winbuffer[256];      //--- Buffer interne ------------------
 extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
 
 void AffUpperPath(FENETRE *Fen,int y);
+
+void InfoSelect(FENETRE *Fen);
+void ExtSetup(void);
+void SerialSetup(void);
+void MasqueSetup(void);
+void SplitMasque(char *chaine,char *buf1,char *buf2);
+void JointMasque(char *chaine,char *buf1,char *buf2);
 
 
 /*--------------------------------------------------------------------*\
@@ -113,19 +122,24 @@ char a;
 Fen->oldscur=0;
 Fen->oldpcur=-1;
 
-ColWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,7*16+6);
+ColWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,Cfg->col[0]);
 
-//---Couleur uniquement pour fentype=1,2 ou 3 (le 4 le fait 2 fois !)---
+switch(KKCfg->fentype) //---Couleur uniquement pour fentype=1,2 ou 3 ---
+    {
+    case 1:
+    case 2:
+    case 3:
+        for(x=Fen->x;x<=Fen->x+Fen->xl;x++)
+            AffCol(x,Fen->y,Cfg->col[37]);
+        for(y=Fen->y;y<=Fen->y+Fen->yl;y++)
+            AffCol(Fen->x,y,Cfg->col[37]);
 
-for(x=Fen->x;x<=Fen->x+Fen->xl;x++)
-    AffCol(x,Fen->y,10*16+1);
-for(y=Fen->y;y<=Fen->y+Fen->yl;y++)
-    AffCol(Fen->x,y,10*16+1);
-
-for(x=Fen->x+1;x<=Fen->x+Fen->xl;x++)
-    AffCol(x,Fen->y+Fen->yl,10*16+3);
-for(y=Fen->y+1;y<Fen->y+Fen->yl;y++)
-    AffCol(Fen->x+Fen->xl,y,10*16+3);
+        for(x=Fen->x+1;x<=Fen->x+Fen->xl;x++)
+            AffCol(x,Fen->y+Fen->yl,Cfg->col[38]);
+        for(y=Fen->y+1;y<Fen->y+Fen->yl;y++)
+            AffCol(Fen->x+Fen->xl,y,Cfg->col[38]);
+        break;
+    }
 
 x=Fen->x;
 y=Fen->y;
@@ -151,7 +165,7 @@ switch (KKCfg->fentype)
         PrintAt(x,y+yl-3,"ÇÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄ¶");
         PrintAt(x,y+yl-2,"º                                      º");
         PrintAt(x,y+yl-1,"ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼");
-        col=7*16+5;
+        col=Cfg->col[4];
 
         break;
     case 2:
@@ -196,8 +210,8 @@ switch (KKCfg->fentype)
                      "    Name    %c   Size   %c  Date  %cTime ",a,a,a);
 
         WinLine(x+1,y+yl-3,38,1);
-        WinCadre(x,y,x+39,y+yl-1,1);
-        col=7*16+5;
+        Cadre(x,y,x+39,y+yl-1,1,Cfg->col[37],Cfg->col[38]);
+        col=Cfg->col[4];
         break;
     }
 
@@ -235,9 +249,9 @@ x=Fen->x+1+(36-strlen(buffer))/2;
 if (y==Fen->y)
     {
     if (KKCfg->FenAct==Fen->nfen)
-        ColLin(x,y,strlen(buffer)+2,13*16+2);
+        ColLin(x,y,strlen(buffer)+2,Cfg->col[1]);
         else
-        ColLin(x,y,strlen(buffer)+2,7*16+6);
+        ColLin(x,y,strlen(buffer)+2,Cfg->col[0]);
     PrintAt(x,y," %s ",buffer);
     }
     else
@@ -384,56 +398,56 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
         if ( (KKCfg->FenAct==Fen->nfen) & (n==Fen->pcur) )
             {
             if (Fen->F[n]->select==0)
-                col=14*16+6;
+                col=Cfg->col[1];
                 else
-                col=14*16+2;
+                col=Cfg->col[3];
             }
             else
             {
             if (Fen->F[n]->select==0)
                 {
-                col=7*16+6;
+                col=Cfg->col[0];
 
                 if (KKCfg->dispcolor==1)
                     {
                     if ((FoundExt(ext,KKCfg->ExtExe)) &
                                                     (KKCfg->Enable_Exe))
-                        col=7*16+13;                       // Executable
+                        col=Cfg->col[15];                  // Executable
                     else
                     if ((FoundExt(ext,KKCfg->ExtArc)) &
                                                     (KKCfg->Enable_Arc))
-                        col=7*16+8;                           // Archive
+                        col=Cfg->col[22];                     // Archive
                     else
                     if ((FoundExt(ext,KKCfg->ExtSnd)) &
                                                     (KKCfg->Enable_Snd))
-                        col=7*16+12;                              // Son
+                        col=Cfg->col[23];                         // Son
                     else
                     if ((FoundExt(ext,KKCfg->ExtBmp)) &
                                                     (KKCfg->Enable_Bmp))
-                        col=7*16+11;                            // Image
+                        col=Cfg->col[32];                       // Image
                     else
                     if ((FoundExt(ext,KKCfg->ExtTxt)) &
                                                     (KKCfg->Enable_Txt))
-                         col=7*16+4;                            // Texte
+                        col=Cfg->col[33];                       // Texte
                     else
                     if ((FoundExt(ext,KKCfg->ExtUsr)) &
                                                     (KKCfg->Enable_Usr))
-                         col=13*16+11;                   // User defined
+                        col=Cfg->col[34];                // User defined
                     }
                 }
                 else
-                col=13*16+8;
+                col=Cfg->col[2];
             }
 
 
 // ---------------------------------------------------------------------
 
         ColLin(x1,y1,12,col);      PrintAt(x1,y1,"%s",ch1);
-        AffCol(x1+12,y1,7*16+6);   AffChr(x1+12,y1,a);
+        AffCol(x1+12,y1,Cfg->col[0]);   AffChr(x1+12,y1,a);
         ColLin(x1+13,y1,10,col);   PrintAt(x1+13,y1,"%s",ch2);
-        AffCol(x1+23,y1,7*16+6);   AffChr(x1+23,y1,a);
+        AffCol(x1+23,y1,Cfg->col[0]);   AffChr(x1+23,y1,a);
         ColLin(x1+24,y1,8,col);    PrintAt(x1+24,y1,"%s",ch3);
-        AffCol(x1+32,y1,7*16+6);   AffChr(x1+32,y1,a);
+        AffCol(x1+32,y1,Cfg->col[0]);   AffChr(x1+32,y1,a);
         ColLin(x1+33,y1,5,col);    PrintAt(x1+33,y1,"%s",ch4);
         }
     }
@@ -446,7 +460,7 @@ if (dispall)
     for (;(i<Fen->yl2);i++,y1++)
        {
        PrintAt(x1,y1,"            %c          %c        %c     ",a,a,a);
-       ColLin(x1,y1,38,7*16+6);
+       ColLin(x1,y1,38,Cfg->col[0]);
        }
 
 if ( (dispall) & (KKCfg->dispath) )
@@ -549,7 +563,8 @@ if ( ( (F->attrib & _A_SUBDIR)==_A_SUBDIR) & (F->name[0]=='.') )
 
 if (Fen2->system!=0) return;
 
-WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
+Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
+                                            ,Cfg->col[37],Cfg->col[38]);
 
 strcpy(Info.path,Fen2->path);
 Path2Abs(Info.path,F->name);
@@ -598,7 +613,7 @@ Buf=GetMem(4000);
 
 Makediz(&Info,Buf);
 
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+4,170);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+4,Cfg->col[16]);
 
 x=Fen->x+2;
 y=Fen->y+6;
@@ -615,10 +630,11 @@ while (Buf[i]!=0)
 	i++;
 	}
 
-WinCadre(Fen->x+1,Fen->y+5,Fen->x+Fen->xl-1,y,2);
-ColWin(Fen->x+2,Fen->y+6,Fen->x+Fen->xl-2,y-1,10*16+1);
+Cadre(Fen->x+1,Fen->y+5,Fen->x+Fen->xl-1,y,2
+                                            ,Cfg->col[37],Cfg->col[38]);
+ColWin(Fen->x+2,Fen->y+6,Fen->x+Fen->xl-2,y-1,Cfg->col[39]);
 
-Window(Fen->x+1,y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,170);
+Window(Fen->x+1,y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,Cfg->col[39]);
 
 LibMem(Buf);
 
@@ -631,10 +647,11 @@ Fen->init=0;
 
 void ClearInfo(FENETRE *Fen)
 {
-WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
+Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
+                                            ,Cfg->col[37],Cfg->col[38]);
 
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,118);
-                                                               // 7*16+6
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1
+                                                         ,Cfg->col[39]);
 
 ChrLin(Fen->x+1,Fen->y+Fen->yl-2,Fen->xl-1,196);
 PrintAt(Fen->x+1,Fen->y+Fen->yl-1,"         Press ALT-I to close");
@@ -815,8 +832,8 @@ for (n=0;n<256;n++)
     AffChr(x+3,y,n);
     }
 
-WinCadre(m,5,m+79,22,0);
-ColWin(m+1,6,m+78,21,10*16+3);
+Cadre(m,5,m+79,22,0,Cfg->col[55],Cfg->col[56]);
+ColWin(m+1,6,m+78,21,Cfg->col[16]);
 
 Wait(0,0,0);
 
@@ -1341,23 +1358,7 @@ void UseCfg(void)
 GestionFct(67);                                    // Rafraichit l'ecran
 
 if (Cfg->speedkey==1)
-    {
-    union REGS R;
-
-    R.w.ax=0x0900;
-    int386(0x16,&R,&R);
-
-    if ((R.h.ah & 4)==4)
-        {
-        R.w.ax=0x0305;
-        R.w.bx=0x0000;
-        int386(0x16,&R,&R);                         // Keystroke maximum
-        }
-        else
-        {
-        Cfg->speedkey=0;
-        }
-    }
+    Cfg->speedkey=KeyTurbo(1);
 }
 
 
@@ -1376,7 +1377,6 @@ int x,y;
 
 static char chaine[80];
 short WindowsActif,HVer,NVer;
-union REGS R;
 
 static long oldfree;
 static char oldpath[256];
@@ -1447,49 +1447,25 @@ drive=toupper(disk[0])-'A';
 
 GetVolume(drive,volume);
 
-InfoVol[0]=0;
+TypeDisk(drive,InfoVol);
 
-R.w.ax=0x5601;
-R.w.dx=0xFFFF;
-R.h.bh=drive;
-R.h.bl=0;
-int386(0x2F,&R,&R);
-
-if (R.h.al==0xFF)
-    strcpy(InfoVol,"Redirected drive (with interlnk)");
-
-// PrintAt(0,0,"%04X %04X %04X %04X",R.w.ax,R.w.bx,R.w.cx,R.w.dx);
-// pour C renvoit 5601 0200 0168 FFFF
-// pour D renvoit 5601 0300 0168 FFFF
-// pour E renvoit 56FF 0401 0001 0630
-
-R.w.ax=0x150B;
-R.w.cx=drive;
-int386(0x2F,&R,&R);
-
-if ( (R.w.bx==0xADAD) & (R.w.ax!=0) )
-    strcpy(InfoVol,"CD-ROM drive");
-
-// PrintAt(0,0,"%04X %04X %04X %04X",R.w.ax,R.w.bx,R.w.cx,R.w.dx);
-// pour C renvoit 0000 ADAD 0002 FFFF
-// pour D renvoit 0000 ADAD 0003 FFFF
-// pour H renvoit 5AD4 ADAD 0007 FFFF
-
-WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+1);
+Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
+                                            ,Cfg->col[37],Cfg->col[38]);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1
+                                                         ,Cfg->col[39]);
 
 PrintAt(x+1,y,"%s",RBTitle);
-ColLin(x,y,38,10*16+5);
+ColLin(x,y,38,Cfg->col[40]);
 ChrLin(x,y+1,38,196);
 
 PrintAt(x+1,y+2,"Current directory");
-ColLin(x+1,y+2,37,10*16+3);
+ColLin(x+1,y+2,37,Cfg->col[40]);
 PrintAt(x+1,y+3,"%s",Buf);
 ChrLin(x,y+4,38,196);
 
 
 PrintAt(x+1,y+5,"Current disk");
-ColLin(x+1,y+5,37,10*16+3);
+ColLin(x+1,y+5,37,Cfg->col[40]);
 
 PrintAt(x+1,y+6,"%s [%s] %s",disk,volume,InfoVol);
 
@@ -1498,7 +1474,7 @@ PrintAt(x+1,y+8,"Capacity:   %8s kilobytes",Long2Str(ttotal,temp));
 
 ChrLin(x,y+9 ,38,196);
 PrintAt(x+1,y+10,"System Information");
-ColLin(x+1,y+10,37,10*16+3);
+ColLin(x+1,y+10,37,Cfg->col[40]);
 
 PrintAt(x+1,y+11,"þ %s",chaine);            // Information about windows
 PrintAt(x+1,y+12,"þ Initialisation: %d clocks ",Info->temps);
@@ -1527,8 +1503,10 @@ static char oldpath[256]="",oldname[256];
 x=Fen->x+1;
 y=Fen->y+1;
 
-WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+4);
+Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
+                                            ,Cfg->col[37],Cfg->col[38]);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,
+                                                          Cfg->col[39]);
 
 strcpy(path,Fen->Fen2->path);
 if (Fen->Fen2->F[Fen->Fen2->pcur]->name[0]!='.')
@@ -1639,8 +1617,10 @@ if (Fen->init==0)
     Fen->init=1;
     }
 
-WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+4);
+Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
+                                            ,Cfg->col[37],Cfg->col[38]);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1
+                                                         ,Cfg->col[39]);
 
 strcpy(oldpath,Fen->Fen2->path);
 
@@ -1740,63 +1720,6 @@ PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
 
 
 
-/*--------------------------------------------------------------------*\
-|-  Recherche des infos sur Windows                                   -|
-\*--------------------------------------------------------------------*/
-
-short windows(short *HVersion, short *NVersion )
-{
-union  REGS  regs;              // Registres pour l'appel d'interruption
-struct SREGS sregs;               // Segment pour l'appel d'interruption
-
-*HVersion = 0;                        // Initialise le num‚ro de version
-*NVersion = 0;
-
-           //-- Identifie Windows x.y en mode Etendu -------------------
-
-regs.w.ax = 0x1600;                    // Test d'installation de Windows
-segread( &sregs );                      // Lire les registres de segment
-int386x(0x2F, &regs, &regs, &sregs );
-
-switch ( regs.h.al )
-    {
-    case 0x01:
-    case 0xFF:
-        *HVersion = 2;                                   // Hauptversion
-        *NVersion = 0;                    // Version secondaire inconnue
-        return 1;                            // Windows /386 Version 2.x
-
-    case 0x00:
-    case 0x80:
-        regs.w.ax = 0x4680;                    // Modes R‚el et Standard
-        int386x( 0x2F, &regs, &regs, &sregs );
-        if( regs.h.al == 0x80 )
-            return 0;                       // Windows ne fonctionne pas
-            else
-            {         //-- Windows en mode R‚el ou Standard ------------
-            regs.w.ax = 0x1605;               // Simuler l'initialiation
-            regs.w.bx = regs.w.si = regs.w.cx =  sregs.es = sregs.ds =0;
-            regs.w.dx = 0x0001;
-            int386x( 0x2F, &regs, &regs, &sregs );
-            if( regs.w.cx == 0x0000 )       //-- Windows en mode R‚el --
-                {
-                regs.w.ax = 0x1606;
-                int386x(0x2F, &regs, &regs, &sregs );
-                return 0x81;
-                }
-            else
-                return 0x82;
-            }
-
-   //-- Windows en mode Etendu, ax contient le num‚ro de version -------
-
-    default:
-        *HVersion = regs.h.al;         // Afficher la version de Windows
-        *NVersion = regs.h.ah;
-        return 0x83;                           // Windows en mode Etendu
-    }
-}
-
 
 /*--------------------------------------------------------------------*\
 |- S E C R E T                                                P A R T -|
@@ -1869,11 +1792,11 @@ void RemplisVide(void)
 {
 if (Cfg->TailleX==80) return;
 
-WinCadre(80,0,Cfg->TailleX-1,2,3);
+Cadre(80,0,Cfg->TailleX-1,2,3,Cfg->col[55],Cfg->col[56]);
 PrintAt(81,1,"%*s",Cfg->TailleX-82,"KetchupK");
 
-WinCadre(80,3,Cfg->TailleX-1,Cfg->TailleY-2,2);
-Window(81,4,Cfg->TailleX-2,Cfg->TailleY-3,10*16+1);
+Cadre(80,3,Cfg->TailleX-1,Cfg->TailleY-2,2,Cfg->col[55],Cfg->col[56]);
+Window(81,4,Cfg->TailleX-2,Cfg->TailleY-3,Cfg->col[16]);
 
 AffChr(Cfg->TailleX-2,Cfg->TailleY-3,3);
 }
@@ -1958,22 +1881,22 @@ for (i=0;(y+y1+1<Fen->yl) & (n<Fen2->nbrfic);i++,n++,y++)
     {
 // ------------------ Line Activity ------------------------------------
     if (n==(Fen2->pcur))
-        ColLin(x+x1,y+y1,38,1*16+6);
+        ColLin(x+x1,y+y1,38,Cfg->col[1]);
         else
         {
         if (Fen2->F[n]->info!=NULL)
             switch(Fen2->F[n]->info[0])
                 {
-                case 1:  ColLin(x+x1,y+y1,38,7*16+12);   break;
-                case 2:  ColLin(x+x1,y+y1,38,7*16+12);   break;
-                case 3:  ColLin(x+x1,y+y1,38,7*16+8);    break;
-                case 4:  ColLin(x+x1,y+y1,38,7*16+11);   break;
-                case 5:  ColLin(x+x1,y+y1,38,7*16+11);   break;
-                case 6:  ColLin(x+x1,y+y1,38,7*16+6);    break;
-                default: ColLin(x+x1,y+y1,38,7*16+6);    break;
+                case 1:  ColLin(x+x1,y+y1,38,Cfg->col[23]);   break;
+                case 2:  ColLin(x+x1,y+y1,38,Cfg->col[23]);   break;
+                case 3:  ColLin(x+x1,y+y1,38,Cfg->col[22]);   break;
+                case 4:  ColLin(x+x1,y+y1,38,Cfg->col[32]);   break;
+                case 5:  ColLin(x+x1,y+y1,38,Cfg->col[32]);   break;
+                case 6:  ColLin(x+x1,y+y1,38,Cfg->col[0]);    break;
+                default: ColLin(x+x1,y+y1,38,Cfg->col[0]);    break;
                 }
             else
-                ColLin(x+x1,y+y1,38,7*16+5);
+                ColLin(x+x1,y+y1,38,Cfg->col[4]);
         }
 
     if (Fen2->F[n]->info!=NULL)
@@ -1990,7 +1913,7 @@ for (i=0;(y+y1+1<Fen->yl) & (n<Fen2->nbrfic);i++,n++,y++)
 for (;(y+y1+1<Fen->yl);i++,y++)
     {
     PrintAt(x+x1,y+y1,"%-38s","");
-    ColLin(x+x1,y+y1,38,7*16+5);
+    ColLin(x+x1,y+y1,38,Cfg->col[4]);
     }
 }
 
@@ -2040,7 +1963,7 @@ if ( (!stricmp(oldpath,Fen->Fen2->path)) & (Fen->init==0) )
     else
     {
     WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
-    Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+4);
+    Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,164);
 
     strcpy(oldpath,Fen->Fen2->path);
 
@@ -2094,31 +2017,3 @@ for(;i<Fen->yl-Fen->y-1;i++)
 DFen=OldFen;
 }
 
-/*--------------------------------------------------------------------*\
-|-  disk 0 --> 'A:'                                                   -|
-\*--------------------------------------------------------------------*/
-void GetVolume(char disk,char *volume)
-{
-struct find_t ff;
-int n,m;
-int error;
-
-sprintf(volume,"%c:\\*.*",disk+'A');
-
-error=_dos_findfirst(volume,_A_VOLID,&ff);
-
-if (error!=0)
-    strcpy(volume,"Unknow");
-    else
-    strcpy(volume,ff.name);
-
-n=0;
-while (volume[n]!=0)
-    {
-    if (volume[n]=='.')
-        for (m=n;m<strlen(volume);m++)
-            volume[m]=volume[m+1];
-        else
-        n++;
-    }
-}

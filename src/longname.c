@@ -283,14 +283,57 @@ return a;
 \*--------------------------------------------------------------------*/
 void EjectCD(FENETRE *Fen)
 {
+EjectDrive(toupper(Fen->path[0])-'A');
+
+IOver=1;
+CommandLine("#CD .");
+}
+
+
+/*--------------------------------------------------------------------*\
+|- Set Name                                                           -|
+\*--------------------------------------------------------------------*/
+void SetWindowsTitle(void)
+{
+char *buf;
+long l;
+
+DOS_Alloc();
+
+l=DOSbuf1*16;
+buf=(char*)l;
+
+strcpy(buf,"KKC");
+
+R.eax=0X168E;
+R.edx=1;
+R.es=DOSbuf1;
+R.edi=0;
+
+DOS_Int(0x2F,&R);
+
+strcpy(buf,"RedBug for King");
+
+R.eax=0X168E;
+R.edx=0;
+R.es=DOSbuf1;
+R.edi=0;
+
+DOS_Int(0x2F,&R);
+
+DOS_Free();
+}
+
+
+/*--------------------------------------------------------------------*\
+|- Ejection DRIVE  (lect: 0 -> 'a')                                   -|
+\*--------------------------------------------------------------------*/
+void EjectDrive(char lect)
+{
 char *buf;
 int i;
 long l;
 union REGS RR;
-
-char lect;
-
-lect=toupper(Fen->path[0])-'A';
 
 RR.w.ax=0x150B;
 RR.w.cx=lect;
@@ -366,45 +409,5 @@ DOS_Int(0x2F,&R);
 DOS_Free();
 
 Delay(100);
-
-IOver=1;
-
-CommandLine("#CD .");
-}
-
-
-/*--------------------------------------------------------------------*\
-|- Set Name                                                           -|
-\*--------------------------------------------------------------------*/
-void SetWindowsTitle(void)
-{
-char *buf;
-long l;
-
-DOS_Alloc();
-
-l=DOSbuf1*16;
-buf=(char*)l;
-
-strcpy(buf,"KKC");
-
-R.eax=0X168E;
-R.edx=1;
-R.es=DOSbuf1;
-R.edi=0;
-
-DOS_Int(0x2F,&R);
-
-strcpy(buf,"RedBug for King");
-
-
-R.eax=0X168E;
-R.edx=0;
-R.es=DOSbuf1;
-R.edi=0;
-
-DOS_Int(0x2F,&R);
-
-DOS_Free();
 }
 

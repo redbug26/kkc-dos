@@ -1,25 +1,26 @@
 /*--------------------------------------------------------------------*\
 |- Programme principal                                                -|
 \*--------------------------------------------------------------------*/
-#include <direct.h>
-#include <i86.h>
 #include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
-#include <conio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <fcntl.h>
+#include <signal.h>                               // For handling signal
+
+/*
+#include <dos.h>                            //  Pour redirection des I/O
+#include <direct.h>
+#include <i86.h>
+#include <conio.h>
 #include <bios.h>
 #include <io.h>
 #include <graph.h>
-#include <fcntl.h>
 #include <sys\types.h>
 #include <sys\stat.h>
-
-#include <signal.h>                               // For handling signal
-
-#include <dos.h>                            //  Pour redirection des I/O
+*/
 
 #include "kk.h"
 
@@ -55,7 +56,6 @@ int EnterArchive(void);
 void SwapWin(long a,long b);
 void SwapLong(long *a,long *b);
 void HistCom(void);
-void _4DOSShistdir(void);
 void AffLonger(void);
 
 void RBSetup(void);
@@ -64,7 +64,6 @@ void RBSetup(void);
 |-  Declaration des variables                                         -|
 \*--------------------------------------------------------------------*/
 
-long OldCol;                                // Ancienne couleur du texte
 long OldY,OldX,PosX,PosY;
 
 sig_atomic_t signal_count;
@@ -95,28 +94,6 @@ extern int IOerr;
 struct kkconfig *KKCfg;
 struct PourMask **Mask;
 struct kkfichier *KKFics;
-
-/*--------------------------------------------------------------------*\
-|-  Procedure en Assembleur                                           -|
-\*--------------------------------------------------------------------*/
-
-char GetDriveReady(int i);
-#pragma aux GetDriveReady = \
-    "mov ah,19h" \
-    "int 21h" \
-    "mov ch,al" \
-    "mov ah,0Eh" \
-    "int 21h" \
-    "mov ah,19h" \
-    "int 21h" \
-    "sub al,dl" \
-    "mov cl,al" \
-    "mov dl,ch" \
-    "mov ah,0Eh" \
-    "int 21h" \
-    modify [eax ebx ecx edx] \
-    parm [edx] \
-    value [cl];
 
 
 void HelpOnError(void)
@@ -263,8 +240,8 @@ if (Wait(0,0,0)!='B') return;
 SaveScreen();
 
 PrintAt(0,0,"%-40s%*s","RedBug's own setup",Cfg->TailleX-40,"Hi Me !");
-ColLin( 0,0,40,7*16+3);
-ColLin(40,0,Cfg->TailleX-40,7*16+4);
+ColLin( 0,0,40,Cfg->col[7]);
+ColLin(40,0,(Cfg->TailleX)-40,Cfg->col[11]);
 
 strcpy(bartxt,
         " ----  ----  ---- SpTest ----  ----  ----  ----  ----  ---- ");
@@ -355,8 +332,8 @@ PutCur(32,0);
 
 RemplisVide();
 
-WinCadre(0,0,79,(Cfg->TailleY)-2,2);
-Window(1,1,78,(Cfg->TailleY)-3,10*16+1);
+Cadre(0,0,79,(Cfg->TailleY)-2,2,Cfg->col[55],Cfg->col[56]);
+Window(1,1,78,(Cfg->TailleY)-3,Cfg->col[16]);
 
 if (Cfg->TailleY==50)
     {
@@ -389,23 +366,24 @@ ntot=15+NBRS;
 
 for(n=0;n<ntot-15;n++)
     {
-    WinCadre(posx[n]-2,posy[n]-1,posx[n]+15,posy[n]+1,2);
-    ColLin(posx[n],posy[n],strlen(Style[n]),10*16+1);
+    Cadre(posx[n]-2,posy[n]-1,posx[n]+15,posy[n]+1,2
+                                            ,Cfg->col[55],Cfg->col[56]);
+    ColLin(posx[n],posy[n],strlen(Style[n]),Cfg->col[16]);
     PrintAt(posx[n],posy[n],Style[n]);
     }
 
 if (Cfg->TailleY==50)
     {
-    WinCadre(2,2,77,4,2);
-    WinCadre(2,5,77,44,2);
+    Cadre(2,2,77,4,2,Cfg->col[55],Cfg->col[56]);
+    Cadre(2,5,77,44,2,Cfg->col[55],Cfg->col[56]);
     PrintAt(30,3,titre);
 
-    WinCadre(2,45,77,47,2);
+    Cadre(2,45,77,47,2,Cfg->col[55],Cfg->col[56]);
 
-    WinCadre(52,16,73,40,2);
+    Cadre(52,16,73,40,2,Cfg->col[55],Cfg->col[56]);
     PrintAt(5,46,"%s /RedBug",RBTitle);
 
-    WinCadre(53,17,72,21,2);
+    Cadre(53,17,72,21,2,Cfg->col[55],Cfg->col[56]);
     PrintAt(54,19,"Predefined palette");
     }
     else
@@ -432,17 +410,17 @@ if (rec==1)
         x=(nt/ey)*ex+x1;
         y=(nt%ey)*5+y1;
 
-        WinCadre(x-1,y-1,x+9,y+3,1);
-        Window(x,y,x+8,y+2,1*16+5);
+        Cadre(x-1,y-1,x+9,y+3,1,Cfg->col[55],Cfg->col[56]);
+        Window(x,y,x+8,y+2,Cfg->col[16]);
 
-        WinCadre(x+10,y-1,x+14,y+3,1);
+        Cadre(x+10,y-1,x+14,y+3,1,Cfg->col[55],Cfg->col[56]);
         ColWin(x+11,y,x+13,y+2,nt*16+nt);
         ChrWin(x+11,y,x+13,y+2,220);
 
         for(mt=0;mt<3;mt++)
             {
             Gradue(x,y+mt,8,0,Cfg->palette[nt*3+mt],64);
-            ColWin(x,y+mt,x+8,y+mt,1*16+2);
+            ColWin(x,y+mt,x+8,y+mt,Cfg->col[16]);
             PrintAt(x-3,y+mt,"%02d",Cfg->palette[nt*3+mt]);
             }
         }
@@ -459,11 +437,11 @@ if (n<16)
     Gradue(x,y+m,8,i,Cfg->palette[n*3+m],64);
     PrintAt(x-3,y+m,"%02d",Cfg->palette[n*3+m]);
 
-    ColWin(x,y+m,x+8,y+m,1*16+5);
+    ColWin(x,y+m,x+8,y+m,Cfg->col[17]);
 
     car=Wait(0,0,0);
 
-    ColWin(x,y+m,x+8,y+m,1*16+2);
+    ColWin(x,y+m,x+8,y+m,Cfg->col[16]);
 
     switch(HI(car))
         {
@@ -517,11 +495,11 @@ if (n<16)
     }
     else
     {
-    ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),10*16+5);
+    ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),Cfg->col[17]);
 
     car=Wait(0,0,0);
 
-    ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),10*16+1);
+    ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),Cfg->col[16]);
 
     switch(HI(car))
         {
@@ -812,6 +790,7 @@ Fin();
 |- 79: Appelle le menu F2                                             -|
 |- 80: Help on Error                                                  -|
 |- 81: Switch la taille horizontale                                   -|
+|- 82: Change les couleurs                                            -|
 \*--------------------------------------------------------------------*/
 
 void GestionFct(int fct)
@@ -851,6 +830,9 @@ switch(fct)
            CommandLine("#%s %s",KKCfg->vieweur,DFen->F[DFen->pcur]->name);
         break;
     case 8:
+        if ((DFen->F[DFen->pcur]->attrib & RB_SUBDIR)==RB_SUBDIR)
+            break;
+
         switch(DFen->system)
             {
             case 0:
@@ -940,6 +922,10 @@ switch(fct)
             GestionFct(36);
         break;
     case 17:                                           // Change palette
+        strcpy(buffer,Fics->path);
+        Path2Abs(buffer,"kksetup.exe -PALETTE");
+        KKCfg->scrrest=0;
+        CommandLine("#%s",buffer);
         ChangePalette(0);
         break;
     case 18:                                                    // About
@@ -1217,6 +1203,7 @@ switch(fct)
     case 62:                                                  // KKSETUP
         strcpy(buffer,Fics->path);
         Path2Abs(buffer,"kksetup.exe");
+        KKCfg->scrrest=0;
         CommandLine("#%s",buffer);
         break;
     case 63:                                        // Fenetre info disk
@@ -1351,6 +1338,13 @@ switch(fct)
             Cfg->TailleX=80;
         ChangeTaille(Cfg->TailleY);
         break;
+    case 82:
+        strcpy(buffer,Fics->path);
+        Path2Abs(buffer,"kksetup.exe -COLOR");
+        KKCfg->scrrest=0;
+        CommandLine("#%s",buffer);
+        ChangePalette(0);
+        break;
     }
 
 
@@ -1474,12 +1468,13 @@ switch (poscur)
    nbmenu=5;
    break;
  case 5:
-   strcpy(bar[0].titre,"Configuration      ");   bar[0].fct=31;
-   strcpy(bar[1].titre,"Color Configuration");   bar[1].fct=17;
-   strcpy(bar[2].titre,"Screen Setup");          bar[2].fct=66;
-   strcpy(bar[3].titre,"");                      bar[3].fct=0;
-   strcpy(bar[4].titre,"Main Setup         ");   bar[4].fct=62;
-   nbmenu=5;
+   strcpy(bar[0].titre,"Configuration   ");   bar[0].fct=31;
+   strcpy(bar[1].titre,"Palette Setup   ");   bar[1].fct=17;
+   strcpy(bar[2].titre,"Color Definition");   bar[2].fct=82;
+   strcpy(bar[3].titre,"Screen Setup    ");   bar[3].fct=66;
+   strcpy(bar[4].titre,"");                   bar[4].fct=0;
+   strcpy(bar[5].titre,"Main Setup      ");   bar[5].fct=62;
+   nbmenu=6;
    break;
  case 6:
    strcpy(bar[0].titre,"Help ");    bar[0].fct=1;
@@ -1609,7 +1604,7 @@ Mlen=0;
 for (i=0;i<100;i++)
     {
     dir[i]=KKCfg->HistDir+j;
-    dir[i]=strupr(dir[i]);
+    dir[i]=StrUpr(dir[i]);
     if (strlen(dir[i])>Mlen) Mlen=strlen(dir[i]);
     if (strlen(dir[i])==0) break;
     while ( (j!=256) & (KKCfg->HistDir[j]!=0) ) j++;
@@ -1629,8 +1624,8 @@ if (i!=0)
     max=i;
     if (max>Cfg->TailleY-4) max=Cfg->TailleY-4;
 
-    WinCadre(x-2,y-1,x+Mlen+1,y+max,4+0);
-    Window(x-1,y,x+Mlen,y+max-1,14*16+7);
+    Cadre(x-2,y-1,x+Mlen+1,y+max,0,Cfg->col[46],Cfg->col[47]);
+    Window(x-1,y,x+Mlen,y+max-1,Cfg->col[28]);
 
     prem=0;
 
@@ -1643,11 +1638,11 @@ if (i!=0)
     for (j=0;j<max;j++)
         PrintAt(x,y+j,"%-*s",Mlen,dir[j+prem]);
 
-    ColLin(x-1,y+(pos-prem),Mlen+2,7*16+4);
+    ColLin(x-1,y+(pos-prem),Mlen+2,Cfg->col[30]);
 
     car=Wait(0,0,0);
 
-    ColLin(x-1,y+(pos-prem),Mlen+2,14*16+7);
+    ColLin(x-1,y+(pos-prem),Mlen+2,Cfg->col[28]);
 
     if (car==0)
         {
@@ -1752,8 +1747,8 @@ if (i!=0)
     max=i;
     if (max>Cfg->TailleY-4) max=Cfg->TailleY-4;
 
-    WinCadre(x-2,y-1,x+Mlen+1,y+max,4+0);
-    Window(x-1,y,x+Mlen,y+max-1,14*16+7);
+    Cadre(x-2,y-1,x+Mlen+1,y+max,0,Cfg->col[46],Cfg->col[47]);
+    Window(x-1,y,x+Mlen,y+max-1,Cfg->col[28]);
 
     prem=0;
 
@@ -1765,11 +1760,11 @@ if (i!=0)
     for (j=0;j<max;j++)
         PrintAt(x,y+j,"%-*s",Mlen,com[j+prem]);
 
-    ColLin(x-1,y+(pos-prem),Mlen+2,7*16+4);
+    ColLin(x-1,y+(pos-prem),Mlen+2,Cfg->col[30]);
 
     car=Wait(0,0,0);
 
-    ColLin(x-1,y+(pos-prem),Mlen+2,14*16+7);
+    ColLin(x-1,y+(pos-prem),Mlen+2,Cfg->col[28]);
 
     switch(HI(car))
         {
@@ -1981,14 +1976,14 @@ long i,d,olddrive;
 
 int car;
 
-chdir(DFen->path);
+DriveSet(DFen->path);
 
 nbr=0;
 
 for (i=0;i<26;i++)
     {
-    drive[i]=GetDriveReady(i);
-    if (drive[i]==0)
+    drive[i]=DriveExist(i);
+    if (drive[i]==1)
         nbr++;
     }
 
@@ -2005,11 +2000,11 @@ Bar(" Help  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
 x1=DFen->x+1;
 
-WinCadre(x1,6,x1+37,21,3);
-Window(x1+1,7,x1+36,20,10*16+1);
-WinCadre(x-1,8,x+l*nbr,10,1);
+Cadre(x1,6,x1+37,21,3,Cfg->col[55],Cfg->col[56]);
+Window(x1+1,7,x1+36,20,Cfg->col[16]);
+Cadre(x-1,8,x+l*nbr,10,1,Cfg->col[55],Cfg->col[56]);
 
-WinCadre(x1+1,11,x1+36,20,3);
+Cadre(x1+1,11,x1+36,20,3,Cfg->col[55],Cfg->col[56]);
 
 PrintAt(x1+2,7, "Choose a drive");
 PrintAt(x1+2,11,"Directory...");
@@ -2017,7 +2012,7 @@ PrintAt(x1+2,11,"Directory...");
 m=x+l/2;
 for (n=0;n<26;n++)
     {
-    if (drive[n]==0)
+    if (drive[n]==1)
         {
         drive[n]=(char)m;
         AffChr(m,9,(char)(n+'A'));
@@ -2055,29 +2050,14 @@ do  {
         if (i<0) i=25;
 
         if ( (drive[i]!=0) & (cpos==50) )
-            if (VerifyDisk(i+1)==0)
+            if (DriveReady(i)==1)
                 {
-                unsigned nbrdrive,ii;
+                Window(x1+2,12,x1+35,19,Cfg->col[16]);
 
-                Window(x1+2,12,x1+35,19,10*16+1);
+                DrivePath(i,path);
+                DriveInfo(i,buffer);
 
-                ii=i+1;
-                _dos_setdrive(ii,&nbrdrive);
-
-                p1=DFen->path[0];
-                p1=toupper(p1)-'A';
-
-                if (p1==i)
-                    strcpy(path,DFen->path);
-                    else
-                    getcwd(path,256);
-
-                if (path[strlen(path)-1]!=DEFSLASH)
-                    strcat(path,"\\");
-
-                GetVolume(i,buffer);
                 sprintf(volume,"[%s]",buffer);
-
 
              //Calcule le nombre de position occup‚e par les repertoires
                 pos=12;
@@ -2133,13 +2113,13 @@ do  {
         }
 
     if (cpos!=50)
-        ColLin(x1+3,cpos-fpos,32,7*16+4);
+        ColLin(x1+3,cpos-fpos,32,Cfg->col[18]);
 
-    AffCol(drive[i],9,10*16+5);
+    AffCol(drive[i],9,Cfg->col[17]);
     car=Wait(0,0,0);
 
     if (cpos!=50)
-        ColLin(x1+3,cpos-fpos,32,10*16+1);
+        ColLin(x1+3,cpos-fpos,32,Cfg->col[16]);
 
     if (car==0)
         {
@@ -2168,7 +2148,7 @@ do  {
             car=13;
         }
 
-    AffCol(drive[i],9,10*16+1);
+    AffCol(drive[i],9,Cfg->col[16]);
 
     if (LO(car)==0)
         {
@@ -2186,7 +2166,10 @@ do  {
         if ( (d>=0) & (d<26) )
             if (drive[d]!=0)
                 {
-                ColLin(x1+3,cpos-fpos,32,10*16+1);
+                if (!DriveReady(d))
+                    EjectDrive(d);
+
+                ColLin(x1+3,cpos-fpos,32,Cfg->col[16]);
                 olddrive=i;
                 i=d;
                 cpos=50;
@@ -2234,8 +2217,8 @@ nbr=0;
 
 for (i=0;i<26;i++)
     {
-    drive[i]=GetDriveReady(i);
-    if (drive[i]==0)
+    drive[i]=DriveExist(i);
+    if (drive[i]==1)
         nbr++;
     }
 
@@ -2248,17 +2231,17 @@ x=(40-(l*nbr))/2+DFen->x;
 
 SaveScreen();
 
-WinCadre(x-2,6,x+l*nbr+1,11,0);
-Window(x-1,7,x+l*nbr,10,10*16+1);
+Cadre(x-2,6,x+l*nbr+1,11,0,Cfg->col[55],Cfg->col[56]);
+Window(x-1,7,x+l*nbr,10,Cfg->col[16]);
 
-WinCadre(x-1,8,x+l*nbr,10,1);
+Cadre(x-1,8,x+l*nbr,10,1,Cfg->col[55],Cfg->col[56]);
 
 PrintAt(x,7,"Select KKDdrive");
 
 m=x+l/2;
 for (n=0;n<26;n++)
     {
-    if (drive[n]==0)
+    if (drive[n]==1)
         {
         drive[n]=(char)m;
         AffChr(m,9,n+'A');
@@ -2290,10 +2273,10 @@ do  {
                 }
        }
 
-    AffCol(drive[i],9,1*16+5);
+    AffCol(drive[i],9,Cfg->col[17]);
 
     car=Wait(0,0,0);
-    AffCol(drive[i],9,10*16+1);
+    AffCol(drive[i],9,Cfg->col[16]);
 
 } while (LO(car)!=13);
 
@@ -2319,9 +2302,9 @@ int c1;
 x=DFen->Fen2->x+3;
 y=DFen->Fen2->y+3;
 
-WinCadre(x-1,y-1,x+24,y+1,0);
+Cadre(x-1,y-1,x+24,y+1,0,Cfg->col[55],Cfg->col[56]);
 ChrLin(x,y,24,32);
-ColLin(x,y,24,10*16+1);
+ColLin(x,y,24,Cfg->col[16]);
 
 if (lng!=0)
     if (chaine[lng-1]!='*')
@@ -2774,7 +2757,7 @@ void Gestion(void)
 char *ext;
 
 clock_t Cl,Cl_Start;
-char car,car2;
+BYTE car,car2;
 
 long car3,c;
 
@@ -3416,17 +3399,6 @@ Fin();
 
 
 
-void PlaceDrive(void)
-{
-unsigned ndrv;
-
-//if (placedrive)
-_dos_setdrive(toupper(DFen->path[0])-'A'+1,&ndrv);
-
-//if (placepath)
-chdir(DFen->path);
-}
-
 
 /*--------------------------------------------------------------------*\
 |-                        Fin d'execution                             -|
@@ -3441,8 +3413,8 @@ if ( (KKCfg->scrrest==0) & (saveconfig) )
 
     x=(Cfg->TailleX-14)/2;
 
-    Window(x,9,x+13,9,10*16+1);
-    WinCadre(x-1,8,x+14,10,0);
+    Window(x,9,x+13,9,Cfg->col[28]);
+    Cadre(x-1,8,x+14,10,0,Cfg->col[46],Cfg->col[47]);
 
     PrintAt(x+1,9,"Please  Wait");
     }
@@ -3450,7 +3422,7 @@ if ( (KKCfg->scrrest==0) & (saveconfig) )
 if (saveconfig)
     SaveCfg();
 
-PlaceDrive();
+DriveSet(DFen->path);
 
 Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;
@@ -3482,8 +3454,10 @@ if (KKCfg->scrrest) // & (saveconfig) )
         }
     }
 
+/*
 if (KKCfg->_4dos==1)
-    _4DOSShistdir();
+    _4DOSShistdir(KKCfg->HistDir);
+*/
 
 GotoXY(0,PosY);
 
@@ -3527,9 +3501,11 @@ for(n=0;n<NBWIN;n++)
     }
 
 PrintAt(0,0,"%-40s%*s",RBTitle,Cfg->TailleX-40,"RedBug");
-ColLin( 0,0,40,1*16+5);
-ColLin(40,0,(Cfg->TailleX)-40,1*16+3);
-ColLin(0,(Cfg->TailleY)-2,Cfg->TailleX,0*16+5);
+ColLin( 0,0,40,Cfg->col[7]);
+ColLin(40,0,(Cfg->TailleX)-40,Cfg->col[11]);
+
+//--- Verify utility of this line --------------------------------------
+ColLin(0,Cfg->TailleY-2,Cfg->TailleX,Cfg->col[63]);
 
 DFen->init=1;
 DFen->Fen2->init=1;
@@ -3537,108 +3513,6 @@ DFen->Fen2->init=1;
 ChangeLine();
 
 MenuBar(4);
-}
-
-
-/*--------------------------------------------------------------------*\
-|-                         Gestion 4DOS                               -|
-|-  Put KKCfg->_4dos on if 4dos found                                 -|
-\*--------------------------------------------------------------------*/
-/*
-void _4DOSverif(void)
-{
-union REGS R;
-
-R.w.ax=0xD44D;
-R.h.bh=0;
-
-int386(0x2F,&R,&R);
-
-if (R.w.ax==0x44DD)
-    {
-    KKCfg->_4dos=1;
-//  PrintAt(0,0,"Found 4DOS V%d.%d",R.h.bl,R.h.bh);
-    }
-    else
-    {
-    KKCfg->_4dos=0;
-    }
-}
-
-void _4DOSLhistdir(void)
-{
-unsigned short seg;
-unsigned short *adr;
-
-char a;
-
-register unsigned char n;
-
-union REGS R;
-
-R.w.ax=0xD44D;
-R.h.bh=0;
-
-int386(0x2F,&R,&R);
-
-if (R.w.ax==0x44DD)
-    {
-    KKCfg->_4dos=1;
-
-    seg=R.w.cx;
-    adr=(unsigned short*)(seg*16+0x290);
-
-    seg=adr[1];
-    adr=(unsigned short*)(seg*16+0x4C60);
-
-    for (n=0;n<255;n++)
-        {
-        a=((char*)adr)[n];
-        KKCfg->HistDir[n]=a;
-        }
-    }
-    else
-    {
-    KKCfg->_4dos=0;
-    }
-}
-*/
-
-void _4DOSShistdir(void)
-{
-unsigned short seg;
-unsigned short *adr;
-
-char a;
-
-register unsigned char n;
-
-union REGS R;
-
-R.w.ax=0xD44D;
-R.h.bh=0;
-
-int386(0x2F,&R,&R);
-
-if (R.w.ax==0x44DD)
-    {
-    KKCfg->_4dos=1;
-
-    seg=R.w.cx;
-    adr=(unsigned short*)(seg*16+0x290);
-
-    seg=adr[1];
-    adr=(unsigned short*)(seg*16+0x4C60);
-
-    for (n=0;n<255;n++)  {
-        a=KKCfg->HistDir[n];
-        ((char*)adr)[n]=a;
-        }
-    }
-    else
-    {
-    KKCfg->_4dos=0;
-    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -3936,16 +3810,17 @@ if ( (DFen->Fen2->FenTyp==2) & (DFen->FenTyp==2) )
 
     for (x=0;x<6;x++)
         {
-        WinCadre(x1, 1+x*3,x2, 3+x*3,2);
-        ColLin(x1+1,2+x*3,8,10*16+4);
+        Cadre(x1, 1+x*3,x2, 3+x*3,2,Cfg->col[55],Cfg->col[56]);
+        ColLin(x1+1,2+x*3,8,Cfg->col[17]);
         memcpy(chaine,KKCfg->Qmenu+x*8,8);
         PrintAt(x1+1,2+x*3 ,chaine);
         }
 
-    Window(x1,19,x2,Cfg->TailleY-6,10*16+4);          // Efface le reste
+    Window(x1,19,x2,Cfg->TailleY-6,Cfg->col[17]);     // Efface le reste
 
-    WinCadre(x1,Cfg->TailleY-5,x2,Cfg->TailleY-3,2);
-    ColLin(x1+1,Cfg->TailleY-4,8,10*16+4);
+    Cadre(x1,Cfg->TailleY-5,x2,Cfg->TailleY-3,2
+                                            ,Cfg->col[55],Cfg->col[56]);
+    ColLin(x1+1,Cfg->TailleY-4,8,Cfg->col[17]);
 
     }
 
@@ -4086,16 +3961,15 @@ Path2Abs(Fics->help,"kkc.hlp");
 
 ChangeType(4);
 
-/*
-KKCfg->_4dos=0;
-_4DOSverif();
+KKCfg->_4dos=_4DOSverif();
 
-if (KKCfg->_4dos==1)
+/*
     {
-    _4DOSLhistdir();
+    memcpy(KKCfg->HistDir,_4DOSLhistdir(),256);
     }
     else */
-    memset(KKCfg->HistDir,0,256);
+
+memset(KKCfg->HistDir,0,256);
 
 
 
@@ -4255,18 +4129,9 @@ Fin();
 }
 
 
-void GetFreeMem(char *buffer);
-#pragma aux GetFreeMem = \
-    "mov ax,0500h" \
-    "int 31h" \
-    modify [edi eax] \
-    parm [edi];
-
 void PrintMem(void)
 {
-int tail[12];
-GetFreeMem((char*)tail);  // inconsistent ?
-PrintAt(0,0,"Memory: %d octets",tail[0]);
+PrintAt(0,0,"Memory: %20d octets",FreeMem());
 }
 
 void SwapLong(long *a,long *b)

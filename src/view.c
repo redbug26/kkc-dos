@@ -207,7 +207,7 @@ PutCur(3,0);
 
 Bar(" Help  ----  ----  Text  ----  ---- Search ----  ----  Quit ");
 
-Window(1,1,Cfg->TailleX-2,(Cfg->TailleY)-3,10*16+1);
+Window(1,1,Cfg->TailleX-2,(Cfg->TailleY)-3,Cfg->col[16]);
 WinCadre(0,3,9,(Cfg->TailleY)-2,2);
 WinCadre(10,3,58,(Cfg->TailleY)-2,2);
 WinCadre(59,3,76,(Cfg->TailleY)-2,2);
@@ -810,7 +810,7 @@ fic=fopen(fichier,"rb");
 
 if (fic==NULL)
     {
-    PrintAt(0,0,"Error on file '%s'",fichier);
+    //PrintAt(0,0,"Error on file '%s'",fichier);
     WinError("Couldn't open file");
     return -1;
     }
@@ -1112,26 +1112,26 @@ if (x<0) x=0;
 if (y<0) y=0;
 
 if ( (x>0) & (y>0) & (x+xl<Cfg->TailleX) & (y+yl<Cfg->TailleY) )
-    WinCadre(x-1,y-1,x+xl,y+yl,3);
+    Cadre(x-1,y-1,x+xl,y+yl,3,Cfg->col[55],Cfg->col[56]);
     else
     {
     if ( (y+yl<Cfg->TailleY) & (y>0) )
         {
-        ColLin(0,y-1,Cfg->TailleX,10*16+1);
+        ColLin(0,y-1,Cfg->TailleX,Cfg->col[16]);
         WinLine(0,y-1,Cfg->TailleX,1);
         WinLine(0,y+yl,Cfg->TailleX,1);
-        ColLin(0,y+yl,Cfg->TailleX,10*16+1);
+        ColLin(0,y+yl,Cfg->TailleX,Cfg->col[16]);
         }
     if ( (x+xl<Cfg->TailleX) & (x>0) )
         {
-        ColWin(x-1,0,x-1,Cfg->TailleY-2,10*16+1);
+        ColWin(x-1,0,x-1,Cfg->TailleY-2,Cfg->col[16]);
         ChrWin(x-1,0,x-1,Cfg->TailleY-2,0xB3);
-        ColWin(x+xl,0,x+xl,Cfg->TailleY-2,10*16+1);
+        ColWin(x+xl,0,x+xl,Cfg->TailleY-2,Cfg->col[16]);
         ChrWin(x+xl,0,x+xl,Cfg->TailleY-2,0xB3);
         }
     }
 
-ColWin(x,y,x+xl-1,y+yl-1,10*16+4);
+ColWin(x,y,x+xl-1,y+yl-1,Cfg->col[16]);
 ChrWin(x,y,x+xl-1,y+yl-1,32);
 
 /*--------------------------------------------------------------------*\
@@ -1383,7 +1383,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
         prc=(posn/taille)*100;
         }
 
-    ColLin(0,0,Cfg->TailleX,1*16+2);
+    ColLin(0,0,Cfg->TailleX,Cfg->col[7]);
 
     strncpy(temp,fichier,78);
 
@@ -1393,7 +1393,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
             "View: %-*s Col%3d %9d bytes %3d%% ",Cfg->TailleX-35,
                                                   temp,warp,taille,prc);
 
-    ColCol(Cfg->TailleX-1,1,Cfg->TailleY-2,1*16+2);
+    ColCol(Cfg->TailleX-1,1,Cfg->TailleY-2,Cfg->col[7]);
     ChrCol(Cfg->TailleX-1,1,cur1-1,32);
     ChrCol(Cfg->TailleX-1,cur1,cur2-cur1+1,219);
     ChrCol(Cfg->TailleX-1,cur2+1,Cfg->TailleY-1-cur2,32);
@@ -1517,7 +1517,7 @@ switch(LO(code))
                 break;
             case 0x43:  //--- F9 ---------------------------------------
                 ChangeMask();
-                ColWin(x,y,x+xl-1,y+yl-1,10*16+4);
+                ColWin(x,y,x+xl-1,y+yl-1,Cfg->col[16]);
                 break;
             case 80:    //--- DOWN -------------------------------------
                 if (pasfini==1) break;
@@ -1554,6 +1554,11 @@ switch(LO(code))
     case 27:
         fin=-1;
         break;
+    case 6:                                                    // CTRL-F
+        SaveScreen();
+        GestionFct(32);
+        LoadScreen();
+        break;
     }
 
 if ( (KKCfg->warp!=0) & (autowarp==1) ) warp=0;
@@ -1576,7 +1581,6 @@ if (shift==2)
 while(!fin);
 
 SavePosition(fichier,posn);
-
 LoadScreen();
 
 return fin;
@@ -1849,7 +1853,7 @@ RB_IDF Info;
 
 
 ColTxt=GetMem(40000*Cfg->TailleX);
-memset(ColTxt,1*16+10,40000*Cfg->TailleX);
+memset(ColTxt,Cfg->col[16],40000*Cfg->TailleX);
 ChrTxt=GetMem(40000*Cfg->TailleX);
 memset(ChrTxt,32,40000*Cfg->TailleX);
 
@@ -1880,9 +1884,9 @@ yl=Cfg->TailleY-2;
 
 WinCadre(x-1,y-1,xl+1,yl,2);
 
-Window(x,y,xl,yl-1,1*16+10);
+Window(x,y,xl,yl-1,Cfg->col[16]);
 
-ColLin(0,yl+1,Cfg->TailleX,1*16+8);
+ColLin(0,yl+1,Cfg->TailleX,Cfg->col[6]);
 ChrLin(0,yl+1,Cfg->TailleX,32);
 
 
@@ -1903,7 +1907,7 @@ ital=0;
 unde=0;
 
 nbrcol=0;
-tabcol[0]=1*16+10;
+tabcol[0]=Cfg->col[16];
 
 debut=0;
 code=0;
@@ -1975,16 +1979,19 @@ switch(car)  {
             titre[debut-1]=0;
 
             if (!stricmp(titre,"TITLE"))
-                                  nbrcol++,tabcol[nbrcol]=3*16+14,aff=1;
+                             nbrcol++,tabcol[nbrcol]=Cfg->col[35],aff=1;
             if (!strnicmp(titre,"H1",2))
-                                        nbrcol++,tabcol[nbrcol]=3*16+13;
+                                   nbrcol++,tabcol[nbrcol]=Cfg->col[36];
             if (!strnicmp(titre,"H2",2))
-                                        nbrcol++,tabcol[nbrcol]=4*16+13;
+                                   nbrcol++,tabcol[nbrcol]=Cfg->col[50];
             if (!strnicmp(titre,"H3",2))
-                                        nbrcol++,tabcol[nbrcol]=5*16+13;
-            if (!strnicmp(titre,"H4",2)) nbrcol++,tabcol[nbrcol]=3*16+1;
-            if (!strnicmp(titre,"H5",2)) nbrcol++,tabcol[nbrcol]=4*16+1;
-            if (!strnicmp(titre,"H6",2)) nbrcol++,tabcol[nbrcol]=5*16+1;
+                                   nbrcol++,tabcol[nbrcol]=Cfg->col[51];
+            if (!strnicmp(titre,"H4",2))
+                                   nbrcol++,tabcol[nbrcol]=Cfg->col[57];
+            if (!strnicmp(titre,"H5",2))
+                                   nbrcol++,tabcol[nbrcol]=Cfg->col[58];
+            if (!strnicmp(titre,"H6",2))
+                                   nbrcol++,tabcol[nbrcol]=Cfg->col[59];
 
             if (!stricmp(titre,"STRONG")) bold++;             // GRAS ON
             if (!stricmp(titre,"B"))      bold++;             // GRAS ON
@@ -1996,7 +2003,7 @@ switch(car)  {
                 {
                 ahref++;
                 nbrcol++;
-                tabcol[nbrcol]=2*16+12;
+                tabcol[nbrcol]=Cfg->col[17];
                 suiv->link=GetMem(strlen(titre)+1);
                 memcpy(suiv->link,titre,strlen(titre)+1);
 
@@ -2259,13 +2266,13 @@ for (k=0;k<lentit;k++)
         bold=0,ital=0,unde=0;
 
     if (bold!=0)
-        col=(col&240)+11;
+        col=(col&240)+Cfg->col[60];
 
     if (ital!=0)
-        col=(col&240)+12;
+        col=(col&240)+Cfg->col[61];
 
     if (unde!=0)
-        col=(col&240)+13;
+        col=(col&240)+Cfg->col[62];
 
     if (car!=0)
         {
@@ -2378,7 +2385,7 @@ if ( (suiv->next!=NULL) & (suiv!=NULL) )
         while(1)
             {
             if (ix<xpage)
-                AffCol(ix+x,iy+y,11*16+12);
+                AffCol(ix+x,iy+y,Cfg->col[18]);
 
             if (iy>(suiv->y2-ye)) break;
 
@@ -2433,7 +2440,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
         prc=(posn/taille2)*100;
         }
 
-    ColLin(0,0,Cfg->TailleX,1*16+2);
+    ColLin(0,0,Cfg->TailleX,Cfg->col[7]);
 
     strncpy(temp,fichier,78);
 
@@ -2441,7 +2448,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
 
     PrintAt(0,0,"View: %-52s %9d bytes %3d%% ",temp,taille,prc);
 
-    ColCol(Cfg->TailleX-1,1,Cfg->TailleY-2,1*16+2);
+    ColCol(Cfg->TailleX-1,1,Cfg->TailleY-2,Cfg->col[7]);
     ChrCol(Cfg->TailleX-1,1,cur1-1,32);
     ChrCol(Cfg->TailleX-1,cur1,cur2-cur1+1,219);
     ChrCol(Cfg->TailleX-1,cur2+1,Cfg->TailleY-1-cur2,32);
@@ -2730,9 +2737,9 @@ while ((y<=y2) | (ok==0) )
             if (trouve!=2)
                 {
                 if (trouve==1)
-                    c2=10*16+3;     // trouve
+                    c2=Cfg->col[17];     // trouve -> bright
                     else
-                    c2=10*16+4;
+                    c2=Cfg->col[16];
 
                 if ( (trouve==0) & (cont==1) )
                     {
@@ -2750,7 +2757,7 @@ while ((y<=y2) | (ok==0) )
                 }
             }
         if (ok)
-            AffCol(x,y,10*16+9);
+            AffCol(x,y,Cfg->col[16]);       // Ou autre chose
         }
 
 /*--------------------------------------------------------------------*\
@@ -2805,7 +2812,7 @@ if (*srcch!=0)
     for (x=0;x<=(x2-x1)-strlen(srcch)+1;x++)
         if (!strnicmp(chain2+x,srcch,strlen(srcch)))
             for(l=0;l<strlen(srcch);l++)
-                AffCol(x1+l+x,y1,10*16+13);
+                AffCol(x1+l+x,y1,Cfg->col[18]);     //Reverse
     }
 
 }
@@ -3329,7 +3336,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
         else
         prc=100;
 
-    ColLin(0,0,Cfg->TailleX,1*16+2);
+    ColLin(0,0,Cfg->TailleX,Cfg->col[7]);
 
     strncpy(temp,fichier,78);
 
@@ -3602,7 +3609,7 @@ fic=fopen(fichier,"rb");
 
 if (fic==NULL)
     {
-    PrintAt(0,0,"Error on file '%s'",fichier);
+    //PrintAt(0,0,"Error on file '%s'",fichier);
     WinError("Couldn't open file");
     i=-1;
     }

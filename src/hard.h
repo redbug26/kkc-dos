@@ -6,8 +6,8 @@
 #define WORD unsigned short
 #define ULONG unsigned long
 
-#define HI(qsd) ((char)(qsd/256))
-#define LO(qsd) ((char)(qsd%256))
+#define HI(qsd) ((BYTE)(qsd/256))
+#define LO(qsd) ((BYTE)(qsd%256))
 
 #define DEFSLASH '\\'
 
@@ -15,6 +15,13 @@
                     44,63,63, 63,63,21, 43,37,30,  0, 0, 0, \
                     63,63, 0, 63,63,63, 43,37,30, 63,20,20, \
                     20,40,20,  0,40,40, 35,30,27,  0, 0, 0}
+/*
+#define RBPALDEF   {   0,0,0,   0,0,42,   0,42,0,  0,42,42, \
+                      42,0,0,  42,0,42,  42,21,0, 42,42,42, \
+                    21,21,21, 21,21,63, 21,63,21, 21,63,63, \
+                    63,21,21, 63,21,63, 63,63,21, 63,63,63 }
+*/
+
 
 #define WinError(_ErrMsg_) WinMesg("Error",_ErrMsg_,0)
 
@@ -59,6 +66,8 @@ struct config
 
      char Tfont;                 // Character used for the vertical line
      char reinit;
+
+     char col[64];
 
      char crc;                                              // CRC: 0x69
      };
@@ -197,6 +206,7 @@ void *GetMemSZ(int);      // Memory allocation without set space to zero
 void LibMem(void *);
 
 void WinCadre(int x1,int y1,int x2,int y2,int type);
+void Cadre(int x1,int y1,int x2,int y2,int type,int col1,int col2);
 void WinLine(int x1,int y1,int xl,int type);
 
 void SetPal(int x,char r,char g,char b);
@@ -266,7 +276,7 @@ int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
 
 
 //--- Retourne 0 si tout va bene ---------------------------------------
-int VerifyDisk(long c);  // 1='A'
+int VerifyDisk(long c);                                   //--- 1='A'
 int __far Error_handler(unsigned deverr,unsigned errcode,
                                                   unsigned far *devhdr);
 

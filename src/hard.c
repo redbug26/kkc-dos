@@ -247,7 +247,7 @@ int _Ansi_col1,_Ansi_col2;               // Couleur que l'on doit mettre
 int _Ansi_tcol;                 // Couleur que l'on a demand‚ par affcol
 int _Ansi_x=0,_Ansi_y=0;                          // precedente position
 
-char _Ansi_cnv[]={0,5,0,2,3,7,6,4,3,1,6,1,2,0,0,0};
+char _Ansi_cnv[]={0,4,2,6,1,5,3,7};
 
 
 void Ansi_AffCol(long x,long y,long c)
@@ -275,10 +275,10 @@ if (*(_RB_screen+((y<<8)+x)+256*128)!=_Ansi_tcol)
     {
     _Ansi_tcol=*(_RB_screen+((y<<8)+x)+256*128);
 
-    _Ansi_col1=_Ansi_cnv[_Ansi_tcol/16]+40;
-    _Ansi_col2=_Ansi_cnv[_Ansi_tcol&15]+30;
+    _Ansi_col1=(_Ansi_cnv[(_Ansi_tcol/16)&7])+40;
+    _Ansi_col2=(_Ansi_cnv[_Ansi_tcol&7])+30;
 
-    cprintf("\x1b[%d;%dm",_Ansi_col1,_Ansi_col2);
+    cprintf("\x1b[%d;%d;%dm",(_Ansi_tcol&8)==8,_Ansi_col1,_Ansi_col2);
     }
 }
 
@@ -1477,29 +1477,19 @@ void Beep(void)
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
-
-/*--------------------------------------------------------------------*\
-|-  Make a Window (0: exterieurn, 1: interieur)                       -|
-\*--------------------------------------------------------------------*/
-void WinCadre(int x1,int y1,int x2,int y2,int type)
+void Cadre(int x1,int y1,int x2,int y2,int type,int col1,int col2)
 {
-int type2;
-char col;
-
-col=(type&4)==4 ? 14 : 10;
-type2=type&3;
-
-if ((type2==1) | (type2==0))
+if ((type==1) | (type==0))
     {
-    //--- Relief (surtout pour type2==1) --------------------------------
-    ColLin(x1,y1,x2-x1+1,col*16+1);
-    ColCol(x1,y1+1,y2-y1,col*16+1);
+    //--- Relief (surtout pour type==1) --------------------------------
+    ColLin(x1,y1,x2-x1+1,col1);
+    ColCol(x1,y1+1,y2-y1,col1);
 
-    ColLin(x1+1,y2,x2-x1,col*16+3);
-    ColCol(x2,y1+1,y2-y1-1,col*16+3);
+    ColLin(x1+1,y2,x2-x1,col2);
+    ColCol(x2,y1+1,y2-y1-1,col2);
 
     if (Cfg->UseFont==0)
-        switch(type2)
+        switch(type)
             {
             case 0:
                 AffChr(x1,y1,'Ú');
@@ -1527,7 +1517,7 @@ if ((type2==1) | (type2==0))
                 break;
             }
     else
-        switch(type2)
+        switch(type)
             {
             case 0:
                 AffChr(x1,y1,142);
@@ -1558,15 +1548,15 @@ if ((type2==1) | (type2==0))
     }
 else
     {
-    //--- Relief (surtout pour type2==1) --------------------------------
-    ColLin(x1,y1,x2-x1+1,col*16+3);
-    ColCol(x1,y1+1,y2-y1,col*16+3);
+    //--- Relief (surtout pour type==1) --------------------------------
+    ColLin(x1,y1,x2-x1+1,col2);
+    ColCol(x1,y1+1,y2-y1,col2);
 
-    ColLin(x1+1,y2,x2-x1,col*16+1);
-    ColCol(x2,y1+1,y2-y1-1,col*16+1);
+    ColLin(x1+1,y2,x2-x1,col1);
+    ColCol(x2,y1+1,y2-y1-1,col1);
 
     if (Cfg->UseFont==0)
-        switch(type2)
+        switch(type)
             {
             case 2:
             case 3:
@@ -1583,7 +1573,7 @@ else
                 break;
             }
         else
-        switch(type2)
+        switch(type)
             {
             case 2:
                 AffChr(x1,y1,139);
@@ -1612,6 +1602,19 @@ else
             }
     return;
     }
+}
+
+/*--------------------------------------------------------------------*\
+|-  Make a Window (0: exterieurn, 1: interieur)                       -|
+\*--------------------------------------------------------------------*/
+void WinCadre(int x1,int y1,int x2,int y2,int type)
+{
+int col1,col2;
+
+col1=(type&4)==4 ? Cfg->col[39] : Cfg->col[37];
+col2=(type&4)==4 ? Cfg->col[40] : Cfg->col[38];
+
+Cadre(x1,y1,x2,y2,type&3,col1,col2);
 }
 
 
@@ -1975,6 +1978,7 @@ return buf;
 
 /*--------------------------------------------------------------------*\
 |-   si p vaut 0 mets off                                             -|
+|-   si p vaut 2 mets on                                              -|
 |-   si p vaut 1 interroge                                            -|
 |-   retourne -1 si SHIFT TAB, 1 si TAB                               -|
 \*--------------------------------------------------------------------*/
@@ -1984,13 +1988,20 @@ int r=0;
 
 int car;
 
-AffChr(x,y,16);
-AffChr(x+lng-1,y,17);
+if (((Cfg->col[48])&240)==((Cfg->col[19])&240))
+    {
+    AffChr(x,y,'[');
+    AffChr(x+lng-1,y,']');
+    }
+else
+    {
+    AffChr(x,y,16);
+    AffChr(x+lng-1,y,17);
+    AffChr(x+lng,y,220);
+    ChrLin(x+1,y+1,lng,223);
+    }
 
-AffChr(x+lng,y,220);
-ChrLin(x+1,y+1,lng,223);
-
-ColLin(x,y,lng,7*16+4);                                       // Couleur
+ColLin(x,y,lng,Cfg->col[49]);                              // Couleur ON
 
 if (p==1)
     while (r==0)
@@ -2036,13 +2047,19 @@ if (p==1)
             }
         }
 
-AffChr(x,y,32);
-AffChr(x+lng-1,y,32);
+if (p!=2)
+    {
+    if ((Cfg->col[48])&240!=(Cfg->col[19])&240)
+        {
+        AffChr(x,y,32);
+        AffChr(x+lng-1,y,32);
 
-AffChr(x+lng,y,220);
-ChrLin(x+1,y+1,lng,223);
+        AffChr(x+lng,y,220);
+        ChrLin(x+1,y+1,lng,223);
+        }
 
-ColLin(x,y,lng,14*16+7);                                      // Couleur
+    ColLin(x,y,lng,Cfg->col[48]);                         // Couleur OFF
+    }
 
 return r;
 }
@@ -2213,8 +2230,8 @@ if (y1==-1)
     y2=y1+F->y2-1;
     }
 
-WinCadre(x1,y1,x2,y2,0);
-Window(x1+1,y1+1,x2-1,y2-1,10*16+1);
+Cadre(x1,y1,x2,y2,0,Cfg->col[44],Cfg->col[45]);
+Window(x1+1,y1+1,x2-1,y2-1,Cfg->col[19]);
 
 PrintAt(x1+((x2-x1+1)-(strlen(F->name)))/2,y1,F->name);
 
@@ -2224,7 +2241,7 @@ switch(T[i].type) {
         PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
         break;
     case 1:
-        ColLin(x1+T[i].x,y1+T[i].y,*(T[i].entier),14*16+3);
+        ColLin(x1+T[i].x,y1+T[i].y,*(T[i].entier),Cfg->col[21]);
         ChrLin(x1+T[i].x,y1+T[i].y,*(T[i].entier),32);
         PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
         break;
@@ -2237,20 +2254,20 @@ switch(T[i].type) {
         Puce(x1+T[i].x,y1+T[i].y,13,0);
         break;
     case 4:
-        WinCadre(x1+T[i].x,y1+T[i].y,
-                                 *(T[i].str)+x1+T[i].x+1,y1+T[i].y+3,1);
+        Cadre(x1+T[i].x,y1+T[i].y,
+       *(T[i].str)+x1+T[i].x+1,y1+T[i].y+3,1,Cfg->col[44],Cfg->col[45]);
         break;
     case 5:
         PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
         Puce(x1+T[i].x,y1+T[i].y,13,0);
         break;
     case 6:
-        WinCadre(x1+T[i].x,y1+T[i].y,
-                                 *(T[i].str)+x1+T[i].x+1,y1+T[i].y+2,2);
+        Cadre(x1+T[i].x,y1+T[i].y,
+       *(T[i].str)+x1+T[i].x+1,y1+T[i].y+2,2,Cfg->col[44],Cfg->col[45]);
         break;
     case 7:
         j=strlen(T[i].str)+2;
-        ColLin(x1+T[i].x+j,y1+T[i].y,9,14*16+3);
+        ColLin(x1+T[i].x+j,y1+T[i].y,9,Cfg->col[21]);
         PrintAt(x1+T[i].x,y1+T[i].y,"%s: %-9d",T[i].str,*(T[i].entier));
         break;
     case 8:
@@ -2258,8 +2275,8 @@ switch(T[i].type) {
                                    *(T[i].entier) ? 'X' : ' ',T[i].str);
         break;
     case 9:
-        WinCadre(x1+T[i].x,y1+T[i].y,
-                  *(T[i].str)+x1+T[i].x+1,*(T[i].entier)+y1+T[i].y+1,2);
+        Cadre(x1+T[i].x,y1+T[i].y,*(T[i].str)+x1+T[i].x+1,
+                *(T[i].entier)+y1+T[i].y+1,2,Cfg->col[44],Cfg->col[45]);
         break;
     case 10:
         PrintAt(x1+T[i].x,y1+T[i].y,
@@ -2317,9 +2334,9 @@ switch(T[i].type)
         direct=Switch(x1+T[i].x,y1+T[i].y,T[i].entier);
         break;
     case 10:
-        ColLin(x1+T[i].x+4,y1+T[i].y,strlen(T[i].str),10*16+3);
+        ColLin(x1+T[i].x+4,y1+T[i].y,strlen(T[i].str),Cfg->col[21]);
         direct=MSwitch(x1+T[i].x,y1+T[i].y,T[i].entier,i);
-        ColLin(x1+T[i].x+4,y1+T[i].y,strlen(T[i].str),10*16+1);
+        ColLin(x1+T[i].x+4,y1+T[i].y,strlen(T[i].str),Cfg->col[19]);
         PrintAt(x1+T[i].x,y1+T[i].y,"(%c) %s",
                               (*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
         break;
@@ -2611,6 +2628,164 @@ Cfg->comspeed=19200;
 Cfg->combit=8;
 Cfg->comparity='N';
 Cfg->comstop=1;
+
+/*
+Cfg->col[0]=1*16+11;
+Cfg->col[1]=3*16+0;
+Cfg->col[2]=1*16+14;
+Cfg->col[3]=3*16+14;
+Cfg->col[4]=1*16+14;
+Cfg->col[5]=0*16+3;
+Cfg->col[6]=3*16+0;
+
+Cfg->col[7]=3*16+0;
+Cfg->col[8]=0*16+15;
+Cfg->col[9]=3*16+0;
+Cfg->col[10]=3*16+15;
+Cfg->col[11]=3*16+14;
+Cfg->col[12]=0*16+15;
+Cfg->col[13]=0*16+14;
+Cfg->col[14]=3*16+0;
+
+Cfg->col[16]=1*16+11;
+Cfg->col[17]=1*16+3;
+Cfg->col[18]=3*16+0;
+
+Cfg->col[19]=3*16+15;
+Cfg->col[20]=3*16+14;
+Cfg->col[21]=0*16+15;
+
+Cfg->col[24]=3*16+0;
+Cfg->col[25]=3*16+15;
+Cfg->col[26]=0*16+15;
+Cfg->col[27]=3*16+14;
+
+Cfg->col[28]=4*16+15;
+Cfg->col[29]=4*16+14;
+Cfg->col[30]=7*16+0;
+
+Cfg->col[37]=1*16+11;
+Cfg->col[38]=1*16+11;
+Cfg->col[39]=1*16+11;
+Cfg->col[40]=1*16+14;
+
+Cfg->col[41]=3*16+0;
+
+Cfg->col[42]=3*16+0;
+Cfg->col[43]=0*16+15;
+
+Cfg->col[44]=3*16+15;
+Cfg->col[45]=3*16+15;
+Cfg->col[46]=4*16+15;
+Cfg->col[47]=4*16+15;
+Cfg->col[48]=3*16+15;
+Cfg->col[49]=0*16+15;
+Cfg->col[50]=4*16+15;
+Cfg->col[51]=7*16+0;
+
+Cfg->col[52]=3*16+0;
+Cfg->col[53]=3*16+0;
+Cfg->col[54]=0*16+14;
+
+Cfg->col[55]=1*16+11;
+Cfg->col[56]=1*16+11;
+
+Cfg->col[15]=1*16+9;
+Cfg->col[22]=1*16+5;
+Cfg->col[23]=1*16+2;
+Cfg->col[32]=1*16+4;
+Cfg->col[33]=1*16+3;
+Cfg->col[34]=11*16+4;
+
+Cfg->col[35]=6*16+0;
+Cfg->col[36]=7*16+0;
+Cfg->col[50]=8*16+0;
+Cfg->col[51]=9*16+0;
+Cfg->col[57]=10*16+0;
+Cfg->col[58]=11*16+0;
+Cfg->col[59]=12*16+0;
+Cfg->col[60]=0*16+4;
+Cfg->col[61]=0*16+3;
+Cfg->col[62]=0*16+5;
+*/
+
+Cfg->col[0]=7*16+6;
+Cfg->col[1]=14*16+6;
+Cfg->col[2]=13*16+8;
+Cfg->col[3]=14*16+2;
+Cfg->col[4]=7*16+5;
+Cfg->col[5]=1*16+8;
+Cfg->col[6]=1*16+2;
+
+Cfg->col[7]=14*16+7;
+Cfg->col[8]=7*16+4;
+Cfg->col[9]=14*16+1;
+Cfg->col[10]=14*16+7;
+Cfg->col[11]=14*16+3;
+Cfg->col[12]=7*16+4;
+Cfg->col[13]=7*16+3;
+
+Cfg->col[14]=3*16+0;
+
+Cfg->col[16]=10*16+1;
+Cfg->col[17]=10*16+5;
+Cfg->col[18]=14*16+5;
+
+Cfg->col[19]=10*16+1;
+Cfg->col[20]=10*16+3;
+Cfg->col[21]=14*16+3;
+
+Cfg->col[24]=10*16+1;
+Cfg->col[25]=10*16+3;
+Cfg->col[26]=1*16+5;
+Cfg->col[27]=10*16+5;
+
+Cfg->col[28]=14*16+7;
+Cfg->col[29]=14*16+4;
+Cfg->col[30]=7*16+4;
+
+Cfg->col[37]=10*16+1;
+Cfg->col[38]=10*16+3;
+Cfg->col[39]=10*16+1;
+Cfg->col[40]=10*16+3;
+
+Cfg->col[41]=14*16+3;
+
+Cfg->col[42]=14*16+3;
+Cfg->col[43]=7*16+3;
+
+Cfg->col[44]=10*16+1;
+Cfg->col[45]=10*16+3;
+Cfg->col[46]=14*16+1;
+Cfg->col[47]=14*16+3;
+Cfg->col[48]=14*16+3;
+Cfg->col[49]=7*16+4;
+
+Cfg->col[52]=10*16+1;
+Cfg->col[53]=10*16+3;
+Cfg->col[54]=1*16+10;
+
+Cfg->col[55]=10*16+1;
+Cfg->col[56]=10*16+3;
+
+Cfg->col[15]=7*16+13;
+Cfg->col[22]=7*16+8;
+Cfg->col[23]=7*16+12;
+Cfg->col[32]=7*16+11;
+Cfg->col[33]=7*16+4;
+Cfg->col[34]=13*16+11;
+
+Cfg->col[35]=3*16+14;
+Cfg->col[36]=3*16+13;
+Cfg->col[50]=4*16+13;
+Cfg->col[51]=5*16+1;
+Cfg->col[57]=3*16+1;
+Cfg->col[58]=4*16+1;
+Cfg->col[59]=5*16+1;
+Cfg->col[60]=0*16+11;
+Cfg->col[61]=0*16+12;
+Cfg->col[62]=0*16+13;
+
 }
 
 /*--------------------------------------------------------------------*\
@@ -2722,6 +2897,8 @@ int VerifyDisk(long c)  // 1='A'
 unsigned nbrdrive,cdrv,n;
 struct diskfree_t d;
 
+char rech[4];
+
 if ((c<1) | (c>26)) return 1;
 
 n=_bios_equiplist();
@@ -2735,7 +2912,14 @@ IOerr=0;
 IOver=1;
 
 _dos_setdrive(c,&nbrdrive);
-// getcwd(path,256);
+
+rech[0]=c+'A'-1;
+rech[1]=':';
+rech[2]='\\';
+rech[3]=0;
+
+if (opendir(rech)==NULL)
+    IOerr=1;
 
 if (_dos_getdiskfree(c,&d)!=0)
     IOerr=1;
@@ -2868,7 +3052,7 @@ int car=0;
 for (n=0;n<nbr;n++)
     let[n]=toupper(bar[n].titre[0]);
 
-ColLin(0,0,Cfg->TailleX,14*16+7);
+ColLin(0,0,Cfg->TailleX,Cfg->col[7]);
 ChrLin(0,0,Cfg->TailleX,32);
 
 
@@ -2893,16 +3077,16 @@ for (n=0;n<nbr;n++)
     {
     if (n==c)
         {
-        AffCol(x+j+n*i-1,0,7*16+4);
-        AffCol(x+j+n*i,0,7*16+3);
-        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),7*16+4);
+        AffCol(x+j+n*i-1,0,Cfg->col[8]);
+        AffCol(x+j+n*i,0,Cfg->col[43]);
+        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),Cfg->col[8]);
         *xp=x+j+n*i;
         }
         else
         {
-        AffCol(x+j+n*i-1,0,14*16+7);
-        AffCol(x+j+n*i,0,14*16+3);
-        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),14*16+7);
+        AffCol(x+j+n*i-1,0,Cfg->col[7]);
+        AffCol(x+j+n*i,0,Cfg->col[42]);
+        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),Cfg->col[7]);
         }
 
     PrintAt(x+j+n*i,0,"%s",bar[n].titre);
@@ -2988,7 +3172,7 @@ int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp)
 {
 int max,n,m,car,fin;
 int i,col;
-char couleur;
+int col1,col2;
 char let[32];
 
 for (n=0;n<nbr;n++)
@@ -3022,8 +3206,8 @@ SaveScreen();
 
 if ((*xp)<1) (*xp)=1;
 
-WinCadre(*xp-1,*yp-1,*xp+max,*yp+nbr,4+3);
-Window(*xp,*yp,*xp+max-1,*yp+nbr-1,14*16+7);
+Cadre(*xp-1,*yp-1,*xp+max,*yp+nbr,3,Cfg->col[9],Cfg->col[41]);
+Window(*xp,*yp,*xp+max-1,*yp+nbr-1,Cfg->col[10]);
 
 fin=0;
 
@@ -3037,23 +3221,29 @@ for (n=0;n<nbr;n++)
     if (bar[n].fct==0)
         {
         ChrLin(*xp,(*yp)+n,max,196);
-        ColLin(*xp,(*yp)+n,max,14*16+7);
+        ColLin(*xp,(*yp)+n,max,Cfg->col[10]);
         }
         else
         {
         PrintAt(*xp,(*yp)+n,"%s",bar[n].titre);
         col=1;
         if (n==*c)
-            couleur=7*16+4;  // 7
+            {
+            col1=Cfg->col[12];  // 7
+            col2=Cfg->col[13];  // 7
+            }
             else
-            couleur=14*16+7;  // 4
+            {
+            col1=Cfg->col[10];  // 4
+            col2=Cfg->col[11];  // 7
+            }
 
         for (i=0;i<strlen(bar[n].titre);i++)
             {
             if ( (col==1) & (toupper(bar[n].titre[i])==let[n]) )
-                AffCol((*xp)+i,(*yp)+n,(couleur&240)+3),col=0;
+                AffCol((*xp)+i,(*yp)+n,col2),col=0;
                 else
-                AffCol((*xp)+i,(*yp)+n,couleur);
+                AffCol((*xp)+i,(*yp)+n,col1);
             }
         }
     }
@@ -3335,12 +3525,11 @@ y2=y1+(NbrMain+1)*3;
 
 SaveScreen();
 
-WinCadre(x1,y1,x2,y2,0);
-
-Window(x1+1,y1+1,x2-1,y2-1,10*16+1);
+Cadre(x1,y1,x2,y2,0,Cfg->col[52],Cfg->col[53]);
+Window(x1+1,y1+1,x2-1,y2-1,Cfg->col[24]);
 
 PrintAt(x1+2,y1,"Main Topic");
-ColLin(x1+2,y1,10,10*16+2);
+ColLin(x1+2,y1,10,Cfg->col[27]);
 
 pos=0;
 
@@ -3350,9 +3539,9 @@ do
         {
         Hlp2Chaine(NdxMainTopic[n],chaine);
         if (pos==n)
-            ColLin(x1+2,y1+3+n*3,strlen(chaine),1*16+5);
+            ColLin(x1+2,y1+3+n*3,strlen(chaine),Cfg->col[26]);
             else
-            ColLin(x1+2,y1+3+n*3,strlen(chaine),10*16+1);
+            ColLin(x1+2,y1+3+n*3,strlen(chaine),Cfg->col[24]);
 
         PrintAt(x1+2,y1+3+n*3,chaine);
         }
@@ -3406,7 +3595,7 @@ do
     switch(car) {
         case 13:
             Hlp2Chaine(NdxMainTopic[pos],chaine);
-            ColLin(x1+2,y1+3+pos*3,strlen(chaine),10*16+1);
+            ColLin(x1+2,y1+3+pos*3,strlen(chaine),Cfg->col[24]);
             SubTopic(pos);
             break;
         }
@@ -3450,13 +3639,12 @@ if (y2>=(Cfg->TailleY-1)) y2=Cfg->TailleY-3;
 
 SaveScreen();
 
-WinCadre(x1,y1,x2,y2,0);
-
-Window(x1+1,y1+1,x2-1,y2-1,10*16+1);
+Cadre(x1,y1,x2,y2,0,Cfg->col[52],Cfg->col[53]);
+Window(x1+1,y1+1,x2-1,y2-1,Cfg->col[24]);
 
 Hlp2Chaine(NdxMainTopic[z],chaine);
 PrintAt(x1+2,y1,"%s",chaine);
-ColLin(x1+2,y1,strlen(chaine),10*16+2);
+ColLin(x1+2,y1,strlen(chaine),Cfg->col[27]);
 
 pos=0;
 prem=0;
@@ -3472,9 +3660,9 @@ do
             {
             Hlp2Chaine(NdxSubTopic[z][n],chaine);
             if (pos==n)
-                ColLin(x1+2,y1+3+(n-prem)*2,max,1*16+5);
+                ColLin(x1+2,y1+3+(n-prem)*2,max,Cfg->col[26]);
                 else
-                ColLin(x1+2,y1+3+(n-prem)*2,max,10*16+1);
+                ColLin(x1+2,y1+3+(n-prem)*2,max,Cfg->col[24]);
 
             PrintAt(x1+2,y1+3+(n-prem)*2,"%-*s",max,chaine);
 
@@ -3590,8 +3778,8 @@ PutCur(32,0);
 
 x1=(Cfg->TailleX-80)/2;
 
-WinCadre(x1,0,x1+79,(Cfg->TailleY)-1,0);
-Window(x1+1,1,x1+78,(Cfg->TailleY)-2,10*16+1);
+Cadre(x1,0,x1+79,(Cfg->TailleY)-1,0,Cfg->col[52],Cfg->col[53]);
+Window(x1+1,1,x1+78,(Cfg->TailleY)-2,Cfg->col[24]);
 
 pres=z;
 
@@ -3665,9 +3853,9 @@ while(1)
             }
 
         if (type!=0)                              // Couleur de la ligne
-            col=10*16+3;
+            col=Cfg->col[25];
             else
-            col=10*16+1;
+            col=Cfg->col[24];
 
         ref[0]=0;
         lref=-1;
@@ -3697,7 +3885,7 @@ while(1)
 
                     lref=0;
                     lstr=0;
-                    col=14*16+6;
+                    col=Cfg->col[27];
                     break;
                 case '>':
                     if (lref==-2)
@@ -3707,9 +3895,9 @@ while(1)
                         lref=-1;
                         lstr=0;
                         if (type!=0)              // Couleur de la ligne
-                            col=10*16+3;
+                            col=Cfg->col[25];
                         else
-                            col=10*16+1;
+                            col=Cfg->col[24];
                         }
                     break;
                 case ';':
@@ -3738,7 +3926,7 @@ while(1)
             n++;
             }
 
-        ColLin(x,y,79-x+x1,10*16+1);
+        ColLin(x,y,79-x+x1,Cfg->col[24]);
         ChrLin(x,y,79-x+x1,SPACE);              // Efface jusqu'a la fin
 
         n++;
@@ -3762,9 +3950,9 @@ if (cref>=NRef) cref=0;
 for(m=0;m<NRef;m++)
     {
     if (cref==m)
-        col=14*16+3;
+        col=Cfg->col[54];
         else
-        col=14*16+6;
+        col=Cfg->col[27];
 
     ColLin(RefX[m],RefY[m],RefLng[m],col);
     }
@@ -3981,9 +4169,6 @@ R.w.ax=0x0000;
 int386(0x33,&R,&R);
 if (R.w.ax==0) return;
 
-R.w.ax=0x0001;
-int386(0x33,&R,&R);
-
 _PasX=4;
 _PasY=4;
 _TmpClik=3;
@@ -4107,20 +4292,36 @@ for (i=0;i<10;i++)
     {
     PrintAt(n,TY,"F%d",(i+1)%10);
     for(j=0;j<2;j++,n++)
-        AffCol(n,TY,1*16+8);
+        AffCol(n,TY,Cfg->col[5]);
     
     for(j=0;j<6;j++,n++)
         {
-        AffCol(n,TY,1*16+2);
+        AffCol(n,TY,Cfg->col[6]);
         AffChr(n,TY,*(bar+i*6+j));
         }
     if (Cfg->TailleX==90)
         {
-        AffCol(n,TY,1*16+2);
+        AffCol(n,TY,Cfg->col[6]);
         AffChr(n,TY,32);
         n++;
         }
     }
+}
+
+void GetFreeMem(char *buffer);
+#pragma aux GetFreeMem = \
+    "mov ax,0500h" \
+    "int 31h" \
+    modify [edi eax] \
+    parm [edi];
+
+int FreeMem(void)
+{
+int tail[12];
+
+GetFreeMem((void*)tail);                           // inconsistent ?
+
+return tail[0];
 }
 
 #ifdef DEBUG
@@ -4143,5 +4344,6 @@ fprintf(fic,"%s",suite);
 fclose(fic);
 }
 #endif
+
 
 

@@ -4,16 +4,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <dos.h>
-#include <direct.h>
-#include <bios.h>
-#include <io.h>
+#include <ctype.h>
 #include <fcntl.h>
-#include <sys\types.h>
-#include <sys\stat.h>
 
 #include "idf.h"
 
@@ -994,8 +988,15 @@ struct key K[nbrkey]=   {
     "Useless Module",
     "USM",
     "Useless",157,0,1,1},  // By FreddyV -------------------------------
+{  {0x7F,0x45,0x4C,0x46,0x01,0x01,0x01,0x00},// ELFúúúú
+    8,
+    0,
+    "Elf executable",    //--- Executable and Linking Format -----------
+    "OUT",
+    "USL",158,0,0,6},    //--- UNIX System Laboratories ----------------
+    
 
-// Dernier employe: 157
+// Dernier employe: 158
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -1237,6 +1238,9 @@ ushort ReadInt(RB_IDF *Info,ulong position,char type);
 char   ReadChar(RB_IDF *Info,ulong position);
 void   ReadStr(RB_IDF *Info,ulong position,char *str,short taille);
 
+char sstricmp(char *dest,char *src);
+char sstrnicmp(char *src,char *dest,int i);
+
 ulong  InvLong(ulong entier);          // Inverse un ulong HILO <-> LOHI
 ushort InvWord(ushort entier);        // Inverse un ushort HILO <-> LOHI
 
@@ -1438,6 +1442,32 @@ if (name!=NULL)
             name[n]=0;
     }
 }
+
+
+char sstricmp(char *dest,char *src)
+{
+int n;
+
+for (n=0;n<strlen(src);n++)
+    if (toupper(dest[n])!=toupper(src[n]))
+        return 1;
+
+return 0;
+}
+
+char sstrnicmp(char *src,char *dest,int i)
+{
+int n;
+
+for (n=0;n<i;n++)
+    if (toupper(dest[n])!=toupper(src[n]))
+        return 1;
+
+return 0;
+
+
+}
+
 
 
 void Traitefic(RB_IDF *Info)
@@ -1835,7 +1865,7 @@ while(1)
                 fread(&strlng,1,1,Info->fic);
                 if (strlng>34) continue;
                 fread(chaine,strlng,1,Info->fic);
-                chaine[strlng]=0;
+                chaine[(int)strlng]=0;
 
                 if (mess==-1)
                         sprintf(Info->fullname,"%s",chaine);
@@ -2180,7 +2210,7 @@ return 0;
 
 short Infopcx(RB_IDF *Info)
 {
-long Lp,Hp;
+int Lp,Hp;
 char BP;
 
 Lp=ReadInt(Info,8,1)+1;
@@ -2212,7 +2242,8 @@ return 0;
 
 short Infobmp(RB_IDF *Info)      // Windows BMP
 {
-long Lp,Hp,bps;
+long Lp,Hp;
+int bps;
 
 if (ReadInt(Info,14,1)!=40) return 1;
 
@@ -2229,7 +2260,8 @@ return 0;
 
 short Infobmp2(RB_IDF *Info)     // OS2 BMP
 {
-long Lp,Hp,bps;
+long Lp,Hp;
+int bps;
 
 if (ReadInt(Info,14,1)!=12) return 1;
 
@@ -2434,7 +2466,6 @@ char *buf;
 buf=Info->buffer;
 
 
-
 if (memcmp(buf,".snd",4))   return 1;
 
 memcpy((char*)(&dataLocation),buf+4,4);
@@ -2592,9 +2623,9 @@ return 0;
 
 short Infoarj(RB_IDF *Info)
 {
-char *buf;
+unsigned char *buf;
 
-buf=Info->buffer;
+buf=(unsigned char*)Info->buffer;
 
 if ( (buf[0]!=0x60) | (buf[1]!=234) | (buf[4]!=0x1E) )
         return 1;
@@ -3344,7 +3375,7 @@ short Infodbf3(RB_IDF *Info)
 {
 char day,month,year;
 
-if ( (Info->buffer[0]!=3) & (Info->buffer[0]!=0x83) )  return 1;
+if ( (Info->buffer[0]!=3) & (Info->buffer[0]!=(char)0x83) )  return 1;
 
 day=Info->buffer[3];
 month=Info->buffer[2];
@@ -3615,10 +3646,10 @@ ReadStr(Info,pos,Info->fullname,60);
 for (i=0;i<60;i++)
         if (Info->fullname[i]<32) Info->fullname[i]=0;
 
-if (!strnicmp(Info->fullname,"REM",3)) a=3;
-if (!strnicmp(Info->fullname,"//",2)) a=2;
+if (!sstrnicmp(Info->fullname,"REM",3)) a=3;
+if (!sstrnicmp(Info->fullname,"//",2)) a=2;
 
-if (!strnicmp(Info->fullname,"include",7)) {
+if (!sstrnicmp(Info->fullname,"include",7)) {
         a=1;
         while ( (Info->buffer[pos]!=13) & (pos<1000) ) pos++;
         }
@@ -3632,9 +3663,9 @@ if (a==0)
         pos+=a;
 
 }
-while ( ( (!strnicmp(Info->fullname,"@ECHO",5)) |
-                  (!strnicmp(Info->fullname,"ECHO",4)) |
-                  (!strnicmp(Info->fullname,"#INCLUDE",8)) |
+while ( ( (!sstrnicmp(Info->fullname,"@ECHO",5)) |
+                  (!sstrnicmp(Info->fullname,"ECHO",4)) |
+                  (!sstrnicmp(Info->fullname,"#INCLUDE",8)) |
                   (a!=0)
                 ) & (pos<1000)
           );
@@ -3670,9 +3701,9 @@ for(n=0;n<32768;n++)
             if (n-d<64)
                 {
                 titre[n-d]=0;
-                if (!stricmp(titre,"HTML")) return 0;
-                if (!stricmp(titre,"TITLE")) return 0;
-                if (!stricmp(titre,"PRE")) return 0;
+                if (!sstricmp(titre,"HTML")) return 0;
+                if (!sstricmp(titre,"TITLE")) return 0;
+                if (!sstricmp(titre,"PRE")) return 0;
                 d=0;
                 }
             break;

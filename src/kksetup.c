@@ -18,6 +18,7 @@
 
 #include "kk.h"
 #include "idf.h"
+#include "rbdos.h"
 
 #define MAXDIR 250
 
@@ -46,9 +47,17 @@ void MenuCreat(char *titbuf,char *buf,char *path)
 
 }
 
+
+// Variable globale
+
+int todo;
+
+
 /*--------------------------------------------------------------------*\
 |- prototype                                                          -|
 \*--------------------------------------------------------------------*/
+
+
 
 int crc32file(char *name,unsigned long *crc);  // Compute CRC-32 of file
 int FileComp(char *a,char *b);   // Comparaison entre 2 noms de fichiers
@@ -59,6 +68,16 @@ void InitMode(void);
 void ClearSpace(char *name);    //--- efface les espaces inutiles ------
 
 void Interroge(char *path,struct player *app,char *Verif,char *GVerif);
+
+void Col2Str(char *from,char *to);
+void Str2Col(char *from,char *to);
+
+void ChangePalette(void);
+void ColorChange(void);
+void IColor(void);       // InitColor
+int DColor(int col);
+
+void AffColScreen(int a);
 
 /*--------------------------------------------------------------------*\
 |- Pour Statistique;                                                  -|
@@ -87,7 +106,12 @@ char dir[MAXDIR][128];      // 50 directory diff‚rents de 128 caracteres
 short nbr;              // nombre d'application lu dans les fichiers KKR
 short nbrdir;
 
-char OldX,OldY;
+long OldCol;                                // Ancienne couleur du texte
+long OldY,OldX,PosX,PosY;
+
+char *Screen_Adr=(char*)0xB8000;
+char *Screen_Buffer;
+
 
 FENETRE *Fenetre[NBWIN];
 
@@ -294,7 +318,7 @@ do
 ep = strrchr(buff,'=');                      // Parse out the equal sign
 ep++;
                                 // Copy up to buffer_len chars to buffer
-strncpy(buffer,ep,buffer_len - 1);
+memcpy(buffer,ep,buffer_len);
 
 buffer[buffer_len] = '\0';
 fclose(fp);                     // Clean up and return the amount copied
@@ -413,28 +437,6 @@ return write_private_profile_string(section,entry,buffer,file_name);
 }
 
 
-/*--------------------------------------------------------------------*
- -                      Procedure en Assembleur                       -
- *--------------------------------------------------------------------*/
-
-char GetDriveReady(char i);
-#pragma aux GetDriveReady = \
-	"mov ah,19h" \
-	"int 21h" \
-	"mov ch,al" \
-	"mov ah,0Eh" \
-	"int 21h" \
-	"mov ah,19h" \
-	"int 21h" \
-	"sub al,dl" \
-	"mov cl,al" \
-	"mov dl,ch" \
-	"mov ah,0Eh" \
-	"int 21h" \
-    modify [eax ebx ecx edx] \
-	parm [dl] \
-    value [cl];
-
 
 int sort_function(const void *a,const void *b)
 {
@@ -488,9 +490,9 @@ for (n=prem;n<nbrkey;n++)
         PrintAt(4,y,"%s",K[n].format);
 
         if (y&1==1)
-            ColLin(1,y,Cfg->TailleX-2,10*16+3);
+            ColLin(1,y,Cfg->TailleX-2,Cfg->col[17]);
             else
-            ColLin(1,y,Cfg->TailleX-2,1*16+3);
+            ColLin(1,y,Cfg->TailleX-2,Cfg->col[16]);
         }
         else
         {
@@ -705,8 +707,8 @@ nbr=0;
 for (i=0;i<26;i++)
     {
     etat[i]=0;
-    drive[i]=GetDriveReady(i);
-    if (drive[i]==0)
+    drive[i]=DriveExist(i);
+    if (drive[i]==1)
         nbr++;
     }
 
@@ -719,19 +721,19 @@ x=(Cfg->TailleX-(l*nbr))/2;
 SaveScreen();
 PutCur(32,0);
 
-WinCadre(x-2,6,x+l*nbr+1,11,4);
-Window(x-1,7,x+l*nbr,10,14*16+7);
+Cadre(x-2,6,x+l*nbr+1,11,0,Cfg->col[46],Cfg->col[47]);
+Window(x-1,7,x+l*nbr,10,Cfg->col[28]);
 
-WinCadre(x-1,8,x+l*nbr,10,4+1);
+Cadre(x-1,8,x+l*nbr,10,1,Cfg->col[46],Cfg->col[47]);
 
 PrintAt(x,7,"Select the drive");
 
 m=x+l/2;
 for (n=0;n<26;n++)
     {
-    if (drive[n]==0)
+    if (drive[n]==1)
         {
-        if (VerifyDisk(n+1)==0)
+        if (DriveReady(n)==1)
             etat[n]=1;
 
         drive[n]=m;
@@ -762,7 +764,7 @@ do
             if (lstdrv[i]==0)
                 {
                 lstdrv[i]=1;
-                if (VerifyDisk(i+1)==0)
+                if (DriveReady(i)==1)
                     etat[i]=1;
                     else
                     etat[i]=0;
@@ -891,8 +893,8 @@ if (i!=0)
     max=i;
     if (max>Cfg->TailleY-(y+1)-1) max=Cfg->TailleY-(y+1)-1;
 
-    WinCadre(x-2,y-1,x+Mlen+1,y+max,0);
-    Window(x-1,y,x+Mlen,y+max-1,10*16+1);
+    Cadre(x-2,y-1,x+Mlen+1,y+max,0,Cfg->col[55],Cfg->col[56]);
+    Window(x-1,y,x+Mlen,y+max-1,Cfg->col[16]);
 
     prem=0;
 
@@ -987,6 +989,7 @@ if (erreur==1)
 \*--------------------------------------------------------------------*/
 void main(short argc,char **argv)
 {
+
 char buffer[256],chaine[256];
 short n;
 int i;
@@ -1000,7 +1003,15 @@ IOerr=1;
 |-  Initialisation de l'ecran                                         -|
 \*--------------------------------------------------------------------*/
 
+todo=0;
+
+if (!stricmp((argv[1])+1,"ABOUT")) todo=2;
+if (!stricmp((argv[1])+1,"COLOR")) todo=12;
+if (!stricmp((argv[1])+1,"PALETTE")) todo=13;
+
 Cfg=GetMem(sizeof(struct config));
+
+Screen_Buffer=(char*)GetMem(8000);                      // maximum 80x50
 
 OldX=(*(char*)(0x44A));
 OldY=(*(char*)(0x484))+1;
@@ -1009,6 +1020,11 @@ Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;                  // Initialisation de la taille ecran
 
 InitScreen(0);                     // Initialise toutes les donn‚es HARD
+
+WhereXY(&PosX,&PosY);
+
+for (n=0;n<8000;n++)
+    Screen_Buffer[n]=Screen_Adr[n];
 
 /*--------------------------------------------------------------------*\
 |-  Gestion des erreurs                                               -|
@@ -1116,97 +1132,105 @@ if (LoadDefCfg)
 |-  Gestion Message                                                   -|
 \*--------------------------------------------------------------------*/
 
-strcpy(chaine,KKFics->trash);
-if (mkdir(chaine)==0)
+if (todo==0)
     {
-    DispMessage("Creation of the trash directory '%s': OK",chaine);
-    DispMessage("");
-    }
-    else
-    {
-    char path[256];
-    getcwd(path,256);
-
-    if (chdir(chaine)==0)
+    strcpy(chaine,KKFics->trash);
+    if (mkdir(chaine)==0)
         {
-        DispMessage("Trash directory exist: %s",chaine);
+        DispMessage("Creation of the trash directory '%s': OK",chaine);
         DispMessage("");
         }
         else
         {
-        DispMessage("You must uncompress archive on your disk");
-        DispMessage("");
-        }
-    chdir(path);
-    }
+        char path[256];
+        getcwd(path,256);
 
+        if (chdir(chaine)==0)
+            {
+            DispMessage("Trash directory exist: %s",chaine);
+            DispMessage("");
+            }
+            else
+            {
+            DispMessage("You must uncompress archive on your disk");
+            DispMessage("");
+            }
+        chdir(path);
+        }
 
 
 /*--------------------------------------------------------------------*\
 |-  Insertion de KK dans la path si pas d‚ja pr‚sent !                -|
 \*--------------------------------------------------------------------*/
 
-strcpy(ActualPath,path);
+    strcpy(ActualPath,path);
 
-_searchenv("KK.BAT","PATH",buffer);
-if (strlen(buffer)!=0)
-    {
-    FILE *fic;
-    static char toto[256];
-    static char tata[256];
+    _searchenv("KK.BAT","PATH",buffer);
+    if (strlen(buffer)!=0)
+        {
+        FILE *fic;
+        static char toto[256];
+        static char tata[256];
 
-    fic=fopen(buffer,"rt");
-    fgets(toto,256,fic);
+        fic=fopen(buffer,"rt");
+        fgets(toto,256,fic);
 
-    sprintf(tata,"@%s",ActualPath);
-    Path2Abs(tata,"kk.exe\n");
+        sprintf(tata,"@%s",ActualPath);
+        Path2Abs(tata,"kk.exe\n");
 
-    if (stricmp(tata,toto)!=0)
+        if (stricmp(tata,toto)!=0)
+            PutInPath();
+
+        Path2Abs(buffer,"..");
+        strcpy(PathOfKK,buffer);
+        }
+        else
         PutInPath();
 
-    Path2Abs(buffer,"..");
-    strcpy(PathOfKK,buffer);
+
+    fic=fopen(KKFics->FicIdfFile,"rb");
+    if (fic==NULL)
+        {
+        DispMessage("It's the first time that you run KKSETUP");
+        DispMessage("  -> Go to menu 'Player'");
+        DispMessage("  -> Select 'Search Player'");
+        DispMessage("");
+        }
+        else
+        fclose(fic);
     }
-    else
-    PutInPath();
 
 
-
-fic=fopen(KKFics->FicIdfFile,"rb");
-if (fic==NULL)
+if (todo!=0)
     {
-    DispMessage("It's the first time that you run KKSETUP");
-    DispMessage("  -> Go to menu 'Player'");
-    DispMessage("  -> Select 'Search Player'");
-    DispMessage("");
-    }
-    else
-    fclose(fic);
-
-do
-    {
-    i=GestionBar();
-    if ((i==7) | (i==0)) break;
-    GestionFct(i);
-    }
-while(1);
-
-if (strlen(PathOfKK)!=0)
-    {
-    DispMessage("KK.BAT & KKDESC.BAT are now in PATH (%s)",PathOfKK);
-    DispMessage("  -> You could run KK from everywhere");
+    GestionFct(todo);
     }
     else
     {
-    DispMessage("WARNING: You couldn't run KK from everywhere "
+    do
+        {
+        i=GestionBar();
+        if ((i==7) | (i==0)) break;
+        GestionFct(i);
+        }
+    while(1);
+
+    if (strlen(PathOfKK)!=0)
+        {
+        DispMessage("KK.BAT & KKDESC.BAT are now in PATH (%s)",
+                                                              PathOfKK);
+        DispMessage("  -> You could run KK from everywhere");
+        }
+        else
+        {
+        DispMessage("WARNING: You couldn't run KK from everywhere "
                                                     "(Reload KKSETUP)");
+        }
+
+    DispMessage("");
+    DispMessage("Press a key to continue");
+    Wait(0,0,0);
     }
-
-DispMessage("");
-
-DispMessage("Press a key to continue");
-
-Wait(0,0,0);
 
 SaveCfg();
 
@@ -1215,7 +1239,13 @@ Cfg->TailleY=OldY;
 
 TXTMode();
 
-puts(RBTitle2);
+GotoXY(0,PosY);
+
+for (n=0;n<8000;n++)
+    Screen_Adr[n]=Screen_Buffer[n];
+
+if (todo==0)
+    cputs(RBTitle2);
 }
 
 
@@ -1253,7 +1283,7 @@ for (n=0;n<26;n++)
     {
     sprintf(ch,"%c:\\",n+'A');
     if (lstdrv[n]==1)
-        if (VerifyDisk(n+1)==0)
+        if (DriveReady(n)==1)
             KKR_Search(ch);
     }
 
@@ -1263,7 +1293,7 @@ for (n=0;n<26;n++)
     {
     sprintf(ch,"%c:\\*.*",n+'A');
     if (lstdrv[n]==1)
-        if (VerifyDisk(n+1)==0)
+        if (DriveReady(n)==1)
             SSearch(ch);
     }
 
@@ -1785,7 +1815,7 @@ return 0;
 
 void LoadConfigFile(char *part)
 {
-char buf[82];
+char buf[200],buf1[81],buf2[81];
 char buffer[32];
 char section[32];
 char filename[128];
@@ -1863,6 +1893,15 @@ KKCfg->cnvtable=get_private_profile_int(section,"cnvtable",
 Pal2Str(Cfg->palette,buf);
 get_private_profile_string(section,"palette",buf,buf,48,filename);
 Str2Pal(buf,Cfg->palette);
+
+Col2Str(Cfg->col,buf);
+memcpy(buf1,buf,64);
+buf1[64]=0;
+memcpy(buf2,buf+64,64);
+buf2[64]=0;
+get_private_profile_string(section,"col1",buf1,buf,64,filename);
+get_private_profile_string(section,"col2",buf2,buf+64,64,filename);
+Str2Col(buf,Cfg->col);
 
 
 switch(toupper(buffer[0]))
@@ -2002,6 +2041,7 @@ void SaveConfigFile(void)
 {
 int n;
 char buf1[80],buf2[80],buf3[80];
+char buf[129];
 char buffer[32];
 char section[32];
 char filename[128];
@@ -2065,6 +2105,15 @@ write_private_profile_string(section,"viewer",KKCfg->vieweur,filename);
 
 Pal2Str(Cfg->palette,buf1);
 write_private_profile_string(section,"palette",buf1,filename);
+
+Col2Str(Cfg->col,buf);
+memcpy(buf1,buf,64);
+buf1[64]=0;
+memcpy(buf2,buf+64,64);
+buf2[64]=0;
+
+write_private_profile_string(section,"col1",buf1,filename);
+write_private_profile_string(section,"col2",buf2,filename);
 
 
 for (n=11;n<15;n++)
@@ -2396,10 +2445,12 @@ switch (poscur)
     strcpy(bar[0].titre,"Config. Default");  bar[0].fct=10;
     strcpy(bar[1].titre,"File setting");  bar[1].fct=11;
     strcpy(bar[2].titre,"");                       bar[2].fct=0;
-
-    strcpy(bar[3].titre,"Load KKSETUP.INI");       bar[3].fct=5;
-    strcpy(bar[4].titre,"Write Profile");          bar[4].fct=9;
-    nbmenu=5;
+    strcpy(bar[3].titre,"Color Definition");       bar[3].fct=12;
+    strcpy(bar[4].titre,"Palette");                bar[4].fct=13;
+    strcpy(bar[5].titre,"");                       bar[5].fct=0;
+    strcpy(bar[6].titre,"Load KKSETUP.INI");       bar[6].fct=5;
+    strcpy(bar[7].titre,"Write Profile");          bar[7].fct=9;
+    nbmenu=8;
     break;
  case 3:
     strcpy(bar[0].titre,"Help ");         bar[0].fct=1;
@@ -2445,6 +2496,8 @@ return fin;
 |- 9: Sauve le fichier des configurations                             -|
 |-10: Appelle le menu setup configuration                             -|
 |-11: Configuration de l'editeur                                      -|
+|-12: Setup couleur                                                   -|
+|-13: Setup Palette                                                   -|
 \*--------------------------------------------------------------------*/
 
 void GestionFct(int i)
@@ -2501,6 +2554,12 @@ switch(i)
         break;
     case 11:
         FileSetup();
+        break;
+    case 12:
+        ColorChange();
+        break;
+    case 13:
+        ChangePalette();
         break;
     }
 }
@@ -2834,20 +2893,990 @@ switch(WinTraite(T,9,&F,0))
     }
 }
 
+void Col2Str(char *from,char *to)
+{
+int n;
+
+for(n=0;n<64;n++)
+    sprintf(to+n*2,"%02X",from[n]);
+}
+
+void Str2Col(char *from,char *to)
+{
+int n,m;
+
+for(n=0;n<64;n++)
+    {
+    sscanf(from+n*2,"%02X",&m);
+    to[n]=m;
+    }
+}
+
 void InitMode(void)
 {
-TXTMode();
-InitFont();
+int x,y;
 
-LoadPal(Cfg->palette);
+if (todo==0)
+    {
+    TXTMode();
+    InitFont();
 
-WinCadre(0,1,Cfg->TailleX-1,(Cfg->TailleY-2),1);
-Window(1,2,Cfg->TailleX-2,(Cfg->TailleY-3),10*16+1);
+    LoadPal(Cfg->palette);
 
-ColLin(0,0,Cfg->TailleX,10*16+5);
-ChrLin(0,0,Cfg->TailleX,32);
+    Cadre(0,1,Cfg->TailleX-1,(Cfg->TailleY-2),1,Cfg->col[55],Cfg->col[56]);
+    Window(1,2,Cfg->TailleX-2,(Cfg->TailleY-3),Cfg->col[16]);
 
-PrintAt((Cfg->TailleX-38)/2,0,"Setup of Ketchup Killers Commander");
+    ColLin(0,0,Cfg->TailleX,Cfg->col[17]);
+    ChrLin(0,0,Cfg->TailleX,32);
+
+    PrintAt((Cfg->TailleX-38)/2,0,"Setup of Ketchup Killers Commander");
+    }
+    else
+    {
+    TXTMode();
+    InitFont();
+
+    LoadPal(Cfg->palette);
+
+    for(x=0;x<OldX;x++)
+        for(y=0;y<OldY;y++)
+            {
+            AffCol(x,y,Screen_Buffer[(x+y*OldX)*2+1]);
+            AffChr(x,y,Screen_Buffer[(x+y*OldX)*2]);
+            }
+    }
 
 InitMessage();
 }
+
+void ColorChange(void)
+{
+int retour,n,x,y;
+static struct barmenu bar[19];
+
+sprintf(bar[0].titre,"Pannel");
+bar[0].fct=1;
+
+sprintf(bar[1].titre,"KeyBar");
+bar[1].fct=2;
+
+sprintf(bar[2].titre,"Window 1");
+bar[2].fct=3;
+
+sprintf(bar[3].titre,"Window 2");
+bar[3].fct=4;
+
+sprintf(bar[4].titre,"Help");
+bar[4].fct=5;
+
+sprintf(bar[5].titre,"Input Box");
+bar[5].fct=6;
+
+sprintf(bar[6].titre,"PullDown Bar");
+bar[6].fct=7;
+
+sprintf(bar[7].titre,"PullDown Menu");
+bar[7].fct=8;
+
+sprintf(bar[8].titre,"HTML Viewer");
+bar[8].fct=9;
+
+SaveScreen();
+
+IColor();
+
+
+x=20;
+y=4;
+n=0;
+
+do
+    {
+    retour=PannelMenu(bar,9,&n,&x,&y);
+    if (retour==2)
+        CColor(bar[n].fct-1);
+    }
+while ( (retour==1) | (retour==-1) | (retour==2) );
+
+LoadScreen();
+}
+
+void IColor(void)       // InitColor
+{
+int x,y;
+int Hexa[]={'0','1','2','3','4','5','6','7','8','9',
+                                               'A','B','C','D','E','F'};
+
+Cadre(0,0,18,18,0,Cfg->col[55],Cfg->col[56]);
+AffChr(1,1,3);
+for(x=0;x<16;x++)
+    {
+    AffCol(x+2,1,Cfg->col[16]);
+    AffCol(1,x+2,Cfg->col[16]);
+    AffChr(x+2,1,Hexa[x]);
+    AffChr(1,x+2,Hexa[x]);
+    for(y=0;y<16;y++)
+        {
+        AffCol(x+2,y+2,y*16+x);
+        AffChr(x+2,y+2,'+');
+        }
+    }
+}
+
+
+int DColor(int col)
+{
+int x,y,car;
+
+x=col&15;
+y=col/16;
+
+AffCol(x+2,1,Cfg->col[18]);
+AffCol(1,y+2,Cfg->col[18]);
+AffChr(x+2,y+2,'*');
+car=Wait(0,0,0);
+AffCol(x+2,1,Cfg->col[16]);
+AffCol(1,y+2,Cfg->col[16]);
+AffChr(x+2,y+2,'+');
+
+switch(HI(car))
+    {
+    case 72:    y--;    break;
+    case 80:    y++;    break;
+    case 0x4B:  x--;    break;
+    case 0x4D:  x++;    break;
+    }
+x=x&15;
+y=y&15;
+
+if (car==27)
+    return -1;
+    else
+    return y*16+x;
+}
+
+void CColor(int m)
+{
+int retour,n,x,y;
+static struct barmenu bar[16];
+int r;
+
+SaveScreen();
+
+x=20;
+y=4;
+
+switch(m)
+    {
+    case 0:      // Pannel
+        sprintf(bar[0].titre,"Border1");
+        bar[0].fct=38;
+
+        sprintf(bar[1].titre,"Border2");
+        bar[1].fct=39;
+
+        sprintf(bar[2].titre,"Normal");
+        bar[2].fct=1;
+
+        sprintf(bar[3].titre,"Bright");
+        bar[3].fct=3;
+
+        sprintf(bar[4].titre,"Reverse");
+        bar[4].fct=2;
+
+        sprintf(bar[5].titre,"Underline");
+        bar[5].fct=5;
+
+        sprintf(bar[6].titre,"Bright Reverse");
+        bar[6].fct=4;
+
+        sprintf(bar[7].titre,"Underline");
+        bar[7].fct=40;
+
+        sprintf(bar[8].titre,"Bright Reverse");
+        bar[8].fct=41;
+
+        sprintf(bar[9].titre,"");
+        bar[9].fct=0;
+
+        sprintf(bar[10].titre,"EXEcutable");
+        bar[10].fct=16;
+        sprintf(bar[11].titre,"ARChive");
+        bar[11].fct=23;
+        sprintf(bar[12].titre,"SouNDfile");
+        bar[12].fct=24;
+        sprintf(bar[13].titre,"BitMaP");
+        bar[13].fct=33;
+        sprintf(bar[14].titre,"TeXT");
+        bar[14].fct=34;
+        sprintf(bar[15].titre,"USeR defined");
+        bar[15].fct=35;
+
+        n=0;
+
+        Window(59,2,77,18,0);
+        AffColScreen(m);
+
+        do
+            {
+            retour=PannelMenu(bar,16,&n,&x,&y);
+
+            if (retour==2)
+                {
+                do
+                    {
+                    AffColScreen(m);
+
+                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    if (r!=-1)
+                        Cfg->col[(bar[n].fct)-1]=r;
+                    }
+                while(r!=-1);
+                }
+            }
+        while ( (retour==1) | (retour==-1) | (retour==2) );
+        break;
+
+
+
+    case 1:     // KeyBar
+        sprintf(bar[0].titre,"Normal");
+        bar[0].fct=7;
+
+        sprintf(bar[1].titre,"Bright");
+        bar[1].fct=6;
+
+        n=0;
+
+        Window(60,3,77,5,0);
+        AffColScreen(m);
+
+        do
+            {
+            retour=PannelMenu(bar,2,&n,&x,&y);
+
+            if (retour==2)
+                {
+                do
+                    {
+                    AffColScreen(m);
+
+                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    if (r!=-1)
+                        Cfg->col[(bar[n].fct)-1]=r;
+                    }
+                while(r!=-1);
+                }
+            }
+        while ( (retour==1) | (retour==-1) | (retour==2) );
+        break;
+
+    case 2:     // Window 1
+        sprintf(bar[0].titre,"Border1");
+        bar[0].fct=56;
+
+        sprintf(bar[1].titre,"Border2");
+        bar[1].fct=57;
+
+        sprintf(bar[2].titre,"Normal");
+        bar[2].fct=17;
+
+        sprintf(bar[3].titre,"Bright");
+        bar[3].fct=18;
+
+        sprintf(bar[4].titre,"Reverse");
+        bar[4].fct=19;
+
+        n=0;
+
+        Window(59,2,77,8,0);
+        AffColScreen(m);
+
+        do
+            {
+            retour=PannelMenu(bar,5,&n,&x,&y);
+
+            if (retour==2)
+                {
+                do
+                    {
+                    AffColScreen(m);
+
+                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    if (r!=-1)
+                        Cfg->col[(bar[n].fct)-1]=r;
+                    }
+                while(r!=-1);
+                }
+            }
+        while ( (retour==1) | (retour==-1) | (retour==2) );
+        break;
+
+    case 3:    // Window 2
+        sprintf(bar[0].titre,"Border1");
+        bar[0].fct=47;
+
+        sprintf(bar[1].titre,"Border2");
+        bar[1].fct=48;
+
+        sprintf(bar[2].titre,"Normal");
+        bar[2].fct=29;
+
+        sprintf(bar[3].titre,"Bright");
+        bar[3].fct=30;
+
+        sprintf(bar[4].titre,"Reverse");
+        bar[4].fct=31;
+
+        n=0;
+
+        Window(59,2,77,8,0);
+        AffColScreen(m);
+
+
+        do
+            {
+            retour=PannelMenu(bar,5,&n,&x,&y);
+
+            if (retour==2)
+                {
+                do
+                    {
+                    AffColScreen(m);
+
+                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    if (r!=-1)
+                        Cfg->col[(bar[n].fct)-1]=r;
+                    }
+                while(r!=-1);
+                }
+            }
+        while ( (retour==1) | (retour==-1) | (retour==2) );
+
+        Cfg->col[50]=Cfg->col[47];
+        Cfg->col[51]=Cfg->col[30];
+        break;
+
+    case 4:     // Help
+        sprintf(bar[0].titre,"Border1");
+        bar[0].fct=53;
+
+        sprintf(bar[1].titre,"Border2");
+        bar[1].fct=54;
+
+        sprintf(bar[2].titre,"Normal");
+        bar[2].fct=25;
+
+        sprintf(bar[3].titre,"Bright");
+        bar[3].fct=26;
+
+        sprintf(bar[4].titre,"Reverse");
+        bar[4].fct=27;
+
+        sprintf(bar[5].titre,"Underline");
+        bar[5].fct=28;
+
+        sprintf(bar[6].titre,"Bright Reverse");
+        bar[6].fct=55;
+
+        n=0;
+
+        Window(59,2,77,10,0);
+        AffColScreen(m);
+
+        do
+            {
+            retour=PannelMenu(bar,7,&n,&x,&y);
+
+            if (retour==2)
+                {
+                do
+                    {
+                    AffColScreen(m);
+
+                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    if (r!=-1)
+                        Cfg->col[(bar[n].fct)-1]=r;
+                    }
+                while(r!=-1);
+                }
+            }
+        while ( (retour==1) | (retour==-1) | (retour==2) );
+        break;
+
+    case 5:     // Input Box
+        sprintf(bar[0].titre,"Border1");
+        bar[0].fct=45;
+
+        sprintf(bar[1].titre,"Border2");
+        bar[1].fct=46;
+
+        sprintf(bar[2].titre,"Normal");
+        bar[2].fct=20;
+
+        sprintf(bar[3].titre,"Bright");
+        bar[3].fct=21;
+
+        sprintf(bar[4].titre,"Reverse");
+        bar[4].fct=22;
+
+        sprintf(bar[5].titre,"Button Off");
+        bar[5].fct=49;
+
+        sprintf(bar[6].titre,"Button On");
+        bar[6].fct=50;
+
+        n=0;
+
+        Window(59,2,77,10,0);
+        AffColScreen(m);
+
+        do
+            {
+            retour=PannelMenu(bar,7,&n,&x,&y);
+
+            if (retour==2)
+                {
+                do
+                    {
+                    AffColScreen(m);
+
+                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    if (r!=-1)
+                        Cfg->col[(bar[n].fct)-1]=r;
+                    }
+                while(r!=-1);
+                }
+            }
+        while ( (retour==1) | (retour==-1) | (retour==2) );
+        break;
+
+    case 6:     // PullDown Bar
+        sprintf(bar[0].titre,"Normal");
+        bar[0].fct=8;
+
+        sprintf(bar[1].titre,"Bright");
+        bar[1].fct=43;
+
+        sprintf(bar[2].titre,"Reverse");
+        bar[2].fct=9;
+
+        sprintf(bar[3].titre,"Bright Reverse");
+        bar[3].fct=44;
+
+        n=0;
+
+        Window(60,3,75,5,0);
+        AffColScreen(m);
+
+        do
+            {
+            retour=PannelMenu(bar,4,&n,&x,&y);
+
+            if (retour==2)
+                {
+                do
+                    {
+                    AffColScreen(m);
+
+                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    if (r!=-1)
+                        Cfg->col[(bar[n].fct)-1]=r;
+                    }
+                while(r!=-1);
+                }
+            }
+        while ( (retour==1) | (retour==-1) | (retour==2) );
+        break;
+
+    case 7:     // PullDown Menu
+        sprintf(bar[0].titre,"Border1");
+        bar[0].fct=10;
+
+        sprintf(bar[1].titre,"Border2");
+        bar[1].fct=42;
+
+        sprintf(bar[2].titre,"Normal");
+        bar[2].fct=11;
+
+        sprintf(bar[3].titre,"Bright");
+        bar[3].fct=12;
+
+        sprintf(bar[4].titre,"Reverse");
+        bar[4].fct=13;
+
+        sprintf(bar[5].titre,"Bright Reverse");
+        bar[5].fct=14;
+
+        n=0;
+
+        Window(59,2,77,7,0);
+        AffColScreen(m);
+
+        do
+            {
+            retour=PannelMenu(bar,6,&n,&x,&y);
+
+            if (retour==2)
+                {
+                do
+                    {
+                    AffColScreen(m);
+
+                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    if (r!=-1)
+                        Cfg->col[(bar[n].fct)-1]=r;
+                    }
+                while(r!=-1);
+                }
+            }
+        while ( (retour==1) | (retour==-1) | (retour==2) );
+        break;
+
+    case 8:     // Viewer HTML
+        sprintf(bar[0].titre,"Title");
+        bar[0].fct=36;
+
+        sprintf(bar[1].titre,"H1");
+        bar[1].fct=37;
+
+        sprintf(bar[2].titre,"H2");
+        bar[2].fct=51;
+
+        sprintf(bar[3].titre,"H3");
+        bar[3].fct=52;
+
+        sprintf(bar[4].titre,"H4");
+        bar[4].fct=58;
+
+        sprintf(bar[5].titre,"H5");
+        bar[5].fct=59;
+
+        sprintf(bar[6].titre,"H6");
+        bar[6].fct=60;
+
+        sprintf(bar[7].titre,"Bold");
+        bar[7].fct=61;
+
+        sprintf(bar[8].titre,"Italic");
+        bar[8].fct=62;
+
+        sprintf(bar[9].titre,"Underline");
+        bar[9].fct=63;
+
+        n=0;
+
+        Window(59,2,77,15,0);
+        AffColScreen(m);
+
+        do
+            {
+            retour=PannelMenu(bar,10,&n,&x,&y);
+
+            if (retour==2)
+                {
+                do
+                    {
+                    AffColScreen(m);
+
+                    r=DColor(Cfg->col[(bar[n].fct)-1]);
+                    if (r!=-1)
+                        Cfg->col[(bar[n].fct)-1]=r;
+                    }
+                while(r!=-1);
+                }
+            }
+        while ( (retour==1) | (retour==-1) | (retour==2) );
+        break;
+    }
+LoadScreen();
+}
+
+void AffColScreen(int a)
+{
+switch(a)
+    {
+    case 0:
+        Cadre(60,3,76,17,0,Cfg->col[37],Cfg->col[38]);
+        ColLin(61,4,15,Cfg->col[0]);
+        ColLin(61,5,15,Cfg->col[2]);
+        ColLin(61,6,15,Cfg->col[1]);
+        ColLin(61,7,15,Cfg->col[4]);
+        ColLin(61,8,15,Cfg->col[3]);
+        ColLin(61,9,15,Cfg->col[39]);
+        ColLin(61,10,15,Cfg->col[40]);
+
+        ColLin(61,11,15,Cfg->col[15]);
+        ColLin(61,12,15,Cfg->col[22]);
+        ColLin(61,13,15,Cfg->col[23]);
+        ColLin(61,14,15,Cfg->col[32]);
+        ColLin(61,15,15,Cfg->col[33]);
+        ColLin(61,16,15,Cfg->col[34]);
+
+        PrintAt(61,4,"normal  exe");
+        PrintAt(61,5,"select  com");
+        PrintAt(61,6,"current ini");
+        PrintAt(61,7,"c:\path");
+        PrintAt(61,8,"cursel  rb");
+        PrintAt(61,9, "normal");
+        PrintAt(61,10,"bright");
+
+        PrintAt(61,11,"exe com bat");
+        PrintAt(61,12,"rar arj zip");
+        PrintAt(61,13,"mod s3m wav");
+        PrintAt(61,14,"bmp lbm png");
+        PrintAt(61,15,"txt diz doc");
+        PrintAt(61,16,"xyz");
+        break;
+    case 1:
+        ColLin(61,4,2,Cfg->col[5]);
+        ColLin(63,4,6,Cfg->col[6]);
+        ColLin(69,4,2,Cfg->col[5]);
+        ColLin(71,4,6,Cfg->col[6]);
+        PrintAt(61,4,"F1 Help F2 Menu");
+        break;
+
+    case 2:
+        Cadre(60,3,76,7,0,Cfg->col[55],Cfg->col[56]);
+        ColLin(61,4,15,Cfg->col[16]);
+        ColLin(61,5,15,Cfg->col[17]);
+        ColLin(61,6,15,Cfg->col[18]);
+
+        PrintAt(61,4,"Normal");
+        PrintAt(61,5,"Bright");
+        PrintAt(61,6,"Reverse");
+        break;
+
+    case 3:
+        Cadre(60,3,76,7,0,Cfg->col[46],Cfg->col[47]);
+        ColLin(61,4,15,Cfg->col[28]);
+        ColLin(61,5,15,Cfg->col[29]);
+        ColLin(61,6,15,Cfg->col[30]);
+
+        PrintAt(61,4,"Normal");
+        PrintAt(61,5,"Bright");
+        PrintAt(61,6,"Reverse");
+        break;
+
+    case 4:
+        Cadre(60,3,76,9,0,Cfg->col[52],Cfg->col[53]);
+        ColLin(61,4,15,Cfg->col[24]);
+        ColLin(61,5,15,Cfg->col[25]);
+        ColLin(61,6,15,Cfg->col[26]);
+        ColLin(61,7,15,Cfg->col[27]);
+        ColLin(61,8,15,Cfg->col[54]);
+                    
+
+        PrintAt(61,4,"Normal");
+        PrintAt(61,5,"Bright");
+        PrintAt(61,6,"Reverse");
+        PrintAt(61,7,"Underline");
+        PrintAt(61,8,"Bright Reverse");
+        break;
+
+    case 5:
+        Cadre(60,3,76,9,0,Cfg->col[44],Cfg->col[45]);
+        Window(61,4,75,8,Cfg->col[19]);
+        ColLin(61,5,15,Cfg->col[20]);
+        ColLin(61,6,15,Cfg->col[21]);
+
+        PrintAt(61,4,"Normal");
+        PrintAt(61,5,"Bright");
+        PrintAt(61,6,"Reverse");
+
+        Puce(62,7,4,2);
+        Puce(69,7,5,0);
+        PrintAt(63,7,"On");
+        PrintAt(70,7,"Off");
+        break;
+
+    case 6:
+        ColLin(61,4,1,Cfg->col[42]);
+        ColLin(62,4,4,Cfg->col[7]);
+        ColLin(66,4,1,Cfg->col[43]);
+        ColLin(67,4,7,Cfg->col[8]);
+        PrintAt(61,4,"Menu Selected");
+        break;
+
+    case 7:
+        Cadre(60,3,76,6,0,Cfg->col[9],Cfg->col[41]);
+        ColLin(61,4,1,Cfg->col[11]);
+        ColLin(62,4,14,Cfg->col[10]);
+        ColLin(61,5,1,Cfg->col[13]);
+        ColLin(62,5,14,Cfg->col[12]);
+
+        PrintAt(61,4,"Menu");
+        PrintAt(61,5,"Selected");
+        break;
+
+    case 8:
+        Cadre(60,3,76,14,0,Cfg->col[37],Cfg->col[38]);
+        ColLin(61,4,15,Cfg->col[35]);
+        ColLin(61,5,15,Cfg->col[36]);
+        ColLin(61,6,15,Cfg->col[50]);
+        ColLin(61,7,15,Cfg->col[51]);
+        ColLin(61,8,15,Cfg->col[57]);
+        ColLin(61,9,15,Cfg->col[58]);
+        ColLin(61,10,15,Cfg->col[59]);
+        ColLin(61,11,15,Cfg->col[60]);
+        ColLin(61,12,15,Cfg->col[61]);
+        ColLin(61,13,15,Cfg->col[62]);
+
+        PrintAt(61,4,"Title");
+        PrintAt(61,5,"H1");
+        PrintAt(61,6,"H2");
+        PrintAt(61,7,"H3");
+        PrintAt(61,8,"H4");
+        PrintAt(61,9,"H5");
+        PrintAt(61,10,"H6");
+        PrintAt(61,11,"Bold");
+        PrintAt(61,12,"Italic");
+        PrintAt(61,13,"Underline");
+        break;
+    }
+}
+
+
+void ChangePalette(void)
+{
+int x,y,i;
+char rec,reloadpal;
+
+int n,m,ntot;
+int nt,mt;
+int car;
+
+int ex,ey;
+int x1,y1;
+
+char *titre="Palette configuration";
+
+#define NBRS 4
+
+char defcol[NBRS][48]={ RBPALDEF ,
+                     { 0, 0, 0, 42,42,42,  0, 0, 0, 63,63,63,
+                      63,63,63, 63,63,32, 42,63,63,  0, 0,43,
+                      63,63, 0, 63,63,63,  0, 0,43, 57,63, 0,
+                      30,60,30,  0,40,63,  0, 0, 0,  0, 0, 0},
+                     {25,36,29, 36,18,15,  0, 0, 0, 49,39,45,
+                      44,63,63, 42,37,63, 45,39,35,  0, 0, 0,
+                       0,63,63, 63,63,63, 25,36,29, 63, 0, 0,
+                       0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0},
+                     {42,37,63, 14,22,17,  0, 0, 0, 58,58,50,
+                      18, 1,36, 63,63,21, 58,42,49, 16,16,32,
+                      63,63, 0, 63,63,63, 43,37,63, 63,20,20,
+                      20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
+                       };
+
+char *Style[NBRS]={"Default Style","Norton Style","Cyan Style",
+                                                             "Venus "};
+int posx[NBRS],posy[NBRS];
+
+SaveScreen();
+PutCur(32,0);
+
+Cadre(0,0,Cfg->TailleX-1,(Cfg->TailleY)-2,2,Cfg->col[55],Cfg->col[56]);
+Window(1,1,Cfg->TailleX-2,(Cfg->TailleY)-3,Cfg->col[16]);
+
+if (Cfg->TailleY==50)
+    {
+    x1=9;
+    y1=7;
+    ey=7;
+    ex=24;
+    for (n=0;n<NBRS;n++)
+        {
+        posx[n]=56;
+        posy[n]=n*3+24;
+        }
+    }
+    else
+    {
+    x1=4;
+    y1=2;
+    ey=4;
+    ex=19;
+    for (n=0;n<NBRS;n++)
+        {
+        posx[n]=n*19+4;
+        posy[n]=(Cfg->TailleY)-4;
+        }
+    }
+
+
+
+ntot=15+NBRS;
+
+for(n=0;n<ntot-15;n++)
+    {
+    Cadre(posx[n]-2,posy[n]-1,posx[n]+15,posy[n]+1,2
+                                            ,Cfg->col[55],Cfg->col[56]);
+    ColLin(posx[n],posy[n],strlen(Style[n]),Cfg->col[16]);
+    PrintAt(posx[n],posy[n],Style[n]);
+    }
+
+if (Cfg->TailleY==50)
+    {
+    Cadre(2,2,77,4,2,Cfg->col[55],Cfg->col[56]);
+    Cadre(2,5,77,44,2,Cfg->col[55],Cfg->col[56]);
+    PrintAt(30,3,titre);
+
+    Cadre(2,45,77,47,2,Cfg->col[55],Cfg->col[56]);
+
+    Cadre(52,16,73,40,2,Cfg->col[55],Cfg->col[56]);
+    PrintAt(5,46,"%s /RedBug",RBTitle);
+
+    Cadre(53,17,72,21,2,Cfg->col[55],Cfg->col[56]);
+    PrintAt(54,19,"Predefined palette");
+    }
+    else
+    {
+    PrintAt(30,0,titre);
+    }
+
+
+n=0;
+m=0;
+
+
+i=0;
+
+rec=1;
+
+do
+{
+if (rec==1)
+    {
+    rec=0;
+    for (nt=0;nt<16;nt++)
+        {
+        x=(nt/ey)*ex+x1;
+        y=(nt%ey)*5+y1;
+
+        Cadre(x-1,y-1,x+9,y+3,1,Cfg->col[55],Cfg->col[56]);
+        Window(x,y,x+8,y+2,Cfg->col[16]);
+
+        Cadre(x+10,y-1,x+14,y+3,1,Cfg->col[55],Cfg->col[56]);
+        ColWin(x+11,y,x+13,y+2,nt*16+nt);
+        ChrWin(x+11,y,x+13,y+2,220);
+
+        for(mt=0;mt<3;mt++)
+            {
+            Gradue(x,y+mt,8,0,Cfg->palette[nt*3+mt],64);
+            ColWin(x,y+mt,x+8,y+mt,Cfg->col[16]);
+            PrintAt(x-3,y+mt,"%02d",Cfg->palette[nt*3+mt]);
+            }
+        }
+    }
+
+if (n<16)
+    {
+    i=Cfg->palette[n*3+m];
+    if (i!=0) i--;
+
+    x=(n/ey)*ex+x1;
+    y=(n%ey)*5+y1;
+
+    Gradue(x,y+m,8,i,Cfg->palette[n*3+m],64);
+    PrintAt(x-3,y+m,"%02d",Cfg->palette[n*3+m]);
+
+    ColWin(x,y+m,x+8,y+m,Cfg->col[17]);
+
+    car=Wait(0,0,0);
+
+    ColWin(x,y+m,x+8,y+m,Cfg->col[16]);
+
+    switch(HI(car))
+        {
+        case 0x47:                                               // HOME
+            ChrWin(x,y+m,x+8,y+m,32);
+            Cfg->palette[n*3+m]=0;
+            reloadpal=1;
+            break;
+        case 0X4F:                                                // END
+            ChrWin(x,y+m,x+8,y+m,32);
+            Cfg->palette[n*3+m]=63;
+            reloadpal=1;
+            break;
+        case 80:                                                  // bas
+            m++;
+            break;
+        case 72:                                                 // haut
+            m--;
+            break;
+        case 0x4B:                                             // gauche
+            if (Cfg->palette[n*3+m]!=0)
+                Cfg->palette[n*3+m]--;
+            reloadpal=1;
+            break;
+        case 0x4D:                                             // droite
+            if (Cfg->palette[n*3+m]!=63)
+                Cfg->palette[n*3+m]++;
+            reloadpal=1;
+            break;
+        case 0xF:                                           // SHIFT-TAB
+            n--;
+            break;
+        }
+
+    switch(LO(car))
+        {
+        case 9:
+            n++;
+            break;
+        }
+
+    if (m==3) n++,m=0;
+    if (m<0)  n--,m=2;
+    if (n<0)  n=ntot;
+
+    if (reloadpal)
+        {
+        LoadPal(Cfg->palette);
+        reloadpal=0;
+        }
+    }
+    else
+    {
+    ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),Cfg->col[17]);
+
+    car=Wait(0,0,0);
+
+    ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),Cfg->col[16]);
+
+    switch(HI(car))
+        {
+        case 80:                                                  // bas
+            n++;
+            break;
+        case 72:                                                 // haut
+            n--;
+            break;
+        case 0xF:                                           // SHIFT-TAB
+            n--;
+            break;
+        }
+
+    switch(LO(car))
+        {
+        case 9:
+            n++;
+            break;
+        case 13:
+            memcpy(Cfg->palette,defcol[n-16],48);
+            LoadPal(Cfg->palette);
+            rec=1;
+            break;
+        }
+
+    if (n<0)        n=ntot;
+    if (n>ntot)     n=0;
+    }
+}
+while(car!=27);
+
+
+LoadScreen();
+}
+
+

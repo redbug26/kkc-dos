@@ -244,7 +244,7 @@ do
         {
         strcpy(moi,nom);
         strcat(moi,fic.name);
-        PrintAt(1,47,"%s",fic.name);
+        PrintAt(1,47,"%-78s",fic.name);
         Fic=fopen(moi,"rb");
         if (Fic==NULL)  {
             PrintAt(0,0,"KKR_Read (1)");

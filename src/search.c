@@ -374,8 +374,8 @@ Bar(" Help  ----  View  ----  ----  ----  ---- Delete ----  ---- ");
 
 (KKCfg->noprompt)=(char)((KKCfg->noprompt)|1);
 
-WinCadre(0,1,Cfg->TailleX-1,(Cfg->TailleY)-2,1);
-Window(1,2,Cfg->TailleX-2,(Cfg->TailleY)-3,10*16+1);
+Cadre(0,1,Cfg->TailleX-1,(Cfg->TailleY)-2,1,Cfg->col[55],Cfg->col[56]);
+Window(1,2,Cfg->TailleX-2,(Cfg->TailleY)-3,Cfg->col[16]);
 
 touche=0;
 
@@ -462,12 +462,12 @@ if (nbr==0)
         PrintAt(0,0,"%-*s",Cfg->TailleX,chaine);
 
         for (n=d;n<=fin;n++)
-            AffCol(n,pos+m-prem,7*16+5);
+            AffCol(n,pos+m-prem,Cfg->col[18]);
 
         a=Wait(0,0,0);
 
         for (n=d;n<=fin;n++)
-            AffCol(n,pos+m-prem,10*16+1);
+            AffCol(n,pos+m-prem,Cfg->col[16]);
 
         if (a==0)     //--- Pression bouton souris ---------------------
             {

@@ -37,10 +37,10 @@ if (((KKCfg->noprompt)&1)==0)
 
     xarc=(Cfg->TailleX-30)/2;
 
-    Window(xarc,6,xarc+31,11,10*16+1);
-    WinCadre(xarc-1,5,xarc+32,12,0);
+    Window(xarc,6,xarc+31,11,Cfg->col[16]);
+    Cadre(xarc-1,5,xarc+32,12,0,Cfg->col[55],Cfg->col[56]);
 
-    WinCadre(xarc+1,6,xarc+30,8,1);
+    Cadre(xarc+1,6,xarc+30,8,1,Cfg->col[55],Cfg->col[56]);
 
     PrintAt(xarc+8,5,"Reading Archive");
 
@@ -1264,7 +1264,7 @@ Nbfic=0;
 
 
 SaveScreen();
-ColLin(0,0,80,1*16+2);
+ColLin(0,0,80,Cfg->col[6]);
 
 oldpos=3+1+256+4+4;
 

@@ -168,8 +168,8 @@ SaveScreen();
 
 x1=(Cfg->TailleX-66)/2;
 
-WinCadre(x1,10,x1+66,12,0);
-Window(x1+1,11,x1+65,11,10*16+1);
+Cadre(x1,10,x1+66,12,0,Cfg->col[55],Cfg->col[56]);
+Window(x1+1,11,x1+65,11,Cfg->col[16]);
 
 
 if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') )
