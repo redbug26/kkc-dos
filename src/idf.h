@@ -1,4 +1,4 @@
-#define ULONG unsigned int
+#define ULONG unsigned long
 #define BYTE unsigned char
 #define WORD unsigned short
 
@@ -15,7 +15,7 @@ struct key      {
         char type;              // type de fichier
         };
 
-#define nbrkey 125
+#define nbrkey 128
         // Nombre of format + 6
 
 struct info

@@ -10,7 +10,16 @@
 #include <i86.h>
 #include <time.h>
 
+#include <dos.h>
+
+#include <ctype.h>
+#include <direct.h>
+#include <bios.h>
+
 #include "hard.h"
+
+int IOver;
+int IOerr;
 
 struct config *Cfg;
 struct fichier *Fics;
@@ -111,6 +120,14 @@ int i;
 
 for (i=top;i<top+length;i++)
       AffChr(left,i,color);
+}
+
+void ColCol(int left,int top,int length,char color)
+{
+int i;
+
+for (i=top;i<top+length;i++)
+      AffCol(left,i,color);
 }
 
 
@@ -344,6 +361,9 @@ switch (caractere&255)
 		  case 77: if (i<fin) i++; else Beep();  break;  /* Right */
 		  case 79: i=fin;						 break;  /* End */
           case 13: *(chaine+fin)=0;              break;  /* Enter */
+
+          case 72: retour=3; end=1; break;
+          case 80: retour=2; end=1; break;
 
 		  case 83:	/* del */
 			if (i!=fin)  /* v‚rifier si pas premiere position */
@@ -1150,14 +1170,14 @@ if (p==1)
             case 0:
                 switch(car/256)
                     {
-                    case 0x0F:
+                    case 15:
+                    case 0x4B:
+                    case 72:
                         r=3;
                         break;
                     case 0x4D:
+                    case 80:
                         r=2;
-                        break;
-                    case 0x4B:
-                        r=3;
                         break;
                     }
                 break;
@@ -1223,6 +1243,56 @@ while (r==0)
 return r;
 }
 
+// 0 si ENTER
+// 1 si ESCAPE
+// 2 si -->
+// 3 si <--
+// 4 si pas bouger
+int MSwitch(int x,int y,int *Val,int i)
+{
+int r=0;
+
+int car;
+
+while (r==0)
+    {
+    AffChr(x+1,y,(*Val)==i ? 'X' : ' ');
+
+    car=Wait(x+1,y,0);
+
+    switch(car%256)
+        {
+        case 13:
+            return 0;
+        case 27:
+            r=1;
+            break;
+        case 32:
+            (*Val)=i;
+            r=4;
+            break;
+        case 9:
+            r=2;
+            break;
+        case 0:
+            switch(car/256)
+                {
+                case 15:
+                case 72:
+                    r=3;
+                    break;
+                case 80:
+                    r=2;
+                    break;
+                }
+            break;
+        }
+    }
+
+
+return r;
+}
+
 
 // Retourne 27 si escape
 // Retourne numero de la liste sinon
@@ -1231,7 +1301,7 @@ int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F)
 {
 char fin;       // si =0 continue
 char direct;    // direction du tab
-int i,j;
+int i,i2,j;
 static char chaine[80];
 
 SaveEcran();
@@ -1282,6 +1352,9 @@ switch(T[i].type) {
     case 9:
         WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].str)+F->x1+T[i].x+1,*(T[i].entier)+F->y1+T[i].y+1,2);
         break;
+    case 10:
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"(%c) %s",(*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
+        break;
     }
 
 fin=0;
@@ -1289,6 +1362,14 @@ direct=1;
 i=0;
 
 while (fin==0) {
+
+for(i2=0;i2<nbr;i2++)   // Affichage a ne faire qu'une fois
+    switch(T[i2].type)
+        {
+        case 10:
+            PrintAt(F->x1+T[i2].x,F->y1+T[i2].y,"(%c) %s",(*(T[i2].entier)==i2) ? 'X' : ' ',T[i2].str);
+            break;
+        }
 
 switch(T[i].type) {
     case 0:
@@ -1315,12 +1396,32 @@ switch(T[i].type) {
     case 8:
         direct=Switch(F->x1+T[i].x,F->y1+T[i].y,T[i].entier);
         break;
+    case 10:
+        direct=MSwitch(F->x1+T[i].x,F->y1+T[i].y,T[i].entier,i);
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"(%c) %s",(*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
+        break;
     }
 
-if (direct==0) fin=1;   // ENTER
-if (direct==1) fin=2;   // ESC
-if (direct==2) i++;
-if (direct==3) i--;
+switch(direct)
+    {
+    case 0:
+        fin=1;   // ENTER
+        break;
+    case 1:
+        fin=2;   // ESC
+        break;
+    case 2:
+        i++;
+        break;
+    case 3:
+        i--;
+        break;
+    case 4:
+        break;
+    default:
+        // Pas normal
+        break;
+    }
 
 if (i==-1) i=nbr-1;
 if (i==nbr) i=0;
@@ -1575,4 +1676,112 @@ Cfg->mtrash=100000;
 Cfg->overflow=0;
 
 Cfg->crc=0x69;
+}
+
+//---------------- Error and Signal Handler -------------------------------------
+
+int __far Error_handler(unsigned deverr,unsigned errcode,unsigned far *devhdr)
+{
+int i,n,erreur[3];
+char car;
+
+switch(IOerr)
+    {
+    case 1:
+        return _HARDERR_IGNORE;
+    case 3:
+        return _HARDERR_FAIL;
+    }
+
+IOerr=1;
+
+if (IOver==1)
+    return _HARDERR_FAIL;
+
+SaveEcran();
+
+WinCadre(19,9,61,16,0);
+ColWin(20,10,60,15,10*16+4);
+ChrWin(20,10,60,15,32);
+
+PrintAt(23,10,"Disk Error: %s",((deverr&32768)==32768) ? "No":"Yes");
+
+PrintAt(23,11,"Position of error: ");
+switch((deverr&1536)/512)  {
+    case 0: PrintAt(42,11,"MS-DOS"); break;
+    case 1: PrintAt(42,11,"FAT"); break;
+    case 2: PrintAt(42,11,"Directory"); break;
+    case 3: PrintAt(42,11,"Data-area"); break;
+    }
+
+PrintAt(23,12,"Type of error: %s %04X",((deverr&256)==256) ? "Write":"Read",deverr);
+
+i=8192;
+n=0;
+
+for(n=0;n<3;n++)
+    {
+    if ((deverr&i)==i)
+        erreur[n]=1;
+        else
+        erreur[n]=0;
+    i=i/2;
+    }
+
+if (erreur[0]==1) PrintAt(25,14,"Ignore"),AffCol(25,14,10*16+5),WinCadre(24,13,31,15,2);
+if (erreur[1]==1) PrintAt(38,14,"Retry"),AffCol(38,14,10*16+5),WinCadre(37,13,43,15,2);
+if (erreur[2]==1) PrintAt(51,14,"Fail"),AffCol(51,14,10*16+5),WinCadre(50,13,55,15,2);
+
+IOerr=0;
+do
+{
+car=getch();
+
+if ( (car=='I') | (car=='i') & (erreur[0]==1) ) IOerr=1;
+if ( (car=='R') | (car=='r') & (erreur[1]==1) ) IOerr=2;
+if ( (car=='F') | (car=='f') & (erreur[2]==1) ) IOerr=3;
+
+}
+while (IOerr==0);
+
+ChargeEcran();
+
+switch(IOerr)
+    {
+    case 1:
+        return _HARDERR_IGNORE;
+    case 2:
+        return _HARDERR_RETRY;
+    }
+return _HARDERR_FAIL;
+}
+
+// Retourne 0 si tout va bene
+int VerifyDisk(char c)  // 1='A'
+{
+char path[256];
+unsigned nbrdrive,cdrv,n;
+struct diskfree_t d;
+
+if ((c<1) | (c>26)) return 1;
+
+n=_bios_equiplist();
+
+n=(n&192)/64;
+if ( (n==0) & (c==2) ) return 1;    // Seulement un disque
+
+_dos_getdrive(&cdrv);
+
+IOerr=0;
+IOver=1;
+
+_dos_setdrive(c,&nbrdrive);
+getcwd(path,256);
+
+if (_dos_getdiskfree(c,&d)!=0)
+    IOerr=1;
+
+_dos_setdrive(cdrv,&nbrdrive);
+
+return IOerr;
 }

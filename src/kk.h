@@ -29,9 +29,6 @@ void SaveCfg(void);
 int LoadCfg(void);
 
 
-void InfoSupport(void);
-
-
 struct fenetre {
      ENTIER IDFSpeed;   // Nombre de clock avant de lire la description
      long nbrfic;
@@ -91,3 +88,8 @@ extern int IOerr;
 #else
 #define PUTSERR(__Chaine)
 #endif
+
+
+#define BYTE unsigned char
+#define WORD unsigned short
+#define ULONG unsigned long

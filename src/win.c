@@ -61,6 +61,10 @@ Traitefic(F->name,&Info);
 
 // sprintf(Info.path,"%s%s",drive,dir);
 
+Info.fullname[40]=0;
+Info.format[40]=0;
+
+
 PrintAt(0,0,"%-40s%-40s",Info.format,Info.fullname);
 
 return Info.numero;
@@ -592,29 +596,7 @@ chaine[36]=0;
 PrintAt(DFen->x3,DFen->y3,"%-36s",chaine);
 }
 
-void SetTaille(void)
-{
-TXTMode(Cfg->TailleY);
-NoFlash();
 
-
-switch (Cfg->TailleY)  {
-   case 50:
-        Font8x8();
-        break;
-   case 25:
-   case 30:
-        Font8x16();
-        break;
-   }
-DFen->yl=(Cfg->TailleY)-4;
-DFen->Fen2->yl=(Cfg->TailleY)-4;
-
-AfficheTout();
-
-LoadPal();
-
-}
 
 
 
@@ -1045,26 +1027,39 @@ switch ( regs.h.al )
  *-----------------------------*/
 void ChangeTaille(int i)
 {
-int n;
-
 if (i==0)
-    switch(Cfg->TailleY) {
-        case 25:
-            Cfg->TailleY=30;
-            break;
-        case 30:
-            Cfg->TailleY=50;
-            break;
-        default:
-            Cfg->TailleY=25;
-            break;
-    }
+    switch(Cfg->TailleY)
+        {
+        case 25:  Cfg->TailleY=30;  break;
+        case 30:  Cfg->TailleY=50;  break;
+        default:  Cfg->TailleY=25;  break;
+        }
     else
     {
     Cfg->TailleY=i;
     }
 
-SetTaille();
+TXTMode(Cfg->TailleY);
+NoFlash();
+
+
+switch (Cfg->TailleY)
+    {
+    case 50:
+        Font8x8();
+        break;
+    case 25:
+    case 30:
+        Font8x16();
+        break;
+   }
+
+DFen->yl=(Cfg->TailleY)-4;
+DFen->Fen2->yl=(Cfg->TailleY)-4;
+
+AfficheTout();
+
+LoadPal();
 }
 
 

@@ -29,9 +29,22 @@ int Movetree(char *inpath,char *outpath);
 int Truemove(char *inpath,char *outpath);
 
 static int FicEcrase;
+static char Dir[256];
+static char temp[256];
 
 int FenCopie(struct fenetre *F2);
 int FenMove(struct fenetre *F2);
+
+// Convertit un masque en ce qui faut ;)
+//---------------------------------------
+
+void MaskCnv(char *path)
+{
+if (!strcmp(temp,"*.*")) return;
+
+Path2Abs(path,"..");
+Path2Abs(path,temp);
+}
 
 
 // Copytree
@@ -50,7 +63,8 @@ Path2Abs(outpath,"..");
 
 mkdir(outpath);
 
-while(error==0)  {
+while(error==0)
+    {
     error=ff.attrib;
 
     if (ff.name[0]!='.')
@@ -197,6 +211,8 @@ long TailleRest;
 
 ok=1;
 
+MaskCnv(outpath);
+
 PrintAt(9,5,"In   %59s",inpath);
 PrintAt(9,6,"From %59s",outpath);
 
@@ -324,7 +340,6 @@ int FenCopie(struct fenetre *F2)
 {
 static int DirLength=70;
 static int CadreLength=71;
-static char Dir[256];
 static int n;
 
 struct Tmt T[5] = {
@@ -341,16 +356,35 @@ memcpy(Dir,F2->path,255);
 
 n=WinTraite(T,5,&F);
 
-if ( (n==1) | (n==0) )
+if (n!=27)  // pas escape
     {
-    if (!strcmp(Dir,F2->path)) return 1;
+    strcpy(temp,"*.*");
 
-    DFen=F2;
-    CommandLine("#cd %s",Dir);
-    return 1;
+    if (T[n].type!=3) // Pas cancel
+        {
+        if (!strcmp(Dir,F2->path)) return 1;
+
+        if (chdir(Dir)!=0)
+            {
+            strcpy(temp,Dir);
+            Path2Abs(temp,"..");
+            if (chdir(temp)!=0)
+                {
+                WinError("Unknown path");
+                return 0;
+                }
+            FileinPath(Dir,temp);
+            Path2Abs(Dir,"..");
+            }
+
+        DFen=F2;
+        CommandLine("#cd %s",Dir);
+
+        return 1;
+        }
     }
 
-return 0;
+return 0;       // Erreur
 }
 
 // retourne 0 si pas move
@@ -377,16 +411,35 @@ memcpy(Dir,F2->path,255);
 
 n=WinTraite(T,5,&F);
 
-if ( (n==1) | (n==0) )
+if (n!=27)  // pas escape
     {
-    if (!strcmp(Dir,F2->path)) return 1;
+    strcpy(temp,"*.*");
 
-    DFen=F2;
-    CommandLine("#cd %s",Dir);
-    return 1;
+    if (T[n].type!=3) // Pas cancel
+        {
+        if (!strcmp(Dir,F2->path)) return 1;
+
+        if (chdir(Dir)!=0)
+            {
+            strcpy(temp,Dir);
+            Path2Abs(temp,"..");
+            if (chdir(temp)!=0)
+                {
+                WinError("Unknown path");
+                return 0;
+                }
+            FileinPath(Dir,temp);
+            Path2Abs(Dir,"..");
+            }
+
+        DFen=F2;
+        CommandLine("#cd %s",Dir);
+
+        return 1;
+        }
     }
 
-return 0;
+return 0;       // Erreur
 }
 
 void CopieRar(struct fenetre *F1,struct fenetre *F2)
@@ -651,6 +704,8 @@ int Renome(char *inpath,char *outpath)
 {
 int i;
 
+MaskCnv(outpath);
+
 PrintAt(9,5,"In   %59s",inpath);
 PrintAt(9,6,"From %59s",outpath);
 
@@ -797,6 +852,8 @@ int j3;
 long TailleRest;
 
 ok=1;
+
+MaskCnv(outpath);
 
 PrintAt(9,5,"In   %59s",inpath);
 PrintAt(9,6,"From %59s",outpath);
@@ -1079,6 +1136,7 @@ TailleTotale=F1->taillesel;
 TailleRest=0;
 
 if (FenCopie(F2)==0) return;
+
 
 F=F1->F[F1->pcur];
 

@@ -1,9 +1,5 @@
 // Header of gestion-function
 
-#define ULONG unsigned int
-#define BYTE unsigned char
-#define WORD unsigned short
-
 
 int Maskcmp(char *src,char *mask);
 char *FileinPath(char *p,char *Ficname);

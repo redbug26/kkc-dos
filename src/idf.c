@@ -16,8 +16,6 @@
 
 #include "idf.h"
 
-#include "hard.h"
-
 struct key K[nbrkey]=	{
 {  {"C64S tap"},
 		8,
@@ -815,6 +813,24 @@ struct key K[nbrkey]=	{
     "JCH module",
     "D00",
     "?",119,0,0,1},
+{  {"AST 0001"},
+    8,
+    1,
+    "All Sound Tracker Module",
+    "AST",
+    "Cagliostro",120,0,1,1},     // Patrice Bouchand a.k.a Cagliostro
+{  {'D','S','M',0x10},
+    4,
+    0,
+    "DigiSound Module",
+    "DSM",                      // Used in a music disk from Necros (in Ace)
+    "Pelusa",121,0,1,1},        // Carlos Hasan aka Pelusa/Psychik Monks (chasan@dcc.uchile.cl)
+{  {0x50,0x53,0x49,0x44,0x00    }, // PSIDú
+    5,
+    0,
+    "PlaySid Module",
+    "DAT",
+    "?",122,0,1,1},
 
 /*******************************************
  - structures … traiter en dernier ressort -
@@ -961,6 +977,10 @@ short Infopat(struct info *Info);
 short Infodsf(struct info *Info);
 short Infouwf(struct info *Info);
 short Infoams2(struct info *Info);
+short Infoast(struct info *Info);
+short Infodsm(struct info *Info);
+short Infodat(struct info *Info);
+
 
 
 ULONG ReadLng(struct info *Info,ULONG position,char type);
@@ -972,6 +992,8 @@ WORD InvWord(WORD entier);				// Inverse un WORD HILO <-> LOHI
 
 
 char buffer[32768];
+
+char tampon[1024];   // Tampon pour faire n'importe quoi
 
 
 short ypos=0;			  // position pour directory
@@ -1241,6 +1263,9 @@ if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) ) {
                 case 113:err=Infodsf(Info); break;
                 case 114:err=Infouwf(Info); break;
                 case 115:err=Infoams2(Info); break;
+                case 120:err=Infoast(Info); break;
+                case 121:err=Infodsm(Info); break;
+                case 122:err=Infodat(Info); break;
                 case 24:err=Infopat(Info); break;
 				default:
 						sprintf(Info->format,"Pingouin %d",K[n].numero);
@@ -1280,7 +1305,8 @@ close(handle);
 
 void ClearSpace(char *name)
 {
-char buf[128];
+/*
+char buf[1024];
 short n;
 
 n=0;
@@ -1292,6 +1318,37 @@ n=strlen(buf)-1;
 while ((buf[n]<=32) & (name[n]!=0))
 		n--;
 buf[n+1]=0;
+strcpy(name,buf);
+*/
+
+char c,buf[1024];
+short i,j;
+
+i=0;    // navigation dans name
+j=0;    // position dans buf
+
+while ( (name[i]==32) & (name[i]!=0) ) i++;
+
+if (name[i]!=0)
+    while ((c=name[i])!=0)
+        {
+        buf[j]=name[i];
+        j++;
+        i++;
+        if (name[i]==32)
+            {
+            c=name[i];
+            while ( (name[i]==32) & (name[i]!=0) )
+                {
+                if (name[i]=='=') c='=';
+                i++;
+                }
+            buf[j]=c;
+            j++;
+            }
+        }
+buf[j]=0;
+
 strcpy(name,buf);
 }
 
@@ -2301,12 +2358,14 @@ if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"NE",2))
 
     pos=ReadLng(Info,*(WORD*)(buf+0x3C)+0x2C,1)+1;
 
-    ReadStr(Info,pos,buf2,32);
+    ReadStr(Info,pos,buf2,79);
+    buf2[79]=0;
     strcpy(Info->fullname,buf2);
     for (n=0;n<strlen(buf2);n++)
         if (buf2[n]==':')
             {
-            ReadStr(Info,pos+n+1,Info->fullname,32);
+            ReadStr(Info,pos+n+1,Info->fullname,79);
+            Info->fullname[79]=0;
             break;
             }
 
@@ -2582,6 +2641,44 @@ return 0;
 short Infoams2(struct info *Info)
 {
 ReadStr(Info,37,Info->fullname,22);
+return 0;
+}
+
+short Infoast(struct info *Info)
+{
+WORD lng;
+
+lng=ReadInt(Info,10,1);
+ReadStr(Info,12,tampon,lng);
+tampon[lng]=0;
+
+ClearSpace(tampon);
+
+tampon[79]=0;
+strcpy(Info->fullname,tampon);
+
+return 0;
+}
+
+short Infodsm(struct info *Info)
+{
+ReadStr(Info,4,tampon,79);
+tampon[79]=0;
+
+ClearSpace(tampon);
+
+tampon[79]=0;
+strcpy(Info->fullname,tampon);
+
+return 0;
+}
+
+short Infodat(struct info *Info)
+{
+ReadStr(Info,0x16,Info->fullname,32);
+ReadStr(Info,0x36,Info->composer,32);
+// ReadStr(Info,0x56,Info->fullname,32);    // C'est quoi ici ?
+
 return 0;
 }
 
@@ -2887,7 +2984,7 @@ while ( ( (!strnicmp(Info->fullname,"@ECHO",5)) |
 				) & (pos<1000)
 		  );
 
-Info->fullname[32]=0;
+Info->fullname[79]=0;
 
 if (pos>999) Info->fullname[0]=0;
 

@@ -238,8 +238,6 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
     return 1;
     }
 
-InfoSupport();  // Selection vitesse du support
-
 return 0;
 }
 
@@ -412,8 +410,6 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
     strcpy(DFen->path,DFen->VolName);
     return 1;
     }
-
-InfoSupport();
 
 return 0;
 }
@@ -619,8 +615,6 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
     strcpy(DFen->path,DFen->VolName);
     return 1;
     }
-
-InfoSupport();
 
 return 0;
 }
@@ -834,8 +828,6 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
     return 1;
     }
 
-InfoSupport();
-
 return 0;
 }
 
@@ -1045,8 +1037,6 @@ if (fin==1)
     strcpy(DFen->path,DFen->VolName);
     return 1;
     }
-
-InfoSupport();
 
 return 0;
 }

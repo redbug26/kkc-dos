@@ -1,3 +1,6 @@
+#include <ctype.h>
+#include <io.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
@@ -20,8 +23,52 @@ static int nbrmax;
 static int nbr;
 
 static char SearchName[70]="*.*";
+static char SearchString[42];
+static char Drive[28];
+static int sw=3;
 
 #define BreakESC  if (kbhit()) touche=_bios_keybrd(0)/256; else if (touche==1) break;
+
+// Recherche la chaine SearchString dans le fichier *name
+int strfic(char *path,char *name)
+{
+long lng,n,m;
+char fin=1;
+
+static char fichier[256];
+FILE *fic;
+
+strcpy(fichier,path);
+Path2Abs(fichier,name);
+
+
+fic=fopen(fichier,"rb");
+if (fic==NULL)
+    {
+    WinError(path);
+
+    WinError(fichier);
+    return 1;
+    }
+
+lng=filelength(fileno(fic));
+
+m=0;
+for (n=0;n<lng;n++)
+    {
+    if (fgetc(fic)==SearchString[m])
+        {
+        m++;
+        if (SearchString[m]==0) fin=0;
+        }
+        else
+        m=0;
+    if (fin==0) break;
+    }
+
+fclose(fic);
+return fin;
+}
 
 void SchAffLine(int pos,int n)
 {
@@ -42,6 +89,7 @@ static touche;
 
 void cherdate(char *nom2)
 {
+char cont;
 struct find_t ff;
 char error;
 char **TabRec;
@@ -61,7 +109,7 @@ do
 PrintAt(0,0,"Go in  %-73s",TabRec[NbrRec-1]);
 
 strcpy(nomtemp,TabRec[NbrRec-1]);
-strcat(nomtemp,"\\*.*");
+Path2Abs(nomtemp,"*.*");
 
 strcpy(nom,TabRec[NbrRec-1]);
 
@@ -74,7 +122,17 @@ while (error==0) {
 
     if ( (ff.name[0]!='.') & (!WildCmp(ff.name,SearchName)) )
         {
-        if ((error&0x10)!=0x10)    // Not Subdir
+        cont=1;
+
+        if ((error&0x10)==0x10) cont=0; // Not Subdir
+        if ((error&0x08)==0x08) cont=0; // Not Subdir
+
+        if ( ((SearchString[0])!=0) & (cont==1) )
+            {
+            if (strfic(nom,ff.name)!=0) cont=0;
+            }
+
+        if (cont)
             {
             int n,pos;
 
@@ -129,7 +187,7 @@ error=_dos_findfirst(nomtemp,63,&ff);
 while (error==0) {
     error=ff.attrib;
 
-    if (ff.name[0]!='.')
+    if ( (ff.name[0]!='.') & (sw!=5) )
         {
         if ((error&0x10)==0x10)    // Subdir
             {
@@ -160,33 +218,61 @@ free(TabRec);
 
 int WinSearch(void)
 {
-static int DirLength=70;
-static int CadreLength=71;
+static int DirLength=68;
+static int DriveLen=26;
+static int StrLen=40;
+static int CadreLength=69;
+
+static char x1=26,x2=40,x3=40;
+static int y1=6,y2=2,y3=2;
+
+
 
 char SearchOld[80];
 
-struct Tmt T[5] = {
-      { 2,3,1,SearchName,&DirLength},    // 0
-      {15,5,2,NULL,NULL},                // 1:Ok
-      {45,5,3,NULL,NULL},
-      { 5,2,0,"Filename",NULL},
-      { 1,1,4,NULL,&CadreLength}
+
+struct Tmt T[18] = {
+      { 3,3,1,SearchName,&DirLength},    // 0
+      { 6,2,0,"Filename",NULL},
+      { 2,1,4,NULL,&CadreLength},
+      { 3,6,10, "Current drive     ",&sw},
+      { 3,7,10, "Cur.dir & subdir  ",&sw},
+      { 3,8,10,"Only current dir  ",&sw},
+      { 3,9,10,"All drive         ",&sw},
+      { 3,10,10,"user defined drive",&sw},
+      { 3,11,1,Drive,&DriveLen},
+      { 2,5,9,&x1,&y1},
+      { 30,5,9,&x2,&y2},
+      { 30,9,9,&x3,&y3},
+      { 32,6,0,"Search String:",NULL},
+      { 31,7,1,SearchString,&StrLen},
+
+      { 32,10,0,"Ketchup Killers",NULL},
+      { 55,11,0,"Search Function",NULL},
+
+      {15,13,2,NULL,NULL},                // 1:Ok
+      {45,13,3,NULL,NULL},
       };
 
 struct TmtWin F = {
-    3,10,76,17,
+    3,4,76,19,
     "Search file(s)"};
 
 int n;
 
 strcpy(SearchOld,SearchName);
 
-n=WinTraite(T,5,&F);
 
-if ( (n==0) | (n==1) )
-    return 0;
-    else
-    return 1;
+
+n=WinTraite(T,18,&F);
+
+if (n!=27)  // pas escape
+    {
+    if (T[n].type!=3) return 0;  // pas cancel
+    }
+
+strcpy(SearchName,SearchOld);
+return 1;       // Erreur
 }
 
 
@@ -235,11 +321,44 @@ WinCadre(0,1,79,(Cfg->TailleY)-2,1);
 ColWin(1,2,78,(Cfg->TailleY)-3,10*16+1);
 ChrWin(1,2,78,(Cfg->TailleY)-3,32);
 
-sprintf(nom,"%c:",DFen->path[0]);
-
 touche=0;
 
-cherdate(nom);
+switch(sw)
+    {
+    case 3: // Current drive
+        sprintf(nom,"%c:",DFen->path[0]);
+        cherdate(nom);
+        break;
+    case 4: // Current dir & subdir
+        strcpy(nom,DFen->path);
+        cherdate(nom);
+        break;
+    case 5: // Current dir
+        strcpy(nom,DFen->path);
+        cherdate(nom);
+        break;
+    case 6: // all drive
+        for(n=0;n<26;n++)
+            {
+            if (VerifyDisk(n+1)==0)
+                {
+                sprintf(nom,"%c:",n+'A');
+                cherdate(nom);
+                }
+            }
+        break;
+    case 7: // user defined drive
+        for(n=0;n<strlen(Drive);n++)
+            {
+            m=toupper(Drive[n])-'A';
+            if (VerifyDisk(m+1)==0)
+                {
+                sprintf(nom,"%c:",m+'A');
+                cherdate(nom);
+                }
+            }
+        break;
+    }
 
 if (nbr==0)
     {
@@ -323,3 +442,4 @@ free(tabnom);
 free(nomtemp);
 free(nom);
 }
+

@@ -20,6 +20,7 @@ void Clr(void);
 void ColLin(int left,int top,int length,short color);
 void ChrLin(int left,int top,int length,short color);
 void ChrCol(int left,int top,int length,short color);
+void ColCol(int left,int top,int length,short color);
 void ColWin(int right,int top,int left,int bottom,short color);
 void ChrWin(int right,int top,int left,int bottom,short color);
 void GotoXY(char,char);
@@ -75,6 +76,7 @@ struct Tmt {
         7 --> Entier (de 9 caracteres)
         8 --> Switch
         9 --> Cadre personnalise
+        10 --> Switch Multiple
 
 */
 
@@ -156,5 +158,6 @@ extern struct PourMask **Mask;
 #define HI(qsd) (qsd/256)
 #define LO(qsd) (qsd%256)
 
-
-
+// Retourne 0 si tout va bene
+int VerifyDisk(char c);  // 1='A'
+int __far Error_handler(unsigned deverr,unsigned errcode,unsigned far *devhdr);

@@ -34,6 +34,8 @@ int HexaView(char *fichier);
 int TxtView(char *fichier);
 int HtmlView(char *fichier,char *liaison);
 
+static char *Keyboard_Flag1=(char*)0x417;
+
 
 
 static FILE *fic;
@@ -747,7 +749,7 @@ while(n==16384);
 
 Wait(0,0,0);
 
-SetTaille();
+ChangeTaille(Cfg->TailleY);
 
 ChargeEcran();
 free(buffer);
@@ -764,6 +766,7 @@ long xm,ym;
 char aff,wrap;
 
 long posd;
+long cur1,cur2;
 
 int xl,yl;
 int x,y;
@@ -972,7 +975,69 @@ while(y2<y+yl)
 
 Masque(x,y,x+xl-1,y+yl-1);
 
+cur1=-1;
+
+while (!kbhit())
+{
+car=*Keyboard_Flag1;
+
+if ( ((car&1)==1) | ((car&2)==2) )
+    {
+    int prc;
+    char temp[80];
+
+    if (cur1==-1)
+        SaveEcran();
+
+    if (posn>taille) posn=taille;
+
+    if (taille<1024*1024)
+        {
+        cur1=(posd)*(Cfg->TailleY-2);
+        cur1=cur1/taille+1;
+
+        cur2=(posn-1)*(Cfg->TailleY-2);
+        cur2=cur2/taille+1;
+
+        prc=(posn*100)/taille;
+        }
+        else
+        {
+        cur1=(posd/1024)*(Cfg->TailleY-2);
+        cur1=cur1/(taille/1024)+1;
+
+        cur2=((posn-1)/1024)*(Cfg->TailleY-2);
+        cur2=cur2/(taille/1024)+1;
+
+        prc=(posn/taille)*100;
+        }
+
+    ColLin(0,0,80,1*16+2);
+
+    strncpy(temp,fichier,78);
+
+    temp[44]=0;
+
+    PrintAt(0,0,"View: %-45s %9d bytes %3d%% co%4d ",temp,taille,prc,0);
+
+    ColCol(79,1,Cfg->TailleY-2,1*16+2);
+    ChrCol(79,1,cur1-1,32);
+    ChrCol(79,cur1,cur2-cur1+1,219);
+    ChrCol(79,cur2+1,Cfg->TailleY-1-cur2,32);
+    }
+    else
+    if (cur1!=-1)
+        ChargeEcran(),cur1=-1;
+
+}
+
+if (cur1!=-1)
+    ChargeEcran();
+
 code=Wait(0,0,0);
+
+
+
 
 posn=posd;
 
@@ -1380,7 +1445,7 @@ switch(car)  {
         break;
     }
 
-if (debut!=0)
+if (debut!=0)       // Code <...>
 switch(car)  {
     case '>':
         if (debut<128)
@@ -1511,6 +1576,13 @@ switch(car)  {
         break;
     case 0:
         break;
+    case '<':
+        titre[debut-1]=0;
+        sprintf(chaine,"<%s%c",titre,car);
+        memcpy(titre,chaine,255);
+        lentit=strlen(titre);
+        debut=0;
+        break;
     default:
         titre[debut-1]=car;
         lentit=0;
@@ -1519,7 +1591,7 @@ switch(car)  {
         break;
     }
 
-if (code!=0)
+if (code!=0)    // code &...;
     {
     if (psuiv!=0)
         {

@@ -215,6 +215,8 @@ FILE *Fic;
 
 PrintAt(1,1,"%-78s",nom);
 
+PrintAt(1,48,"%-78s",nom);
+
 strcpy(moi,nom);
 strcat(moi,"*.KKR");
 
@@ -225,6 +227,7 @@ do
     if ((fic.attrib&_A_SUBDIR)!=_A_SUBDIR)  {
         strcpy(moi,nom);
         strcat(moi,fic.name);
+        PrintAt(1,47,"%s",fic.name);
         Fic=fopen(moi,"rb");
         if (Fic==NULL)  {
             PrintAt(0,0,"KKR_Read (1)");

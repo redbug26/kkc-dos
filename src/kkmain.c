@@ -59,8 +59,8 @@ struct fenetre *DFen;
 
 char *RBTitle="Ketchup Killers Commander V"VERSION" / RedBug";
 
-int IOver;
-int IOerr;
+extern int IOver;
+extern int IOerr;
 
 
 /*-------------------------*
@@ -88,84 +88,6 @@ char GetDriveReady(char i);
 /*------------------*
  * Other Procedures *
  *------------------*/
-
-//---------------- Error and Signal Handler -------------------------------------
-
-int __far Error_handler(unsigned deverr,unsigned errcode,unsigned far *devhdr)
-{
-int i,n,erreur[3];
-char car;
-
-switch(IOerr)
-    {
-    case 1:
-        return _HARDERR_IGNORE;
-    case 3:
-        return _HARDERR_FAIL;
-    }
-
-IOerr=1;
-
-if (IOver==1)
-    return _HARDERR_FAIL;
-
-SaveEcran();
-
-WinCadre(19,9,61,16,0);
-ColWin(20,10,60,15,10*16+4);
-ChrWin(20,10,60,15,32);
-
-PrintAt(23,10,"Disk Error: %s",((deverr&32768)==32768) ? "No":"Yes");
-
-PrintAt(23,11,"Position of error: ");
-switch((deverr&1536)/512)  {
-    case 0: PrintAt(42,11,"MS-DOS"); break;
-    case 1: PrintAt(42,11,"FAT"); break;
-    case 2: PrintAt(42,11,"Directory"); break;
-    case 3: PrintAt(42,11,"Data-area"); break;
-    }
-
-PrintAt(23,12,"Type of error: %s %04X",((deverr&256)==256) ? "Write":"Read",deverr);
-
-i=8192;
-n=0;
-
-for(n=0;n<3;n++)
-    {
-    if ((deverr&i)==i)
-        erreur[n]=1;
-        else
-        erreur[n]=0;
-    i=i/2;
-    }
-
-if (erreur[0]==1) PrintAt(25,14,"Ignore"),AffCol(25,14,10*16+5),WinCadre(24,13,31,15,2);
-if (erreur[1]==1) PrintAt(38,14,"Retry"),AffCol(38,14,10*16+5),WinCadre(37,13,43,15,2);
-if (erreur[2]==1) PrintAt(51,14,"Fail"),AffCol(51,14,10*16+5),WinCadre(50,13,55,15,2);
-
-IOerr=0;
-do
-{
-car=getch();
-
-if ( (car=='I') | (car=='i') & (erreur[0]==1) ) IOerr=1;
-if ( (car=='R') | (car=='r') & (erreur[1]==1) ) IOerr=2;
-if ( (car=='F') | (car=='f') & (erreur[2]==1) ) IOerr=3;
-
-}
-while (IOerr==0);
-
-ChargeEcran();
-
-switch(IOerr)
-    {
-    case 1:
-        return _HARDERR_IGNORE;
-    case 2:
-        return _HARDERR_RETRY;
-    }
-return _HARDERR_FAIL;
-}
 
 // c=0 --> change from selection
 //   1 --> default set of color
@@ -471,6 +393,9 @@ exit(1);
  33: Switch special sort
  34: Efface la trash
  35: Affiche les infos
+ 36: Ligne suivante
+ 37: Ligne precedente
+ 38: Fenˆtre information
 */
 
 void GestionFct(int fct)
@@ -696,13 +621,36 @@ switch(fct)
     case 35:
         WinInfo();
         break;
+    case 36:
+        DFen->scur++;
+        DFen->pcur++;
+        break;
+    case 37:
+        DFen->scur--;
+        DFen->pcur--;
+        break;
+    case 38:
+        DFen->init=1;
+
+        if (DFen->FenTyp==3)
+            {
+            DFen->FenTyp=0;
+            DFen->Fen2->FenTyp=0;
+            DFen->Fen2->init=1;
+            }
+        else
+            {
+            DFen->FenTyp=3;
+            DFen->Fen2->FenTyp=2;
+            }
+        break;
     }
 
 
 }
 
 //-----------------------------------------------------------------------
-int GestionBar()
+int GestionBar(int i)
 {
 int retour;
 int nbmenu;
@@ -717,8 +665,22 @@ static int poscur;
 
 SaveEcran();
 
-retour=0;
-
+if (i==0)
+    retour=0;
+    else
+    {
+    retour=1;
+    switch(i)
+        {
+        case 0x21:  poscur=0;  break;  // ALT-F
+        case 0x19:  poscur=1;  break;  // ALT-P
+        case 0x20:  poscur=2;  break;  // ALT-D
+        case 0x1F:  poscur=3;  break;  // ALT-S
+        case 0x14:  poscur=4;  break;  // ALT-T
+        case 0x18:  poscur=5;  break;  // ALT-O
+        case 0x23:  poscur=6;  break;  // ALT-H
+        }
+    }
 
 do
 {
@@ -857,7 +819,7 @@ Cfg->bkcol=3*16+7;
 void SelectPlus(void)
 {
 int i;
-
+char fin;
 
 SaveEcran();
 
@@ -869,13 +831,14 @@ WinCadre(30,8,50,10,1);
 
 PrintAt(30,7,"Selection of files");
 
-InputAt(31,9,Select_Chaine,12);
+fin=InputAt(31,9,Select_Chaine,12);
 
 ChargeEcran();
 
-for (i=0;i<DFen->nbrfic;i++)
-    if (!WildCmp(DFen->F[i]->name,Select_Chaine))
-        FicSelect(i,1);
+if (fin!=1)
+    for (i=0;i<DFen->nbrfic;i++)
+        if (!WildCmp(DFen->F[i]->name,Select_Chaine))
+            FicSelect(i,1);
 }
 
 //---------------
@@ -885,6 +848,7 @@ for (i=0;i<DFen->nbrfic;i++)
 void SelectMoins(void)
 {
 int i;
+char fin;
 
 SaveEcran();
 
@@ -896,13 +860,14 @@ WinCadre(30,8,50,10,1);
 
 PrintAt(30,7,"Deselection of files");
 
-InputAt(31,9,Select_Chaine,12);
+fin=InputAt(31,9,Select_Chaine,12);
 
 ChargeEcran();
 
-for (i=0;i<DFen->nbrfic;i++)
-    if (!WildCmp(DFen->F[i]->name,Select_Chaine))
-        FicSelect(i,0);
+if (fin!=1)
+    for (i=0;i<DFen->nbrfic;i++)
+        if (!WildCmp(DFen->F[i]->name,Select_Chaine))
+            FicSelect(i,0);
 }
 
 //--------------
@@ -956,9 +921,11 @@ if (i!=0)
     switch(HI(car))  {
         case 72:        // UP
             pos--;
+            if (pos==-1) pos=i-1;
             break;
         case 80:        // DOWN
             pos++;
+            if (pos==i) pos=0;
             break;
         case 0x47:      // HOME
             pos=0;
@@ -975,10 +942,8 @@ if (i!=0)
             if (pos>=i) pos=i-1;
             break;
         }
-    if (pos==1) pos=i-1;
-    if (pos==i) pos=0;
     }
-    while ( (car!=13) & (car!=27) );
+    while ( (car!=13) & (car!=27) & (HI(car)!=0x8D) );
 
     ChargeEcran();
 
@@ -1103,38 +1068,6 @@ if ( (n==0) | (n==1) )
     MakeKKD(DFen,Name);
     }
 }
-
-
-// Retourne 0 si tout va bene
-int VerifyDisk(char c)  // 1='A'
-{
-char path[256];
-unsigned nbrdrive,cdrv,n;
-struct diskfree_t d;
-
-n=_bios_equiplist();
-
-n=(n&192)/64;
-if ( (n==0) & (c==2) ) return 1;    // Seulement un disque
-
-
-_dos_getdrive(&cdrv);
-
-IOerr=0;
-IOver=1;
-
-_dos_setdrive(c,&nbrdrive);
-getcwd(path,256);
-
-if (_dos_getdiskfree(c,&d)!=0)
-    IOerr=1;
-
-_dos_setdrive(cdrv,&nbrdrive);
-
-return IOerr;
-}
-
-
 
 
 //---------------------------------
@@ -1816,7 +1749,6 @@ do
 
     if (Cfg->key==0)
         {
-        
         c=0;
 
         while ( (!kbhit()) & (c==0) )
@@ -1985,11 +1917,22 @@ do
         case 0x0C:  // CTRL-L
             GestionFct(35);
             break;
+        case 0x0F:  // CTRL-O
+            GestionFct(14);
+            GestionFct(15);
+            break;
         case 27:    // ESCAPE
             CommandLine("\r");
             break;
         case 'ý':
             GestionFct(19);
+            break;
+        case 32:
+            if (CommandLine(" ")==0)
+                {
+                GestionFct(16);
+                GestionFct(36);
+                }
             break;
 
 //-Switch car2-----------------------------------------------------------------
@@ -1998,15 +1941,15 @@ do
         
 
         case 72:         // HAUT
-            DFen->scur--;
-            DFen->pcur--;
+            GestionFct(37);
             break;
 
         case 0x52:       // Insert
             GestionFct(16);       // pas de break car ---/
+            GestionFct(36);
+            break;
         case 80:         // BAS
-            DFen->scur++;
-            DFen->pcur++;
+            GestionFct(36);
             break;
         case 0x4B:       // LEFT
             Cfg->FenAct=0;
@@ -2049,9 +1992,9 @@ do
         case 0x42:       // F8
             GestionFct(13);           break;
         case 0x43:       // F9
-            i=GestionBar();
+            i=GestionBar(0);
             if (i==20)
-                car2=0x44;
+                car2=0x44;      // F10
                 else
                 GestionFct(i);
             break;
@@ -2134,25 +2077,26 @@ do
         case 0xA1:
             CommandLine("#CD %s",Fics->LastDir);
             break;
-        case 0x14:       // ALT-T
-            DFen->init=1;
 
-            if (DFen->FenTyp==3)
-                {
-                DFen->FenTyp=0;
-                DFen->Fen2->FenTyp=0;
-                DFen->Fen2->init=1;
-                }
+        case 0x21:       // ALT-F
+        case 0x19:       // ALT-P
+        case 0x20:       // ALT-D
+        case 0x1F:       // ALT-S
+        case 0x14:       // ALT-T
+        case 0x18:       // ALT-O
+        case 0x23:       // ALT-H
+            i=GestionBar(car2);
+            if (i==20)
+                car2=0x44;      // F10
                 else
-                {
-                DFen->FenTyp=3;
-                DFen->Fen2->FenTyp=2;
-                }
+                GestionFct(i);
+            break;
+        case 0x17:      // ALT-I
+            GestionFct(38);
             break;
         case 0xB6:  //
         case 0xB7:  //  Windows 95 keyboard
         case 0xB8:  //
-//               ErrWin95();
 			   break;
 
         default:
@@ -2324,20 +2268,6 @@ switch (Fen->FenTyp) {
     }
 }
 
-
-void InfoSupport()
-{
-switch(tolower(DFen->path[0])-'A'+1) {
-   case 1:
-   case 2:
-		DFen->IDFSpeed=10*18;
-		break;
-   default:
-		DFen->IDFSpeed=2*18;
-		break;
-   }
-
-}
 
 
 /****************
@@ -2545,7 +2475,6 @@ for(n=0;n<16;n++)
     Mask[n]->title[taille]=0;
     }
 
-
 for (t=0;t<2;t++)
     {
     DFen=Fenetre[t];
@@ -2740,9 +2669,6 @@ signal(SIGTERM,Signal_Handler);
 
 
 
-
-
-
 /*******************************
  - Initialisation des fichiers -
  *******************************/
@@ -2853,6 +2779,14 @@ if (LoadCfg()==-1)
 
     DefaultCfg();
     }
+
+/*
+if (LC[4]=='0')
+    {
+    cprintf("Press a key to return %s",RBTitle);
+    Wait(0,0,0);
+    }
+*/
 
 
 VerifHistDir();                 // Verifie l'history pour les repertoires

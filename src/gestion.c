@@ -378,6 +378,7 @@ return ok;
  - E.G. c:\kkcom\kkc.c --> "kkc.c" -
  -      c:\            --> ""      -
  -      c:\kkcom       --> "kkcom" -
+ -           p         --> Ficname -
  *---------------------------------*/
 char *FileinPath(char *p,char *Ficname)
 {
@@ -856,6 +857,8 @@ if (suite[0]=='#')  {
 traite=0;
 
 if ( (suite[0]=='\n') & (px==0)) return 0;
+
+if ( (suite[0]==32) & (px==0)) return 0;
 
 do {
    a=suite[n];

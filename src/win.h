@@ -17,7 +17,7 @@ void ErrWin95(void);
 void ASCIItable(void);
 void YouMad(char *s);
 
-void SetTaille(void);
+// void SetTaille(void);
 
 
 

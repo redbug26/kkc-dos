@@ -16,6 +16,7 @@
 #define DROITE 0x4D
 
 extern struct key K[nbrkey];
+extern int IOerr;
 
 // Pour Statistique;
 int St_App;
@@ -66,6 +67,7 @@ char GetDriveReady(char i);
 	"int 21h" \
 	parm [dl] \
     value [cl];
+
 
 int sort_function(const void *a,const void *b)
 {
@@ -455,15 +457,6 @@ if (car==27)
 
 }
 
-//---------------- Error and Signal Handler -------------------------------------
-int IOerr;
-
-int __far Error_handler(unsigned deverr,unsigned errcode,unsigned far *devhdr)
-{
-IOerr=1;
-return _HARDERR_IGNORE;
-}
-
 void main(short argc,char **argv)
 {
 FILE *fic;
@@ -472,6 +465,9 @@ short n;
 int car;
 
 char *path;
+
+IOerr=1;
+
 
 /***********************
  - Gestion des erreurs -
@@ -1309,35 +1305,6 @@ if (erreur==1)
 }
 
 ChargeEcran();
-}
-
-
-// Retourne 0 si tout va bene
-int VerifyDisk(char c)  // 1='A'
-{
-char path[256];
-unsigned nbrdrive,cdrv,n;
-struct diskfree_t d;
-
-n=_bios_equiplist();
-
-n=(n&192)/64;
-if ( (n==0) & (c==2) ) return 1;    // Seulement un disque
-
-
-_dos_getdrive(&cdrv);
-
-IOerr=0;
-
-_dos_setdrive(c,&nbrdrive);
-getcwd(path,256);
-
-if (_dos_getdiskfree(c,&d)!=0)
-    IOerr=1;
-
-_dos_setdrive(cdrv,&nbrdrive);
-
-return IOerr;
 }
 
 
