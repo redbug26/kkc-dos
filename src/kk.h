@@ -1,4 +1,4 @@
-#define VERSION "0.3"
+#define VERSION "0.31"
 
 #define ENTIER short
 
@@ -23,10 +23,11 @@ struct file {
 
 
 void Shell(char *string,...);
-void AffFen(struct fenetre *Fen);
+
 
 void SaveCfg(void);
 int LoadCfg(void);
+void AffFen(struct fenetre *Fen);
 
 
 struct fenetre {
@@ -83,6 +84,7 @@ extern int IOerr;
 #include "help.h"
 
 #include "view.h"
+#include "edit.h"
 
 #include "util.h"
 

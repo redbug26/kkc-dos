@@ -35,13 +35,14 @@ ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
 # -ou            unique adresse                                         #
 # -xst           save exception                                         #
 # -oneatx        pour optimization                                      #
+# -fpi           pour emuler le coprocesseur                            #
 #-----------------------------------------------------------------------#
 
 #------------------------ En phase de debugging ------------------------#
 #-----------------------------------------------------------------------#
 !ifdef DEBUG
 
-CCOPTS = -wx -5r -fpi -zdp -d__WC32__ -mf -d3 -zm -od
+CCOPTS = -wx -5r -fpc -zdp -d__WC32__ -mf -d3 -zm -od
 AOPTS = /d1
 LOPTS = option stack=60000 debug all option caseexact
 LAOPTS = debug all
@@ -51,7 +52,7 @@ LAOPTS = debug all
 #-----------------------------------------------------------------------#
 !else
 
-CCOPTS = -w5 -5r -fpi -zdp -d__WC32__ -mf -s
+CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s
 # -oneatx
 # quand on mets les optimisations, on peux plus faire un shell, pq ?
 AOPTS =
@@ -69,7 +70,8 @@ all : kk.exe kkmain.exe kksetup.exe kkdesc.exe kkkkrgr.exe kkfont.exe idf.lib
 
 kkmain.exe  : kkmain.obj    idf.lib   hard.obj   win.obj gestion.obj &
                  dos.obj driver.obj ficidf.obj copie.obj  delete.obj &
-              search.obj   help.obj   view.obj  util.obj reddies.obj
+              search.obj   help.obj   view.obj  util.obj reddies.obj &
+                edit.obj
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 kksetup.exe : kksetup.obj hard.obj idf.lib help.obj reddies.obj

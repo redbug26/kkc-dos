@@ -7,7 +7,10 @@
  -                                                                       -
  *-----------------------------------------------------------------------*/
 #include <string.h>
+#include <stdlib.h>
 #include <ctype.h>
+
+#include "reddies.h"
 
 void TPath2Abs(char *p,char *Ficname);
 
@@ -296,3 +299,90 @@ if (Ficname[0]!='.') {
 if (p[strlen(p)-1]==':') strcat(p,"\\");
 }
 
+/*----------------------------------------------*
+ - Recherche l'extension ext dans la chaine src -
+ - Renvoit 1 si trouve                          -
+ - Ex: FoundExt(ext,"EXE COM BAT BTM")          -
+ *----------------------------------------------*/
+
+char FoundExt(char *ext,char *src)
+{
+char e[4];
+short c1,c3,c4;
+
+c1=c3=c4=0;
+
+do
+    {
+    c3++;
+
+    if ( (src[c3]==32) | (src[c3]==0) )
+        {
+        memcpy(e,src+c4,4);
+        e[c3-c4]=0;
+        if (!stricmp(e,ext)) return 1;
+        c4=c3+1;
+        }
+    }
+while(src[c3]!=0);
+return 0;
+}
+
+/*--------------------------------------------------*
+ - Convertit un entier en chaine de longueur length -
+ *--------------------------------------------------*/
+
+char *Int2Char(int n,char *s,char length)
+{
+if ((length>=3) & (n==1))
+    {
+    strcpy(s,"One");
+    return s;
+    }
+
+ltoa(n,s,10);
+
+if (strlen(s)<=length) return s;
+
+strcpy(s,s+strlen(s)-length);
+
+return s;
+}
+
+/*---------------------------------------------*
+ - Convertit un long en string de 10 positions -
+ *---------------------------------------------*/
+
+char *Long2Str(long entier,char *chaine)
+{
+char chaine2[20];
+short i,j,n;
+
+ltoa(entier,chaine2,10);
+if ((n=strlen(chaine2))<9)
+    {
+    chaine[0]=chaine2[0];
+    i=j=1;
+    n--;
+
+    while(n!=0)
+        {
+        if ((n==6) | (n==3))
+            {
+            chaine[i]='.';
+            i++;
+            }
+        chaine[i]=chaine2[j];
+        i++;
+        j++;
+        n--;
+        }
+    chaine[i]=0;
+    }
+    else
+    {
+    strcpy(chaine,chaine2);
+    }
+
+return chaine;
+}

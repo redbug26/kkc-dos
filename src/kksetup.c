@@ -9,6 +9,8 @@
 #include <ctype.h>
 #include <bios.h>
 
+#include <time.h>
+
 #include "kk.h"
 #include "idf.h"
 
@@ -606,6 +608,12 @@ int car;
 char *path;
 
 IOerr=1;
+
+/*****************************
+ - Initialisation de l'ecran -
+ *****************************/
+
+InitScreen();                   // Initialise toutes les donn‚es HARD
 
 /***********************
  - Gestion des erreurs -

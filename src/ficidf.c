@@ -6,6 +6,8 @@
 #include <string.h>
 #include <conio.h>
 
+#include <time.h>
+
 #include "kk.h"
 #include "win.h"
 

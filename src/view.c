@@ -24,11 +24,13 @@
 
 #include "idf.h"
 
+static char ReadChar(void);
+static void Bar(char *bar);
+
 
 void ChangeMask(void);
 void Masque(short x1,short y1,short x2,short y2);
 
-char ReadChar(void);
 
 int HexaView(char *fichier);
 int TxtView(char *fichier);
@@ -109,7 +111,7 @@ WinCadre(77,3,79,(Cfg->TailleY)-2,2);
 
 WinCadre(0,0,79,2,3);
 
-ChrCol(34,4,(Cfg->TailleY)-6,Cfg->Tfont[0]);
+ChrCol(34,4,(Cfg->TailleY)-6,Cfg->Tfont);
 
 PrintAt(3,1,"View File %s",fichier);
 
@@ -807,9 +809,9 @@ ym=0;
 
 x=0;
 
-if (taille<32768)
+//if (taille<32768)
     {
-    for (n=0;n<taille;n++)
+    for (n=0;n<((taille<32768) ? taille:32768);n++)
         {
         switch(view_buffer[n])
             {
@@ -832,11 +834,12 @@ if (taille<32768)
             }
         }
     }
-    else
+/*    else
     {
     xm=80;
     ym=50;
     }
+*/
 ym++;
 
 if (xm>=79)
@@ -2530,7 +2533,6 @@ if (m==27)  // escape
 
 
 lpt=0;
-
 
 fic=fopen(fichier,"rb");
 if (fic==NULL)

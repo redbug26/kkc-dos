@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <time.h>
+
 #include "hard.h"
 
 // Pour Statistique;
@@ -34,6 +36,12 @@ void main(short argc,char **argv)
 {
 int n;
 char *path;
+
+/*****************************
+ - Initialisation de l'ecran -
+ *****************************/
+
+InitScreen();                   // Initialise toutes les donn‚es HARD
 
 path=GetMem(256);
 

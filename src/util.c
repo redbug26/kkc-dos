@@ -7,10 +7,9 @@
 
 #include <conio.h>
 #include <dos.h>
-
 #include <bios.h>   // Gestion clavier
-
 #include <fcntl.h>
+#include <time.h>
 
 #include "win.h"
 #include "kk.h"

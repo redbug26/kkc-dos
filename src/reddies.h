@@ -14,3 +14,6 @@ int find1st(char *src,char *dest,char *mask);
 int WildCmp(char *a,char *b);
 char *FileinPath(char *p,char *Ficname);
 void Path2Abs(char *p,char *Ficname);
+char FoundExt(char *ext,char *src);
+char *Long2Str(long n,char *chaine);         // Convertit un long en chaine
+char *Int2Char(int n,char *s,char length); // Convertit un entier en chaine

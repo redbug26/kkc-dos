@@ -1,4 +1,7 @@
-// Identification of file
+/*------------------------*
+ - Identification of file -
+ *------------------------*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
@@ -805,7 +808,7 @@ struct key K[nbrkey]=   {
     0,
     "JCH module",
     "D00",
-    "?",119,0,0,1},
+    "Jens Christian Huus",119,0,0,1},   // Jean Christian Huus
 {  {"AST 0001"},
     8,
     1,
@@ -846,10 +849,54 @@ struct key K[nbrkey]=   {
     "Macintosh PICT",
     "PIC",
     "?",125,0,0,4},
+{  {"LZANIM"},
+    6,
+    0,
+    "LZA animation",
+    "LZA", 
+    "goto64",126,0,1,5},         // Brian Strack Jensen aka goto64/Purple
+{  {"RAD by REALiTY!!"},
+    16,
+    0,
+    "Reality ADlib Tracker Module",
+    "RAD",
+    "Reality",130,0,0,1},      // Shayde/Reality (?)
+{  {0xFC,0x00,0x01,0x00,0x0C,0x00,0x81,0x01,// תתתתתתתת
+    0x82,0x01,0x06,0x00,0x01,0x02,0x03,0x04,// תתתתתתתת 
+    0x05,0x08,0x10    }, // תתת 
+    19,
+    0x0,
+    "QuickBasic Listing",
+    "BAS",
+    "Microsoft",131,0,0,6},
+
+
+// Dernier employe: 131
 
 /*******************************************
  - structures … traiter en dernier ressort -
  *******************************************/
+{  {0x34,0x12},
+    2,
+    0,
+    "PCPaint/Pictor file",
+    "PIC",
+    "?",
+    129,0,0,4},
+{  {0x00,0x95},
+    2,
+    4,
+    "Animator Pro PIC File",
+    "PIC",
+    "Autodesk",
+    127,0,0,4},
+{  {0x19,0x91},
+    2,
+    0,
+    "Original Animator PIC File",
+    "PIC",
+    "Autodesk",
+    128,0,0,4},
 {  {0,0},
     0,
     0,
@@ -886,9 +933,9 @@ struct key K[nbrkey]=   {
     "",
     91,1,0,6},    // Laisser celui-ci dernier
 
-/**************************************************
- - structures … ne pas toucher en dernier ressort -
- **************************************************/
+/*******************************
+ - structures … ne pas toucher -
+ *******************************/
 
 {  {0,0},
         2,
@@ -980,6 +1027,7 @@ short Infogrp(RB_IDF *Info);
 short Infotga(RB_IDF *Info);
 short Infodlz(RB_IDF *Info);
 short Infofli(RB_IDF *Info);
+short Infolza(RB_IDF *Info);
 short Infoflc(RB_IDF *Info);
 short Infoswg(RB_IDF *Info);
 short Infoams(RB_IDF *Info);
@@ -1273,6 +1321,7 @@ for (n=0;n<nbrkey-6;n++)    // Il faut ignorer les 6 derniers clefs
             case 121:err=Infodsm(Info); break;
             case 122:err=Infodat(Info); break;
             case 24:err=Infopat(Info); break;
+            case 126:err=Infolza(Info); break;
             default:        // Ca serait une erreur de ma part alors
                 sprintf(Info->format,"Pingouin %d",K[n].numero);
                 trv=1;
@@ -2788,6 +2837,27 @@ Info->taille=(ULONG)(*(WORD*)(buf+0xA))+17+(ULONG)(buf[0x9])*65536L;
 return 0;
 }
 
+short Infolza(RB_IDF *Info)
+{
+short Lp,Hp,BP,frame;
+
+Lp=ReadInt(Info,9,1);
+Hp=ReadInt(Info,11,1);
+BP=8;
+frame=ReadInt(Info,7,1);
+
+if (Lp>9999) Lp=9999;
+if (Hp>9999) Hp=9999;
+if (BP>99) BP=99;
+if (BP==0) BP=8;
+
+sprintf(Info->message[0], " Image is       %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[1], "                     %7d frames",frame);
+
+// Info->taille=ReadLng(Info,0,1);
+return 0;
+}
+
 short Infofli(RB_IDF *Info)
 {
 short Lp,Hp,BP,frame;
@@ -2926,7 +2996,7 @@ for (pos=0;pos<Info->sizebuf;pos++) {
 						(a!=0) &				// erreur buffer
                         (a!=2) &                // la petite tˆte
 						(a!=26)) {				// fin de fichier
-//						cprshortf("%d",Info->buffer[pos]);
+                        // cprintf("%d",Info->buffer[pos]);
 						return 1;
 						}
 				}

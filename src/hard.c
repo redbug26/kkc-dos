@@ -16,16 +16,33 @@
 #include <direct.h>
 #include <bios.h>
 
+#include <time.h>
+
 #include "hard.h"
 
 int IOver;
 int IOerr;
 
+
+struct RB_info *Info;
 struct config *Cfg;
-struct fichier *Fics;
 struct PourMask **Mask;
+struct fichier *Fics;
+
 
 char *scrseg=(char*)0xB8000;
+
+char _RB_screen[256*128*2];
+
+void (*AffChr)(char x,char y,char c);
+void (*AffCol)(char x,char y,char c);
+
+/*------------------*
+ - Fonction interne -
+ *------------------*/
+
+void Cache_AffChr(char x,char y,char c);
+void Cache_AffCol(char x,char y,char c);
 
 void GotoXY(char x,char y)
 {
@@ -50,7 +67,6 @@ int386(0x10,&regs,&regs);
 
 *x=regs.h.dl;
 *y=regs.h.dh;
-
 }
 
 void GetCur(char *x,char *y)
@@ -80,22 +96,30 @@ int386(0x10,&regs,&regs);
 
 char GetChr(char x,char y)
 {
-return *(scrseg+(y*80+x)*2);
+return *(_RB_screen+(y*256+x));
 }
 
 char GetCol(char x,char y)
 {
-return *(scrseg+(y*80+x)*2+1);
+return *(_RB_screen+(y*256+x)+256*128);
 }
 
-void AffChr(char x,char y,char c)
+void Cache_AffChr(char x,char y,char c)
 {
-*(scrseg+((y*80+x)<<1))=c;
+if (*(_RB_screen+(y*256+x))!=c)
+    {
+    *(scrseg+((y*80+x)<<1))=c;
+    *(_RB_screen+(y*256+x))=c;
+    }
 }
 
-void AffCol(char x,char y,char c)
+void Cache_AffCol(char x,char y,char c)
 {
-*(scrseg+(y*80+x)*2+1)=c;
+if (*(_RB_screen+(y*256+x)+256*128)!=c)
+    {
+    *(scrseg+((y*80+x)<<1)+1)=c;
+    *(_RB_screen+(y*256+x)+256*128)=c;
+    }
 }
 
 void ColLin(int left,int top,int length,char color)
@@ -155,88 +179,113 @@ void Clr()
 char i,j;
 
 for (i=0;i<80;i++)
-   for(j=0;j<25;j++)
+   for(j=0;j<Cfg->TailleY;j++)
 	  {
 	  AffChr(i,j,32);
 	  AffCol(i,j,7);
 	  }
 }
 
+
 void ScrollUp(void)
 {
-int n;
-for (n=0;n<49*160;n++)
-    scrseg[n]=scrseg[n+160];
+int x,y;
+for (y=0;y<49;y++)
+    for (x=0;x<160;x++)
+        {
+        AffChr(x,y,GetChr(x,y+1));
+        AffCol(x,y,GetCol(x,y+1));
+        }
 }
 
 
-char MEcran[8000];
+static char _MEcran[8000];
 
 void MoveText(int x1,int y1,int x2,int y2,int x3,int y3)
 {
-int x,y,n;
-for (n=0;n<8000;n++) MEcran[n]=*(scrseg+n);
+int x,y;
+
+for (x=0;x<80;x++)
+    for (y=0;y<49;y++)
+        {
+        _MEcran[(x+y*80)*2]=GetChr(x,y);
+        _MEcran[(x+y*80)*2+1]=GetCol(x,y);
+        }
 
 for (y=y3;y<=y3+(y2-y1);y++)
-    for (x=x3;x<=x3+(x2-x1);x++)    {
-        *(scrseg+(x+y*80)*2)=MEcran[((x-x3+x1)+(y-y3+y1)*80)*2];
-        *(scrseg+(x+y*80)*2+1)=MEcran[((x-x3+x1)+(y-y3+y1)*80)*2+1];
+    for (x=x3;x<=x3+(x2-x1);x++)
+        {
+        AffChr(x,y,_MEcran[((x-x3+x1)+(y-y3+y1)*80)*2]);
+        AffCol(x,y,_MEcran[((x-x3+x1)+(y-y3+y1)*80)*2+1]);
         }
 
 }
 
-char *Ecran[10];
-char EcranX[10],EcranY[10];
-char EcranD[10],EcranF[10];
-signed short WhichEcran=0;
+
+/*----------------------------------*
+ - Routine de sauvegarde de l'ecran -
+ *----------------------------------*/
+
+char *_Ecran[10];
+char _EcranX[10],_EcranY[10];
+char _EcranD[10],_EcranF[10];
+signed short _WhichEcran=0;
 
 void SaveEcran(void)
 {
-int n;
+int x,y;
 
-if (Ecran[WhichEcran]==NULL)
-    Ecran[WhichEcran]=GetMem(8000);
+if (_Ecran[_WhichEcran]==NULL)
+    _Ecran[_WhichEcran]=GetMem(8000);
 
-for (n=0;n<8000;n++)
-    Ecran[WhichEcran][n]=*(scrseg+n);
+for (x=0;x<80;x++)
+    for (y=0;y<50;y++)
+        {
+        _Ecran[_WhichEcran][(x+y*80)*2]=GetChr(x,y);
+        _Ecran[_WhichEcran][(x+y*80)*2+1]=GetCol(x,y);
+        }
 
-WhereXY(&(EcranX[WhichEcran]),&(EcranY[WhichEcran]));
+WhereXY(&(_EcranX[_WhichEcran]),&(_EcranY[_WhichEcran]));
+GetCur(&(_EcranD[_WhichEcran]),&(_EcranF[_WhichEcran]));
 
-GetCur(&(EcranD[WhichEcran]),&(EcranF[WhichEcran]));
-
-WhichEcran++;
+_WhichEcran++;
 }
 
 void ChargeEcran(void)
 {
-int n;
+int x,y;
 
-WhichEcran--;
+_WhichEcran--;
 
-if ( (Ecran[WhichEcran]==NULL) | (WhichEcran<0) )
+if ( (_Ecran[_WhichEcran]==NULL) | (_WhichEcran<0) )
     {
     Clr();
     PrintAt(0,0,"Internal Error: ChargeEcran");
     return;
     }
 
-for (n=0;n<8000;n++)
-    *(scrseg+n)=Ecran[WhichEcran][n];
+for (x=0;x<80;x++)
+    for (y=0;y<50;y++)
+        {
+        AffChr(x,y,_Ecran[_WhichEcran][(x+y*80)*2]);
+        AffCol(x,y,_Ecran[_WhichEcran][(x+y*80)*2+1]);
+        }
 
-GotoXY(EcranX[WhichEcran],EcranY[WhichEcran]);
+GotoXY(_EcranX[_WhichEcran],_EcranY[_WhichEcran]);
+PutCur(_EcranD[_WhichEcran],_EcranF[_WhichEcran]);
 
-PutCur(EcranD[WhichEcran],EcranF[WhichEcran]);
-
-free(Ecran[WhichEcran]);
-Ecran[WhichEcran]=NULL;
+free(_Ecran[_WhichEcran]);
+_Ecran[_WhichEcran]=NULL;
 }
 
 
 
-
+/*--------------------------------*
+ - Fonction d'impression du texte -
+ *--------------------------------*/
 void PrintAt(int x,int y,char *string,...)
 {
-char sortie[255];
+static char sortie[256];
 va_list arglist;
 
 char *suite;
@@ -251,21 +300,30 @@ va_end(arglist);
 a=x;
 while (*suite!=0)
 	{
-//    AffChr(a,y,'Û');
-//    Delay(1);
-	AffChr(a,y,*suite);
+//    AffChr(a,y,'Û'), Delay(1000);
+    AffChr(a,y,*suite);
 	a++;
 	suite++;
 	}
 
 }
 
-/************************/
-/* Retourne 1 sur ESC	*/
-/*          0 ENTER     */
-/*          2 TAB       */
-/*          3 SHIFT-TAB */
-/************************/
+void Delay(long ms)
+{
+union REGS R;
+
+R.h.ah=0x86;
+R.w.cx=ms/0x10000;
+R.w.dx=ms&0xFFFF;
+int386(0x15,&R,&R);
+}
+
+/*----------------------*
+ - Retourne 1 sur ESC   -
+ ---------* 0 ENTER     -
+          - 2 TAB       -
+          - 3 SHIFT-TAB -
+          *-------------*/
 
 char InputAt(char colonne,char ligne,char *chaine, int longueur)
 {
@@ -531,7 +589,8 @@ void Pause(int n)
 {
 int m;
 
-for (m=0;m<n;m++)  {
+for (m=0;m<n;m++)
+    {
     while ((inp(0x3DA) & 8)!=8);
     while ((inp(0x3DA) & 8)==8);
     }
@@ -819,7 +878,7 @@ char chaine[256];
 
 
 
-Cfg->Tfont[0]=179;      // Barre Verticale | with 8x8
+Cfg->Tfont=179;      // Barre Verticale | with 8x8
 
 strcpy(chaine,Fics->path);
 strcat(chaine,"\\font8x8.cfg");
@@ -831,7 +890,7 @@ fic=fopen(chaine,"rb");
 if (fic==NULL) return;
 
 Cfg->UseFont=1;         // utilise les fonts 8x8
-Cfg->Tfont[0]=168;      // Barre Verticale | with 8x8
+Cfg->Tfont=168;      // Barre Verticale | with 8x8
 
 pol=malloc(2048);
 
@@ -839,10 +898,12 @@ fread(pol,2048,1,fic);
 
 fclose(fic);
 
+/*
 for (n=0;n<8;n++)
     Cfg->Tfont[n+1]=128+n;
 for (n=0;n<8;n++)
     Cfg->Tfont[n+9]=142+n;
+*/
 
 for (n=0;n<256;n++)  {
     MakeFont(pol+n*8,buf+n*32);
@@ -875,7 +936,7 @@ unsigned char x;
 
 char chaine[256];
 
-Cfg->Tfont[0]=179;      // Barre Verticale | with 8x8
+Cfg->Tfont=179;      // Barre Verticale | with 8x8
 
 strcpy(chaine,Fics->path);
 strcat(chaine,"\\font8x16.cfg");
@@ -887,7 +948,7 @@ fic=fopen(chaine,"rb");
 if (fic==NULL) return;
 
 Cfg->UseFont=1;         // utilise les fonts 8x8
-Cfg->Tfont[0]=168;      // Barre Verticale | with 8x8
+Cfg->Tfont=168;      // Barre Verticale | with 8x8
 
 pol=malloc(4096);
 
@@ -895,10 +956,12 @@ fread(pol,4096,1,fic);
 
 fclose(fic);
 
+/*
 for (n=0;n<8;n++)
     Cfg->Tfont[n+1]=128+n;
 for (n=0;n<8;n++)
     Cfg->Tfont[n+9]=142+n;
+*/
 
 for (n=0;n<256;n++)  {
     MakeFont(pol+n*16,buf+n*32);
@@ -978,6 +1041,8 @@ void Mode30(void);
 
 void TXTMode(char lig)
 {
+Clr();
+
 Cfg->UseFont=0;
 switch (lig)
     {
@@ -1034,12 +1099,26 @@ void *buf;
 
 buf=malloc(s);
 
-if (buf==NULL) {
-//    ErrWin95();
+if (buf==NULL)
+    {
     exit(1);
-   }
+    }
 
 memset(buf,0,s);
+
+return buf;
+}
+
+void *GetMemSZ(int s)   // GetMem sans mise … z‚ro
+{
+void *buf;
+
+buf=malloc(s);
+
+if (buf==NULL)
+    {
+    exit(1);
+    }
 
 return buf;
 }
@@ -1699,10 +1778,13 @@ Cfg->font=1;
 Cfg->AnsiSpeed=133;
 Cfg->SaveSpeed=7200;
 
+
+
 Cfg->fentype=4;
 
 Cfg->mtrash=100000;
 
+Cfg->currentdir=1;
 Cfg->overflow=0;
 
 Cfg->autoreload=1;
@@ -1717,10 +1799,21 @@ Cfg->debug=0;
 
 Cfg->key=0;
 
+Cfg->dispcolor=1;
+Cfg->speedkey=1;
+
+Cfg->insdown=1;
+Cfg->seldir=1;
+
 strcpy(Cfg->HistDir,"C:\\");
 }
 
-//---------------- Error and Signal Handler -------------------------------------
+/*---------------------------------------------------------------------*
+ -                       Error and Signal Handler                      -
+ -----------------------------------------------------------------------
+ - Return IOerr si IOerr = 1 ou 3                                      -
+ - Return     3 si IOver = 1                                           -
+ *---------------------------------------------------------------------*/
 
 int __far Error_handler(unsigned deverr,unsigned errcode,unsigned far *devhdr)
 {
@@ -1801,7 +1894,6 @@ return _HARDERR_FAIL;
 // Retourne 0 si tout va bene
 int VerifyDisk(char c)  // 1='A'
 {
-char path[256];
 unsigned nbrdrive,cdrv,n;
 struct diskfree_t d;
 
@@ -1809,8 +1901,9 @@ if ((c<1) | (c>26)) return 1;
 
 n=_bios_equiplist();
 
-n=(n&192)/64;
-if ( (n==0) & (c==2) ) return 1;    // Seulement un disque
+if ( ((n&192)==0) & (c==2) ) return 1;    // Seulement un disque
+if ( ((n&1)==0) & (c==1) ) return 1;    // Pas de disque
+
 
 _dos_getdrive(&cdrv);
 
@@ -1818,7 +1911,7 @@ IOerr=0;
 IOver=1;
 
 _dos_setdrive(c,&nbrdrive);
-getcwd(path,256);
+// getcwd(path,256);
 
 if (_dos_getdiskfree(c,&d)!=0)
     IOerr=1;
@@ -1827,3 +1920,11 @@ _dos_setdrive(cdrv,&nbrdrive);
 
 return IOerr;
 }
+
+void InitScreen(void)
+{
+AffChr=Cache_AffChr;
+AffCol=Cache_AffCol;
+}
+
+

@@ -3,6 +3,7 @@
 #include <conio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
 #include <dos.h>
 #include <direct.h>
 #include <ctype.h>
@@ -19,7 +20,13 @@
 
 int *TailleX;
 
-void ClearSpace(char *name);    // efface les espaces inutiles
+#define EXTTXT "ASM BAS C CPP DIZ DOC H HLP HTM INI LOG NFO PAS TXT"
+#define EXTBMP "BMP GIF ICO JPG LBM PCX PIC PKM PNG RAW TGA TIF WMF WPG"
+#define EXTSND "IT IFF MID MOD MTM S3M VOC WAV XM"
+#define EXTARC "ARJ LHA RAR ZIP"
+#define EXTEXE "BAT BTM COM EXE PRG"
+
+void ClearSpace(char *name);              // efface les espaces inutiles
 
 void ErrWin95(void)
 {
@@ -99,9 +106,9 @@ int yl;
 
 char a;
 
-a=Cfg->Tfont[0];
+a=Cfg->Tfont;
 
-ColWin(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,7*16+6);
+ColWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,7*16+6);
 
 // Couleur uniquement pour fentype=1,2 ou 3 (le 4 le fait 2 fois !)
 
@@ -122,103 +129,108 @@ y=Fen->y;
 yl=(Fen->yl)+(Fen->y);
 
 switch (Cfg->fentype)
-    {
-    case 1:
-        Cfg->Tfont[0]=179;
-        Fen->x2=Fen->x-1;
-        Fen->y2=Fen->y-1;
-        Fen->xl2=Fen->xl;
-        Fen->yl2=Fen->yl-4;
-        Fen->x3=Fen->x+2;
-        Fen->y3=Fen->y+Fen->yl-1;
+{
+case 1:
+    Cfg->Tfont=179;
+    Fen->x2=Fen->x-1;
+    Fen->y2=Fen->y-1;
+    Fen->xl2=Fen->xl;
+    Fen->yl2=Fen->yl-4;
+    Fen->x3=Fen->x+2;
+    Fen->y3=Fen->y+Fen->yl-1;
 
-        PrintAt(x,y     ,"ÉÍÍÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÑÍÍÍÍÍ»");
-        PrintAt(x,y+1,   "º    Name    ³    Size  ³  Date  ³ Timeº");
-        for (i=2;i<yl-3;i++)
-           PrintAt(x,y+i,"º            ³          ³        ³     º");
-        PrintAt(x,y+yl-3,"ÇÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄ¶");
-        PrintAt(x,y+yl-2,"º                                      º");
-        PrintAt(x,y+yl-1,"ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼");
+    PrintAt(x,y,"ÉÍÍÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÑÍÍÍÍÍ»");
+    PrintAt(x,y+1,"º    Name    ³    Size  ³  Date  ³ Timeº");
+    for (i=2;i<yl-3;i++)
+        PrintAt(x,y+i,"º            ³          ³        ³     º");
+    PrintAt(x,y+yl-3,"ÇÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄ¶");
+    PrintAt(x,y+yl-2,"º                                      º");
+    PrintAt(x,y+yl-1,"ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼");
 
-        break;
-    case 2:
-        Cfg->Tfont[0]=179;
-        Fen->x2=Fen->x-1;
-        Fen->y2=Fen->y-2;
-        Fen->xl2=(Fen->xl);
-        Fen->yl2=Fen->yl-3;
-        Fen->x3=Fen->x+2;
-        Fen->y3=Fen->y+Fen->yl-1;
+    break;
+case 2:
+    Cfg->Tfont=179;
+    Fen->x2=Fen->x-1;
+    Fen->y2=Fen->y-2;
+    Fen->xl2=(Fen->xl);
+    Fen->yl2=Fen->yl-3;
+    Fen->x3=Fen->x+2;
+    Fen->y3=Fen->y+Fen->yl-1;
 
-        ColLin(x,y,40,Cfg->bkcol);
-        PrintAt(x,y,     "     Name    ³    Size  ³  Date  ³ Time ");
-        for (i=1;i<yl-3;i++)
-           PrintAt(x,y+i,"Û            ³          ³        ³     Û");
-        PrintAt(x,y+yl-3,"ÛßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßÛ");
-        PrintAt(x,y+yl-2,"Û                                      Û");
-        PrintAt(x,y+yl-1,"ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß");
-        break;
-    case 3:
-        Cfg->Tfont[0]=179;
-        Fen->x2=Fen->x-1;
-        Fen->y2=Fen->y-2;
-        Fen->xl2=Fen->xl;
-        Fen->yl2=Fen->yl-3;
-        Fen->x3=Fen->x+2;
-        Fen->y3=Fen->y+Fen->yl-1;
+    ColLin(x,y,40,Cfg->bkcol);
+    PrintAt(x,y,"     Name    ³    Size  ³  Date  ³ Time ");
+    for (i=1;i<yl-3;i++)
+        PrintAt(x,y+i,"Û            ³          ³        ³     Û");
+    PrintAt(x,y+yl-3,"ÛßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßÛ");
+    PrintAt(x,y+yl-2,"Û                                      Û");
+    PrintAt(x,y+yl-1,"ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß");
+    break;
+case 3:
+    Cfg->Tfont=179;
+    Fen->x2=Fen->x-1;
+    Fen->y2=Fen->y-2;
+    Fen->xl2=Fen->xl;
+    Fen->yl2=Fen->yl-3;
+    Fen->x3=Fen->x+2;
+    Fen->y3=Fen->y+Fen->yl-1;
 
-        PrintAt(x,y     ,"ÚÄúÄúNameúÄúÄÂúÄúSizeúÄúÂÄúDateúÄÂTimeú¿");
-        for (i=1;i<yl-3;i++)
-           PrintAt(x,y+i,"³            ³          ³        ³     ³");
-        PrintAt(x,y+yl-3,"³ÚÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄ¿³");
-        PrintAt(x,y+yl-2,"³                                      ³");
-        PrintAt(x,y+yl-1,"ÀÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙÙ");
-        break;
-    case 4:
-        Fen->x2=Fen->x-1;
-        Fen->y2=Fen->y-1;
-        Fen->xl2=Fen->xl;
-        Fen->yl2=Fen->yl-4;
-        Fen->x3=Fen->x+2;
-        Fen->y3=Fen->y+Fen->yl-1;
+    PrintAt(x,y,"ÚÄ Ä Name Ä ÄÂ Ä Size Ä ÂÄ Date ÄÂTime ¿");
+    for (i=1;i<yl-3;i++)
+        PrintAt(x,y+i,"³            ³          ³        ³     ³");
+    PrintAt(x,y+yl-3,"³ÚÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄ¿³");
+    PrintAt(x,y+yl-2,"³                                      ³");
+    PrintAt(x,y+yl-1,"ÀÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙÙ");
+    break;
+case 4:
+    Fen->x2=Fen->x-1;
+    Fen->y2=Fen->y-1;
+    Fen->xl2=Fen->xl;
+    Fen->yl2=Fen->yl-4;
+    Fen->x3=Fen->x+2;
+    Fen->y3=Fen->y+Fen->yl-1;
 
-        ColLin(x+ 5,y+1,4,7*16+5);
-        ColLin(x+18,y+1,4,7*16+5);
-        ColLin(x+27,y+1,4,7*16+5);
-        ColLin(x+34,y+1,4,7*16+5);
-        ChrLin(x+1,y+yl-2,38,32);
+    ColLin(x+ 5,y+1,4,7*16+5);
+    ColLin(x+18,y+1,4,7*16+5);
+    ColLin(x+27,y+1,4,7*16+5);
+    ColLin(x+34,y+1,4,7*16+5);
+    ChrLin(x+1,y+yl-2,38,32);
 
-        PrintAt(x+1,y+1,"    Name    %c    Size  %c  Date  %cTime ",a,a,a);
-        for (i=2;i<yl-3;i++)
-           PrintAt(x+1,y+i,"            %c          %c        %c     ",a,a,a);
+    PrintAt(x+1,y+1,"    Name    %c    Size  %c  Date  %cTime ",a,a,a);
 
-        WinLine(x+1,y+yl-3,38,1);
-        WinCadre(x,y,x+39,y+yl-1,1);
-        break;
-    }
+    ChrCol(x+13,y+2,yl-5,a);
+    ChrCol(x+24,y+2,yl-5,a);
+    ChrCol(x+33,y+2,yl-5,a);
+
+    WinLine(x+1,y+yl-3,38,1);
+    WinCadre(x,y,x+39,y+yl-1,1);
+    break;
+}
 }
 
 
 void FenNor(struct fenetre *Fen)
 {
-int j,n;  // Compteur
+int j,n;                                                     // Compteur
 int date,time;
-char chaine[255];
-char temp[16];
+char ch1[13],ch2[11],ch3[9],ch4[6];
+char temp[16],temp2[20];
 char nom[13],ext[4];
+
+char col;
 
 short i;
 
-char a;                 // Separator Character
+char a;                                           // Separator Character
 
 int x1,y1;
-int x=2,y=3;
+
+a=Cfg->Tfont;
 
 if (Fen->init==1)
     ClearNor(Fen);
 
-
-if (Fen->scur>Fen->pcur) Fen->scur=Fen->pcur;
+if (Fen->scur>Fen->pcur)
+    Fen->scur=Fen->pcur;
 
 while (Fen->pcur<0)
     {
@@ -238,41 +250,22 @@ if (Fen->scur<0)
 if (Fen->scur>Fen->yl2-1)
     Fen->scur=Fen->yl2-1;
 
-a=Cfg->Tfont[0];
+x1=2+Fen->x2;
+y1=3+Fen->y2;
 
-x1=Fen->x2;
-y1=Fen->y2;
-
-n=(Fen->pcur)-(Fen->scur);			  // premier
+n=(Fen->pcur)-(Fen->scur);                                    // premier
 
 InfoSelect(Fen);
 
-for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y++)
+for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
     {
-// ------------------ Line Activity ------------------------------------
-    if ((Fen->actif==1) & (n==(Fen->pcur)) )
-        {
-        if (Fen->F[n]->select==0)
-            ColLin(x+x1,y+y1,38,1*16+6);
-            else
-            ColLin(x+x1,y+y1,38,1*16+5);
-        }
-        else
-        {
-        if (Fen->F[n]->select==0)
-            ColLin(x+x1,y+y1,38,7*16+6);
-            else
-            ColLin(x+x1,y+y1,38,7*16+5);
-        }
-
-// ---------------------------------------------------------------------
     date=Fen->F[n]->date;
     time=Fen->F[n]->time;
 
     strcpy(nom,Fen->F[n]->name);
+
     if ((Fen->F[n]->attrib& _A_SUBDIR)!=_A_SUBDIR)
         strlwr(nom);
-
 
     ext[0]=0;
     j=0;
@@ -289,55 +282,114 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y++)
                 }
             j++;
             }
-    nom[8]=0;
+    nom[8]=0;                    // Dans le cas o— on aurait un nom long
 
 
     Int2Char((date>>9)+80,temp,2);
 
-    sprintf(chaine,"%-8s %-3s%c%10s%c%02d/%02d/%2s%c%02d:%02d",
-                      nom,ext,a,Long2Str(Fen->F[n]->size),a,
-                     (date&31),(date>>5)&15,temp,a,
-					 (time>>11)&31,(time>>5)&63
-					 );
+    sprintf(ch1,"%-8s %-3s",nom,ext);
+    sprintf(ch2,"%10s",Long2Str(Fen->F[n]->size,temp2));
+    sprintf(ch3,"%02d/%02d/%2s",(date&31),(date>>5)&15,temp);
+    sprintf(ch4,"%02d:%02d",(time>>11)&31,(time>>5)&63);
 
     if ((Fen->F[n]->attrib & _A_SUBDIR)==_A_SUBDIR)
-        memcpy(chaine+13,"SUB--DIR",10);
+        memcpy(ch2,"SUB--DIR",10);
 
     if ((Fen->F[n]->attrib & _A_VOLID)==_A_VOLID)
-        sprintf(chaine,"%-8s%-3s %c##Vol-ID##%c%02d/%02d/%2s%c%02d:%02d",
-                     nom,ext,a,a,
-                     (date&31),(date>>5)&15,temp,a,
-					 (time>>11)&31,(time>>5)&63
-					 );
+        memcpy(ch2,"##Vol-ID##",10);
 
     if (nom[1]==':')
-        sprintf(chaine,"%-8s    %c##Reload##%c        %c     ",nom,a,a,a);
+        {
+        memcpy(ch2,"##Reload##",10);
+        strcpy(ch3,"        ");
+        strcpy(ch4,"     ");
+        }
+
+    if (Fen->F[n]->select!=0)
+        memcpy(ch4,"<SEL>",5);
+
+    if ((Fen->F[n]->attrib & _A_HIDDEN)==_A_HIDDEN)
+        ch1[8]=176;  // 176,177,178
 
     if (nom[0]=='.')
         {
         if (nom[1]!='.')
-            memcpy(chaine+13," RELOAD ",10);
+            memcpy(ch2," RELOAD ",10);
             else
-        memcpy(chaine+13," UP-DIR ",10);
+        memcpy(ch2," UP-DIR ",10);
+        }
+
+// ------------------ Line Activity ------------------------------------
+    if ((Fen->actif==1) & (n==(Fen->pcur)) )
+        {
+        if (Fen->F[n]->select==0)
+            col=1*16+6;
+            else
+            col=1*16+5;
+        }
+        else
+        {
+        if (Fen->F[n]->select==0)
+            {
+            col=7*16+6;
+
+            if (Cfg->dispcolor==1)
+                {
+                if (FoundExt(ext,EXTEXE)) col=7*16+13;     // Executable
+                else
+                if (FoundExt(ext,EXTARC)) col=7*16+8;         // Archive
+                else
+                if (FoundExt(ext,EXTSND)) col=7*16+12;            // Son
+                else
+                if (FoundExt(ext,EXTBMP)) col=7*16+11;          // Image
+                       else
+                if (FoundExt(ext,EXTTXT)) col=7*16+4;           // Texte
+                }
+            }
+            else
+            col=7*16+5;
         }
 
 
-    PrintAt(x+x1,y+y1,"%s",chaine);
+// ---------------------------------------------------------------------
+
+    ColLin(x1,y1,12,col);      PrintAt(x1,y1,"%s",ch1);
+
+    AffCol(x1+12,y1,7*16+6);   AffChr(x1+12,y1,a);
+
+    ColLin(x1+13,y1,10,col);   PrintAt(x1+13,y1,"%s",ch2);
+
+    AffCol(x1+23,y1,7*16+6);   AffChr(x1+23,y1,a);
+
+    ColLin(x1+24,y1,8,col);    PrintAt(x1+24,y1,"%s",ch3);
+
+    AffCol(x1+32,y1,7*16+6);   AffChr(x1+32,y1,a);
+
+    ColLin(x1+33,y1,5,col);    PrintAt(x1+33,y1,"%s",ch4);
     }
+
+// ------------------- Remplis le reste de la fenˆtre ------------------
+
+for (;(i<Fen->yl2);i++,y1++)
+    {
+    PrintAt(x1,y1,"            %c          %c        %c     ",a,a,a);
+    ColLin(x1,y1,38,7*16+6);
+    }
+
 
 Fen->paff=Fen->pcur;
 Fen->saff=Fen->scur;
 
 if (Fen->FenTyp==3)
-    FenInfo(Fen);   //  Affiche les infos sur les fichiers si type=3
+    FenInfo(Fen);       //  Affiche les infos sur les fichiers si type=3
 
 Fen->init=0;
 }
 
 
-/********************************************
-             For the FILE_ID.DIZ
- ********************************************/
+/*------------------------------------------*
+ -           For the FILE_ID.DIZ            -
+ *------------------------------------------*/
 
 void Makediz(RB_IDF *Info,char *Buf)
 {
@@ -346,7 +398,6 @@ char ligne[256];
 
 _dos_getdate(&Date);
 
-
 sprintf(ligne,"                                    \r\n");
 strcpy(Buf,ligne);
 sprintf(ligne,"      Ketchup Killers  (C) %4d     \r\n",Date.year);
@@ -354,45 +405,57 @@ strcat(Buf,ligne);
 sprintf(ligne,"ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ\r\n");
 strcat(Buf,ligne);
 
-if (*Info->fullname!=0)  {
-        ClearSpace(Info->fullname);
-        Info->fullname[30]=0;
+if (*Info->fullname!=0)
+    {
+    ClearSpace(Info->fullname);
+    Info->fullname[30]=0;
 
-        if (strlen(Info->fullname)<=26)
-                sprintf(ligne," Title: %27s \r\n",Info->fullname); //34
-                else
-                sprintf(ligne," T.:%31s \r\n",Info->fullname); //34
-        strcat(Buf,ligne); }
+    if (strlen(Info->fullname)<=26)
+        sprintf(ligne," Title: %27s \r\n",Info->fullname); //34
+    else
+        sprintf(ligne," T.:%31s \r\n",Info->fullname); //34
+    strcat(Buf,ligne);
+    }
 
-if (*Info->format!=0) {
-        sprintf(ligne," Type : %27s \r\n",Info->format); //34
-        strcat(Buf,ligne); }
+if (*Info->format!=0)
+    {
+    sprintf(ligne," Type : %27s \r\n",Info->format); //34
+    strcat(Buf,ligne);
+    }
 
-if (*Info->info!=0) {
-        sprintf(ligne," %-14s : %17s \r\n",Info->Tinfo,Info->info); //34
-        strcat(Buf,ligne); }
+if (*Info->info!=0)
+    {
+    sprintf(ligne," %-14s : %17s \r\n",Info->Tinfo,Info->info); //34
+    strcat(Buf,ligne);
+    }
 
-if (*Info->composer!=0) {
-        sprintf(ligne," Composer: %24s \r\n",Info->composer); //34
-        strcat(Buf,ligne); }
+if (*Info->composer!=0)
+    {
+    sprintf(ligne," Composer: %24s \r\n",Info->composer); //34
+    strcat(Buf,ligne);
+    }
 
-if (*Info->message[0]!=0) {
-        short m;
-        sprintf(ligne,"ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ\r\n");
-        strcat(Buf,ligne);
-        for (m=0;m<9;m++)
-                {
-                if (*Info->message[m]!=0)
-                        {
-                        sprintf(ligne,"%-36s\r\n",Info->message[m]); //36
-                        strcat(Buf,ligne);
-                        }
-                }
+if (*Info->message[0]!=0)
+    {
+    short m;
+    sprintf(ligne,"ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ\r\n");
+    strcat(Buf,ligne);
+    for (m=0;m<9;m++)
+        {
+        if (*Info->message[m]!=0)
+            {
+            sprintf(ligne,"%-36s\r\n",Info->message[m]);
+            strcat(Buf,ligne);
+            }
         }
+    }
 
-if (Info->taille!=0) {
-        sprintf(ligne," True Size: %23ld \r\n",Info->taille);
-        strcat(Buf,ligne); }
+if (Info->taille!=0)
+    {
+    sprintf(ligne," True Size: %23ld \r\n",Info->taille);
+    strcat(Buf,ligne);
+    }
+
 sprintf(ligne,"                                    \r\n");
 strcat(Buf,ligne);
 
@@ -429,12 +492,14 @@ x=Fen->x+2;
 y=Fen->y+6;
 
 i=0;
-while (Buf[i]!=0)  {
-	switch (Buf[i]) {
-           case 10: x=Fen->x+2; break;
-		   case 13: y++; break;
-		   default: AffChr(x,y,Buf[i]); x++; break;
-		   }
+while (Buf[i]!=0)
+    {
+    switch (Buf[i])
+        {
+        case 10: x=Fen->x+2; break;
+        case 13: y++; break;
+        default: AffChr(x,y,Buf[i]); x++; break;
+        }
 	i++;
 	}
 
@@ -449,9 +514,9 @@ free (Buf);
 Fen->init=0;
 }
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
+/*--------------------------------------------------------------------*
+ -                                                                    -
+ *--------------------------------------------------------------------*/
 
 void ClearInfo(struct fenetre *Fen)
 {
@@ -497,115 +562,63 @@ ChargeEcran();
 WinCadre(Fen2->x,Fen2->y,Fen2->x+Fen2->xl,Fen2->y+Fen2->yl,1);
 
 ChrWin(Fen2->x+1,Fen2->y+1,Fen2->x+Fen2->xl-1,Fen2->y+Fen2->yl-1,' ');
-ColWin(Fen2->x+1,Fen2->y+1,Fen2->x+Fen2->xl-1,Fen2->y+Fen2->yl-1,7*16+6);
+ColWin(Fen2->x+1,Fen2->y+1,Fen2->x+Fen2->xl-1,Fen2->y+Fen2->yl-1,118);
+                                                               // 7*16+6
 
 ChrLin(Fen2->x+1,Fen2->y+Fen2->yl-2,Fen2->xl-1,196);
 PrintAt(Fen2->x+1,Fen2->y+Fen2->yl-1,"Use this at your own risk ;)");
 }
 
-void FenInfo(struct fenetre *Fen)
-{
-int n;  // Compteur
-struct fenetre *Fen2;
 
-short i;
-
-char a;                 // Separator Character
-
-int x1,y1;
-int x=2,y=3;
-
-Fen2=Fen->Fen2;
-
-if (Fen->init==1)
-    ClearInfo(Fen);
-
-a=Cfg->Tfont[0];
-
-x1=Fen2->x2;
-y1=Fen2->y2;
-
-n=(Fen->pcur)-(Fen->scur);            // premier
-
-for (i=0;(i<Fen2->yl2) & (n<Fen->nbrfic);i++,n++,y++)
-    {
-// ------------------ Line Activity ------------------------------------
-    if (n==(Fen->pcur))
-        ColLin(x+x1,y+y1,38,1*16+5);
-        else
-        {
-        if (Fen->F[n]->info!=NULL)
-            switch(Fen->F[n]->info[0])
-                {
-                case 1:
-                    ColLin(x+x1,y+y1,38,4*16+11);
-                    break;
-                case 2:
-                    ColLin(x+x1,y+y1,38,4*16+1);
-                    break;
-                case 3:
-                    ColLin(x+x1,y+y1,38,4*16+13);
-                    break;
-                case 4:
-                    ColLin(x+x1,y+y1,38,3*16+11);
-                    break;
-                case 5:
-                    ColLin(x+x1,y+y1,38,3*16+1);
-                    break;
-                case 6:
-                    ColLin(x+x1,y+y1,38,3*16+13);
-                    break;
-                default:
-                    ColLin(x+x1,y+y1,38,7*16+5);
-                    break;
-                }
-            else
-                ColLin(x+x1,y+y1,38,7*16+5);
-        }
-
-    if (Fen->F[n]->info!=NULL)
-        PrintAt(x+x1,y+y1,"%-38s",Fen->F[n]->info+1);
-    }
-}
-
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
+/*--------------------------------------------------------------------*
+ -                                                                    -
+ *--------------------------------------------------------------------*/
 
 
-/**********************************************
-            Display about select
- **********************************************/
+/*--------------------------------------------*
+ -          Display about select              *
+ *--------------------------------------------*/
 
 
 void InfoSelect(struct fenetre *Fen)
 {
-if (Fen->nbrsel==0)  {
-   if (Fen->nbrfic==1)
-      PrintAt(Fen->x3,Fen->y3,"%-10s bytes in one file         ",Long2Str(Fen->taillefic));
-	  else
-      PrintAt(Fen->x3,Fen->y3,"%-10s bytes in %3d files        ",Long2Str(Fen->taillefic),Fen->nbrfic);
-   }
-   else {
-   if (Fen->nbrsel==1)
-      PrintAt(Fen->x3,Fen->y3,"%-10s b. in one selected file   ",Long2Str(Fen->taillesel));
-	  else
-      PrintAt(Fen->x3,Fen->y3,"%-10s b. in %3d selected files  ",Long2Str(Fen->taillesel),Fen->nbrsel);
-   }
+char temp[20];
 
+if (Fen->nbrsel==0)
+    {
+    if (Fen->nbrfic==1)
+        PrintAt(Fen->x3,Fen->y3,"%-10s bytes in one file         ",
+            Long2Str(Fen->taillefic,temp));
+    else
+        PrintAt(Fen->x3,Fen->y3,"%-10s bytes in %3d files        ",
+            Long2Str(Fen->taillefic,temp),Fen->nbrfic);
+    }
+else
+    {
+    if (Fen->nbrsel==1)
+        PrintAt(Fen->x3,Fen->y3,"%-10s b. in one selected file   ",
+            Long2Str(Fen->taillesel,temp));
+    else
+        PrintAt(Fen->x3,Fen->y3,"%-10s b. in %3d selected files  ",
+            Long2Str(Fen->taillesel,temp),Fen->nbrsel);
+    }
 }
 
 
-//-----------------------------------------------------------------------------
-// The KEY's menu
-//-----------------------------------------------------------------------------
+/*--------------------------------------------------------------------*
+ - The KEY's menu                                                     -
+ *--------------------------------------------------------------------*/
 void CtrlMenu(void)
 {
+char temp[20];
+
 if (DFen->y3==0) return;
 if (DFen->nbrfic==1)
-    PrintAt(DFen->x3,DFen->y3,"%-10s bytes in one file         ",Long2Str(DFen->taillefic));
-    else
-    PrintAt(DFen->x3,DFen->y3,"%-10s bytes in %3d files        ",Long2Str(DFen->taillefic),DFen->nbrfic);
+    PrintAt(DFen->x3,DFen->y3,"%-10s bytes in one file         ",
+        Long2Str(DFen->taillefic,temp));
+else
+    PrintAt(DFen->x3,DFen->y3,"%-10s bytes in %3d files        ",
+        Long2Str(DFen->taillefic,temp),DFen->nbrfic);
 }
 
 void ShiftMenu(void)
@@ -619,25 +632,29 @@ PrintAt(DFen->x3,DFen->y3,"%-36s",chaine);
 }
 
 
-
-
-
 void AltMenu(void)
 {
+time_t clock;
+static char buffer[80];
+
 if (DFen->y3==0) return;
-PrintAt(DFen->x3,DFen->y3,"[ Hello World !!!                  ]");
+
+clock=time(NULL);
+strftime(buffer,80,"%H:%M:%S",localtime(&clock));
+
+PrintAt(DFen->x3,DFen->y3,"%-36s",buffer);
 }
 
 void MenuBar(char c)
 {
 static char bar[4][60]=
-   { " Help  ----  View  Edit  Copy  Move  MDir Delete Menu  Quit ",      // NORMAL
-     " ---- Attrib View  ----  ---- Rename ----  ----  ----  ---- ",      // SHIFT
-     "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ",      // CONTROL
-     " Drv1  Drv2  FDiz  ----  ----  ---- Search Type  Line  ---- "       // ALT
-   };
+ {" Help  ----  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
+  " ---- Attrib View  ----  ---- Rename ----  ----  ----  ---- ",//SHIFT
+  "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
+  " Drv1  Drv2  FDiz  ----  ----  ---- Search Type  Line  ---- "}; //ALT
+
 char i,j,n;
-static char d=-1;
+static signed char d=-1;
 int TY;
 
 TY=Cfg->TailleY;
@@ -646,7 +663,7 @@ if (d==c) return;
 d=c;
 
 
-if (DFen->FenTyp==0)    // Fenetre Normale
+if (DFen->FenTyp==0)                                  // Fenetre Normale
 switch(c) {
     case 0:
         InfoSelect(DFen);
@@ -659,6 +676,7 @@ switch(c) {
         break;
     case 3:
         AltMenu();
+        d=-1;
         break;
     }
 
@@ -674,62 +692,12 @@ for (i=0;i<10;i++)	{
 
 }
 
-//-----------------------------------------------------------------------------
+/*--------------------------------------------------------------------*/
 
 
-void Int2Char(int n,char *s,char length)
-{
-if ((length>=3) & (n==1))
-    {
-    strcpy(s,"One");
-    return;
-    }
-
-ltoa(n,s,10);
-
-if (strlen(s)<=length) return;
-
-strcpy(s,s+strlen(s)-length);
-}
-
-char *Long2Str(long entier)
-{
-static char chaine[20];
-char chaine2[20];
-short i,j,n;
-
-ltoa(entier,chaine2,10);
-if ((n=strlen(chaine2))<9)
-    {
-    chaine[0]=chaine2[0];
-    i=j=1;
-    n--;
-
-    while(n!=0)
-        {
-        if ((n==6) | (n==3))
-            {
-            chaine[i]='.';
-            i++;
-            }
-        chaine[i]=chaine2[j];
-        i++;
-        j++;
-        n--;
-        }
-    chaine[i]=0;
-    }
-    else
-    {
-    strcpy(chaine,chaine2);
-    }
-
-return chaine;
-}
-
-//--------------
-// ASCII Table -
-//--------------
+/*-------------*
+ - ASCII Table -
+ *-------------*/
 void ASCIItable(void)
 {
 int n,x,y;
@@ -754,6 +722,10 @@ ChargeEcran();
 }
 
 
+/*----------------------------------*
+ - Erreur (l'utilisateur est fou !) -
+ *----------------------------------*/
+
 void YouMad(char *s)
 {
 int x,l;
@@ -771,7 +743,7 @@ struct TmtWin F = { 3,10,76,17,"Error!"};
 
 l=strlen(s);
 
-x=(80-l)/2;     // 1-> 39, 2->39
+x=(80-l)/2;                                             // 1-> 39, 2->39
 if (x>25) x=25;
 
 l=(40-x)*2;
@@ -981,67 +953,8 @@ if (car==27)
     return 2;
 }
 
-/*----------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
 
-/*---------------------------------*
- - Recherche des infos sur Windows -
- *---------------------------------*/
-short windows(short *HVersion, short *NVersion )
-{
-union  REGS  regs;          // Registres pour l'appel d'interruption
-struct SREGS sregs;           // Segment pour l'appel d'interruption
-
-*HVersion = 0;                    // Initialise le num‚ro de version
-*NVersion = 0;
-
-           //-- Identifie Windows x.y en mode Etendu -----------------
-
-regs.w.ax = 0x1600;                // Test d'installation de Windows
-segread( &sregs );                  // Lire les registres de segment
-int386x(0x2F, &regs, &regs, &sregs );
-
-switch ( regs.h.al )
-    {
-    case 0x01:
-    case 0xFF:
-        *HVersion = 2;        // Hauptversion
-        *NVersion = 0;        // Version secondaire inconnue
-        return 1;             // Windows /386 Version 2.x
-
-    case 0x00:
-    case 0x80:
-        regs.w.ax = 0x4680;           // Modes R‚el et Standard
-        int386x( 0x2F, &regs, &regs, &sregs );
-        if( regs.h.al == 0x80 )
-            return 0;           // Windows ne fonctionne pas
-            else
-            {
-               //-- Windows en mode R‚el ou Standard -----------------
-
-            regs.w.ax = 0x1605;        // Simuler l'initialiation
-            regs.w.bx = regs.w.si = regs.w.cx =  sregs.es = sregs.ds = 0;
-            regs.w.dx = 0x0001;
-            int386x( 0x2F, &regs, &regs, &sregs );
-            if( regs.w.cx == 0x0000 )
-                {
-                 //-- Windows en mode R‚el ---------------------------
-
-                regs.w.ax = 0x1606;
-                int386x(0x2F, &regs, &regs, &sregs );
-                return 0x81;
-                }
-            else
-                return 0x82;
-            }
-
- //-- Windows en mode Etendu, ax contient le num‚ro de version -------
-
-    default:
-        *HVersion = regs.h.al;  // Afficher la version de Windows
-        *NVersion = regs.h.ah;
-        return 0x83;              // Windows en mode Etendu
-    }
-}
 
 /*-----------------------------*
  - Change la taille de l'ecran -
@@ -1056,13 +969,10 @@ if (i==0)
         default:  Cfg->TailleY=25;  break;
         }
     else
-    {
     Cfg->TailleY=i;
-    }
 
 TXTMode(Cfg->TailleY);
 NoFlash();
-
 
 switch (Cfg->TailleY)
     {
@@ -1081,52 +991,6 @@ LoadPal();
 }
 
 
-/*----------------------------------*
- - Affiche les infos sur le systeme -
- *----------------------------------*/
-void WinInfo(struct fenetre **Fenetre)
-{
-static char chaine[80];
-short WindowsActif,HVer,NVer;
-
-SaveEcran();
-
-WinCadre(19,9,61,16,0);
-ColWin(20,10,60,15,10*16+4);
-ChrWin(20,10,60,15,32);
-
-PrintAt(23,10,"System Information");
-
-WindowsActif = windows( &HVer, &NVer );
-
-switch ( WindowsActif )
-    {
-    case 0:
-        sprintf(chaine,"Windows non actif");
-        break;
-    case 0x81:
-        sprintf(chaine,"Windows actif en mode R‚el");
-        break;
-    case 0x82:
-        sprintf(chaine,"Windows actif en mode Standard");
-        break;
-    case 0x01:
-        sprintf(chaine,"Windows/386 V 2.x actif");
-        break;
-    case 0x83:
-        sprintf(chaine,"Windows V %d.%d actif en %s", HVer, NVer, "mode Etendu" );
-        break;
-    }
-PrintAt(21,12," %s",chaine);
-
-PrintAt(21,14," %s",Fenetre[2]->path);
-
-Wait(0,0,0);
-ChargeEcran();
-}
-
-
-
 
 
 /*-------*
@@ -1134,12 +998,12 @@ ChargeEcran();
  *-------*/
 void Setup(void)
 {
-static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12;
+static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14;
 
 static char x1=32,x2=32,x3=32;
 static int y1=8,y2=3,y3=15;
 
-struct Tmt T[16] = {
+struct Tmt T[19] = {
       {5,3,7, "Size Trash   ",&l1},
       {5,4,7, "Ansi Speed   ",&l2},
       {5,5,7, "Screen Saver ",&l7},
@@ -1153,16 +1017,16 @@ struct Tmt T[16] = {
       {5,14,8,"Verify History Directory",&l10},
       {5,15,8,"Quick Palette",&l11},
 
-//      {39,6,8,"Hidden File",&l12},
+      {39,3,8,"Highlight groups",&l12},
+      {39,4,8,"Insert move down",&l13},
+      {39,5,8,"Select directories",&l14},
 
       {3,7,9,&x1,&y1},
       {3,2,9,&x2,&y2},
       {37,2,9,&x3,&y3},
 
-//      {5,14,0,"Under Construction",NULL},
-
-      {6,17,2,NULL,NULL},           // le OK
-      {21,17,3,NULL,NULL}            // le CANCEL
+      {6,17,2,NULL,NULL},                                       // le OK
+      {21,17,3,NULL,NULL}                                   // le CANCEL
       };
 
 struct TmtWin F = {3,3,76,22,"Setup"};
@@ -1180,8 +1044,11 @@ l8=Cfg->hidfil;
 l9=Cfg->autoreload;
 l10=Cfg->verifhist;
 l11=Cfg->palafter;
+l12=Cfg->dispcolor;
+l13=Cfg->insdown;
+l14=Cfg->seldir;
 
-n=WinTraite(T,16,&F);
+n=WinTraite(T,19,&F);
 
 if (n==27) return;
 
@@ -1196,6 +1063,9 @@ Cfg->hidfil=l8;
 Cfg->autoreload=l9;
 Cfg->verifhist=l10;
 Cfg->palafter=l11;
+Cfg->dispcolor=l12;
+Cfg->insdown=l13;
+Cfg->seldir=l14;
 
 SaveCfg();
 
@@ -1206,6 +1076,278 @@ CommandLine("#cd .");
 
 LoadCfg();
 
-ChangeTaille(Cfg->TailleY); // Rafraichit l'ecran
+UseCfg();
+
+}
+
+/*-------------------------------------*
+ - Utilise les donnees dans la         -
+ -  structure configuration            -
+ -  avec les verifications necessaires -
+ *-------------------------------------*/
+void UseCfg(void)
+{
+ChangeTaille(Cfg->TailleY);                        // Rafraichit l'ecran
+
 ChangeLine();
+
+if (Cfg->speedkey==1)
+    {
+    union REGS R;
+
+    R.w.ax=0x0900;
+    int386(0x16,&R,&R);
+
+    if ((R.h.ah & 4)==4)
+        {
+        R.w.ax=0x0305;
+        R.w.bx=0x0000;
+        int386(0x16,&R,&R);                         // Keystroke maximum
+        }
+        else
+        {
+        Cfg->speedkey=0;
+        }
+    }
+}
+
+
+/*-----------------------------*
+ - Test la vitesse d'affichage -
+ *-----------------------------*/
+
+void SpeedTest(void)
+{
+static char vit1[64],vit2[64];
+
+int x,y;
+clock_t Cl,Cl1,Cl2;
+char c;
+int n,m;
+double fvit1,fvit2;
+
+struct Tmt T[6] =  {
+      {6,17,2,NULL,NULL},                                       // le OK
+      {21,17,3,NULL,NULL},                                  // le CANCEL
+
+      {5,3,0,"No-Random Char",NULL},
+      {5,4,0,"Random Char",NULL},
+      {25,3,0,vit1,NULL},
+      {25,4,0,vit2,NULL}
+      };
+
+struct TmtWin F = {3,3,76,22,"Speed Test"};
+
+
+SaveEcran();
+
+Cl=clock();
+
+c=(rand()*80)/RAND_MAX+32;
+
+for (m=0,n=0;n<2000000;n++,m++)
+    {
+    x=(rand()*80)/RAND_MAX;
+    y=(rand()*Cfg->TailleY)/RAND_MAX;
+
+    AffChr(x,y,c);
+    if (m>10000) m=0,c=(rand()*80)/RAND_MAX+32;
+    }
+Cl1=clock()-Cl;
+
+Cl=clock();
+
+c=(rand()*80)/RAND_MAX+32;
+
+for (n=0;n<2000000;n++)
+    {
+    x=(rand()*80)/RAND_MAX;
+    y=(rand()*Cfg->TailleY)/RAND_MAX;
+
+    AffChr(x,y,c);
+    c++;
+    }
+Cl2=clock()-Cl;
+ChargeEcran();
+
+SaveEcran();
+         
+fvit1=(2000000./Cl1)*CLOCKS_PER_SEC;
+fvit2=(2000000./Cl2)*CLOCKS_PER_SEC;
+
+sprintf(vit1,"%f",fvit1);
+sprintf(vit2,"%f",fvit2);
+
+n=WinTraite(T,6,&F);
+
+ChargeEcran();
+}
+
+
+
+/*--------------------------------------------------------------------*
+ - S E C R E T                                                P A R T -
+ *--------------------------------------------------------------------*/
+
+/*----------------------------------*
+ - Affiche les infos sur le systeme -
+ *----------------------------------*/
+
+void WinInfo(struct fenetre **Fenetre)
+{
+static char chaine[80];
+short WindowsActif,HVer,NVer;
+union REGS R;
+
+
+R.w.ax=0x0900;
+int386(0x16,&R,&R);
+
+SaveEcran();
+
+WinCadre(19,9,61,18,0);
+ColWin(20,10,60,17,10*16+4);
+ChrWin(20,10,60,17,32);
+
+PrintAt(23,10,"System Information");
+
+WindowsActif = windows( &HVer, &NVer );
+
+switch ( WindowsActif )
+    {
+    case 0:
+        sprintf(chaine,"Windows not present");
+        break;
+    case 0x81:
+        sprintf(chaine,"Windows in Real Mode");
+        break;
+    case 0x82:
+        sprintf(chaine,"Windows in Standard Mode");
+        break;
+    case 0x01:
+        sprintf(chaine,"Windows/386 V 2.x");
+        break;
+    case 0x83:
+        sprintf(chaine,"Windows V %d.%d Exended Mode",HVer,NVer);
+        break;
+    }
+PrintAt(21,11,"ş %s",chaine);
+PrintAt(21,12,"ş %s",Fenetre[2]->path);
+PrintAt(21,13,"ş Initialisation: %d clocks ",Info->temps);
+PrintAt(21,14,"ş Keyboard function: %X",R.h.ah);
+
+Wait(0,0,0);
+ChargeEcran();
+}
+
+/*---------------------------------*
+ - Recherche des infos sur Windows -
+ *---------------------------------*/
+
+short windows(short *HVersion, short *NVersion )
+{
+union  REGS  regs;              // Registres pour l'appel d'interruption
+struct SREGS sregs;               // Segment pour l'appel d'interruption
+
+*HVersion = 0;                        // Initialise le num‚ro de version
+*NVersion = 0;
+
+           //-- Identifie Windows x.y en mode Etendu -------------------
+
+regs.w.ax = 0x1600;                    // Test d'installation de Windows
+segread( &sregs );                      // Lire les registres de segment
+int386x(0x2F, &regs, &regs, &sregs );
+
+switch ( regs.h.al )
+    {
+    case 0x01:
+    case 0xFF:
+        *HVersion = 2;                                   // Hauptversion
+        *NVersion = 0;                    // Version secondaire inconnue
+        return 1;                            // Windows /386 Version 2.x
+
+    case 0x00:
+    case 0x80:
+        regs.w.ax = 0x4680;                    // Modes R‚el et Standard
+        int386x( 0x2F, &regs, &regs, &sregs );
+        if( regs.h.al == 0x80 )
+            return 0;                       // Windows ne fonctionne pas
+            else
+            {         //-- Windows en mode R‚el ou Standard ------------
+            regs.w.ax = 0x1605;               // Simuler l'initialiation
+            regs.w.bx = regs.w.si = regs.w.cx =  sregs.es = sregs.ds =0;
+            regs.w.dx = 0x0001;
+            int386x( 0x2F, &regs, &regs, &sregs );
+            if( regs.w.cx == 0x0000 )       //-- Windows en mode R‚el --
+                {
+                regs.w.ax = 0x1606;
+                int386x(0x2F, &regs, &regs, &sregs );
+                return 0x81;
+                }
+            else
+                return 0x82;
+            }
+
+   //-- Windows en mode Etendu, ax contient le num‚ro de version -------
+
+    default:
+        *HVersion = regs.h.al;         // Afficher la version de Windows
+        *NVersion = regs.h.ah;
+        return 0x83;                           // Windows en mode Etendu
+    }
+}
+
+/*----------------------------------------------------*
+ - Fenˆtre avec les infos sur fichiers d'apres header -
+ *----------------------------------------------------*/
+
+void FenInfo(struct fenetre *Fen)
+{
+int n;                                                       // Compteur
+struct fenetre *Fen2;
+
+short i;
+
+char a;                                           // Separator Character
+
+int x1,y1;
+int x=2,y=3;
+
+Fen2=Fen->Fen2;
+
+if (Fen->init==1)
+    ClearInfo(Fen);
+
+a=Cfg->Tfont;
+
+x1=Fen2->x2;
+y1=Fen2->y2;
+
+n=(Fen->pcur)-(Fen->scur);                                    // premier
+
+for (i=0;(i<Fen2->yl2) & (n<Fen->nbrfic);i++,n++,y++)
+    {
+// ------------------ Line Activity ------------------------------------
+    if (n==(Fen->pcur))
+        ColLin(x+x1,y+y1,38,1*16+5);
+        else
+        {
+        if (Fen->F[n]->info!=NULL)
+            switch(Fen->F[n]->info[0])
+                {
+                case 1:  ColLin(x+x1,y+y1,38,4*16+11);   break;
+                case 2:  ColLin(x+x1,y+y1,38,4*16+1);    break;
+                case 3:  ColLin(x+x1,y+y1,38,4*16+13);   break;
+                case 4:  ColLin(x+x1,y+y1,38,3*16+11);   break;
+                case 5:  ColLin(x+x1,y+y1,38,3*16+1);    break;
+                case 6:  ColLin(x+x1,y+y1,38,3*16+13);   break;
+                default: ColLin(x+x1,y+y1,38,7*16+5);    break;
+                }
+            else
+                ColLin(x+x1,y+y1,38,7*16+5);
+        }
+
+    if (Fen->F[n]->info!=NULL)
+        PrintAt(x+x1,y+y1,"%-38s",Fen->F[n]->info+1);
+    }
 }

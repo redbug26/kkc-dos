@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <time.h>
+
 #include "hard.h"
 
 #include "idf.h"
@@ -36,6 +38,12 @@ void main(short argc,char **argv)
 char OldY;
 int n;
 char *path;
+
+/*****************************
+ - Initialisation de l'ecran -
+ *****************************/
+
+InitScreen();                   // Initialise toutes les donn‚es HARD
 
 OldY=(*(char*)(0x484))+1;
 

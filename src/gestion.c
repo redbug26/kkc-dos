@@ -537,7 +537,7 @@ if ( (chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (Cfg->logfile==1) )
     fclose(fic);
     }
 
-if (!strnicmp(chaine,"CD -",4))
+if (!stricmp(chaine,"CD -"))
     {
     ChangeDir(GetLastHistDir());
     ChangeLine();      // Affichage Path
@@ -736,7 +736,9 @@ if ( (chaine[1]==':') & (chaine[0]!=0) & (chaine[2]==0) & (traite==1) )
     if (chdir(DFen->path)!=0)
         DFen->path[3]=0;
 
-    InstallDOS();
+    getcwd(DFen->path,255);
+
+    DFen->system=0;
 
     _dos_getdrive(&nbrdrive);
 
@@ -751,7 +753,9 @@ if ( (chaine[1]==':') & (chaine[0]!=0) & (chaine[2]==0) & (traite==1) )
 
     if (error==0)
         {
-        InstallDOS();              // drive 1 for A, 2 for B
+        getcwd(DFen->path,255);
+
+        DFen->system=0;
 
         DFen->FenTyp=0;
 

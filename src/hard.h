@@ -1,6 +1,12 @@
 #define ENTIER short
 
 // Header of hard-function
+
+extern void (*AffChr)(short x,short y,short c);
+extern void (*AffCol)(short x,short y,short c);
+
+
+
 void TXTMode(char lig);         // Nombre de ligne
 
 void LoadPal(void);
@@ -14,8 +20,7 @@ int ScreenSaver(void);
 void ScrollUp(void);
 char GetChr(short x,short y);
 char GetCol(short x,short y);
-void AffChr(short x,short y,short c);
-void AffCol(short x,short y,short c);
+
 void Clr(void);
 void ColLin(int left,int top,int length,short color);
 void ChrLin(int left,int top,int length,short color);
@@ -31,12 +36,15 @@ void PrintAt(int x,int y,char *string,...);
 char InputAt(char colonne,char ligne,char *chaine, int longueur);
 int Wait(int x,int y,char c);
 
+void Delay(long ms);
+
 void SaveEcran(void);
 void ChargeEcran(void);
 
 void Font8x8(void);
 void Font8x16(void);
-void *GetMem(int);
+void *GetMem(int);      // Malloc avec mise … z‚ro
+void *GetMemSZ(int);    // Malloc sans mise … z‚ro
 
 void WinCadre(int x1,int y1,int x2,int y2,int type);
 void WinLine(int x1,int y1,int xl,int type);
@@ -104,10 +112,14 @@ struct config {
      char verifhist;        // Verify history at any loading of KK (CTRL-PGDN)
      char palafter;         // Load the palette only when configuration is ok
      char noprompt;         // Si x&1 vaut 1 alors on ne prompte pdt la copie
+     char currentdir;       // Va dans le repertoire courant
 
      char font;             // utilisation des fonts
+     char dispcolor;        // Highlight les fichiers suivant les extensions
+     char speedkey;         // vaut 1 si on veut accelerer les touches
 
-     
+     char insdown;          // vaut 1 si on descent quand on appuie sur insert
+     char seldir;           // vaut 1 si on selectionne les repertoires avec +
 
      long strash;           // taille actuelle de la trash
     // Pas touche
@@ -128,12 +140,17 @@ struct config {
      ENTIER FenTyp[2];      // Type des fenˆtres SHELL
      ENTIER KeyAfterShell;  // Vaut 1 si wait key after dosshell
      ENTIER UseFont;        // Type de Font (0:normal, 1:8x8)
-     char Tfont[33];        // Caracteres employ‚s pour les fenˆtres
+     char Tfont;            // Caracteres employ‚s pour la ligne verticale
 
      short key;             // code touche a reutiliser
      char FileName[256];    // Nom du dernier fichier selectionne for F3 on arc.
      char crc;              // Vaut tjs 0x69 (genre de crc)
      };
+
+struct RB_info
+    {
+    clock_t temps;              // Temps entre le main() et l'appel utilisateur
+    };
 
 struct fichier {
     char *FicIdfFile;      // idfext.rb
@@ -150,15 +167,16 @@ struct fichier {
 
 struct PourMask
     {
-    char Ignore_Case;   // 1 si on ignore la case
-    char Other_Col;     // 1 si on colorie les autres noms
-    char chaine[1024];       // chaine de comparaison EX: "asm break case @"
-    char title[40];        // nom de ce masque
+    char Ignore_Case;    // 1 si on ignore la case
+    char Other_Col;      // 1 si on colorie les autres noms
+    char chaine[1024];   // chaine de comparaison EX: "asm break case @"
+    char title[40];      // nom de ce masque
     };
 
-
+void InitScreen(void);
 
 extern struct config *Cfg;
+extern struct RB_info *Info;
 extern struct fichier *Fics;
 extern struct PourMask **Mask;
 

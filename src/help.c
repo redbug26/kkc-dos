@@ -7,6 +7,8 @@
 #include <io.h>
 #include <conio.h>
 
+#include <time.h>
+
 #include "win.h"
 #include "kk.h"
 

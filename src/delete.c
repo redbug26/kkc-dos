@@ -5,6 +5,8 @@
 #include <direct.h>
 #include <dos.h>
 
+#include <time.h>
+
 #include "win.h"
 #include "kk.h"
 #include "gestion.h"

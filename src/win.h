@@ -1,15 +1,14 @@
 void PutInHistDir(void);
 void ChangeTaille(int i);
 
-void Fenet(int x1,int y1,int x2,int y2,int type);
+void SpeedTest(void);                               // Independant de KK
+
+
 
 void FenNor(struct fenetre *Fen);
 void FenDIZ(struct fenetre *Fen);
-
-void FenInfo(struct fenetre *Fen);
 void LitInfo(struct fenetre *Fen);
 
-void WinInfo(struct fenetre **);
 
 int InfoIDF(struct fenetre *Fen);
 int NameIDF(char *buf);
@@ -23,17 +22,24 @@ void YouMad(char *s);
 
 
 
+void UseCfg(void);
 
 void Setup(void);
 
-char *Long2Str(long n);
-
 extern int *TailleX;
 
+/*----------------------------*
+ - Fonction de la secret part -
+ *----------------------------*/
 
-/*********************************************
+void WinInfo(struct fenetre **Fenetre);
+short windows(short *HVersion, short *NVersion );
+void FenInfo(struct fenetre *Fen);
+
+
+/*-------------------------------------------*
  -       Gestion de la barre de menu         -
- *********************************************/
+ *-------------------------------------------*/
 
 int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
 int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);

@@ -7,6 +7,8 @@
 #include <string.h>
 #include <direct.h>
 
+#include <time.h>
+
 #include "kk.h"
 
 
@@ -21,33 +23,49 @@ struct find_t ff;
 struct file **Fic;
 unsigned error;
 char rech[256];
+union REGS R;
+
+char drive;
+
+drive=toupper(DFen->path[0])-'A';
+
+/*
+
+R.w.ax=0x5601;
+R.w.dx=0xFFFF;
+R.h.bh=drive;
+R.h.bl=0;
+int386(0x2F,&R,&R);
+
+if (R.h.al==0xFF) PrintAt(0,0,"Redirected drive (with interlnk)"),getch();
+
+// PrintAt(0,0,"%04X %04X %04X %04X",R.w.ax,R.w.bx,R.w.cx,R.w.dx);
+// pour C renvoit 5601 0200 0168 FFFF
+// pour D renvoit 5601 0300 0168 FFFF
+// pour E renvoit 56FF 0401 0001 0630
+
+R.w.ax=0x150B;
+R.w.cx=drive;
+int386(0x2F,&R,&R);
+
+if ( (R.w.bx==0xADAD) & (R.w.ax!=0) ) PrintAt(0,0,"CD-ROM drive"),getch();
+
+// PrintAt(0,0,"%04X %04X %04X %04X",R.w.ax,R.w.bx,R.w.cx,R.w.dx);
+// pour C renvoit 0000 ADAD 0002 FFFF
+// pour D renvoit 0000 ADAD 0003 FFFF
+// pour H renvoit 5AD4 ADAD 0007 FFFF
+
+*/
 
 if (chdir(DFen->path)!=0)
     return 1;
-
 
 Fic=DFen->F;
 
 strcpy(rech,DFen->path);
 if (rech[strlen(rech)-1]!='\\') strcat(rech,"\\");
 
-if ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
-    {
-    Fic[0]=GetMem(sizeof(struct file));
-
-    Fic[0]->name=GetMem(4); // Pour Reload
-    memcpy(Fic[0]->name,rech,4);
-    Fic[0]->time=0;
-    Fic[0]->date=0;
-    Fic[0]->attrib=_A_SUBDIR;
-    Fic[0]->select=0;
-    Fic[0]->size=0;
-    DFen->nbrfic=1;
-    }
-    else
-    {
-    DFen->nbrfic=0;
-    }
+DFen->nbrfic=0;
 
 strcat(rech,"*.*");
 
@@ -70,8 +88,8 @@ while (error==0)
          (((ff.attrib)&_A_VOLID)!=_A_VOLID)
          )
         {
-        Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
-        Fic[DFen->nbrfic]->name=GetMem(strlen(ff.name)+1);
+        Fic[DFen->nbrfic]=GetMemSZ(sizeof(struct file));
+        Fic[DFen->nbrfic]->name=GetMemSZ(strlen(ff.name)+1);
         strcpy(Fic[DFen->nbrfic]->name,ff.name);
         Fic[DFen->nbrfic]->time=ff.wr_time;
         Fic[DFen->nbrfic]->date=ff.wr_date;
@@ -84,15 +102,32 @@ while (error==0)
     error=_dos_findnext(&ff);
 	}
 
-DFen->init=1;
+// DFen->init=1;
+
+rech[3]=0;
+
+if ( ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
+     | (DFen->nbrfic==0) )
+    {
+    Fic[DFen->nbrfic]=GetMemSZ(sizeof(struct file));
+
+    Fic[DFen->nbrfic]->name=GetMemSZ(4); // Pour Reload
+    memcpy(Fic[DFen->nbrfic]->name,rech,4);
+    Fic[DFen->nbrfic]->time=0;
+    Fic[DFen->nbrfic]->date=0;
+    Fic[DFen->nbrfic]->attrib=_A_SUBDIR;
+    Fic[DFen->nbrfic]->select=0;
+    Fic[DFen->nbrfic]->size=0;
+    DFen->nbrfic++;
+    }
 
 ChangeLine();
 
 // Temporise le temps … attendre avant le lecture du header OK ;-}
 
-switch(toupper(DFen->path[0]))
+switch(drive)
     {
-    case 'C':
+    case 2:     // C
         DFen->IDFSpeed=2*18;
         break;
     default:
@@ -103,12 +138,6 @@ switch(toupper(DFen->path[0]))
 return 0;
 }
 
-void InstallDOS(void)
-{
-getcwd(DFen->path,255);
-
-DFen->system=0;
-}
 
 
 

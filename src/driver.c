@@ -11,6 +11,8 @@
 #include <fcntl.h>
 #include <io.h>
 
+#include <time.h>
+
 #include "win.h"
 #include "kk.h"
 
@@ -230,7 +232,7 @@ if (Header.FType!=2)
 
 close(handle);
 
-DFen->init=1;
+// DFen->init=1;
 
 if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
     {
@@ -392,7 +394,7 @@ pos=pos+Lt.TeteSize;
 if (Lt.Flags & 0x8000) pos+=Lt.PackSize;		// LONG_BLOCK
 }
 
-DFen->init=1;
+// DFen->init=1;
 
 if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
     {
@@ -589,7 +591,7 @@ pos=tell(handle)+Header.PackSize+Header.ExtraField;
 
 close(handle);
 
-DFen->init=1;
+// DFen->init=1;
 
 if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
     {
@@ -791,7 +793,7 @@ pos+=Header.HSize+Header.PackSize+2;     // CRC ?
 
 close(handle);
 
-DFen->init=1;
+// DFen->init=1;
 
 if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
     {
@@ -991,7 +993,7 @@ if (fin==0)
     }
 
 close(handle);
-DFen->init=1;
+// DFen->init=1;
 
 if (fin==1)
     {

@@ -13,6 +13,8 @@
 #include <dos.h>
 #include <fcntl.h>
 
+#include <time.h>
+
 #include "win.h"
 #include "kk.h"
 
