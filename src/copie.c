@@ -688,7 +688,7 @@ struct file *F;
 char nom[256];
 char player[256];
 
-fic=fopen(Fics->temp,"wt");
+fic=fopen(KKFics->temp,"wt");
 
 strcpy(nom,F1->path);
 
@@ -721,7 +721,7 @@ if (PlayerIdf(player,30)==0)
     {
     KKCfg->scrrest=0;
     CommandLine("#%s a -ep1 -std %s @%s %s >nul",player,F2->VolName,
-                                                        Fics->temp,nom);
+                                                      KKFics->temp,nom);
     }
 }
 
@@ -741,7 +741,7 @@ char option;
 
 option='E';
 
-fic=fopen(Fics->temp,"wt");
+fic=fopen(KKFics->temp,"wt");
 
 if (strlen(F1->path)==strlen(F1->VolName))
     strcpy(nom,"");
@@ -780,7 +780,7 @@ if (PlayerIdf(player,34)==0)
     {
     KKCfg->scrrest=0;
     CommandLine("#%s %c -std -y %s @%s %s >nul",player,option,
-                                       F1->VolName,Fics->temp,F2->path);
+                                     F1->VolName,KKFics->temp,F2->path);
     }
 }
 
@@ -801,7 +801,7 @@ char option;
 
 option='e';
 
-fic=fopen(Fics->temp,"wt");
+fic=fopen(KKFics->temp,"wt");
 
 if (strlen(F1->path)==strlen(F1->VolName))
     strcpy(nom,"");
@@ -842,7 +842,7 @@ if (PlayerIdf(player,35)==0)
     {
     KKCfg->scrrest=0;
     CommandLine("#%s -%c -o %s @%s %s >nul",player,option,F1->VolName,
-                                                   Fics->temp,F2->path);
+                                                 KKFics->temp,F2->path);
     }                    // Overwrite newer file
 }
 
@@ -862,7 +862,7 @@ char option;
 
 option='E';
 
-fic=fopen(Fics->temp,"wt");
+fic=fopen(KKFics->temp,"wt");
 
 if (strlen(F1->path)==strlen(F1->VolName))
     strcpy(nom,"");
@@ -900,7 +900,7 @@ if (PlayerIdf(player,30)==0)
     {
     KKCfg->scrrest=0;
     CommandLine("#%s %c -P -y %s %s !%s >nul",player,option,F1->VolName,
-                                                   F2->path,Fics->temp);
+                                                 F2->path,KKFics->temp);
     }
 }
 
@@ -921,7 +921,7 @@ char option;
 
 option='E';
 
-fic=fopen(Fics->temp,"wt");
+fic=fopen(KKFics->temp,"wt");
 
 if (strlen(F1->path)==strlen(F1->VolName))
     strcpy(nom,"");
@@ -959,7 +959,7 @@ if (PlayerIdf(player,32)==0)
     {
     KKCfg->scrrest=0;
     CommandLine("#%s %c -a %s -w%s @%s >nul",player,option,F1->VolName,
-                        F2->path,Fics->temp);
+                        F2->path,KKFics->temp);
     }
 }
 

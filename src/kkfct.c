@@ -2,6 +2,7 @@
 |- KK fonction                                                        -|
 \*--------------------------------------------------------------------*/
 #include <mem.h>
+#include <stdlib.h>       //--- Pour getenv ----------------------------
 
 #include "kk.h"
 
@@ -143,7 +144,7 @@ KKCfg->saveviewpos=1;
 KKCfg->wmask=15;                                    // RedBug preference
 
 KKCfg->lnfeed=4;                                                // CR/LF
-KKCfg->userfeed=0;
+KKCfg->userfeed=0xE3;
 
 KKCfg->AnsiSpeed=133;
 }
@@ -242,3 +243,40 @@ strcpy(KKCfg->editeur,Edit);
 strcpy(KKCfg->vieweur,View);
 strcpy(KKCfg->ssaver,SSaver);
 }
+
+void SetDefaultKKPath(char *path)
+{
+char *Trash;
+
+Trash=getenv("KKUSER");
+if (Trash==NULL) Trash="trash";
+
+KKFics->trash=(char*)GetMem(256);
+strcpy(KKFics->trash,path);
+Path2Abs(KKFics->trash,Trash);                       // repertoire trash
+
+KKFics->FicIdfFile=(char*)GetMem(256);
+strcpy(KKFics->FicIdfFile,KKFics->trash);
+Path2Abs(KKFics->FicIdfFile,"idfext.rb");
+
+KKFics->CfgFile=(char*)GetMem(256);
+strcpy(KKFics->CfgFile,KKFics->trash);
+Path2Abs(KKFics->CfgFile,"kkrb.cfg");
+
+KKFics->temp=(char*)GetMem(256);
+strcpy(KKFics->temp,KKFics->trash);
+Path2Abs(KKFics->temp,"kktemp.tmp");
+
+KKFics->log=(char*)GetMem(256);
+strcpy(KKFics->log,KKFics->trash);
+Path2Abs(KKFics->log,"logfile");                        // logfile trash
+
+KKFics->menu=(char*)GetMem(256);
+strcpy(KKFics->menu,KKFics->trash);
+Path2Abs(KKFics->menu,"kkc.mnu");
+
+KKFics->ficscreen=(char*)GetMem(256);
+strcpy(KKFics->ficscreen,KKFics->trash);
+Path2Abs(KKFics->ficscreen,"kkc.scr");
+}
+

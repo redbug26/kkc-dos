@@ -278,6 +278,8 @@ if (DFen->system==0)
         strcpy(tnom,"");
         do
             {
+//            strcpy(nom2,DFen->path);  // Marjorie (pq j'avais mis ca ?)
+
             n=0;
             for (i=0;i<strlen(DFen->path)-1;i++)
                 if (DFen->path[i]==DEFSLASH) n=i;
@@ -903,7 +905,7 @@ memcpy(&(KKCfg->HistCom[TabCom[i]]),chaine,strlen(chaine)+1);
 /*--------------------------------------------------------------------*\
 |-  Commandes globales                                                -|
 \*--------------------------------------------------------------------*/
-static int x0,py,xmax;    // position en X,Y ,X initial, Taille de X max
+static int x0,py=0,xmax;  // position en X,Y ,X initial, Taille de X max
 static char str[256];                                // commande interne
 static int px;                                                // Chaipus
 
@@ -918,7 +920,7 @@ time_t t;
 if ((chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (KKCfg->logfile==1))
     {
     t=time(NULL);
-    fic=fopen(Fics->log,"at");
+    fic=fopen(KKFics->log,"at");
     fprintf(fic,"%-50s @ %s",chaine,ctime(&t));
     fclose(fic);
     }
@@ -1010,7 +1012,7 @@ if (n!=27)
         if (strlen(Dir)!=0)
             {
             KKCfg->scrrest=0;
-            CommandLine("#%s >%s",Dir,Fics->temp);
+            CommandLine("#%s >%s",Dir,KKFics->temp);
             }
     }
 }
@@ -1025,12 +1027,13 @@ void ChangeLine(void)
 {
 int x1,m,n,v;
 
-if (DFen->nfen>=2) return;
+if ((py==0) | (DFen->nfen>=2)) return;
 
 x1=strlen(DFen->path)+1;
 m=strlen(str);
 
 v=xmax-2-x0;
+
 
 if ( ((x1+m)>75) & (x1>40) )
     {

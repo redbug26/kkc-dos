@@ -66,13 +66,8 @@ struct config
 
 struct fichier
      {
-     char *FicIdfFile;                                      // idfext.rb
-     char *CfgFile;                                          // kkrb.cfg
      char *path;                                                 // path
      char *help;                                              // kkc.hlp
-     char *temp;                                             // temp.tmp
-     char *trash;                                    // repertoire trash
-     char *log;                                               // logfile
      char *LastDir;                                           // lastdir
      };
 

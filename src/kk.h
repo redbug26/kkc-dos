@@ -22,6 +22,12 @@ struct kkfichier
      {
      char *menu;                                              // kkc.mnu
      char *ficscreen;                                         // kkc.scr
+
+     char *trash;                                    // repertoire trash
+     char *FicIdfFile;                                      // idfext.rb
+     char *CfgFile;                                          // kkrb.cfg
+     char *temp;                                             // temp.tmp
+     char *log;                                               // logfile
      };
 
 extern struct kkfichier *KKFics;
@@ -69,7 +75,6 @@ typedef struct _fenetre
      long taillefic;
      long nbrsel;
      long taillesel;
-     char actif;
      struct file **F;
 
      long nopcur;                  // Fichier a copier si c'est noprompt
@@ -101,6 +106,8 @@ typedef struct _fenetre
 
      char VolName[255];                                 // Nom du volume
      char nfen;                                  // Numero de la fenetre
+                                                   // 0: Celle de gauche
+                                                   // 1: Celle de droite
 
      char KKDdrive;                     // Numero du drive pour les .KKD
 
@@ -214,6 +221,7 @@ int ChangeToKKD(void);
 
 void GestionFct(int fct);
 char *AccessFile(int n);
+char *AccessAbsFile(char *fic);
 
 extern FENETRE *DFen;
 extern char *Screen_Buffer;
@@ -248,3 +256,4 @@ extern int IOerr;
 \*--------------------------------------------------------------------*/
 void DefaultKKCfg(void);
 void FileSetup(void);
+void SetDefaultKKPath(char *path);

@@ -36,6 +36,7 @@ char LoadDefCfg;
 
 struct kkconfig *KKCfg;
 struct PourMask **Mask;
+struct kkfichier *KKFics;
 
 /*--------------------------------------------------------------------*\
 |- Fake MenuCreat pour ficidf                                         -|
@@ -576,7 +577,7 @@ FENETRE *Fen;
 KKCfg->FenTyp[0]=0;
 KKCfg->FenTyp[1]=0;
 
-fic=fopen(Fics->CfgFile,"wb");
+fic=fopen(KKFics->CfgFile,"wb");
 fwrite((void*)Cfg,sizeof(struct config),1,fic);
 
 fwrite((void*)KKCfg,sizeof(struct kkconfig),1,fic);
@@ -633,7 +634,7 @@ char nom[256];
 FENETRE *DFen;
 
 
-fic=fopen(Fics->CfgFile,"rb");
+fic=fopen(KKFics->CfgFile,"rb");
 if (fic==NULL) return -1;
 
 fread((void*)Cfg,sizeof(struct config),1,fic);
@@ -1045,6 +1046,7 @@ Fenetre[3]=GetMem(sizeof(FENETRE));
 Fenetre[3]->F=GetMem(TOTFIC*sizeof(void *));
 
 Fics=GetMem(sizeof(struct fichier));
+KKFics=(struct kkfichier*)GetMem(sizeof(struct kkfichier));
 
 Mask=GetMem(sizeof(struct PourMask*)*16);
 for (n=0;n<16;n++)
@@ -1056,11 +1058,11 @@ for (n=0;n<16;n++)
 \*--------------------------------------------------------------------*/
 
 SetDefaultPath(path);
+SetDefaultKKPath(path);
 
 Fics->help=GetMem(256);
 strcpy(Fics->help,path);
 Path2Abs(Fics->help,"kksetup.hlp");
-
 
 /*--------------------------------------------------------------------*\
 |- Chargement de la configuration                                     -|
@@ -1114,8 +1116,7 @@ if (LoadDefCfg)
 |-  Gestion Message                                                   -|
 \*--------------------------------------------------------------------*/
 
-strcpy(chaine,Fics->path);
-Path2Abs(chaine,"trash");
+strcpy(chaine,KKFics->trash);
 if (mkdir(chaine)==0)
     {
     DispMessage("Creation of the trash directory '%s': OK",chaine);
@@ -1171,7 +1172,7 @@ if (strlen(buffer)!=0)
 
 
 
-fic=fopen(Fics->FicIdfFile,"rb");
+fic=fopen(KKFics->FicIdfFile,"rb");
 if (fic==NULL)
     {
     DispMessage("It's the first time that you run KKSETUP");
@@ -1268,7 +1269,7 @@ for (n=0;n<26;n++)
 
 if (nbr>0)
     {
-    fic=fopen(Fics->FicIdfFile,"wb");
+    fic=fopen(KKFics->FicIdfFile,"wb");
     if (fic!=NULL)
         {
         fwrite("RedBLEXU",1,8,fic);
@@ -2117,7 +2118,7 @@ char info;
 int ndir;
 char name[256],dir[129];
 
-fic=fopen(Fics->FicIdfFile,"rb");
+fic=fopen(KKFics->FicIdfFile,"rb");
 
 
 if (fic==NULL)

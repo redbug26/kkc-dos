@@ -14,6 +14,7 @@ void FenDIZ(FENETRE *Fen);
 void FenDisk(FENETRE *Fen);
 void FenTree(FENETRE *Fen);
 void FenFileID(FENETRE *Fen);
+void ViewFileID(FENETRE *Fen);
 int SearchInfo(FENETRE *Fen);
 void DispInfo(FENETRE *Fen);
 

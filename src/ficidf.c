@@ -76,7 +76,7 @@ int car,nbrappl;
 
 car=numero;
 
-fic=fopen(Fics->FicIdfFile,"rb");
+fic=fopen(KKFics->FicIdfFile,"rb");
 
 if (fic==NULL)
     {
@@ -346,7 +346,7 @@ int nbrappl;
 
 a=numero;
 
-fic=fopen(Fics->FicIdfFile,"rb");
+fic=fopen(KKFics->FicIdfFile,"rb");
 
 if (fic==NULL)
     {

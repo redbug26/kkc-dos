@@ -117,7 +117,7 @@ static char ficname[256];
 
 if (KKCfg->saveviewpos==1)
     {
-    strcpy(ficname,Fics->trash);
+    strcpy(ficname,KKFics->trash);
     Path2Abs(ficname,"kkview.rb");
     fic=fopen(ficname,"rb");
     if (fic!=NULL)
@@ -149,7 +149,7 @@ static char ficname[256];
 
 if (KKCfg->saveviewpos==1)
     {
-    strcpy(ficname,Fics->trash);
+    strcpy(ficname,KKFics->trash);
     Path2Abs(ficname,"kkview.rb");
     fic=fopen(ficname,"r+b");
     if (fic==NULL)
@@ -903,24 +903,30 @@ int car,m;
 m=0;
 do
     {
-    posn++;
-    if (posn==taille)
-        {
-        posn=taille-1;
-        return 0;
-        }
     car=ReadChar();
+    posn++;
+
     if ( ((car==10) & (KKCfg->lnfeed==0)) |
          ((car==13) & (KKCfg->lnfeed==1)) |
          ((car==10) & (KKCfg->lnfeed==2)) |
          ((car==10) & (KKCfg->lnfeed==4)) |
          ((car==KKCfg->userfeed) & (KKCfg->lnfeed==3)))
         {
-        posn++;
         return 1;
         }
+//
+    if (posn==taille)
+        {
+        posn=taille-1;
+        return 0;
+        }
+//
     if ((car!=10) & (car!=13)) m++;
-    if ((m>=xl) & (KKCfg->warp!=0)) return 1;
+    if ((m>xl) & (KKCfg->warp!=0))
+        {
+        posn--;
+        return 1;
+        }
     }
 while(1);
 }
@@ -935,8 +941,12 @@ int TxtUp(int xl)
 int car,m;
 
 if (posn==0) return 0;
-posn--;
+
 m=0;
+posn--;
+car=ReadChar();
+if ((car!=10) & (car!=13)) m++;
+
 if (posn==0) return 0;
 do
     {
@@ -957,9 +967,10 @@ do
         return 1;
         }
     if ((car!=10) & (car!=13)) m++;
-    if ((m>=xl-1) & (KKCfg->warp!=0)) return 1;
+    if ((m>=xl) & (KKCfg->warp!=0)) return 1;
     }        // m>xl-1
 while(1);
+
 }
 
 /*--------------------------------------------------------------------*\
@@ -2612,89 +2623,6 @@ if (code==13)
 }
 
 
-/*--------------------------------------------------------------------*\
-|- Fonction principale du viewer                                      -|
-\*--------------------------------------------------------------------*/
-
-void View(FENETRE *F)
-{
-static char buffer[256];
-char *fichier,*liaison;
-short i;
-
-xor=0;
-
-if (F->FenTyp!=0) return;
-
-SaveScreen();
-
-Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
-
-fichier=GetMem(256);
-strcpy(fichier,F->path);
-Path2Abs(fichier,F->F[F->pcur]->name);
-
-liaison=GetMem(256);
-strcpy(liaison,"");
-
-i=InfoIDF(F);
-
-fic=fopen(fichier,"rb");
-
-if (fic==NULL)
-    {
-    PrintAt(0,0,"Error on file '%s'",fichier);
-    WinError("Couldn't open file");
-    i=-1;
-    }
-    else
-    {
-    taille=filelength(fileno(fic));
-
-    if (taille==0) i=-1;
-
-    fread(view_buffer,32768,1,fic);
-
-    pos=0;
-    posl=32768;
-
-    posn=0;
-    }
-
-while(i!=-1)
-    {
-    switch(i)
-        {
-        case 86:  // Ansi
-            i=Ansi2View(fichier);
-            break;
-        case 91:  // Texte
-            i=TxtView(fichier);
-            break;
-        case 104: // HTML
-            i=HtmlView(fichier,liaison);
-            break;
-        case 37:  // GIF
-        case 38:  // JPG
-            FicIdf(buffer,fichier,i,0);
-            CommandLine(buffer);
-            i=-1;
-            break;
-        default:
-            i=HexaView(fichier);
-            break;
-        }
-    }
-
-if (fic!=NULL)
-    fclose(fic);
-
-free(liaison);
-free(fichier);
-
-LoadScreen();
-}
-
 
 
 
@@ -3281,6 +3209,7 @@ for (posn=0;posn<taille;posn++)
     ansi_out(ReadChar());
 
 Ansi2=cury+1-Cfg->TailleY+2;
+if (Ansi2<0) Ansi2=0;
 }
 
 void DispAnsiPage(void)
@@ -3395,7 +3324,10 @@ if ( ((car&1)==1) | ((car&2)==2) )
     if (shift==0)
         SaveScreen();
 
-    prc=(Ansi1*100)/Ansi2;
+    if (Ansi2!=0)
+        prc=(Ansi1*100)/Ansi2;
+        else
+        prc=100;
 
     ColLin(0,0,Cfg->TailleX,1*16+2);
 
@@ -3637,3 +3569,148 @@ WinError(buffer);
 LibMem(buffer);
 
 }
+
+
+/*--------------------------------------------------------------------*\
+|- Fonction principale du viewer                                      -|
+\*--------------------------------------------------------------------*/
+
+void View(FENETRE *F)
+{
+static char buffer[256];
+char *fichier,*liaison;
+short i;
+
+xor=0;
+
+if (F->FenTyp!=0) return;
+
+SaveScreen();
+
+Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
+
+fichier=GetMem(256);
+strcpy(fichier,F->path);
+Path2Abs(fichier,F->F[F->pcur]->name);
+
+liaison=GetMem(256);
+strcpy(liaison,"");
+
+i=InfoIDF(F);
+
+fic=fopen(fichier,"rb");
+
+if (fic==NULL)
+    {
+    PrintAt(0,0,"Error on file '%s'",fichier);
+    WinError("Couldn't open file");
+    i=-1;
+    }
+    else
+    {
+    taille=filelength(fileno(fic));
+
+    if (taille==0) i=-1;
+
+    fread(view_buffer,32768,1,fic);
+
+    pos=0;
+    posl=32768;
+
+    posn=0;
+    }
+
+while(i!=-1)
+    {
+    switch(i)
+        {
+        case 86:  // Ansi
+            i=Ansi2View(fichier);
+            break;
+        case 91:  // Texte
+            i=TxtView(fichier);
+            break;
+        case 104: // HTML
+            i=HtmlView(fichier,liaison);
+            break;
+        case 37:  // GIF
+        case 38:  // JPG
+            FicIdf(buffer,fichier,i,0);
+            CommandLine(buffer);
+            i=-1;
+            break;
+        default:
+            i=HexaView(fichier);
+            break;
+        }
+    }
+
+if (fic!=NULL)
+    fclose(fic);
+
+free(liaison);
+free(fichier);
+
+LoadScreen();
+}
+
+
+/*--------------------------------------------------------------------*\
+|- Viewer de vrai file (avec une path complete)                       -|
+\*--------------------------------------------------------------------*/
+void ViewFile(char *file)
+{
+FENETRE *SFen,*OldFen;
+static char buf[256];
+int i,k;
+
+OldFen=DFen;
+
+SFen=GetMem(sizeof(FENETRE));
+SFen->F=GetMem(TOTFIC*sizeof(void *));
+
+SFen->x=40;
+SFen->nfen=7;
+SFen->FenTyp=0;
+SFen->Fen2=SFen;
+SFen->y=1;
+SFen->yl=(Cfg->TailleY)-4;
+SFen->xl=39;
+SFen->order=17;
+SFen->pcur=0;
+SFen->scur=0;
+
+DFen=SFen;
+
+strcpy(buf,file);
+Path2Abs(buf,"..");
+
+IOver=1;
+IOerr=0;
+
+CommandLine("#CD %s\n",buf);
+
+IOver=0;
+
+FileinPath(file,buf);
+
+k=-1;
+for (i=0;i<DFen->nbrfic;i++)
+    if (!WildCmp(buf,DFen->F[i]->name))
+        {
+        k=i;
+        break;
+        }
+
+if (k!=-1)
+    {
+    DFen->pcur=k;
+    View(DFen);
+    }
+
+DFen=OldFen;
+
+LibMem(SFen->F);
+LibMem(SFen);
+}
+

@@ -329,7 +329,7 @@ SFen=GetMem(sizeof(FENETRE));
 SFen->F=GetMem(TOTFIC*sizeof(void *));
 
 SFen->x=40;
-SFen->actif=0;
+//SFen->actif=0;
 SFen->nfen=7;
 SFen->FenTyp=0;
 SFen->Fen2=SFen;

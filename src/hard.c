@@ -3531,8 +3531,10 @@ do
     if (pos>=NbrSub[z]) pos=NbrSub[z]-1;
 
 
-    switch(car) {
+    switch(car)
+        {
         case 13:
+            help_fin=0;
             Page(NdxSubTopic[z][pos]);
             break;
         }
@@ -3919,26 +3921,6 @@ getcwd(Fics->LastDir,256);
 
 Fics->path=(char*)GetMem(256);
 strcpy(Fics->path,_IntBuffer);
-
-Fics->trash=(char*)GetMem(256);
-strcpy(Fics->trash,_IntBuffer);
-strcat(Fics->trash,"trash");                         // repertoire trash
-
-Fics->FicIdfFile=(char*)GetMem(256);
-strcpy(Fics->FicIdfFile,Fics->trash);
-strcat(Fics->FicIdfFile,"\\idfext.rb");
-
-Fics->CfgFile=(char*)GetMem(256);
-strcpy(Fics->CfgFile,Fics->trash);
-strcat(Fics->CfgFile,"\\kkrb.cfg");
-
-Fics->temp=(char*)GetMem(256);
-strcpy(Fics->temp,Fics->trash);
-strcat(Fics->temp,"\\kktemp.tmp");
-
-Fics->log=(char*)GetMem(256);
-strcpy(Fics->log,Fics->trash);
-strcat(Fics->log,"\\logfile");                          // logfile trash
 }
 
 /*--------------------------------------------------------------------*\

@@ -295,18 +295,9 @@ for (n=strlen(path);n>0;n--) {
         }
     }
 
-Fics=GetMem(sizeof(struct fichier));
+Fics=(struct fichier*)GetMem(sizeof(struct fichier));
 
-Fics->FicIdfFile=GetMem(256);
-strcpy(Fics->FicIdfFile,path);
-strcat(Fics->FicIdfFile,"\\idfext.rb");
-
-Fics->CfgFile=GetMem(256);
-strcpy(Fics->CfgFile,path);
-strcat(Fics->CfgFile,"\\kkrb.cfg");
-
-Fics->path=GetMem(256);
-strcpy(Fics->path,path);
+SetDefaultPath(path);
 
 Fics->help=GetMem(256);
 strcpy(Fics->help,path);

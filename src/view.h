@@ -2,3 +2,4 @@
 |-  Prototype du viewer                                               -|
 \*--------------------------------------------------------------------*/
 void View(FENETRE *F);
+void ViewFile(char *file);

@@ -234,7 +234,7 @@ x=Fen->x+1+(36-strlen(buffer))/2;
 
 if (y==Fen->y)
     {
-    if (Fen->actif==1)
+    if (KKCfg->FenAct==Fen->nfen)
         ColLin(x,y,strlen(buffer)+2,13*16+2);
         else
         ColLin(x,y,strlen(buffer)+2,7*16+6);
@@ -381,7 +381,7 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
 /*--------------------------------------------------------------------*\
 |------------------- Line Activity ------------------------------------|
 \*--------------------------------------------------------------------*/
-        if ((Fen->actif==1) & (n==(Fen->pcur)) )
+        if ( (KKCfg->FenAct==Fen->nfen) & (n==Fen->pcur) )
             {
             if (Fen->F[n]->select==0)
                 col=14*16+6;
@@ -1516,8 +1516,107 @@ Fen->init=0;
 /*--------------------------------------------------------------------*\
 |-  Information on FILE_ID.DIZ                                        -|
 \*--------------------------------------------------------------------*/
-
 void FenFileID(FENETRE *Fen)
+{
+int x,y,n,l;
+char c;
+char path[256],*name;
+FILE *fic;
+static char oldpath[256]="",oldname[256];
+
+x=Fen->x+1;
+y=Fen->y+1;
+
+WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+4);
+
+strcpy(path,Fen->Fen2->path);
+if (Fen->Fen2->F[Fen->Fen2->pcur]->name[0]!='.')
+    Path2Abs(path,Fen->Fen2->F[Fen->Fen2->pcur]->name);  // Ajout gedeon
+    else
+    oldpath[0]=0;
+Path2Abs(path,"FILE_ID.DIZ");
+
+if (strcmp(path,oldpath)!=0)
+    {
+    strcpy(oldpath,path);
+
+    name=AccessAbsFile(path);  // Ajout GEDEON ------------------------
+    if (name==NULL)
+        strcpy(oldname,"");
+        else
+        strcpy(oldname,name);
+
+    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
+    }
+    else
+    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"?");
+
+// Affichage du file_id.diz dans la fenetre ----------------------------
+
+if (oldname[0]!=0)
+    {
+    fic=fopen(oldname,"rb");
+    if (fic==NULL)
+        {
+        PrintAt(x+1,y+1,"FILE_ID.DIZ doesn't exist !");
+        return;
+        }
+
+    l=filelength(fileno(fic));
+
+    if (l>32768) l=32768;
+
+    for(n=0;n<l;n++)
+        {
+        c=fgetc(fic);
+
+        switch(c)
+            {
+            case 10:
+                x=Fen->x+1;
+                y++;
+                break;
+            case 7:
+            case 13:
+                break;
+            default:
+                if (x<Fen->x+Fen->xl)
+                    {
+                    AffChr(x,y,c);
+                    x++;
+                    }
+                break;
+            }
+        if (y>Fen->y+Fen->yl-2) break;
+        }
+    fclose(fic);
+    }
+
+Fen->init=0;
+}
+
+/*--------------------------------------------------------------------*\
+|-  Information on FILE_ID.DIZ                                        -|
+\*--------------------------------------------------------------------*/
+void ViewFileID(FENETRE *Fen)
+{
+char path[256],*name;
+
+strcpy(path,Fen->Fen2->path);
+if (Fen->Fen2->F[Fen->Fen2->pcur]->name[0]!='.')
+    Path2Abs(path,Fen->Fen2->F[Fen->Fen2->pcur]->name);  // Ajout gedeon
+Path2Abs(path,"FILE_ID.DIZ");
+
+name=AccessAbsFile(path);  // Ajout GEDEON -----------------------------
+
+if (name!=NULL)
+    ViewFile(name);
+
+DFen->init=1;
+}
+
+void FenFileID2(FENETRE *Fen)
 {
 int x,y,n,l,i;
 char c;
@@ -1548,7 +1647,7 @@ strcpy(oldpath,Fen->Fen2->path);
 Fen->init=0;
 
 if (Fen->Fen2->system!=0)
-    strcpy(path,Fics->trash);
+    strcpy(path,KKFics->trash);
     else
     strcpy(path,oldpath);
 
@@ -1594,7 +1693,6 @@ if (l!=Fen->Fen2->F[i]->size)
     AccessFile(k);          // Acces au fichier -----------------------
     DFen=OldFen;
     }
-
 /*--------------------------------------------------------------------*\
 |- Affichage du file_id.diz dans la fenetre                           -|
 \*--------------------------------------------------------------------*/
@@ -1637,6 +1735,8 @@ fclose(fic);
 
 PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
 }
+
+
 
 
 

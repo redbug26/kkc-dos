@@ -364,7 +364,7 @@ if (infic==NULL)
     return 1;
     }
 
-outfic=fopen(Fics->temp,"wt");
+outfic=fopen(KKFics->temp,"wt");
 if (outfic==NULL)
     {
     fclose(infic);
@@ -405,7 +405,7 @@ strcat(buf1,".bak");
 
 unlink(buf1);
 rename(KKFics->menu,buf1);
-rename(Fics->temp,KKFics->menu);
+rename(KKFics->temp,KKFics->menu);
 
 return 1;
 }
@@ -528,7 +528,7 @@ if (retour==2)
         return 0;
         }
 
-    strcpy(filename,Fics->trash);
+    strcpy(filename,KKFics->trash);
     Path2Abs(filename,"z.bat");
 
     outfic=fopen(filename,"wt");
