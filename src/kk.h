@@ -1,5 +1,5 @@
-#define VERSION "0.5"
-#define RBTitle "Ketchup Killers Commander V0.5"
+#define VERSION "0.6"
+#define RBTitle "Ketchup Killers Commander V0.6"
 
 #define CALLING __cdecl
 
@@ -41,7 +41,8 @@ typedef struct _fenetre
      long taillesel;
      char actif;
      struct file **F;
-     
+
+     short nopcur;                 // Fichier a copier si c'est noprompt
      short pcur;                              // positon dans le tableau
      short scur;                         // positon du curseur … l'‚cran
      short oldscur;                              // dernier scur affiche
@@ -77,7 +78,7 @@ void AffFen(FENETRE *Fen);
 int ChangeToKKD(void);
 
 void GestionFct(int fct);
-char *AccessFile(void);
+char *AccessFile(int n);
 
 extern FENETRE *DFen;
 extern char *Screen_Buffer;
@@ -96,6 +97,7 @@ extern int IOerr;
 #include "reddies.h"
 #include "driver.h"
 #include "win.h"
+#include "longname.h"
 
 #ifdef DEBUG
 #define PUTSERR(__Ch) PrintAt(0,0,"DEBUG MODE ERROR: %s",__Ch);  getch()

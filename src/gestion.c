@@ -208,14 +208,16 @@ char *p;
 p=DFen->path;
 memcpy(old,p,256);
 
-for(n=0;n<strlen(Ficname);n++)
-    if (Ficname[n]=='/') Ficname[n]='\\';
+
+// Conversion suivant le type de dir du systeme (pour comptabilite UNIX)
+for(n=0;n<strlen(Ficname);n++)  
+    if (Ficname[n]=='/') Ficname[n]=DEFSLASH;
 
 FileinPath(DFen->path,nom);
 
 Path2Abs(DFen->path,Ficname);
 
-if ( (p[strlen(p)-1]=='\\') & (p[strlen(p)-2]!=':') )
+if ( (p[strlen(p)-1]==DEFSLASH) & (p[strlen(p)-2]!=':') )
      p[strlen(p)-1]=0;
 
 err=0;
@@ -240,7 +242,7 @@ if (DFen->system==0)
             {
             n=0;
             for (i=0;i<strlen(DFen->path)-1;i++)
-                if (DFen->path[i]=='\\') n=i;
+                if (DFen->path[i]==DEFSLASH) n=i;
 
             if (n==0) break;
 
@@ -409,7 +411,7 @@ int j;
 
 j=0;
 
-SaveEcran();
+// SaveEcran();
 ColLin(0,0,80,1*16+4);
 
 while(1) {
@@ -435,7 +437,7 @@ while(1) {
 if (j<256)
     memset(&(Cfg->HistDir[j]),0,256-j);
 
-ChargeEcran();
+// ChargeEcran();
 }
 
 /*--------------------------------------------------------------------*\
@@ -948,7 +950,6 @@ va_start(parameter,string);
 vsprintf(sortie,string,parameter);
 va_end(parameter);
 
-
 if (suite[0]=='#')
     {
     pos=0;                             // position dans commande interne
@@ -967,6 +968,8 @@ if (suite[0]=='#')
     }
 
 traite=0;
+
+if (suite[0]==0) return 0;
 
 if ( (suite[0]=='\n') & (px==0)) return 0;
 

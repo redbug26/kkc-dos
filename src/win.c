@@ -24,8 +24,6 @@
 extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
 
 
-int *TailleX;
-
 void ClearSpace(char *name);    //--- efface les espaces inutiles ------
 
 int NameIDF(char *name)
@@ -47,20 +45,26 @@ return Info.numero;
 
 int InfoIDF(FENETRE *Fen)
 {
+static char buffer[256];
 struct file *F;
 RB_IDF Info;
 
 F=Fen->F[Fen->pcur];
 
+if (Cfg->_Win95==1)
+    InfoLongFile(Fen,buffer);
+    else
+    strcpy(buffer,F->name);
+
 if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
     {
-    PrintAt(0,0,"%-40s%-40s","Directory",F->name);
+    PrintAt(0,0,"%-40s%-*s","Directory",(Cfg->TailleX)-40,buffer);
     return 0;
     }
 
 if (Fen->system!=0)
     {
-    PrintAt(0,0,"%-40s%-40s","Internal File",F->name);
+    PrintAt(0,0,"%-40s%-*s","Internal File",(Cfg->TailleX)-40,buffer);
     return 0;
     }
 
@@ -72,10 +76,13 @@ strcpy(Info.fullname,"");
 
 Traitefic(&Info);
 
-Info.fullname[40]=0;
+Info.fullname[(Cfg->TailleX)-40]=0;
 Info.format[40]=0;
 
-PrintAt(0,0,"%-40s%-40s",Info.format,Info.fullname);
+if (!strcmp(Info.fullname,F->name))
+    strcpy(Info.fullname,buffer);
+
+PrintAt(0,0,"%-40s%-*s",Info.format,(Cfg->TailleX)-40,Info.fullname);
 
 return Info.numero;
 }
@@ -324,7 +331,7 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
             if (Fen->F[n]->select==0)
                 col=1*16+6;
                 else
-                col=1*16+5;
+                col=13*16+2;
             }
             else
             {
@@ -335,26 +342,26 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
                 if (Cfg->dispcolor==1)
                     {
                     if ((FoundExt(ext,Cfg->ExtExe)) & (Cfg->Enable_Exe))
-                        col=7*16+13;                        // Executable
+                        col=7*16+13;                       // Executable
                     else
                     if ((FoundExt(ext,Cfg->ExtArc)) & (Cfg->Enable_Arc))
-                        col=7*16+8;                            // Archive
+                        col=7*16+8;                           // Archive
                     else
                     if ((FoundExt(ext,Cfg->ExtSnd)) & (Cfg->Enable_Snd))
-                        col=7*16+12;                               // Son
+                        col=7*16+12;                              // Son
                     else
                     if ((FoundExt(ext,Cfg->ExtBmp)) & (Cfg->Enable_Bmp))
-                        col=7*16+11;                             // Image
+                        col=7*16+11;                            // Image
                     else
                     if ((FoundExt(ext,Cfg->ExtTxt)) & (Cfg->Enable_Txt))
-                         col=7*16+4;                             // Texte
+                         col=7*16+4;                            // Texte
                     else
                     if ((FoundExt(ext,Cfg->ExtUsr)) & (Cfg->Enable_Usr))
-                         col=13*16+11;                    // User defined
+                         col=13*16+11;                   // User defined
                     }
                 }
                 else
-                col=7*16+5;
+                col=13*16+8;
             }
 
 
@@ -639,12 +646,12 @@ PrintAt(DFen->x3,DFen->y3,"%-36s",chaine);
 void AltMenu(void)
 {
 time_t clock;
-static char buffer[80];
+static char buffer[40];
 
 if (DFen->y3==0) return;
 
 clock=time(NULL);
-strftime(buffer,80,"%H:%M:%S",localtime(&clock));
+strftime(buffer,40,"%H:%M:%S",localtime(&clock));
 
 PrintAt(DFen->x3,DFen->y3,"%-36s",buffer);
 }
@@ -695,21 +702,24 @@ void Bar(char *bar)
 int TY;
 int i,j,n;
 
-TY=Cfg->TailleY;
+TY=Cfg->TailleY-1;
 
 n=0;
 for (i=0;i<10;i++)
     {
-    PrintAt(n,TY-1,"F%d",(i+1)%10);
+    PrintAt(n,TY,"F%d",(i+1)%10);
     for(j=0;j<2;j++,n++)
-        AffCol(n,TY-1,1*16+8);
+        AffCol(n,TY,1*16+8);
     
     for(j=0;j<6;j++,n++)
         {
-        AffCol(n,TY-1,1*16+2);
-        AffChr(n,TY-1,*(bar+i*6+j));
+        AffCol(n,TY,1*16+2);
+        AffChr(n,TY,*(bar+i*6+j));
         }
     }
+
+if (Cfg->TailleX!=80)
+    ColLin(80,TY,Cfg->TailleX-80,1*16+8);
 }
 
 /*--------------------------------------------------------------------*\
@@ -721,21 +731,23 @@ for (i=0;i<10;i++)
 
 void ASCIItable(void)
 {
-int n,x,y;
+int n,x,y,m;
 
 SaveEcran();
 
+m=((Cfg->TailleX)-80)/2;
+
 for (n=0;n<256;n++)
     {
-    x=(n/16)*5;
+    x=(n/16)*5+m;
     y=(n%16)+6;
 
     PrintAt(x,y,"%2X   ",n);
     AffChr(x+3,y,n);
     }
 
-WinCadre(0,5,79,22,0);
-ColWin(1,6,78,21,10*16+5);
+WinCadre(m,5,m+79,22,0);
+ColWin(m+1,6,m+78,21,10*16+5);
 
 Wait(0,0,0);
 
@@ -764,10 +776,10 @@ struct TmtWin F = { 3,10,76,17,"Error!"};
 
 l=strlen(s);
 
-x=(80-l)/2;                                             // 1-> 39, 2->39
+x=((Cfg->TailleX)-l)/2;                                 // 1-> 39, 2->39
 if (x>25) x=25;
 
-l=(40-x)*2;
+l=(Cfg->TailleX)-2*x;
 
 CadreLength=l+1;
 
@@ -830,12 +842,12 @@ LoadPal();
 
 void Setup(void)
 {
-static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14,l15,l16;
+static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14,l15,l16,l17;
 
 static char x1=32,x2=32,x3=32;
 static int y1=9,y2=2,y3=15;
 
-struct Tmt T[25] = {
+struct Tmt T[26] = {
       {40,17,2,NULL,NULL},                                      // le OK
       {55,17,3,NULL,NULL},                                  // le CANCEL
 
@@ -853,6 +865,7 @@ struct Tmt T[25] = {
       {5,14,8,"Select directories",&l14},
       {5,15,8,"Estimated copying time",&l15},
       {5,16,8,"Auto adjust viewer size",&l16},
+      {5,17,8,"Load startup directory",&l17},
 
       {39,3,7, "Size Trash   ",&l1},
       {39,4,7, "Ansi Speed   ",&l2},
@@ -887,10 +900,11 @@ l13=Cfg->insdown;
 l14=Cfg->seldir;
 l15=Cfg->esttime;
 l16=Cfg->ajustview;
+l17=Cfg->currentdir;
 
 do
 {
-n=WinTraite(T,25,&F);
+n=WinTraite(T,26,&F);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -922,6 +936,7 @@ Cfg->insdown=l13;
 Cfg->seldir=l14;
 Cfg->esttime=l15;
 Cfg->ajustview=l16;
+Cfg->currentdir=l17;
 
 SaveCfg();
 
@@ -982,7 +997,13 @@ if (T[n].type==3) return;                                      // Cancel
 
 if (n==4)
     {
-    switch(FicIdf(buffer,91,2))
+    static char dest[256];
+    static int i;
+
+    i=FicIdf(dest,buffer,91,2);
+    CommandLine(dest);
+
+    switch(i)
         {
         case 0:
             strcpy(Edit,buffer);
@@ -1208,7 +1229,7 @@ struct Tmt T[18] = {
       { 1,12,1,buffer[7],&DirLength}
       };
 
-struct TmtWin F = {0,5,79,22,"Serial Setup"};
+struct TmtWin F = {0,5,79,22,"Mask Setup"};
 
 int n;
 
@@ -1504,6 +1525,8 @@ ColLin(x+1,y+10,37,10*16+3);
 
 PrintAt(x+1,y+11,"þ %s",chaine);            // Information about windows
 PrintAt(x+1,y+12,"þ Initialisation: %d clocks ",Info->temps);
+PrintAt(x+1,y+13,"þ Long filenames support: %s ",
+                                              Cfg->_Win95 ?"Yes": "No");
 
 PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
 
@@ -1522,89 +1545,66 @@ void FenFileID(FENETRE *Fen)
 {
 int x,y,n,l,i;
 char c;
-FENETRE *Fen2;
 char path[256];
+static char oldpath[256];
 FILE *fic;
-struct file *F1,*F2;
 FENETRE *OldFen;
-int j;
+int k;
 
 x=Fen->x+1;
 y=Fen->y+1;
 
-j=-1;
-for (i=0;i<Fen->Fen2->nbrfic;i++)
-    if (!strnicmp("FILE_ID.DIZ",Fen->Fen2->F[i]->name,13))
-        {
-        j=i;
-        break;
-        }
-if ( (j==-1) | (Fen->Fen2->system==5) )
-    {
-    WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
-    Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+1);
-    PrintAt(x+1,y+1,"FILE_ID.DIZ doesn't exist !!");
-    Fen->init=1;
-    return;
-    }
-
-if (Fen->Fen2->system!=0)
-    {
-    if (stricmp(Fics->trash,Fenetre[3]->path)!=0)
-        {
-        OldFen=DFen;
-        DFen=Fenetre[3];
-        CommandLine("#CD %s",Fics->trash);
-        DFen=OldFen;
-
-        for (i=0;i<Fenetre[3]->nbrfic;i++)
-            if (!strnicmp("FILE_ID.DIZ",Fenetre[3]->F[i]->name,13))
-                {
-                Fenetre[3]->pcur=i;
-                Fenetre[3]->scur=i;
-                break;
-                }
-        }
-    }
-
-F1=Fenetre[3]->F[Fenetre[3]->pcur];
-F2=Fen->Fen2->F[j];
-
-if ((F1->size!=F2->size) | (F1->time!=F2->time) | (F1->date!=F2->date))
-    {
-    OldFen=DFen;
-    DFen=Fenetre[3];
-    CommandLine("#CD %s",Fen->Fen2->path);
-    DFen=OldFen;
-    Fen->init=1;
-    }
-
 if (Fen->init==0)
     {
-    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"?");
+    if (!stricmp(oldpath,Fen->Fen2->path))   // Pas de changement de dir
+        {
+        PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"?");
+        return;
+        }
+    Fen->init=1;
+    }
+
+WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+4);
+
+strcpy(oldpath,Fen->Fen2->path);
+
+Fen->init=0;
+
+if (Fen->Fen2->system!=0)
+    strcpy(path,Fics->trash);
+    else
+    strcpy(path,oldpath);
+
+Path2Abs(path,"FILE_ID.DIZ");
+fic=fopen(path,"rb");
+if (fic!=NULL)
+    {
+    l=filelength(fileno(fic));
+    fclose(fic);
+    }
+
+k=-1;
+for (i=0;i<Fen->Fen2->nbrfic;i++)
+    if (!stricmp("FILE_ID.DIZ",Fen->Fen2->F[i]->name))
+        {
+        k=i;
+        break;
+        }
+
+if (k==-1)
+    {
+    PrintAt(x+1,y+1,"FILE_ID.DIZ doesn't exist !");
     return;
     }
 
-OldFen=DFen;
-DFen=Fenetre[3];
-for (i=0;i<Fenetre[3]->nbrfic;i++)
-    if (!strnicmp("FILE_ID.DIZ",Fenetre[3]->F[i]->name,13))
-        {
-        Fenetre[3]->pcur=i;
-        Fenetre[3]->scur=i;
-        break;
-        }
-AccessFile();
-DFen=OldFen;
-
-WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+1);
-
-Fen2=Fenetre[3];
-
-strcpy(path,Fen2->path);
-Path2Abs(path,Fen2->F[Fen2->pcur]->name);
-
+if (l!=Fen->Fen2->F[i]->size)
+    {
+    OldFen=DFen;
+    DFen=Fen->Fen2;
+    AccessFile(k);
+    DFen=OldFen;
+    }
 
 /*--------------------------------------------------------------------*\
 |- Affichage du file_id.diz dans la fenetre                           -|
@@ -1637,7 +1637,7 @@ for(n=0;n<l;n++)
         default:
             if (x<Fen->x+Fen->xl)
                 {
-                PrintAt(x,y,"%c",c);
+                AffChr(x,y,c);
                 x++;
                 }
             break;
@@ -1646,9 +1646,7 @@ for(n=0;n<l;n++)
     }
 fclose(fic);
 
-
 PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
-Fen->init=0;
 }
 
 /*--------------------------------------------------------------------*\
@@ -1752,7 +1750,7 @@ while(clock()==Cl);                           //  met l'horloge au debut
 
 while((clock()-Cl)<270)
     {
-    x=(rand()*80)/RAND_MAX;
+    x=(rand()*(Cfg->TailleX))/RAND_MAX;
     y=(rand()*Cfg->TailleY)/RAND_MAX;
 
     AffChr(x,y,c);
@@ -1770,7 +1768,7 @@ while(clock()==Cl);                           //  met l'horloge au debut
 
 while((clock()-Cl)<270)
     {
-    x=(rand()*80)/RAND_MAX;
+    x=(rand()*(Cfg->TailleX))/RAND_MAX;
     y=(rand()*Cfg->TailleY)/RAND_MAX;
 
     AffChr(x,y,c);
@@ -1851,201 +1849,3 @@ for (i=0;(i<Fen2->yl2) & (n<Fen->nbrfic);i++,n++,y++)
 }
 
 
-/*
-void PacNoe(void)
-{
-char pac [] = {
-    ' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x10,' ',0x11,' ',0x11,
-    ' ',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x10,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    '°',0x10,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    '°',0x10,'°',0x10,'°',0x11,'°',0x11,' ',0x11,' ',0x11,' ',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x10,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,'°',0x10,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x10,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x10,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x10,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,
-    '°',0x11,'°',0x11,'°',0x11,' ',0x11,' ',0x11,' ',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,' ',0x11,' ',0x11,' ',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x10,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,
-    ' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    ' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,' ',0x11,' ',0x11,' ',0x11,'°',0x11,'°',0x11,'°',0x7F,
-    '²',0x7F,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x7F,'²',0x7F,'°',0x11,' ',0x07,' ',0x07,' ',0x07,
-    '°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x7F,'²',0x7F,'°',0x11,' ',0x07,
-    ' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    ' ',0x11,' ',0x11,' ',0x11,'°',0x11,'°',0x11,'²',0x7F,'°',0x00,
-    '°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '²',0x7F,'°',0x00,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'²',0x7F,'°',0x00,'°',0x11,' ',0x07,' ',0x07,
-    ' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x11,
-    ' ',0x11,' ',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    ' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x11,' ',0x11,
-    ' ',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,
-    ' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x10,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'²',0x7F,'°',0x78,
-    ' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,
-    ' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'²',0x7F,
-    '°',0x78,'°',0x11,'°',0x00,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    ' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
-    '²',0x7F,'°',0x78,'°',0x11,'°',0x11,'°',0x00,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x78,'²',0x7F,'°',0x11,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x78,'²',0x7F,
-    '°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x78,
-    '²',0x7F,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    ' ',0x07,'°',0x04,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    '°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x04,'°',0x40,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,'°',0x04,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    '°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x10,'°',0x10,
-    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x10,'°',0x10,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,
-    '°',0x10,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x10,
-    '°',0x10,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,'°',0x10,'°',0x10,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
-    '°',0x11,'°',0x10,'°',0x10,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,'²',0x7F,'°',0x78,'°',0x10,'°',0x10,
-    '°',0x10,'°',0x10,'°',0x10,'°',0x70,'±',0x0F,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    '°',0x10,'°',0x10,'°',0x10,'°',0x10,'°',0x10,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    '±',0x0F,'°',0x70,'°',0x10,'°',0x10,'°',0x10,'°',0x10,'°',0x10,
-    '°',0x78,'²',0x7F,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,'°',0x78,'²',0x7F,'°',0x00,'°',0x00,'°',0x00,
-    '°',0x00,'°',0x00,'±',0x0F,'°',0x70,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x7F,
-    '²',0x7F,'²',0x7F,'±',0x0F,'±',0x0F,'°',0x70,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x70,
-    '±',0x0F,'°',0x00,'°',0x00,'°',0x00,'°',0x00,'°',0x00,'²',0x7F,
-    '°',0x78,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
-    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07};
-
-int x,y,z,n,deb,fin,nl;
-int chr,col,h,l;
-
-char buffer[80*16*2];
-
-for (x=0;x<80;x++)
-    for(y=0;y<16;y++)
-        {
-        buffer[x*2+y*160]=GetChr(x,y);
-        buffer[x*2+y*160+1]=GetCol(x,y);
-        }
-
-n=0;
-for (z=-16;z<80;z++,n++)
-    {
-    if (n==3) n=0;
-    deb=0;
-    fin=16;
-
-    if (z>80-16) fin=80-z;
-    if (z<0) deb=-z;
-
-    for(x=deb;x<fin;x++)
-        for(y=0;y<16;y++)
-            {
-            nl=x*2+y*96;      // 15*3*2
-
-            nl+=n*32;
-
-            chr=pac[nl];
-            col=pac[nl+1];
-
-            h=col/16;
-            l=col&15;
-
-            switch(h)
-                {
-                case 0:  col=0      ; break;
-                case 1:  col=13*16  ; break;
-                case 4:  col=11*16  ; break;
-                case 7:  col=7*16   ; break;
-                }
-            switch(l)
-                {
-                case 0:  col+=0    ; break;
-                case 1:  col+=13  ; break;
-                case 4:  col+=11  ; break;
-                case 7:  col+=7   ; break;
-                }
-
-            if ((chr==32) & (col==7)) col=0;
-
-            if (col!=0)
-                {
-                AffCol(x+z,y,col);
-                AffChr(x+z,y,chr);
-                }
-                else
-                {
-                AffChr(x+z,y,buffer[(x+z)*2+y*160]);
-                AffCol(x+z,y,buffer[(x+z)*2+y*160+1]);
-                }
-            }
-
-    while ((inp(0x3DA) & 8)==8);
-    while ((inp(0x3DA) & 8)!=8);
-    while ((inp(0x3DA) & 1)==1);
-    while ((inp(0x3DA) & 1)!=1);
-
-    while ((inp(0x3DA) & 8)==8);
-    while ((inp(0x3DA) & 8)!=8);
-    while ((inp(0x3DA) & 1)==1);
-    while ((inp(0x3DA) & 1)!=1);
-
-    if (z>=0)
-        for (y=0;y<16;y++)
-            {
-            AffChr(z,y,buffer[z*2+y*160]);
-            AffCol(z,y,buffer[z*2+y*160+1]);
-            }
-    }
-}
-*/

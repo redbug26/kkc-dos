@@ -39,7 +39,7 @@ static long pos;        //--- position de depart -----------------------
 static long posl;       //--- taille du buffer -------------------------
 static long posn;       //--- octet courant ----------------------------
 
-static char srcch[80];
+static char srcch[132];
 
 /*--------------------------------------------------------------------*\
 |-  Lit l'octet se trouvant en posn                                   -|
@@ -92,7 +92,7 @@ int fin=0; //--- Code de retour ----------------------------------------
 SaveEcran();
 PutCur(3,0);
 
-Bar(" Help  ----  ----  Text  ----  ----  ----  ----  ----  ---- ");
+Bar(" Help  ----  ----  Text  ----  ---- Search ----  ----  ---- ");
 
 
 Window(1,1,78,(Cfg->TailleY)-3,10*16+1);
@@ -160,6 +160,40 @@ posn=posd;
 
 car=Wait(0,0,0);
 
+if (car==0)     //--- Pression bouton souris ---------------------------
+    {
+    int button;
+
+    button=MouseButton();
+
+    if ((button&1)==1)     //--- gauche --------------------------------
+        {
+        int x,y;
+
+        x=MousePosX();
+        y=MousePosY();
+
+
+        if ( (x==78) & (y>=4) & (y<=Cfg->TailleY-3) ) //-- Ascensceur --
+            {
+            posn=(taille*(y-4))/(Cfg->TailleY-7);
+            }
+            else
+            if (y==Cfg->TailleY-1)
+                car=(0x3B+(x/8))*256;
+                else
+                if (y>(Cfg->TailleY)/2)
+                    car=80*256;
+                    else
+                    car=72*256;
+        }
+
+    if ((button&2)==2)     //--- droite ---------------------------
+        {
+        car=27;
+        }
+    }
+
 switch(LO(car))   {
     case 0:
         switch(HI(car))   {
@@ -180,6 +214,9 @@ switch(LO(car))   {
                 break;
             case 0x4F:  // --- END -------------------------------------
                 posn=taille-((((Cfg->TailleY)-6)*16))+15;
+                break;
+            case 0x41:  // --- F7 --------------------------------------
+                SearchHexa();
                 break;
             case 0x43:  // --- F9 --------------------------------------
                 fin=86;
@@ -740,7 +777,6 @@ do
     }
 while(n==16384);
 
-
 Wait(0,0,0);
 
 ChangeTaille(Cfg->TailleY);
@@ -758,6 +794,8 @@ return (-1);
 \*--------------------------------------------------------------------*/
 int TxtView(char *fichier)
 {
+int xm,ym,zm;
+
 int aff,wrap;
 
 long posd;
@@ -837,12 +875,12 @@ if (Cfg->ajustview==1)
                 if (x>xm) xm=x;
                 break;
             }
-        if (x>80) ym++,x=0;
+        if (x>Cfg->TailleX) ym++,x=0;
         }
     ym++;
 
-    if (xm>=79)
-        xl=80;
+    if (xm>=((Cfg->TailleX)-1))
+        xl=Cfg->TailleX;
         else
         autowarp=1, xl=xm;                        //--> Longueur fenˆtre
 
@@ -853,7 +891,7 @@ if (Cfg->ajustview==1)
     }
     else
     {
-    xl=80;
+    xl=Cfg->TailleX;
     yl=Cfg->TailleY-1;
     }
 
@@ -878,24 +916,24 @@ Bar(bar);
 |- Affichage de la fenetre                                            -|
 \*--------------------------------------------------------------------*/
 
-x=(80-xl)/2;                                          // centre le texte
+x=(Cfg->TailleX-xl)/2;                                          // centre le texte
 y=(Cfg->TailleY-yl)/2;
 
 if (x<0) x=0;
 if (y<0) y=0;
 
-if ( (x>0) & (y>0) & (x+xl<80) & (y+yl<Cfg->TailleY) )
+if ( (x>0) & (y>0) & (x+xl<Cfg->TailleX) & (y+yl<Cfg->TailleY) )
     WinCadre(x-1,y-1,x+xl,y+yl,3);
     else
     {
     if ( (y+yl<Cfg->TailleY) & (y>0) )
         {
-        ColLin(0,y-1,80,10*16+1);
-        WinLine(0,y-1,80,1);
-        WinLine(0,y+yl,80,1);
-        ColLin(0,y+yl,80,10*16+1);
+        ColLin(0,y-1,Cfg->TailleX,10*16+1);
+        WinLine(0,y-1,Cfg->TailleX,1);
+        WinLine(0,y+yl,Cfg->TailleX,1);
+        ColLin(0,y+yl,Cfg->TailleX,10*16+1);
         }
-    if ( (x+xl<80) & (x>0) )
+    if ( (x+xl<Cfg->TailleX) & (x>0) )
         {
         ColWin(x-1,0,x-1,Cfg->TailleY-2,10*16+1);
         ChrWin(x-1,0,x-1,Cfg->TailleY-2,0xB3);
@@ -923,7 +961,7 @@ y2=y;
 
 aff=0;
 
-if (xl==80)       //--- Jusqu'ou on ecrit ------------------------------
+if (xl==Cfg->TailleX)       //--- Jusqu'ou on ecrit --------------------
     xl2=xl-shift;
     else
     xl2=xl;
@@ -1074,13 +1112,13 @@ if (shift==0)
     Masque(x,y,x+xl-1,y+yl-1);
     else                                     // Ca marche mais ca pas b“
     {
-    if ( (xl==80) & (y==0) )
+    if ( (xl==Cfg->TailleX) & (y==0) )
         Masque(x,y+1,x+xl-2,y+yl-1);
-    if ( (xl==80) & (y!=0) )
+    if ( (xl==Cfg->TailleX) & (y!=0) )
         Masque(x,y,x+xl-2,y+yl-1);
-    if ( (xl!=80) & (y==0) )
+    if ( (xl!=Cfg->TailleX) & (y==0) )
         Masque(x,y+1,x+xl-1,y+yl-1);
-    if ( (xl!=80) & (y!=0) )
+    if ( (xl!=Cfg->TailleX) & (y!=0) )
         Masque(x,y,x+xl-1,y+yl-1);
     }
 
@@ -1089,15 +1127,18 @@ if (shift==0)
 |- Gestion des touches                                                -|
 \*--------------------------------------------------------------------*/
 
+zm=0;
 
-while (!KbHit())
+while ( (!KbHit()) & (zm==0) )
 {
+GetPosMouse(&xm,&ym,&zm);
+
 car=*Keyboard_Flag1;
 
 if ( ((car&1)==1) | ((car&2)==2) )
     {
     int prc;
-    char temp[80];
+    char temp[132];
 
     if (shift==0)
         SaveEcran();
@@ -1125,7 +1166,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
         prc=(posn/taille)*100;
         }
 
-    ColLin(0,0,80,1*16+2);
+    ColLin(0,0,Cfg->TailleX,1*16+2);
 
     strncpy(temp,fichier,78);
 
@@ -1160,6 +1201,40 @@ posn=posd;
 if ( (shift!=-1) & (shift!=2) )
 {
 code=Wait(0,0,0);
+
+if (code==0)     //--- Pression bouton souris --------------------------
+    {
+    int button;
+
+    button=MouseButton();
+
+    if ((button&1)==1)     //--- gauche --------------------------------
+        {
+        int x,y;
+
+        x=MousePosX();
+        y=MousePosY();
+
+
+        if ( (x==79) & (y>=1) & (y<=Cfg->TailleY-1) ) //-- Ascensceur --
+            {
+            posn=(taille*(y-1))/(Cfg->TailleY-2);
+            }
+            else
+            if (y==Cfg->TailleY-1)
+                code=(0x3B+(x/8))*256;
+                else
+                if (y>(Cfg->TailleY)/2)
+                    code=80*256;
+                    else
+                    code=72*256;
+        }
+
+    if ((button&2)==2)     //--- droite ---------------------------
+        {
+        code=27;
+        }
+    }
 
 switch(LO(code))
     {
@@ -1234,7 +1309,7 @@ switch(LO(code))
                     {
                     posn--;
                     if (posn==0)  break;
-                    if ((m-posn>=80) & (Cfg->warp!=0)) break;
+                    if ((m-posn>=Cfg->TailleX) & (Cfg->warp!=0)) break;
                     }
                 while(ReadChar()!=0x0A);
                 if (posn!=0) posn++;
@@ -1331,7 +1406,7 @@ return fin;
 }
 
 /*--------------------------------------------------------------------*\
-|-  Recherche une chaine                                              -|
+|-  Recherche une chaine en mode texte                                -|
 \*--------------------------------------------------------------------*/
 
 void SearchTxt(void)
@@ -1424,6 +1499,99 @@ while(ReadChar()!=0x0A);
 if (posn!=0) posn++;
 }
 
+/*--------------------------------------------------------------------*\
+|-  Recherche une chaine en mode hexa                                 -|
+\*--------------------------------------------------------------------*/
+
+void SearchHexa(void)
+{
+static char Text[70],Hexa[70];
+static int DirLength=70;
+static int CadreLength=71;
+
+struct Tmt T[8] =
+    { { 2,3,1,Hexa,&DirLength},
+      { 2,7,1,Text,&DirLength},
+      {15,9,2,NULL,NULL},
+      {45,9,3,NULL,NULL},
+      { 5,6,0,"Search for text:",NULL},
+      { 5,2,0,"Search for hexa:",NULL},
+      { 1,1,4,NULL,&CadreLength},
+      { 1,5,4,NULL,&CadreLength} };
+
+struct TmtWin F =
+    { 3,7,76,18, "Search Text/Hexa" };
+
+int a,n,lng;
+char c1,c2;
+int testhexa=0;
+
+a=posn;
+
+n=WinTraite(T,8,&F);
+
+if ( (n!=0) & (n!=1) ) return;
+
+if (strlen(Hexa)!=0)
+    {
+    int len=0,te,t,l;
+
+    l=strlen(Hexa);
+
+    for(te=0;te<l;te+=3)
+        {
+        Hexa[te+2]=0;
+        sscanf(Hexa+te,"%02X",&t);
+        Hexa[te+2]=32;
+        srcch[len]=t;
+        len++;
+        }
+    srcch[len]=0;
+    lng=len;
+    testhexa=1;
+    }
+    else
+    {
+    strcpy(srcch,Text);
+    lng=strlen(Text);
+    }
+
+n=0;
+
+do
+{
+if (n>=lng) break;
+
+c1=srcch[n];
+if ( (c1>='a') & (c1<='z') & (testhexa==0) ) c1+='A'-'a';
+
+c2=ReadChar();;
+if ( (c2>='a') & (c2<='z') & (testhexa==0) ) c2+='A'-'a';
+
+if (c1==c2)
+    n++;
+    else
+    {
+    if (n!=0)
+        {
+        posn-=(n-1);
+        n=0;
+        }
+    }
+
+posn++;
+}
+while (posn<taille);
+
+if (srcch[n]!=0)
+    {
+    posn=a;
+    WinError("Don't find text");
+    return;
+    }
+
+posn=posn-lng;
+}
 
 struct Href {
     char *link;
@@ -1536,8 +1704,8 @@ WinCadre(x-1,y-1,xl+1,yl,2);
 ColWin(x,y,xl,yl-1,10*16+1);
 ChrWin(x,y,xl,yl-1,32);
 
-ColLin(0,yl+1,80,1*16+8);
-ChrLin(0,yl+1,80,32);
+ColLin(0,yl+1,Cfg->TailleX,1*16+8);
+ChrLin(0,yl+1,Cfg->TailleX,32);
 
 
 
@@ -2028,7 +2196,7 @@ if ( (suiv->next!=NULL) & (suiv!=NULL) )
             
             }
 
-    PrintAt(0,yl+1,"%-80s",suiv->link);
+    PrintAt(0,yl+1,"%-*s",Cfg->TailleX,suiv->link);
     }
 
 posd=ye;
@@ -2043,7 +2211,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
     {
     long cur1,cur2;
     int prc;
-    char temp[80];
+    char temp[132];
 
     if (shift==0)
         SaveEcran();
@@ -2071,7 +2239,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
         prc=(posn/taille2)*100;
         }
 
-    ColLin(0,0,80,1*16+2);
+    ColLin(0,0,Cfg->TailleX,1*16+2);
 
     strncpy(temp,fichier,78);
 
@@ -2267,6 +2435,7 @@ if (code==13)
 
 void View(FENETRE *F)
 {
+static char buffer[256];
 char *fichier,*liaison;
 short i;
 
@@ -2319,7 +2488,8 @@ while(i!=-1)
             break;
         case 37:  // GIF
         case 38:  // JPG
-            FicIdf(fichier,i,0);
+            FicIdf(buffer,fichier,i,0);
+            CommandLine(buffer);
             i=-1;
             break;
         default:
@@ -2345,7 +2515,7 @@ ChargeEcran();
 void Masque(short x1,short y1,short x2,short y2)
 {
 char *chaine;
-char chain2[80];
+char chain2[132];
 short l,m1,m2;
 
 unsigned char c,c2;
@@ -2517,8 +2687,8 @@ ColWin(x1+1,y1+1,x2-1,y1+1,10*16+5);
 
 prem=0;
 
-ColLin(0,(Cfg->TailleY)-1,80,1*16+8);
-ChrLin(0,(Cfg->TailleY)-1,80,32);
+ColLin(0,(Cfg->TailleY)-1,Cfg->TailleX,1*16+8);
+ChrLin(0,(Cfg->TailleY)-1,Cfg->TailleX,32);
 
 
 do

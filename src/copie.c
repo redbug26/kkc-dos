@@ -92,6 +92,9 @@ Path2Abs(inpath,"..");      Path2Abs(outpath,"..");
 
 mkdir(outpath);
 
+if (Cfg->_Win95==1)
+    UpdateLongName(inpath,outpath);
+
 if (dirp!=NULL)
     while(1)
     {
@@ -438,6 +441,9 @@ if ( (ok==1) & (fin==0) )      //--- Mise a l'heure --------------------
     _dos_open(outpath,O_RDONLY,&handle);
     _dos_setftime(handle,d,t);
     _dos_close(handle);
+
+    if (Cfg->_Win95==1)
+        UpdateLongName(inpath,outpath);
     }
 
 if (Nbrfic!=0)
@@ -635,7 +641,7 @@ for(i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
 
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if (SelectFile(F1,i))
         {
         if (F1->F[i]->select==1)
             {
@@ -692,7 +698,7 @@ for(i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
 
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if (SelectFile(F1,i))
         {
         if (F1->F[i]->select==1)
             {
@@ -751,7 +757,7 @@ for(i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
 
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if (SelectFile(F1,i))
         {
         if (F1->F[i]->select==1)
             {
@@ -811,7 +817,7 @@ for(i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
 
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if (SelectFile(F1,i))
         {
         if (F1->F[i]->select==1)
             {
@@ -869,7 +875,7 @@ for(i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
 
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if (SelectFile(F1,i))
         {
         if (F1->F[i]->select==1)
             {
@@ -1279,7 +1285,7 @@ j2=0;
 for (i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if (SelectFile(F1,i))
         {
         strcpy(inpath,F1->path);
         Path2Abs(inpath,F->name);
@@ -1329,6 +1335,7 @@ DFen=FTrash;
 CommandLine("#cd %s",path);
 
 if (FenCopie(F1,FTrash)==0) return;
+
 
 if (!strcmp(F1->path,FTrash->path))
     return;
@@ -1403,7 +1410,7 @@ j2=0;
 for (i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if (SelectFile(F1,i))
         {
         strcpy(inpath,F1->path);
         Path2Abs(inpath,F->name);
@@ -1425,6 +1432,24 @@ for (i=0;i<F1->nbrfic;i++)
     }
 
 ChargeEcran();
+}
+
+/*--------------------------------------------------------------------*\
+|- Renvoit 1 si on doit copier le fichier                             -|
+\*--------------------------------------------------------------------*/
+int SelectFile(FENETRE *F1,int i)
+{
+if (((Cfg->noprompt)&1)==0)
+    {
+    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+        return 1;
+        else
+        return 0;
+    }
+    else
+    {
+    return (i==F1->nopcur);
+    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -1491,7 +1516,7 @@ PrintAt(26,8,"(Continue by pressing any key)");
 for (i=0;(i<F1->nbrfic) & (!KbHit());i++)
 {
 
-if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+if (SelectFile(F1,i))
     {
     if ((F1->F[i]->attrib & _A_SUBDIR)==_A_SUBDIR)
         {
@@ -1640,7 +1665,7 @@ j2=0;
 for (i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if (SelectFile(F1,i))
         {
         if (KKDrecopy(F1,i,FTrash)==1)
             {
@@ -1751,7 +1776,7 @@ j2=0;
 for (i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if (SelectFile(F1,i))
         {
         if (File2KKD(F1,i,FTrash)==1)
             {
@@ -1910,7 +1935,7 @@ if (fin==0)
             fseek(fic,0,SEEK_END);
 
             z=0;
-            fwrite(&z,1,4,fic);
+            fwrite(&z,1,4,fic);            //--- Information sur fichier
 
             strcpy(buffer,F1->path);
             Path2Abs(buffer,F1->F[F1pos]->name);
@@ -2120,7 +2145,7 @@ if (fin==0)
             fseek(fic,KKD_desc.desc,SEEK_SET);
 
             z=0;
-            fread(&z,1,4,fic);
+            fread(&z,1,4,fic);             //--- Information sur fichier
 
             strcpy(buffer,F2->path);
             Path2Abs(buffer,F1->F[F1pos]->name);

@@ -1,3 +1,4 @@
+
 /*--------------------------------------------------------------------*\
 |- Hard-function                                                      -|
 \*--------------------------------------------------------------------*/
@@ -24,9 +25,11 @@
 #include <io.h>
 #include <conio.h>
 
-
-
 #include "hard.h"
+
+/*--------------------------------------------------------------------*\
+|- variable globale                                                   -|
+\*--------------------------------------------------------------------*/
 
 int IOver;
 int IOerr;
@@ -35,6 +38,20 @@ struct RB_info *Info;
 struct config *Cfg;
 struct PourMask **Mask;
 struct fichier *Fics;
+
+/*--------------------------------------------------------------------*\
+|- Variable locale                                                    -|
+\*--------------------------------------------------------------------*/
+
+static char _MouseOK=0;
+
+static int _MPosX,_MPosY;
+static int _PasX,_PasY,_TmpClik;
+static int _xm,_ym,_zm,_zmok;
+static int _dclik,_mclock;
+static char _charm;
+
+char _IntBuffer[256];
 
 char _RB_screen[256*128*2];
 
@@ -63,11 +80,11 @@ void Norm_Clr(void)
 char i,j;
 
 for(j=0;j<Cfg->TailleY;j++)
-    for (i=0;i<80;i++)
+    for (i=0;i<Cfg->TailleX;i++)
       AffCol(i,j,7);
 
 for(j=0;j<Cfg->TailleY;j++)
-    for (i=0;i<80;i++)
+    for (i=0;i<Cfg->TailleX;i++)
       AffChr(i,j,32);
 }
 
@@ -93,13 +110,13 @@ for(j=top;j<=bottom;j++)
 void Cache_AffChr(char x,char y,char c);
 void Cache_AffCol(char x,char y,char c);
 
-char *scrseg=(char*)0xB8000;
+char *scrseg[50];
 
 void Cache_AffChr(char x,char y,char c)
 {
 if (*(_RB_screen+(y*256+x))!=c)
     {
-    *(scrseg+((y*80+x)<<1))=c;
+    *(scrseg[y]+(x<<1))=c;
     *(_RB_screen+(y*256+x))=c;
     }
 }
@@ -108,7 +125,7 @@ void Cache_AffCol(char x,char y,char c)
 {
 if (*(_RB_screen+(y*256+x)+256*128)!=c)
     {
-    *(scrseg+((y*80+x)<<1)+1)=c;
+    *(scrseg[y]+(x<<1)+1)=c;
     *(_RB_screen+(y*256+x)+256*128)=c;
     }
 }
@@ -119,6 +136,8 @@ char a;
 int b;
 clock_t Cl;
 
+int xm=0,ym=0,zm=0;
+
 if ((x!=0) | (y!=0))
     GotoXY(x,y);
 
@@ -127,19 +146,24 @@ Cl=clock();
 a=0;
 b=0;
 
-while ( (!kbhit()) & (b==0) )
+while ( (!kbhit()) & (b==0) & (zm==0) )
     {
+    GetPosMouse(&xm,&ym,&zm);
+
     if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) )
         b=ScreenSaver();
     }
 
-if (b==0)
+if (zm!=0) _zmok=0;
+
+if ((b==0) & (zm==0))
     {
     a=getch();
     if (a==0)
         return getch()*256+a;
     return a;
     }
+
 return b;
 }
 
@@ -308,7 +332,7 @@ if (*(_RB_screen+(y*256+x)+256*128)!=c)
     {
     *(_RB_screen+(y*256+x)+256*128)=c;
 
-    *(scrseg+((y*80+x)<<1)+1)=c;            // --------- Echo console --
+    *(scrseg[y]+(x<<1)+1)=c;            // --------- Echo console --
 
     Com_GenCol(x,y);
     Com_GenChr(x,y,GetChr(x,y));
@@ -324,7 +348,7 @@ if (*(_RB_screen+(y*256+x))!=c)
     {
     Com_GenCol(x,y);
 
-    *(scrseg+((y*80+x)<<1))=c;              // --------- Echo console --
+    *(scrseg[y]+(x<<1))=c;              // --------- Echo console --
 
     Com_GenChr(x,y,c);
     }
@@ -470,7 +494,7 @@ for(j=top;j<=bottom;j++)
         *(_RB_screen+(j*256+i)+256*128)=color;
         *(_RB_screen+(j*256+i))=0;             // Pour le remettre apres
 
-        *(scrseg+((j*80+i)<<1)+1)=color;    // --------- Echo console --
+        *(scrseg[j]+(i<<1)+1)=color;    // --------- Echo console --
         }
 
 for(j=top;j<=bottom;j++)
@@ -898,18 +922,27 @@ signed short _WhichEcran=0;
 
 void SaveEcran(void)
 {
-int x,y;
+int x,y,n;
 
 if (_Ecran[_WhichEcran]==NULL)
-    _Ecran[_WhichEcran]=GetMem(8000);
+    _Ecran[_WhichEcran]=GetMem((Cfg->TailleY)*(Cfg->TailleX)*2);
 
-for (y=0;y<50;y++)
-    for (x=0;x<80;x++)
-        _Ecran[_WhichEcran][(x+y*80)*2+1]=GetCol(x,y);
 
-for (y=0;y<50;y++)
-    for (x=0;x<80;x++)
-        _Ecran[_WhichEcran][(x+y*80)*2]=GetChr(x,y);
+n=0;
+for (y=0;y<Cfg->TailleY;y++)
+    for (x=0;x<Cfg->TailleX;x++)
+        {
+        _Ecran[_WhichEcran][n*2+1]=GetCol(x,y);
+        n++;
+        }
+
+n=0;
+for (y=0;y<Cfg->TailleY;y++)
+    for (x=0;x<Cfg->TailleX;x++)
+        {
+        _Ecran[_WhichEcran][n*2]=GetChr(x,y);
+        n++;
+        }
 
 WhereXY(&(_EcranX[_WhichEcran]),&(_EcranY[_WhichEcran]));
 GetCur(&(_EcranD[_WhichEcran]),&(_EcranF[_WhichEcran]));
@@ -919,7 +952,7 @@ _WhichEcran++;
 
 void ChargeEcran(void)
 {
-int x,y;
+int x,y,n;
 
 _WhichEcran--;
 
@@ -933,18 +966,27 @@ if ( (_Ecran[_WhichEcran]==NULL) | (_WhichEcran<0) )
     }
 #endif
 
-for (y=0;y<50;y++)
-    for (x=0;x<80;x++)
-        AffCol(x,y,_Ecran[_WhichEcran][(x+y*80)*2+1]);
 
-for (y=0;y<50;y++)
-    for (x=0;x<80;x++)
-        AffChr(x,y,_Ecran[_WhichEcran][(x+y*80)*2]);
+n=0;
+for (y=0;y<Cfg->TailleY;y++)
+    for (x=0;x<Cfg->TailleX;x++)
+        {
+        AffCol(x,y,_Ecran[_WhichEcran][n*2+1]);
+        n++;
+        }
+
+n=0;
+for (y=0;y<Cfg->TailleY;y++)
+    for (x=0;x<Cfg->TailleX;x++)
+        {
+        AffChr(x,y,_Ecran[_WhichEcran][n*2]);
+        n++;
+        }
 
 GotoXY(_EcranX[_WhichEcran],_EcranY[_WhichEcran]);
 PutCur(_EcranD[_WhichEcran],_EcranF[_WhichEcran]);
 
-free(_Ecran[_WhichEcran]);
+LibMem(_Ecran[_WhichEcran]);
 _Ecran[_WhichEcran]=NULL;
 }
 
@@ -955,7 +997,7 @@ _Ecran[_WhichEcran]=NULL;
 \*--------------------------------------------------------------------*/
 void PrintAt(int x,int y,char *string,...)
 {
-static char sortie[256];
+char sortie[256];      // Pas de raison que ca soit un static ici (ok ?)
 va_list arglist;
 
 char *suite;
@@ -970,12 +1012,10 @@ va_end(arglist);
 a=x;
 while (*suite!=0)
     {
-//    AffChr(a,y,'Û'), Delay(1000);
     AffChr(a,y,*suite);
     a++;
     suite++;
     }
-
 }
 
 void Delay(long ms)
@@ -1035,6 +1075,20 @@ if (ins==0)
     PutCur(2,7);
 
 caractere=Wait(colonne+i,ligne,ins);
+
+if (caractere==0)
+    {
+    int px,py;
+
+    px=MousePosX();
+    py=MousePosY();
+
+    if ( (py!=ligne) | (px<colonne) | (px>=colonne+longueur) )
+        {
+        retour=8;
+        end=1;
+        }
+    }
 
 if ( ((caractere&255)!=0) & (couleur!=0) & (caractere!=13)
                                     & (caractere!=27) & (caractere!=9) )
@@ -1337,7 +1391,7 @@ if ((type==1) | (type==0))
     }
 else
     {
-    // Relief (surtout pour type==1)
+    //--- Relief (surtout pour type==1) --------------------------------
     for(x=x1;x<=x2;x++)    AffCol(x,y1,10*16+3);
     for(y=y1;y<=y2;y++)    AffCol(x1,y,10*16+3);
 
@@ -1447,7 +1501,6 @@ outpw( 0x3C4, 0x304);
 outpw( 0x3CE, 4);
 outpw( 0x3CE, 0x1005);
 outpw( 0x3CE, 0xE06);
-
 }
 
 void Font8x(int height)
@@ -1456,9 +1509,6 @@ FILE *fic;
 char *pol;
 char *buf=(char*)0xA0000;
 int n;
-
-union REGS R;
-unsigned char x;
 
 char chaine[256];
 
@@ -1485,20 +1535,29 @@ fclose(fic);
 for (n=0;n<256;n++)
     MakeFont(pol+n*height,buf+n*32);
 
-R.w.bx=(8==8) ? 0x0001 : 0x0800;
-x=inp(0x3CC) & (255-12);
-(void) outp(0x3C2,x);
-// disable();
-outpw( 0x3C4, 0x0100);
-outpw( 0x3C4, 0x01+ (R.h.bl<<8) );
-outpw( 0x3C4, 0x0300);
-// enable();
+if (Cfg->TailleX==80)                         // 9 bits normal -> 8 bits
+    {
+    unsigned char x;
+    union REGS R;
 
-R.w.ax=0x1000;
-R.h.bl=0x13;
-int386(0x10,&R,&R);
+    R.w.bx=(8==8) ? 0x0001 : 0x0800;
 
-free(pol);
+    x=inp(0x3CC) & (255-12);
+
+    outp(0x3C2,x);
+    // disable();
+    outpw( 0x3C4, 0x0100);
+    outpw( 0x3C4, 0x01+ (R.h.bl<<8) );
+    outpw( 0x3C4, 0x0300);
+    // enable();
+
+    R.w.ax=0x1000;
+    R.h.bl=0x13;
+    int386(0x10,&R,&R);
+    }
+
+
+LibMem(pol);
 }
 
 void Mode25(void);
@@ -1551,15 +1610,119 @@ void Mode30(void);
     "out dx,al" \
     "inc dx" \
     "mov al,bl" \
-    "out dx,al" \
-    "mov ebx,484h" \
-    "mov al,29" \
-    "mov [ebx],al";
+    "out dx,al";
 
+void Mode90(void);
+
+/*
+#pragma aux Mode90 = \
+    "mov dx,03C4h" \
+    "mov ax,0100h" \
+    "out dx,ax" \
+    "inc ax" \
+    "out dx,ax" \
+    "mov dx,03CCh" \
+    "in al,dx" \
+    "and al,0F3h" \
+    "or al,4" \
+    "mov dx,03C2h" \
+    "out dx,al" \
+    "mov dx,03DAh" \
+    "in al,dx" \
+    "mov dx,03C0h" \
+    "mov al,13h" \
+    "out dx,al" \
+    "xor al,al" \
+    "out dx,al" \
+    "mov al,20h" \
+    "out dx,al" \
+    "out dx,al" \
+    "mov dx,03D4h" \
+    "mov al,11h" \
+    "out dx,al" \
+    "inc dx" \
+    "in al,dx" \
+    "and al,7Fh" \
+    "out dx,al" \
+    "dec dx" \
+    "mov ax,06B00h" \
+    "out dx,ax" \
+    "mov ax,05901h" \
+    "out dx,ax" \
+    "mov ax,05A02h" \
+    "out dx,ax" \
+    "mov ax,08E03h" \
+    "out dx,ax" \
+    "mov ax,06004h" \
+    "out dx,ax" \
+    "mov ax,08D05h" \
+    "out dx,ax" \
+    "mov ax,02D13h" \
+    "out dx,ax" \
+    "mov ah,al" \
+    "mov al,11h" \
+    "or ah,80h" \
+    "out dx,ax" \
+    "mov dx,03C4h" \
+    "mov ax,0300h" \
+    "out dx,ax";
+*/
+
+void Mode90(void)
+{
+unsigned char x;
+
+outpw(0x3C4,0x100);                                 // Synchronous reset
+outpw(0x3C4,0x101);                                     // 8 pixels/char
+
+x=inp(0x3CC);
+x=(x&0xF3)|4;                          // mets les bits 2-3 … 01 = 28MhZ
+outp(0x3C2,x);
+
+x=inp(0x3DA);
+outp(0x3C0,0x13);                                  // Horizontal panning
+
+outp(0x3C0,0);                                            // set shift=0
+
+outp(0x3C0,0x20);                                      // Restart screen
+outp(0x3C0,0x20);
+
+outp(0x3D4,0x11);                                    // Register protect
+
+x=inp(0x3D5);
+x=x&0X7F;
+outp(0x3D5,x);                                       // Turn off protect
+
+outpw(0x3D4,0x6B00);                                 // Horizontal Total
+outpw(0x3D4,0x5901);                             // Horizontal Displayed
+outpw(0x3D4,0x5A02);                             // Start Horiz Blanking
+outpw(0x3D4,0x8E03);                               // End Horiz Blanking
+outpw(0x3D4,0x6004);                              // Start Horiz Retrace
+outpw(0x3D4,0x8D05);                                // End Horiz Retrace
+outpw(0x3D4,0x2D13);                                // Memory Allocation
+
+outpw(0x3D4,0x9311);                                  // Turn on protect
+
+outpw(0x3C4,0x300);                                 // Restart Sequencer
+}
+
+void Mode80(void)
+{
+
+}
 
 void TXTMode(char lig)
 {
+char *TX=(char*)0x44A;
+char *TY=(char*)0x484;
+
 Clr();
+
+if (Cfg->TailleX==0) Cfg->TailleX=80;
+if (Cfg->TailleY==0) Cfg->TailleY=25;
+
+if (lig==0)
+    lig=Cfg->TailleY;
 
 Cfg->UseFont=0;
 switch (lig)
@@ -1574,6 +1737,21 @@ switch (lig)
         Mode50();
         break;
     }
+
+switch(Cfg->TailleX)
+    {
+    case 80:
+        Mode80();
+        break;
+    case 90:
+        Mode90();
+        break;
+    }
+
+(*TX)=Cfg->TailleX;
+(*TY)=Cfg->TailleY-1;
+
+InitSeg();
 }
 
 void NoFlash(void)
@@ -1611,9 +1789,15 @@ outp(0x3C9,g);
 outp(0x3C9,b);
 }
 
+void LibMem(char *mem)
+{
+free(mem);
+}
+
 void *GetMem(int s)
 {
 void *buf;
+
 
 buf=malloc(s);
 
@@ -1639,100 +1823,6 @@ return buf;
 
 
 /*--------------------------------------------------------------------*\
-|---- Crc - 32 BIT ANSI X3.66 CRC checksum files ----------------------|
-\*--------------------------------------------------------------------*/
-
-static unsigned long int crc_32_tab[] = {   // CRC polynomial 0xedb88320
-0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
-0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
-0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
-0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
-0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9,
-0xfa0f3d63, 0x8d080df5, 0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172,
-0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b, 0x35b5a8fa, 0x42b2986c,
-0xdbbbc9d6, 0xacbcf940, 0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
-0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423,
-0xcfba9599, 0xb8bda50f, 0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924,
-0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d, 0x76dc4190, 0x01db7106,
-0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
-0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d,
-0x91646c97, 0xe6635c01, 0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e,
-0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457, 0x65b0d9c6, 0x12b7e950,
-0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
-0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7,
-0xa4d1c46d, 0xd3d6f4fb, 0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0,
-0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9, 0x5005713c, 0x270241aa,
-0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
-0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81,
-0xb7bd5c3b, 0xc0ba6cad, 0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a,
-0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683, 0xe3630b12, 0x94643b84,
-0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
-0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb,
-0x196c3671, 0x6e6b06e7, 0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc,
-0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5, 0xd6d6a3e8, 0xa1d1937e,
-0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
-0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55,
-0x316e8eef, 0x4669be79, 0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236,
-0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f, 0xc5ba3bbe, 0xb2bd0b28,
-0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
-0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f,
-0x72076785, 0x05005713, 0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38,
-0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21, 0x86d3d2d4, 0xf1d4e242,
-0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
-0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69,
-0x616bffd3, 0x166ccf45, 0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2,
-0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db, 0xaed16a4a, 0xd9d65adc,
-0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
-0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693,
-0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
-0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
-};
-
-
-/*--------------------------------------------------------------------*\
-|-  Return -1 if error, 0 in other case                               -|
-\*--------------------------------------------------------------------*/
-
-int crc32file(char *name,unsigned long *crc)
-{
-FILE *fin;
-unsigned long oldcrc32;
-unsigned long crc32;
-unsigned long oldcrc;
-int c;
-long charcnt;
-
-oldcrc32 = 0xFFFFFFFF;
-charcnt = 0;
-
-if ((fin=fopen(name, "rb"))==NULL)
-    {
-    perror(name);
-    return -1;
-    }
-
-while ((c=getc(fin))!=EOF)
-    {
-    ++charcnt;
-    oldcrc32 = (crc_32_tab[(oldcrc32^c) & 0xff]^(oldcrc32 >> 8));
-    }
-
-if (ferror(fin))
-    {
-    perror(name);
-    charcnt = -1;
-    }
-fclose(fin);
-
-crc32 = oldcrc32;
-oldcrc = oldcrc32 = ~oldcrc32;
-
-*crc=oldcrc;
-
-return 0;
-}
-
-/*--------------------------------------------------------------------*\
 |-   si p vaut 0 mets off                                             -|
 |-   si p vaut 1 interroge                                            -|
 |-   retourne -1 si SHIFT TAB, 1 si TAB                               -|
@@ -1755,6 +1845,20 @@ if (p==1)
     while (r==0)
         {
         car=Wait(x,y,0);
+
+        if (car==0)
+            {
+            int px,py,pz;
+
+            px=MousePosX();
+            py=MousePosY();
+            pz=MouseButton();
+
+            if ( ((pz&4)==4) & (px>=x) & (px<x+lng) & (py==y) )
+                car=13;
+                else
+                r=8;
+            }
 
         switch(car%256)
             {
@@ -1809,6 +1913,20 @@ while (r==0)
 
     car=Wait(x+1,y,0);
 
+    if (car==0)
+        {
+        int px,py,pz;
+
+        px=MousePosX();
+        py=MousePosY();
+        pz=MouseButton();
+
+        if ( ((pz&4)==4) & (px==x+1) & (py==y) )
+            car=32;
+            else
+            r=8;
+        }
+
     switch(car%256)
         {
         case 13:
@@ -1847,6 +1965,7 @@ return r;
 |-   5 si HAUT                                                        -|
 |-   6 si BAT                                                         -|
 |-   7 si F1                                                          -|
+|-   8 si Souris                                                      -|
 \*--------------------------------------------------------------------*/
 int MSwitch(int x,int y,int *Val,int i)
 {
@@ -1859,6 +1978,20 @@ while (r==0)
     AffChr(x+1,y,(*Val)==i ? 'X' : ' ');
 
     car=Wait(x+1,y,0);
+
+    if (car==0)
+        {
+        int px,py,pz;
+
+        px=MousePosX();
+        py=MousePosY();
+        pz=MouseButton();
+
+        if ( ((pz&4)==4) & (px==x+1) & (py==y) )
+            car=32;
+            else
+            r=8;
+        }
 
     switch(car%256)
         {
@@ -1974,7 +2107,7 @@ i=0;
 
 while (fin==0) {
 
-for(i2=0;i2<nbr;i2++)   // Affichage a ne faire qu'une fois
+for(i2=0;i2<nbr;i2++)   //--- Affichage a ne faire qu'une fois ---------
     switch(T[i2].type)
         {
         case 10:
@@ -1983,7 +2116,8 @@ for(i2=0;i2<nbr;i2++)   // Affichage a ne faire qu'une fois
             break;
         }
 
-switch(T[i].type) {
+switch(T[i].type)
+    {
     case 0:
     case 4:
     case 9:
@@ -2022,20 +2156,14 @@ switch(T[i].type) {
 
 switch(direct)
     {
-    case 0:
-        fin=1;                                              // SELECTION
-        break;
-    case 1:
-        fin=2;                                                  // ABORT
-        break;
+    case 0:                                                 // SELECTION
+        fin=1;   break;
+    case 1:                                                     // ABORT
+        fin=2;   break;
     case 2:                                                 // Next Case
-        i++;
-        break;
+        i++;     break;
     case 3:                                             // Previous Case
-        i--;
-        break;
-    case 4:                                              // Rien du tout
-        break;
+        i--;     break;
     case 5:                                              // Type suivant
         adr=T[i].entier;
         while (adr==T[i].entier)
@@ -2052,9 +2180,46 @@ switch(direct)
             if (i==-1) i=nbr-1;
             }
         break;
-    case 7:
-        HelpTopic(F->name);
+    case 7:                                       // Aide sur la fenˆtre
+        HelpTopic(F->name);      break;
+    case 8:
+        {
+        int px,py,j,k;
+        int x1,x2,y1;
+
+        px=MousePosX();
+        py=MousePosY();
+
+        k=-1;
+        for(j=0;j<nbr;j++)
+            {
+            x1=F->x1+T[j].x;
+            x2=F->x1+T[j].x+(*(T[j].entier));
+            y1=F->y1+T[j].y;
+
+            switch(T[j].type)
+                {
+                case 11:
+                case 1:
+                case 7:
+                    if ( (py==y1) & (px>=x1) & (px<x2) ) k=j;
+                    break;
+                case 2:
+                case 3:
+                case 5:
+                    if ( (px>=x1) & (px<x1+13) & (py==y1) ) k=j;
+                    break;
+                case 8:
+                case 10:
+                    if ( (px==x1+1) & (py==y1) ) k=j;
+                    break;
+                }
+            if (k!=-1) break;
+            }
+        if (k!=-1) i=k;
+        }
         break;
+    case 4:
     default:                                               // Pas normal
         break;
     }
@@ -2088,8 +2253,7 @@ return WinMesg("Error",erreur);
 int WinMesg(char *mesg,char *erreur)
 {
 int x,l;
-static char Buffer[70];
-static char Buffer2[70];
+static char Buffer[70],Buffer2[70];
 static int CadreLength=71;
 
 struct Tmt T[4] = {
@@ -2103,7 +2267,7 @@ struct TmtWin F = { 3,10,76,16, Buffer2};
 
 l=strlen(erreur);
 
-x=(80-l)/2;                                             // 1-> 39, 2->39
+x=((Cfg->TailleX)-l)/2;                                 // 1-> 39, 2->39
 if (x>25) x=25;
 
 l=(40-x)*2;
@@ -2139,74 +2303,74 @@ int j3;
 
 if (total==0) return 0;
 
-if ( (to>1000) & (total>1000) )
+if ( (to>1024) & (total>1024) )
     {
-    j3=(to/1000);
-    j3=(j3*length*8)/(total/1000);
+    j3=(to/1024);
+    j3=(j3*length*8)/(total/1024);
     }
     else
     j3=(to*length*8)/total;
 
 if (j3>=(length*8)) j3=(length*8)-1;
 
-j1=from;
-
-for (;j1<j3;j1++)
+for (j1=from;j1<j3;j1++)
     {
     j2=j1/8;
     if (Cfg->UseFont==0)
-    switch(j1%8) {
-        case 0:
-            AffChr(j2+x,y,'*'); // b
-            break;
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            AffChr(j2+x,y,'*'); // d
-            AffChr(j2+x+1,y,32); // i
-            break;
-        case 5:
-        case 6:
-        case 7:
-            AffChr(j2+x,y,32); // g
-            AffChr(j2+x+1,y,'*'); // l
-            break;
-        }
+        switch(j1%8)
+            {
+            case 0:
+                AffChr(j2+x,y,'*');
+                break;
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                AffChr(j2+x,y,'*');
+                AffChr(j2+x+1,y,32);
+                break;
+            case 5:
+            case 6:
+            case 7:
+                AffChr(j2+x,y,32);
+                AffChr(j2+x+1,y,'*');
+                break;
+            }
     else
-    switch(j1%8) {
-        case 0:
-            AffChr(j2+x,y,156); // b
-            break;
-        case 1:
-            AffChr(j2+x,y,157); // c
-            AffChr(j2+x+1,y,32); // c
-            break;
-        case 2:
-            AffChr(j2+x,y,158); // d
-            AffChr(j2+x+1,y,163); // i
-            break;
-        case 3:
-            AffChr(j2+x,y,159); // e
-            AffChr(j2+x+1,y,164); // j
-            break;
-        case 4:
-            AffChr(j2+x,y,160); // f
-            AffChr(j2+x+1,y,165); // k
-            break;
-        case 5:
-            AffChr(j2+x,y,161); // g
-            AffChr(j2+x+1,y,166); // l
-            break;
-        case 6:
-            AffChr(j2+x,y,162); // h
-            AffChr(j2+x+1,y,167); // k
-            break;
-        case 7:
-            AffChr(j2+x,y,32);  // a
-            AffChr(j2+x+1,y,155);
-            break;
-        }
+        switch(j1%8)
+            {
+            case 0:
+                AffChr(j2+x,y,156);
+                break;
+            case 1:
+                AffChr(j2+x,y,157);
+                AffChr(j2+x+1,y,32);
+                break;
+            case 2:
+                AffChr(j2+x,y,158);
+                AffChr(j2+x+1,y,163);
+                break;
+            case 3:
+                AffChr(j2+x,y,159);
+                AffChr(j2+x+1,y,164);
+                break;
+            case 4:
+                AffChr(j2+x,y,160);
+                AffChr(j2+x+1,y,165);
+                break;
+            case 5:
+                AffChr(j2+x,y,161);
+                AffChr(j2+x+1,y,166);
+                break;
+            case 6:
+                AffChr(j2+x,y,162);
+                AffChr(j2+x+1,y,167);
+                break;
+            case 7:
+                AffChr(j2+x,y,32);
+                AffChr(j2+x+1,y,155);
+                break;
+            }
     }
 
 if (to==total)
@@ -2214,7 +2378,7 @@ if (to==total)
 
 if (to==0)
     if (Cfg->UseFont==0)
-    AffChr(x,y,'*'); // b
+    AffChr(x,y,'*');
     else
     AffChr(x,y,155);
 
@@ -2271,7 +2435,7 @@ Mask[1]->Ignore_Case=1;
 Mask[1]->Other_Col=1;
 
 strcpy(Mask[15]->title,"User Defined Style");
-strcpy(Mask[15]->chaine,      "ketchup killers redbug access darkangel "
+strcpy(Mask[15]->chaine,      "ketchup killers redbug access dark angel "
                    "marjorie katana ecstasy cray magic fred cobra z @");
 Mask[15]->Ignore_Case=1;
 Mask[15]->Other_Col=1;
@@ -2313,6 +2477,8 @@ Cfg->seldir=1;
 
 Cfg->display=0;
 
+Cfg->hidfil=1;
+
 Cfg->comport=2;
 Cfg->comspeed=19200;
 Cfg->combit=8;
@@ -2337,7 +2503,7 @@ strcpy(Cfg->ExtTxt,"ASM BAS C CPP DIZ DOC H HLP HTM INI LOG NFO PAS TXT");
 Cfg->Enable_Txt=1;
 strcpy(Cfg->ExtBmp,"BMP GIF ICO JPG LBM PCX PIC PKM PNG RAW TGA TIF WMF WPG");
 Cfg->Enable_Bmp=1;
-strcpy(Cfg->ExtSnd,"IT IFF MID MOD MTM S3M VOC WAV XM");
+strcpy(Cfg->ExtSnd,"IT IFF MID MOD MTM S3M VOC WAV XM RTM");
 Cfg->Enable_Snd=1;
 strcpy(Cfg->ExtArc,"ARJ LHA RAR ZIP KKD");
 Cfg->Enable_Arc=1;
@@ -2471,12 +2637,29 @@ _dos_setdrive(cdrv,&nbrdrive);
 return IOerr;
 }
 
+void InitSeg(void)
+{
+int n;
+
+for(n=0;n<50;n++)
+    scrseg[n]=(char*)(0xB8000+n*(Cfg->TailleX)*2);
+
+}
+
 int InitScreen(int a)
 {
 char buf[31];
 int nr;
 
 // --- Console ---------------------------------------------------------
+
+if ((Cfg->TailleX==0) | (Cfg->TailleY==0))
+    {
+    Cfg->TailleX=80;
+    Cfg->TailleY=25;
+    }
+
+InitSeg();
 
 AffChr=Cache_AffChr;
 AffCol=Cache_AffCol;
@@ -2567,16 +2750,16 @@ int car=0;
 for (n=0;n<nbr;n++)
     let[n]=toupper(bar[n].titre[0]);
 
-ColLin(0,0,80,1*16+7);
-ChrLin(0,0,80,32);
+ColLin(0,0,Cfg->TailleX,1*16+7);
+ChrLin(0,0,Cfg->TailleX,32);
 
 
 x=0;
 for(n=0;n<nbr;n++)
     x+=strlen(bar[n].titre);
 
-i=(80-x)/nbr;
-x=(80-(nbr-1)*i-x)/2;
+i=((Cfg->TailleX)-x)/nbr;
+x=((Cfg->TailleX)-(nbr-1)*i-x)/2;
 
 c=*poscur;
 
@@ -2611,12 +2794,45 @@ if (*yp==0)
 
 car=Wait(0,0,0);
 
+if (car==0)
+    {
+    int xm,ym,button;
+
+    xm=MousePosX();
+    ym=MousePosY();
+
+    button=MouseButton();
+
+    if ((button&4)==4) car=13;
+
+    if ((button&2)==2) car=27;
+
+    if ((button&1)==1)
+        {
+        if (ym!=0)
+            car=13;
+            else
+            {
+            j=0;
+            for (n=0;n<nbr;n++)
+                {
+                if (xm>=x+j+n*i)
+                    c=n;
+                j+=strlen(bar[n].titre);
+                }
+            }
+        }
+
+
+    }
+
+
 switch(HI(car))
     {
-    case 0x4B:
+    case 0x4B:      //--- Gauche ---------------------------------------
         c--;
         break;
-    case 0x4D:
+    case 0x4D:      //--- Droite ---------------------------------------
         c++;
         break;
     case 80:
@@ -2624,6 +2840,7 @@ switch(HI(car))
         car=13;
         break;
     }
+
 if (LO(car)!=0)
     for (n=0;n<nbr;n++)
         if (toupper(car)==let[n])
@@ -2683,8 +2900,8 @@ fin=0;
 
 do
 {
-if ((*c)<0)   (*c)=nbr-1;
-if ((*c)>=nbr) (*c)=0;
+if ((*c)<0)   (*c)=0;
+if ((*c)>=nbr) (*c)=nbr-1;
 
 for (n=0;n<nbr;n++)
     {
@@ -2713,6 +2930,35 @@ for (n=0;n<nbr;n++)
     }
 
 car=Wait(0,0,0);
+
+if (car==0)
+    {
+    int xm,ym,button;
+
+    ym=MousePosY();
+    xm=MousePosX();
+
+    button=MouseButton();
+
+    if ((button&4)==4) car=13;
+
+    if ((button&2)==2) car=27;
+
+    if ((button&1)==1)
+        {
+        if ((*c)>ym-(*yp))
+            car=0x4800;
+        if ((*c)<ym-(*yp))
+            car=0x5000;
+
+        if (xm<(*xp))
+            car=0x4B00;
+        if (xm>(*xp+max-1))
+            car=0x4D00;
+        }
+
+    _zmok=1;                                     // On relache le bouton
+    }
 
 do
     {
@@ -2793,6 +3039,9 @@ while ( (hlp[pos+n]!=0x0A) & (hlp[pos+n]!=0x0D) )
 chaine[n]=0;
 }
 
+/*--------------------------------------------------------------------*\
+|- Appelle l'aide en g‚n‚ral                                          -|
+\*--------------------------------------------------------------------*/
 void Help(void)
 {
 FILE *fic;
@@ -2848,9 +3097,12 @@ while(n<lng)
 
 MainTopic();
 
-free(hlp);
+LibMem(hlp);
 }
 
+/*--------------------------------------------------------------------*\
+|- Aide sur un topic en particulier                                   -|
+\*--------------------------------------------------------------------*/
 void HelpTopic(char *topic)
 {
 FILE *fic;
@@ -2879,20 +3131,19 @@ while(n<lng)
     n++;
     }
 
-free(hlp);
+LibMem(hlp);
 }
 
+/*--------------------------------------------------------------------*\
+|- Affichage du menu principal                                        -|
+\*--------------------------------------------------------------------*/
 void MainTopic(void)
 {
-short x1,y1,x2,y2,max;
+short x1,y1,x2,y2,max,n,pos;
 
 char chaine[256];
 char car,car2;
 int c;
-
-short n;
-
-short pos;
 
 
 
@@ -2905,8 +3156,8 @@ for (n=0;n<NbrMain;n++)
     }
 
 
-x1=5; // (82-max)/2;
-y1=3; // ((Cfg->TailleY)-3*NbrMain)/2;
+x1=5;
+y1=3;
 
 x2=x1+max+3;
 y2=y1+(NbrMain+1)*3;
@@ -2936,6 +3187,31 @@ do
         }
 
     c=Wait(0,0,0);
+
+    if (c==0)     //--- Pression bouton souris ---------------------------
+        {
+        int button;
+
+        button=MouseButton();
+
+        if ((button&1)==1)     //--- gauche --------------------------------
+            {
+            int y;
+
+            y=MousePosY();
+
+            if (y>(y1+3+pos*3))
+                c=80*256;
+            if (y<(y1+3+pos*3))
+                c=72*256;
+            }
+        if ((button&2)==2)     //--- droite ---------------------------
+            c=27;
+
+        if ((button&4)==4)
+            c=13;
+        }
+
     car=LO(c);
     car2=HI(c);
 
@@ -2971,18 +3247,15 @@ ChargeEcran();
 
 }
 
+/*--------------------------------------------------------------------*\
+|- Affichage du menu secondaire                                       -|
+\*--------------------------------------------------------------------*/
 void SubTopic(long z)
 {
 char chaine[256];
 char car,car2;
-int c;
-
-int x1,x2,y1,y2,max;
-
-short n,dernier;
-
-
-short pos,prem;
+int c,x1,x2,y1,y2,max;
+short n,dernier,pos,prem;
 
 Hlp2Chaine(NdxMainTopic[z],chaine);
 max=strlen(chaine);
@@ -3037,6 +3310,32 @@ do
         }
 
     c=Wait(0,0,0);
+
+    if (c==0)     //--- Pression bouton souris ---------------------------
+        {
+        int button;
+
+        button=MouseButton();
+
+        if ((button&1)==1)     //--- gauche --------------------------------
+            {
+            int y;
+
+            y=MousePosY();
+
+            if (y>(y1+3+(pos-prem)*2))
+                c=80*256;
+            if (y<(y1+3+(pos-prem)*2))
+                c=72*256;
+            }
+
+        if ((button&2)==2)     //--- droite ---------------------------
+            c=27;
+
+        if ((button&4)==4)
+            c=13;
+        }
+
     car=LO(c);
     car2=HI(c);
 
@@ -3075,6 +3374,9 @@ ChargeEcran();
 #define SPACE ' '
 
 
+/*--------------------------------------------------------------------*\
+|- Affichage d'une page d'aide                                        -|
+\*--------------------------------------------------------------------*/
 void Page(long z)
 {
 char car,car2;
@@ -3086,7 +3388,9 @@ int nbrkey;
 
 short x,y;
 
-char type;                   // 1: Centre & highlighted & 2: Highlighted
+char type;                   //--- 1: Centre & highlighted -------------
+                             //--- 2: Highlighted ----------------------
+                             //--- 3: Marqueur pour topic aide ---------
 
 char chaine[256];
 
@@ -3095,8 +3399,8 @@ long avant,apres,pres;
 SaveEcran();
 PutCur(32,0);
 
-WinCadre(0,1,79,(Cfg->TailleY)-2,1);
-Window(1,2,78,(Cfg->TailleY)-3,10*16+1);
+WinCadre(0,0,(Cfg->TailleX)-1,(Cfg->TailleY)-2,1);
+Window(1,1,78,(Cfg->TailleY)-3,10*16+1);
 
 pres=z;
 
@@ -3108,7 +3412,7 @@ n=pres;
 avant=pres;
 apres=pres;
 
-y=1;
+y=0;
 
 while(hlp[n]!=0x0A) n++;
 n++;
@@ -3188,7 +3492,7 @@ while(1)
             n++;
             }
 
-        ChrLin(x,y,79-x,SPACE);                 // Efface jusqu'a la fin
+        ChrLin(x,y,(Cfg->TailleX)-1-x,SPACE);                 // Efface jusqu'a la fin
 
         if (type!=0)                              // Couleur de la ligne
             ColLin(1,y,78,10*16+5);
@@ -3216,6 +3520,28 @@ if (kbhit()!=0) nbrkey=0;
 if (nbrkey==0)
     {
     c=Wait(0,0,0);
+
+    if (c==0)     //--- Pression bouton souris ---------------------------
+        {
+        int button;
+
+        button=MouseButton();
+
+        if ((button&1)==1)     //--- gauche ----------------------------
+            {
+            int y;
+
+            y=MousePosY();
+
+            if (y>(Cfg->TailleY)/2)
+                c=80*256;
+                else
+                c=72*256;
+            }
+        if ((button&2)==2)     //--- droite ----------------------------
+            c=27;
+        }
+
     car=LO(c);
     car2=HI(c);
     }
@@ -3277,6 +3603,192 @@ switch(car2)
 while ( (c!=27) & (c!=0x8D00) );
 
 ChargeEcran();
+}
+
+/*--------------------------------------------------------------------*\
+|- Initialisation des fichiers selon la path                          -|
+\*--------------------------------------------------------------------*/
+void SetDefaultPath(char *path)
+{
+strcpy(_IntBuffer,path);
+
+if ( (path[strlen(path)-1]!='\\') &
+     (path[strlen(path)-1]!='/') )
+        _IntBuffer[strlen(path)]=DEFSLASH,
+        _IntBuffer[strlen(path)+1]=0;
+
+Fics->LastDir=GetMem(256);
+getcwd(Fics->LastDir,256);
+
+Fics->FicIdfFile=GetMem(256);
+strcpy(Fics->FicIdfFile,_IntBuffer);
+strcat(Fics->FicIdfFile,"idfext.rb");
+
+Fics->CfgFile=GetMem(256);
+strcpy(Fics->CfgFile,_IntBuffer);
+strcat(Fics->CfgFile,"kkrb.cfg");
+
+Fics->path=GetMem(256);
+strcpy(Fics->path,_IntBuffer);
+
+Fics->help=GetMem(256);
+strcpy(Fics->help,_IntBuffer);
+strcat(Fics->help,"kkc.hlp");
+
+Fics->temp=GetMem(256);
+strcpy(Fics->temp,_IntBuffer);
+strcat(Fics->temp,"temp.tmp");
+
+Fics->trash=GetMem(256);
+strcpy(Fics->trash,_IntBuffer);
+strcat(Fics->trash,"trash");                         // repertoire trash
+
+Fics->log=GetMem(256);
+strcpy(Fics->log,_IntBuffer);
+strcat(Fics->log,"trash\\logfile");                     // logfile trash
+}
+
+/*--------------------------------------------------------------------*\
+|- Gestion souris                                                     -|
+\*--------------------------------------------------------------------*/
+
+
+int MousePosX(void)
+{
+return _xm;
+}
+
+int MousePosY(void)
+{
+return _ym;
+}
+
+int MouseButton(void)
+{
+return _zm;
+}
+
+void InitMouse(void)
+{
+union REGS R;
+
+R.w.ax=0x0000;
+int386(0x33,&R,&R);
+if (R.w.ax==0) return;
+
+R.w.ax=0x0001;
+int386(0x33,&R,&R);
+
+_PasX=4;
+_PasY=4;
+_TmpClik=3;
+
+_MouseOK=1;
+_MPosX=40*_PasX;
+_MPosY=(Cfg->TailleY)/2*_PasY;
+
+_charm=0;
+
+_dclik=0;
+
+_zmok=1;        // Bouton relach‚
+}
+
+
+void GetPosMouse(int *x,int *y,int *button)
+{
+union REGS R;
+signed short t;
+
+if (_MouseOK==0)
+    {
+    (*x)=(*y)=(*button)=0;
+    return;
+    }
+
+R.w.ax=0x000B;
+int386(0x33,&R,&R);
+
+t=R.w.cx;
+_MPosX+=t;
+t=R.w.dx;
+_MPosY+=t;
+
+if (_MPosX<0) _MPosX=0;
+if (_MPosX>=((Cfg->TailleX)*_PasX)) _MPosX=(Cfg->TailleX-1)*_PasX;
+
+if (_MPosY<0) _MPosY=0;
+if (_MPosY>=((Cfg->TailleY)*_PasY)) _MPosY=(Cfg->TailleY-1)*_PasY;
+
+(*x)=_MPosX/_PasX;
+(*y)=_MPosY/_PasY;
+
+R.w.ax=0x0005;
+int386(0x33,&R,&R);
+
+_zm=R.w.ax;
+
+if ( ((*x)!=_xm) | ((*y)!=_ym) | (_charm==0) )
+    {
+    *(scrseg[_ym]+(_xm<<1)+1)=GetCol(_xm,_ym);
+
+    _charm=GetCol((*x),(*y));
+
+    _xm=(*x);
+    _ym=(*y);
+    }
+
+if (_charm!=0)
+    *(scrseg[_ym]+(_xm<<1)+1)=(_charm&15)*16 + (_charm/16);
+
+if ((_zm&1)==1)
+    {
+    _mclock=clock();
+    if ( (_dclik!=0) & (_dclik!=_TmpClik) )
+        {
+        _zm=4;
+        }
+    _dclik=_TmpClik;
+    }
+    else
+    {
+    if (_dclik!=0)
+        {
+        if (clock()!=_mclock)
+            {
+            _dclik--;
+            _mclock=clock();
+            }
+        }
+    }
+
+
+if (_zm==0) _zmok=1;                    // On debloque si touche relache
+
+if (_zmok==0) _zm=0;         // Touche est relache si pas encore relache
+
+
+(*button)=_zm;
 
 }
 
+#ifdef DEBUG
+void Debug(char *string,...)
+{
+char sortie[256];
+va_list arglist;
+FILE *fic;
+
+char *suite;
+
+suite=sortie;
+
+va_start(arglist,string);
+vsprintf(sortie,string,arglist);
+va_end(arglist);
+
+fic=fopen("c:\\debug","at");
+fprintf(fic,"%s",suite);
+fclose(fic);
+}
+#endif

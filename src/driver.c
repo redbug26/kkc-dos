@@ -86,6 +86,7 @@ DFen->nbrsel=0;
 
 Fic=DFen->F;
 
+Fic[0]=GetMem(sizeof(struct file));
 Fic[0]->name=GetMem(3);
 strcpy(Fic[0]->name,"..");
 
@@ -99,6 +100,7 @@ DFen->nbrfic=1;
 
 if (Cfg->pntrep==1)
     {
+    Fic[1]=GetMem(sizeof(struct file));
     Fic[1]->name=GetMem(2);
     strcpy(Fic[1]->name,".");
 
@@ -312,6 +314,7 @@ DFen->nbrsel=0;
 
 Fic=DFen->F;
 
+Fic[0]=GetMem(sizeof(struct file));
 Fic[0]->name=GetMem(3);
 strcpy(Fic[0]->name,"..");
 
@@ -325,6 +328,7 @@ DFen->nbrfic=1;
 
 if (Cfg->pntrep==1)
     {
+    Fic[1]=GetMem(sizeof(struct file));
     Fic[1]->name=GetMem(2);
     strcpy(Fic[1]->name,".");
 
@@ -477,6 +481,7 @@ DFen->nbrsel=0;
 
 Fic=DFen->F;
 
+Fic[0]=GetMem(sizeof(struct file));
 Fic[0]->name=GetMem(3);
 strcpy(Fic[0]->name,"..");
 
@@ -490,6 +495,7 @@ DFen->nbrfic=1;
 
 if (Cfg->pntrep==1)
     {
+    Fic[1]=GetMem(sizeof(struct file));
     Fic[1]->name=GetMem(2);
     strcpy(Fic[1]->name,".");
 
@@ -676,6 +682,7 @@ DFen->nbrsel=0;
 
 Fic=DFen->F;
 
+Fic[0]=GetMem(sizeof(struct file));
 Fic[0]->name=GetMem(3);
 strcpy(Fic[0]->name,"..");
 
@@ -689,6 +696,7 @@ DFen->nbrfic=1;
 
 if (Cfg->pntrep==1)
     {
+    Fic[1]=GetMem(sizeof(struct file));
     Fic[1]->name=GetMem(2);
     strcpy(Fic[1]->name,".");
 
@@ -866,22 +874,24 @@ DFen->nbrfic=0;
 
 if (Cfg->pntrep==1)
     {
-    Fic[DFen->nbrfic]->name=GetMem(2);
-    strcpy(Fic[DFen->nbrfic]->name,".");
+    Fic[0]=GetMem(sizeof(struct file));
+    Fic[0]->name=GetMem(2);
+    strcpy(Fic[0]->name,".");
 
-    Fic[DFen->nbrfic]->size=0;
-    Fic[DFen->nbrfic]->time=0;
-    Fic[DFen->nbrfic]->date=33;
-    Fic[DFen->nbrfic]->attrib=0x10;
-    Fic[DFen->nbrfic]->select=0;
+    Fic[0]->size=0;
+    Fic[0]->time=0;
+    Fic[0]->date=33;
+    Fic[0]->attrib=0x10;
+    Fic[0]->select=0;
 
-    Fic[DFen->nbrfic]->desc=0;
+    Fic[0]->desc=0;
 
     DFen->nbrfic=1;
     }
 
 if (strlen(DFen->path)==strlen(DFen->VolName))
     {
+    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
     Fic[DFen->nbrfic]->name=GetMem(2);
     strcpy(Fic[DFen->nbrfic]->name,"..");
 

@@ -2,7 +2,6 @@
 |-  Header of hard-function                                           -|
 \*--------------------------------------------------------------------*/
 
-
 #define BYTE unsigned char
 #define WORD unsigned short
 #define ULONG unsigned long
@@ -65,8 +64,6 @@ void WinLine(int x1,int y1,int xl,int type);
 
 void SetPal(char x,char r,char g,char b);
 
-int crc32file(char *name,unsigned long *crc);  // Compute CRC-32 of file
-
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F);
 int WinError(char*);
 int WinMesg(char *,char *);
@@ -74,6 +71,8 @@ int WinMesg(char *,char *);
 int Gradue(int x,int y,int length,int from,int to,int total);
 
 void DefaultCfg(void);
+
+void SetDefaultPath(char *path);   // Initialise les fichiers selon path
 
 /*--------------------------------------------------------------------*\
 |-        Gestion de la barre de menu                                 -|
@@ -125,7 +124,8 @@ struct config
      long AnsiSpeed;
 
      short fentype;    // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
-     short TailleY;                // Nombre de caratctere verticalement
+     short TailleY;                 // Nombre de caractere verticalement
+     short TailleX;               // Nombre de caractere horizontalement
 
      char palette[48];                                    // The PALETTE
 
@@ -184,7 +184,8 @@ struct config
     //-----------
      long mtrash;                          // taille maximum de la trash
      long FenAct;                         // Quelle fenˆtre est active ?
-     int _4dos;                                 // equal 1 if 4DOS found
+     char _4dos;                                // equal 1 if 4DOS found
+     char _Win95;                                    // Support nom long
 
      char HistDir[256];                                // History of dir
      char overflow1;
@@ -260,10 +261,25 @@ short com_open(short port,long speed,short bit,BYTE parity,BYTE stop);
 void com_close(void);
 
 /*--------------------------------------------------------------------*\
+|-                             Gestion souris                         -|
 \*--------------------------------------------------------------------*/
+
+void InitMouse(void);
+void GetPosMouse(int *xm,int *ym,int *button);
+int MousePosX(void);
+int MousePosY(void);
+int MouseButton(void);
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+void Debug(char *string,...);
 
 /*--------------------------------------------------------------------*\
 |-  Header for help-functions                                         -|
 \*--------------------------------------------------------------------*/
 void Help(void);
 void HelpTopic(char *);
+
+
+#define DEFSLASH '\\'

@@ -897,10 +897,16 @@ struct key K[nbrkey]=   {
     "Executable file Us Pilot",
     "PRC",
     "US Robotics",137,0,1,6},
+{  {"RTMM"},
+    4,
+    0,
+    "RTM Module",
+    "RTM",
+    "Arnaud Hasenfratz",137,0,0,1},       // arnaud.hasenfratz@utbm.fr
 
 
 
-// Dernier employe: 137
+// Dernier employe: 138
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|

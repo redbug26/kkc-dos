@@ -32,6 +32,15 @@ extern int IOerr;
 char PathOfKK[256];
 char ActualPath[256];
 
+char LoadDefCfg;
+
+
+/*--------------------------------------------------------------------*\
+|- prototype                                                          -|
+\*--------------------------------------------------------------------*/
+
+int crc32file(char *name,unsigned long *crc);  // Compute CRC-32 of file
+int FileComp(char *a,char *b);   // Comparaison entre 2 noms de fichiers
 
 /*--------------------------------------------------------------------*\
 |- Pour Statistique;                                                  -|
@@ -117,11 +126,11 @@ while (*suite!=0)
 	}
 
 MesgY++;
-if (MesgY>(Cfg->TailleY-2))
+if (MesgY>(Cfg->TailleY-3))
     {
-    MoveText(1,3,78,(Cfg->TailleY-2),1,2);
+    MoveText(1,3,78,(Cfg->TailleY-3),1,2);
     MesgY--;
-    ChrLin(1,(Cfg->TailleY-2),78,32);
+    ChrLin(1,(Cfg->TailleY-3),78,32);
     }
 }
 
@@ -457,7 +466,7 @@ for (n=prem;n<nbrkey;n++)
         if (y&1==1)
             ColLin(1,y,78,10*16+3);
             else
-            ColLin(1,y,78,15*16+3);
+            ColLin(1,y,78,1*16+3);
         }
         else
         {
@@ -473,13 +482,13 @@ for (n=prem;n<nbrkey;n++)
             }
             else
             {
-            ColLin(1,y,4,  15*16+3);
-            ColLin(5,y,1,  15*16+3);
-            ColLin(6,y,32, 15*16+4);
-            ColLin(38,y,6, 15*16+3);
-            ColLin(44,y,29,15*16+5);
-            ColLin(73,y,1, 15*16+3);
-            ColLin(74,y,5, 15*16+3);
+            ColLin(1,y,4,  1*16+3);
+            ColLin(5,y,1,  1*16+3);
+            ColLin(6,y,32, 1*16+4);
+            ColLin(38,y,6, 1*16+3);
+            ColLin(44,y,29,1*16+5);
+            ColLin(73,y,1, 1*16+3);
+            ColLin(74,y,5, 1*16+3);
             }
 
         PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,
@@ -490,7 +499,7 @@ for (n=prem;n<nbrkey;n++)
 
     y++;
 
-    if ( (y==(Cfg->TailleY-2)) | (n==nbrkey-1) ) break;
+    if ( (y==(Cfg->TailleY-3)) | (n==nbrkey-1) ) break;
     }
 
 car=Wait(0,0,0);
@@ -513,12 +522,12 @@ switch(HI(car))
         prem=0;
         break;
     case 0X4F:                                                    // END
-        prem=nbrkey-(Cfg->TailleY-5);
+        prem=nbrkey-(Cfg->TailleY-6);
         break;
     }
 
 if (prem<0) prem=0;
-if (prem>nbrkey-(Cfg->TailleY-5)) prem=nbrkey-(Cfg->TailleY-5);
+if (prem>nbrkey-(Cfg->TailleY-6)) prem=nbrkey-(Cfg->TailleY-6);
 
 }
 while (car!=27);
@@ -559,7 +568,7 @@ fwrite(Fen->path,256,1,fic);
 fwrite(&(Fen->order),sizeof(short),1,fic);
 fwrite(&(Fen->sorting),sizeof(short),1,fic);
 
-fwrite(&(Fen->nbrsel),4,1,fic);
+fwrite(&(Fen->nbrfic),4,1,fic);
 
 for (n=0;n<=Fen->nbrfic;n++)
     {
@@ -618,11 +627,9 @@ for (t=0;t<NBWIN;t++)
     fread(&(DFen->order),sizeof(short),1,fic);
     fread(&(DFen->sorting),sizeof(short),1,fic);
 
-    fread(&nbr,4,1,fic);
+    fread(&(DFen->nbrfic),4,1,fic);
 
-    DFen->nbrsel=0;
-
-    for (i=0;i<=nbr;i++)
+    for (i=0;i<=DFen->nbrfic;i++)
         {
         DFen->F[i]=GetMem(sizeof(struct file));
 
@@ -633,8 +640,6 @@ for (t=0;t<NBWIN;t++)
         DFen->F[i]->name=GetMem(m+1);
         memcpy(DFen->F[i]->name,nom,m+1);
         }
-
-    DFen->nbrsel=nbr;
 
     fread(&(DFen->scur),sizeof(short),1,fic);
     }
@@ -755,14 +760,14 @@ do	{
             PrintAt(xx,yy,"Search in %c: (%9s)",
                     n+'A',etat[n]==1 ? "Ready" : "Not Ready");
             yy++;
-            if (yy>=Cfg->TailleY-4) yy=13,xx+=39;
+            if (yy>=Cfg->TailleY-5) yy=13,xx+=39;
             }
 
     while(xx!=80)
         {
         PrintAt(xx,yy,"                        ");
         yy++;
-        if (yy>=Cfg->TailleY-4) yy=13,xx+=39;
+        if (yy>=Cfg->TailleY-5) yy=13,xx+=39;
         }
 
     if (lstdrv[i]==0)
@@ -799,7 +804,7 @@ static char **dir;
 
 
 
-k=Cfg->TailleY-5;
+k=Cfg->TailleY-6;
 
 DispMessage("Select the directory where you will that KKSETUP"
                                            " copy the batch files for");
@@ -842,7 +847,7 @@ if (i!=0)
     PutCur(32,0);
 
     max=i;
-    if (max>Cfg->TailleY-(y+1)) max=Cfg->TailleY-(y+1);
+    if (max>Cfg->TailleY-(y+1)-1) max=Cfg->TailleY-(y+1)-1;
 
     WinCadre(x-2,y-1,x+Mlen+1,y+max,0);
     ColWin(x-1,y,x+Mlen,y+max-1,10*16+1);
@@ -1013,6 +1018,15 @@ Fics->help=GetMem(256);
 strcpy(Fics->help,path);
 strcat(Fics->help,"\\kksetup.hlp");
 
+
+
+
+/*--------------------------------------------------------------------*\
+|- Chargement de la configuration                                     -|
+\*--------------------------------------------------------------------*/
+
+LoadDefCfg=0;
+
 if (LoadCfg()==-1)
     {
     FENETRE *DFen;
@@ -1020,7 +1034,10 @@ if (LoadCfg()==-1)
 
     DefaultCfg();
 
-    for (t=0;t<3;t++)
+    LoadDefCfg=1;
+    
+
+    for (t=0;t<4;t++)
         {
         DFen=Fenetre[t];
 
@@ -1057,25 +1074,22 @@ switch (Cfg->TailleY)
         break;
     }
 
-
-SetPal(0, 43, 37, 30);
-SetPal(1, 31, 22, 17);
-SetPal(2, 0, 0, 0);
-SetPal(3, 58, 58, 50);
-SetPal(4, 44, 63, 63);
-SetPal(5, 63, 63, 21);
-SetPal(6,43,37,30);
-SetPal(7,  0,  0,  0);
-SetPal(10, 43, 37, 30);
-SetPal(15, 47, 41, 34);
-
-WinCadre(0,1,79,(Cfg->TailleY-1),1);
-ChrWin(1,2,78,(Cfg->TailleY-2),32);
-ColWin(1,2,78,(Cfg->TailleY-2),10*16+1);
+WinCadre(0,1,79,(Cfg->TailleY-2),1);
+ChrWin(1,2,78,(Cfg->TailleY-3),32);
+ColWin(1,2,78,(Cfg->TailleY-3),10*16+1);
 ColLin(1,0,78,10*16+5);
 ChrLin(1,0,78,32);
 
 PrintAt(21,0,"Setup of Ketchup Killers Commander");
+
+LoadPal();
+
+/*--------------------------------------------------------------------*\
+|- Autres configurations                                              -|
+\*--------------------------------------------------------------------*/
+
+if (LoadDefCfg)
+    ConfigSetup();
 
 /*--------------------------------------------------------------------*\
 |-  Gestion Message                                                   -|
@@ -1198,8 +1212,8 @@ FILE *fic;
 SaveEcran();
 PutCur(32,0);
 
-ChrWin(1,3,78,(Cfg->TailleY-2),32);
-ColWin(1,3,78,(Cfg->TailleY-2),10*16+1);
+ChrWin(1,3,78,(Cfg->TailleY-3),32);
+ColWin(1,3,78,(Cfg->TailleY-3),10*16+1);
 
 nbr=0;
 
@@ -1255,6 +1269,8 @@ if (nbr>0)
                 fwrite(&sn,1,1,fic);
                 fwrite(a,sn,1,fic);
 
+
+
                 a=app[n]->Titre;
                 sn=strlen(a);
                 fwrite(&sn,1,1,fic);
@@ -1279,12 +1295,12 @@ if (nbr>0)
         fclose(fic);
         }
 
-    PrintAt(29,(Cfg->TailleY-2),"Press a key to continue");
-    ColLin(1,(Cfg->TailleY-2),78,0*16+2);
+    PrintAt(29,(Cfg->TailleY-3),"Press a key to continue");
+    ColLin(1,(Cfg->TailleY-3),78,0*16+2);
 
     Wait(0,0,0);
-    ColWin(1,2,78,(Cfg->TailleY-2),0*16+1);
-    ChrWin(1,2,78,(Cfg->TailleY-2),32);  // '±'
+    ColWin(1,2,78,(Cfg->TailleY-3),0*16+1);
+    ChrWin(1,2,78,(Cfg->TailleY-3),32);  // '±'
 
     ChargeEcran();
 
@@ -1333,11 +1349,11 @@ if (!strncmp(Key,"KKRB",4))
             PrintAt(3,posy,"Loading information about %s",Titre);
             posy++;
 
-            if (posy>(Cfg->TailleY-2))
+            if (posy>(Cfg->TailleY-3))
                 {
-                MoveText(1,4,78,(Cfg->TailleY-2),1,3);
+                MoveText(1,4,78,(Cfg->TailleY-3),1,3);
                 posy--;
-                ChrLin(1,(Cfg->TailleY-2),78,32);
+                ChrLin(1,(Cfg->TailleY-3),78,32);
                 }
             break;
         case 2:                                      // Code Programmeur
@@ -1526,16 +1542,22 @@ do
         K1crc=0;
 
         for(n=0;n<nbr;n++)
-            if ( (!stricmp(fic.name,app[n]->Filename)) &
+            if ( (!FileComp(fic.name,app[n]->Filename)) &
                                                  (app[n]->Checksum!=0) )
                 {
                 if (KKcrc==0)
                     {
                     if (K1crc==0)
                         {
+                        int n;
+
                         strcpy(moi,nom);
                         moi[strlen(moi)-3]=0;
                         strcat(moi,fic.name);
+                        n=0;
+                        while(moi[n]!=0)
+                            if (moi[n]==32) moi[n]=0; else n++;
+
                         crc32file(moi,&KKcrc);
                         K1crc=KKcrc;
                         }
@@ -1552,7 +1574,7 @@ do
         for(n=0;n<nbr;n++)
             {
             bill=0;
-            if (!stricmp(fic.name,app[n]->Filename))
+            if (!FileComp(fic.name,app[n]->Filename))
                 {
                 if ( (KKcrc==0) & (app[n]->Checksum==0) )
                     {
@@ -1646,11 +1668,11 @@ do
         PrintAt(3,posy,"Found %s in %s",app[wok]->Titre,dir[o-1]);
         posy++;
 
-        if (posy>(Cfg->TailleY-2))
+        if (posy>(Cfg->TailleY-3))
                 {
-                MoveText(1,4,78,(Cfg->TailleY-2),1,3);
+                MoveText(1,4,78,(Cfg->TailleY-3),1,3);
                 posy--;
-                ChrLin(1,(Cfg->TailleY-2),78,32);
+                ChrLin(1,(Cfg->TailleY-3),78,32);
                 }
         }
    }
@@ -1979,7 +2001,7 @@ struct {
                 // 1: Decompacteur
                 // 2: Compacteur
     char dir[128];
-    } IDF_app;
+    } IDF2_app;
 
 /*--------------------------------------------------------------------*\
 |-  Montre tous les players que vous possedez                         -|
@@ -2020,8 +2042,8 @@ if (nbr==0) return 0;
 SaveEcran();
 PutCur(32,0);
 
-ChrWin(1,3,78,(Cfg->TailleY-2),32);
-ColWin(1,3,78,(Cfg->TailleY-2),10*16+1);
+ChrWin(1,3,78,(Cfg->TailleY-3),32);
+ColWin(1,3,78,(Cfg->TailleY-3),10*16+1);
 
 
 prem=0;
@@ -2056,44 +2078,44 @@ do
         char *a;
 
         fread(&n,1,1,fic);
-        IDF_app.Filename=GetMem(n+1);
-        a=IDF_app.Filename;
+        IDF2_app.Filename=GetMem(n+1);
+        a=IDF2_app.Filename;
         a[n]=0;
         fread(a,n,1,fic);
 
         fread(&n,1,1,fic);
-        IDF_app.Titre=GetMem(n+1);
-        a=IDF_app.Titre;
+        IDF2_app.Titre=GetMem(n+1);
+        a=IDF2_app.Titre;
         a[n]=0;
         fread(a,n,1,fic);
 
         fread(&n,1,1,fic);
-        IDF_app.Meneur=GetMem(n+1);
-        a=IDF_app.Meneur;
+        IDF2_app.Meneur=GetMem(n+1);
+        a=IDF2_app.Meneur;
         a[n]=0;
         fread(a,n,1,fic);
 
-        fread(&(IDF_app.ext),2,1,fic);               // Numero de format
+        fread(&(IDF2_app.ext),2,1,fic);              // Numero de format
 
-        fread(&(IDF_app.NoDir),2,1,fic);             // Numero directory
+        fread(&(IDF2_app.NoDir),2,1,fic);            // Numero directory
 
-        fread(&(IDF_app.type),1,1,fic);              // Numero directory
+        fread(&(IDF2_app.type),1,1,fic);             // Numero directory
 
         for(k=0;k<nbrkey;k++)
-            if (K[k].numero == IDF_app.ext) break;
+            if (K[k].numero == IDF2_app.ext) break;
 
         if (prem==j)
             {
-            ColLin(1,y,1,  13*16+3);
-            ColLin(2,y,3,  13*16+4);
-            ColLin(5,y,1,  13*16+3);
-            ColLin(6,y,35, 13*16+4);
-            ColLin(41,y,6, 13*16+3);
-            ColLin(47,y,30,13*16+5);
-            ColLin(77,y,1, 13*16+3);
+            ColLin(1,y,1,  12*16+3);
+            ColLin(2,y,3,  12*16+4);
+            ColLin(5,y,1,  12*16+3);
+            ColLin(6,y,35, 12*16+4);
+            ColLin(41,y,6, 12*16+3);
+            ColLin(47,y,30,12*16+5);
+            ColLin(77,y,1, 12*16+3);
 
-            ndir=IDF_app.NoDir;
-            strcpy(name,IDF_app.Filename);
+            ndir=IDF2_app.NoDir;
+            strcpy(name,IDF2_app.Filename);
             }
         else
         if (y&1==1)
@@ -2108,20 +2130,20 @@ do
             }
         else
             {
-            ColLin(1,y,1,  15*16+3);
-            ColLin(2,y,3,  15*16+4);
-            ColLin(5,y,1,  15*16+3);
-            ColLin(6,y,35, 15*16+4);
-            ColLin(41,y,6, 15*16+3);
-            ColLin(47,y,30,15*16+5);
-            ColLin(77,y,1, 15*16+3);
+            ColLin(1,y,1,  1*16+3);
+            ColLin(2,y,3,  1*16+4);
+            ColLin(5,y,1,  1*16+3);
+            ColLin(6,y,35, 1*16+4);
+            ColLin(41,y,6, 1*16+3);
+            ColLin(47,y,30,1*16+5);
+            ColLin(77,y,1, 1*16+3);
             }
 
-        PrintAt(1,y," %3s %-35s from %30s ",K[k].ext,IDF_app.Titre,
-                                                        IDF_app.Meneur);
+        PrintAt(1,y," %3s %-35s from %30s ",K[k].ext,IDF2_app.Titre,
+                                                       IDF2_app.Meneur);
         y++;
 
-        if ( (y==(Cfg->TailleY-2)) | (j==nbr-1) ) break;
+        if ( (y==(Cfg->TailleY-3)) | (j==nbr-1) ) break;
         }
 
     while(j<nbr-1)
@@ -2174,7 +2196,7 @@ do
     if (prem<0) prem=0;
     if (prem>=nbr) prem=nbr-1;
 
-    while (paff<prem-(Cfg->TailleY-6)) paff++;
+    while (paff<prem-(Cfg->TailleY-7)) paff++;
     while (paff>prem) paff--;
     }
 while(car!=27);
@@ -2245,9 +2267,13 @@ switch (poscur)
     nbmenu=2;
     break;
  case 2:
-    strcpy(bar[0].titre,"Load KKSETUP.INI");  bar[0].fct=5;
-    strcpy(bar[1].titre,"Write Profile");     bar[1].fct=9;
-    nbmenu=2;
+    strcpy(bar[0].titre,"Configuration Default");  bar[0].fct=10;
+    strcpy(bar[1].titre,"Editor/Viewer Config.");  bar[1].fct=11;
+    strcpy(bar[2].titre,"");                       bar[2].fct=0;
+
+    strcpy(bar[3].titre,"Load KKSETUP.INI");       bar[3].fct=5;
+    strcpy(bar[4].titre,"Write Profile");          bar[4].fct=9;
+    nbmenu=5;
     break;
  case 3:
     strcpy(bar[0].titre,"Help ");         bar[0].fct=1;
@@ -2290,6 +2316,9 @@ return fin;
 |- 6: Putinpath                                                       -|
 |- 7: Exit                                                            -|
 |- 8: Show all player                                                 -|
+|- 9: Sauve le fichier des configurations                             -|
+|-10: Appelle le menu setup configuration                             -|
+|-11: Configuration de l'editeur                                      -|
 \*--------------------------------------------------------------------*/
 
 void GestionFct(int i)
@@ -2334,5 +2363,257 @@ switch(i)
     case 9:
         SaveConfigFile();
         break;
+    case 10:
+        ConfigSetup();
+        break;
+    case 11:
+        FileSetup();
+        break;
+    }
+}
+
+/*--------------------------------------------------------------------*\
+|---- Crc - 32 BIT ANSI X3.66 CRC checksum files ----------------------|
+\*--------------------------------------------------------------------*/
+
+static unsigned long int crc_32_tab[] = {   // CRC polynomial 0xedb88320
+0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
+0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
+0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
+0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
+0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec, 0x14015c4f, 0x63066cd9,
+0xfa0f3d63, 0x8d080df5, 0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172,
+0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b, 0x35b5a8fa, 0x42b2986c,
+0xdbbbc9d6, 0xacbcf940, 0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
+0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423,
+0xcfba9599, 0xb8bda50f, 0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924,
+0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d, 0x76dc4190, 0x01db7106,
+0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
+0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d,
+0x91646c97, 0xe6635c01, 0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e,
+0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457, 0x65b0d9c6, 0x12b7e950,
+0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
+0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7,
+0xa4d1c46d, 0xd3d6f4fb, 0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0,
+0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9, 0x5005713c, 0x270241aa,
+0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
+0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81,
+0xb7bd5c3b, 0xc0ba6cad, 0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a,
+0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683, 0xe3630b12, 0x94643b84,
+0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
+0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb,
+0x196c3671, 0x6e6b06e7, 0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc,
+0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5, 0xd6d6a3e8, 0xa1d1937e,
+0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
+0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55,
+0x316e8eef, 0x4669be79, 0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236,
+0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f, 0xc5ba3bbe, 0xb2bd0b28,
+0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
+0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f,
+0x72076785, 0x05005713, 0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38,
+0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21, 0x86d3d2d4, 0xf1d4e242,
+0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
+0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69,
+0x616bffd3, 0x166ccf45, 0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2,
+0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db, 0xaed16a4a, 0xd9d65adc,
+0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
+0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693,
+0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
+0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
+};
+
+
+/*--------------------------------------------------------------------*\
+|-  Return -1 if error, 0 in other case                               -|
+\*--------------------------------------------------------------------*/
+
+int crc32file(char *name,unsigned long *crc)
+{
+FILE *fin;
+unsigned long oldcrc32;
+unsigned long crc32;
+unsigned long oldcrc;
+int c;
+long charcnt;
+
+oldcrc32 = 0xFFFFFFFF;
+charcnt = 0;
+
+if ((fin=fopen(name, "rb"))==NULL)
+    {
+    perror(name);
+    return -1;
+    }
+
+while ((c=getc(fin))!=EOF)
+    {
+    ++charcnt;
+    oldcrc32 = (crc_32_tab[(oldcrc32^c) & 0xff]^(oldcrc32 >> 8));
+    }
+
+if (ferror(fin))
+    {
+    perror(name);
+    charcnt = -1;
+    }
+fclose(fin);
+
+crc32 = oldcrc32;
+oldcrc = oldcrc32 = ~oldcrc32;
+
+*crc=oldcrc;
+
+return 0;
+}
+
+/*--------------------------------------------------------------------*\
+|- Charge un configuration par default                                -|
+|- ------------------------------------------------------------------ -|
+|- 0: Ketchup Improvement                                             -|
+|- 1: Classic Configuration                                           -|
+\*--------------------------------------------------------------------*/
+
+void DefaultConfig(int a)
+{
+switch(a)
+    {
+    case 0:                                  //--- Configuration normale
+        Cfg->enterkkd=1;                        //--- Entre dans les KKD
+        Cfg->ajustview=1;        //--- Ajuste l'affichage pour le viewer
+        Cfg->cnvhist=1;                    //--- Conversion de l'history
+        Cfg->dispcolor=1;                    //--- Souligne les couleurs
+        Cfg->hidfil=1;                 //--- Affiche les fichiers caches
+        break;
+    case 1:
+        Cfg->enterkkd=0;                  //--- N'entre pas dans les KKD
+        Cfg->ajustview=0;  //--- N'ajuste pas l'affichage pour le viewer
+        Cfg->cnvhist=0;             //--- Pas de conversion de l'history
+        Cfg->dispcolor=0;             //--- Ne souligne pas les couleurs
+        Cfg->hidfil=0;           //--- N'affiche pas les fichiers caches
+        break;
+    }
+}
+
+/*--------------------------------------------------------------------*\
+|- Confiration par default                                            -|
+\*--------------------------------------------------------------------*/
+void ConfigSetup(void)
+{
+static int sy;
+
+static char x1=32;
+static int y1=2;
+
+struct Tmt T[5] = {
+      {5, 2,10,"Ketchup Improvement ",&sy},
+      {5, 3,10,"Classic Configuration ",&sy},
+
+      {3,1,9,&x1,&y1},
+
+      {3,5,2,NULL,NULL},                                      // le OK
+      {24,5,3,NULL,NULL}                                   // le CANCEL
+      };
+
+struct TmtWin F = {20,5,59,12,"Configuration"};
+
+int n;
+
+sy=0;
+
+n=WinTraite(T,5,&F);
+
+if (n==27) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+DefaultConfig(sy);
+}
+
+/*--------------------------------------------------------------------*\
+|- Editeur par default                                                -|
+\*--------------------------------------------------------------------*/
+void FileSetup(void)
+{
+static char buffer[256],dest[256];
+
+static char Edit[64],View[64];
+static int DirLength=63;
+
+
+struct Tmt T[7] = {
+      { 8,3,1,View,&DirLength},
+      { 8,5,1,Edit,&DirLength},
+      { 1,3,0, "Viewer:",NULL},
+      { 1,5,0, "Editor:",NULL},
+      
+      { 3,7,5," Auto Editor ",NULL}, // Copy All
+
+      {3,10,2,NULL,NULL},                                       // le OK
+      {18,10,3,NULL,NULL}                                   // le CANCEL
+      };
+
+struct TmtWin F = {3,5,76,18,"File Setup"};
+
+int n;
+char fin;
+
+strcpy(Edit,Cfg->editeur);
+strcpy(View,Cfg->vieweur);
+
+do
+{
+fin=1;
+
+n=WinTraite(T,7,&F);
+
+if (n==27) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+if (n==4)
+    {
+    switch(FicIdf(dest,buffer,91,2))
+        {
+        case 0:
+            strcpy(Edit,buffer);
+            break;
+        case 1:
+            WinError("Run Main Setup before");
+            break;  //--- error ----------------------------------------
+        case 2:
+            WinError("No player found");
+            break;  //--- no player ------------------------------------
+        case 3:
+            break; //--- Escape ----------------------------------------
+        }
+    fin=0;
+    }
+}
+while(!fin);
+
+strcpy(Cfg->editeur,Edit);
+strcpy(Cfg->vieweur,View);
+}
+
+/*--------------------------------------------------------------------*\
+|- Comparaison entre 2 noms de fichiers                               -|
+\*--------------------------------------------------------------------*/
+int FileComp(char *a,char *b)
+{
+int n;
+char an,bn;
+
+n=0;
+
+while(1)
+    {
+    an=toupper(a[n]);
+    bn=toupper(b[n]);
+
+    if ( ((an==0) | (an==32)) & ((bn==0) | (bn==32)) )
+        return 0;
+
+    if (an!=bn)
+        return 1;
+
+    n++;
     }
 }

@@ -21,6 +21,8 @@ int Deltree(char *path);
 
 int Del(char *s)
 {
+PrintAt(9,11,"Delete%58s",s);
+
 _dos_setfileattr(s,_A_NORMAL);
 
 IOerr=0;
@@ -75,7 +77,6 @@ return rmdir(path);
 /*--------------------------------------------------------------------*\
 |-  Efface convenablement                                             -|
 \*--------------------------------------------------------------------*/
-
 int Erase(char *path,struct file *F)
 {
 int i;
@@ -85,31 +86,28 @@ if ((F->attrib & _A_SUBDIR)==_A_SUBDIR)
     else
     i=Del(path);
 
-
 return i;
 }
 
 
-// retourne 0 si pas copie
-//-------------------------
-
+/*--------------------------------------------------------------------*\
+|-  retourne 0 si pas copie                                           -|
+\*--------------------------------------------------------------------*/
 int FenDelete(char *dest)
 {
 static int CadreLength=71;
 static int Dir[256];
 
 struct Tmt T[6] = {
-      {5,5,5,"   Delete    ",NULL}, // Delete
-      {30,5,5," Delete All  ",NULL}, // Delete All
+      {5,5,5,"   Delete    ",NULL},                            // Delete
+      {30,5,5," Delete All  ",NULL},                       // Delete All
       {55,5,3,NULL,NULL},
       { 5,3,0,Dir,NULL},
       { 5,2,0,"Delete file",NULL},
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = {
-    3,10,76,17,
-    "Delete"};
+struct TmtWin F = { 3,10,76,17, "Delete" };
 
 int n;
 
@@ -127,14 +125,14 @@ static int CadreLength=71;
 static int Dir[256];
 
 struct Tmt T[5] = {
-      {15,5,2,NULL,NULL}, // Delete
+      {15,5,2,NULL,NULL},                                      // Delete
       {45,5,3,NULL,NULL},
       { 5,3,0,Dir,NULL},
       { 5,2,0,"Couldn't delete file",NULL},
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = { 3,10,76,17, "Error" };
+struct TmtWin F = { 3,10,76,17, "Error!" };
 
 int n;
 
@@ -158,6 +156,13 @@ char car;
 char inpath[128];
 
 struct file *F;
+
+SaveEcran();
+
+WinCadre(7,10,73,12,0);
+Window(8,11,72,11,10*16+1);
+
+
 
 if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') )
     {
@@ -187,17 +192,18 @@ for (i=0;i<F1->nbrfic;i++)
 
         switch(car)
             {
-            case 27:    // Touche ESCape
+            case 27:                                    // Touche ESCape
             case 3:
                 fin=1;
                 break;
-            case 1:     // Delete ALL
+            case 1:                                        // Delete ALL
                 test=0;
-            case 0:     // Delete
+            case 0:                                            // Delete
                 switch(F1->system)
                     {
                     case 0:
-                        if (Erase(inpath,(F1->F[i]))==0) {
+                        if (Erase(inpath,(F1->F[i]))==0)
+                            {
                             F1->F[i]->select=0;
                             F1->nbrsel--;
                             (F1->taillesel)-=F1->F[i]->size;
@@ -215,5 +221,7 @@ for (i=0;i<F1->nbrfic;i++)
         }
     if (fin==1) break;
     }
+
+ChargeEcran();
 }
 

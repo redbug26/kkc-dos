@@ -14,7 +14,7 @@
 #include "kk.h"
 #include "win.h"
 
-struct
+static struct
     {
     char *Filename;
     char *Titre;
@@ -28,22 +28,22 @@ struct
     } app[50];
 
 
-int nbr;	// nombre d'application
-int nbrdir; //
-int prem,max;
+static int nbr;        // nombre d'application
+static int nbrdir; //
+static int prem,max;
 
 
-int d,lfin;
+static int d,lfin;
 
-char di;
-int pos=0;
+static char di;
+static int pos=0;
 
-char a;
-char chaine[132];
-char col[132];
+static char a;
+static char chaine[132];
+static char col[132];
 
-FILE *fic;
-char key[8];
+static FILE *fic;
+static char key[8];
 
 static char Filename[256];
 static char Titre[256];
@@ -64,15 +64,14 @@ static char Meneur[256];
 |-                                                                    -|
 \*--------------------------------------------------------------------*/
 
-int FicIdf(char *name,int numero,int kefaire)
+int FicIdf(char *dest,char *name,int numero,int kefaire)
 {
 char fin=0;
 int j,i,n,m;
 
-int nbrappl;
+int car,nbrappl;
 
-a=numero;
-
+car=numero;
 
 fic=fopen(Fics->FicIdfFile,"rb");
 
@@ -190,15 +189,40 @@ if ( (nbrappl!=1) & (fin==0) )
             AffCol(n,pos-prem,7*16+4);
             }
 
-		a=getch();
+        car=Wait(0,0,0);
+
+        if (car==0)
+            {
+            int button;
+
+            button=MouseButton();
+
+            if ((button&1)==1)     //--- gauche --------------------------------
+                {
+                int y;
+
+                y=MousePosY();
+
+                if (y>(pos-prem))
+                    car=80*256;
+                if (y<(pos-prem))
+                    car=72*256;
+                }
+
+            if ((button&2)==2)     //--- droite ---------------------------
+                car=27;
+
+            if ((button&4)==4)
+                car=13;
+            }
+
+
         for (n=d;n<=lfin;n++)
             AffCol(n,pos-prem,col[n]);
 
-
-        if (a==0)
+        if (LO(car)==0)
             {
-			a=getch();
-            switch(a)
+            switch(HI(car))
                 {
                 case 72:
                     pos--;
@@ -224,16 +248,18 @@ if ( (nbrappl!=1) & (fin==0) )
                 }
 			}
         }
-    while ( (a!=27) & (a!=13) & (a!=0x8D) & (a!=0x4B) & (a!=0x4D) );
+    while ( (car!=27) & (car!=13) &
+                  (HI(car)!=0x8D) & (HI(car)!=0x4B) & (HI(car)!=0x4D) );
+
 	ChargeEcran();
 
-    if (a==27) fin=3;
+    if (LO(car)==27) fin=3;
 	n=pos-m;
 	}
 	else
     {
 	n=0;
-    a=13;
+    car=13;
     }
 
 if (fin==0)
@@ -241,15 +267,18 @@ if (fin==0)
     strcpy(chaine,app[n].dir);
     strcat(chaine,app[n].Filename);
 
-    if (a!=13) kefaire=1;
+    if (car!=13) kefaire=1;
+
+    strcpy(dest,"");
 
     switch(kefaire)
         {
         case 0:
-            CommandLine("#%s %s",chaine,name);
+            FicIdfDev(dest,chaine,name);
+//            sprintf(dest,"#%s %s",chaine,name);
             break;
         case 1:
-            CommandLine("#%s",chaine);
+            sprintf(dest,"#%s",chaine);
             break;
         case 2:
             strcpy(name,chaine);
@@ -374,5 +403,99 @@ for (j=0;j<nbrappl;j++)
 return fin;
 }
 
+
+void FicIdfDev(char *dest,char *chaine,char *name)
+{
+char ok=1;
+static char buf1[256],buf2[256];
+char *drive,*rep,*file,*ext;
+int m,n;
+
+for(n=0;n<strlen(chaine);n++)
+    {
+    if (chaine[n]=='!') ok=0;
+    }
+
+if (ok==1)
+    {
+    FileinPath(name,buf1);
+    sprintf(dest,"#%s %s",chaine,buf1);
+    return;
+    }
+
+
+strcpy(buf1,name);
+
+rep=file=ext=NULL;
+
+drive=buf1;
+
+for(n=0;n<strlen(name);n++)
+    {
+    if (buf1[n]==':')
+        rep=buf1+n+1,buf1[n]=0;
+    if (buf1[n]=='\\') m=n;
+    }
+
+file=buf1+m+1;
+buf1[m]=0;
+
+for(n=m;n<strlen(name);n++)
+    {
+    if (buf1[n]=='.')
+        ext=buf1+n+1,buf1[n]=0;
+    }
+
+strcat(dest,name);
+
+m=0;
+ok=0;
+
+for(n=0;n<strlen(chaine);n++)
+    {
+    if (chaine[n]!='!')
+        {
+        buf2[m]=chaine[n];
+        m++;
+        }
+        else
+        {
+        switch(chaine[n+1])
+            {
+            case ':':
+                strcpy(buf2+m,drive);
+                m+=strlen(drive);
+                break;
+            case '\\':
+                strcpy(buf2+m,rep);
+                m+=strlen(rep);
+                break;
+            case '.':
+                strcpy(buf2+m,file);
+                m+=strlen(file);
+                ok=1;
+                break;
+            default:
+                if (ok==1)
+                    {
+                    strcpy(buf2+m,ext);
+                    m+=strlen(ext);
+                    }
+                    else
+                    {
+                    strcpy(buf2+m,file);
+                    m+=strlen(file);
+                    ok=1;
+                    }
+                break;
+            }
+        }
+    }
+buf2[m]=0;
+
+sprintf(dest,"#%s",buf2);
+
+return;
+}
 
 

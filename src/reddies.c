@@ -11,6 +11,7 @@
 #include <ctype.h>
 
 #include "reddies.h"
+#include "hard.h"
 
 void TPath2Abs(char *p,char *Ficname);
 
@@ -108,9 +109,9 @@ int n;
 for (n=0;n<strlen(mask);n++)
     {
     if ( (src[n]=='/') & (mask[n]=='/') ) continue;
-    if ( (src[n]=='\\') & (mask[n]=='/') ) continue;
-    if ( (src[n]=='\\') & (mask[n]=='\\') ) continue;
-    if ( (src[n]=='/') & (mask[n]=='\\') ) continue;
+    if ( (src[n]==DEFSLASH) & (mask[n]=='/') ) continue;
+    if ( (src[n]==DEFSLASH) & (mask[n]==DEFSLASH) ) continue;
+    if ( (src[n]=='/') & (mask[n]==DEFSLASH) ) continue;
     if (toupper(src[n])==toupper(mask[n])) continue;
 
     return 1;
@@ -129,13 +130,13 @@ int i;
 
 if (!Maskcmp(src,mask))
     {
-    if ( (src[strlen(mask)]=='\\') | (src[strlen(mask)]=='/') )
+    if ( (src[strlen(mask)]==DEFSLASH) | (src[strlen(mask)]=='/') )
         memcpy(dest,src+strlen(mask)+1,strlen(src+strlen(mask)));
         else
         memcpy(dest,src+strlen(mask),strlen(src+strlen(mask))+1);
     for (i=0;i<strlen(dest);i++)
         {
-        if (dest[i]=='\\') return 0;
+        if (dest[i]==DEFSLASH) return 0;
         if (dest[i]=='/') return 0;
         }
 
@@ -235,7 +236,7 @@ int n;
 char *s;
 
 for (n=0;n<strlen(p);n++)
-    if ( (p[n]=='\\') | (p[n]=='/') )
+    if ( (p[n]==DEFSLASH) | (p[n]=='/') )
         s=p+n+1;
 
 strcpy(Ficname,s);
@@ -255,15 +256,15 @@ char car;
 strcpy(Ficname,relatif);
 
 for(n=0;n<strlen(p);n++)
-    if (p[n]=='/') p[n]='\\';
+    if (p[n]=='/') p[n]=DEFSLASH;
 
 for(n=0;n<strlen(Ficname);n++)
-    if (Ficname[n]=='/') Ficname[n]='\\';
+    if (Ficname[n]=='/') Ficname[n]=DEFSLASH;
 
 m=0;
 l=strlen(Ficname);
 for(n=0;n<l;n++)
-    if (Ficname[n]=='\\')
+    if (Ficname[n]==DEFSLASH)
         {
         car=Ficname[n+1];
 
@@ -287,11 +288,11 @@ static char old[256];     // Path avant changement
 
 memcpy(old,p,256);
 
-if (p[strlen(p)-1]=='\\') p[strlen(p)-1]=0;
+if (p[strlen(p)-1]==DEFSLASH) p[strlen(p)-1]=0;
 
 if ( (!strncmp(Ficname,"..",2)) & (p[0]!=0) ) {
     for (n=strlen(p);n>0;n--)
-        if (p[n]=='\\') {
+        if (p[n]==DEFSLASH) {
             p[n]=0;
             break;
             }
@@ -300,19 +301,19 @@ if ( (!strncmp(Ficname,"..",2)) & (p[0]!=0) ) {
     }
 
 if (Ficname[0]!='.') {
-    if  ( (Ficname[1]==':') & (Ficname[2]=='\\') )  {
+    if  ( (Ficname[1]==':') & (Ficname[2]==DEFSLASH) )  {
         strcpy(p,Ficname);
         if (p[strlen(p)-1]==':') strcat(p,"\\");
         return;
         }
 
-    if (Ficname[0]=='\\')  {
+    if (Ficname[0]==DEFSLASH)  {
         strcpy(p+2,Ficname);
         if (p[strlen(p)-1]==':') strcat(p,"\\");
         return;
         }
 
-    if (p[strlen(p)-1]!='\\') strcat(p,"\\");
+    if (p[strlen(p)-1]!=DEFSLASH) strcat(p,"\\");
     strcat(p,Ficname);
    }
 
