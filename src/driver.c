@@ -106,9 +106,7 @@ if (((KKCfg->noprompt)&1)==0)
     debarc=LongGradue(xarc+2,7,28,debarc,debut,LngCopy);
 
     if (KbHit())
-        {
-        if (Wait(0,0,0)==13) return 1;
-        }
+        if (Wait(0,0)==13) return 1;
     }
 
 return 0;

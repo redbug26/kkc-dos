@@ -17,6 +17,7 @@
 #include <time.h>
 
 #include "kk.h"
+#include "idf.h"
 
 int xcop;
 
@@ -63,6 +64,7 @@ static char bufton[32];
 static long SizeMaxRecord;
 static char noselect;              // prend le celui qui est highlighted
 static int chgattr=0;
+static int chgext=0;
 extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
 
 
@@ -364,7 +366,7 @@ while ((fin==0) & (Taille>0))
 
     if (KbHit())
         {
-        Wait(0,0,0);
+        Wait(0,0);
         fin=UserInt();
         }
     }
@@ -407,6 +409,31 @@ ok=1;
 // PrintAt(0,1,"%40s%40s",inpath,outpath);
 
 MaskCnv(outpath);
+
+if (chgext)
+    {
+    RB_IDF Info;
+    static char buffer[255];
+    char *ext;
+
+    strcpy(Info.path,inpath);
+
+    Traitefic(&Info);
+
+    FileinPath(outpath,buffer);
+    Path2Abs(outpath,"..");
+
+    ext=strchr(buffer,'.');
+    if (ext!=NULL)
+        strcpy(ext+1,Info.ext);
+        else
+        {
+        strcat(buffer,".");
+        strcat(buffer,Info.ext);
+        }
+
+    Path2Abs(outpath,buffer);
+    }
 
 if (!WildCmp(inpath,outpath))
     {
@@ -533,20 +560,23 @@ static int DirLength=70;
 static char CadreLength=70;
 static int n,m,o;
 static char buffer[80];
+static int hauteur=2;
 
 struct Tmt T[] = {
       { 2,3,1,Dir,&DirLength},
       { 5,6,8,"Keep attribut",&chgattr},
-      {15,8,2,NULL,NULL},           // le OK
-      {45,8,3,NULL,NULL},           // le CANCEL
+      { 5,7,8,"Change extension",&chgext},
+      {15,9,2,NULL,NULL},           // le OK
+      {45,9,3,NULL,NULL},           // le CANCEL
       { 5,2,0,buffer,NULL},
       { 1,1,4,&CadreLength,NULL},
-      { 1,5,6,&CadreLength,NULL}
+      { 1,5,9,&CadreLength,&hauteur}
       };
 
-struct TmtWin F = {-1,10,74,20,"Copy" };
+struct TmtWin F = {-1,10,74,21,"Copy" };
 
 chgattr=0;
+chgext=0;
 
 if (Nbrfic!=0)
     {
@@ -566,7 +596,7 @@ memcpy(Dir,FTrash->path,255);
 
 n=0;
 if (((KKCfg->noprompt)&1)==0)
-    n=WinTraite(T,7,&F,0);
+    n=WinTraite(T,8,&F,0);
 
 Path2Abs(Dir,".");
 
@@ -641,6 +671,9 @@ struct Tmt T[5] = {
 
 struct TmtWin F = {-1,10,74,17,"Move"};
 
+chgext=0;
+chgattr=0;
+
 memcpy(Dir,FTrash->path,255);
 
 n=0;
@@ -714,12 +747,7 @@ for(i=0;i<F1->nbrfic;i++)
 
     if (SelectFile(F1,i))
         {
-        if (F1->F[i]->select==1)
-            {
-            F->select=0;
-            F1->nbrsel--;
-            F1->taillesel-=F->size;
-            }
+        FicSelect(F1,i,0);
 
         if (IsDir(F))
             fprintf(fic,"%s%s\\*.*\n",nom,F->name);
@@ -772,12 +800,7 @@ for(i=0;i<F1->nbrfic;i++)
 
     if (SelectFile(F1,i))
         {
-        if (F1->F[i]->select==1)
-            {
-            F->select=0;
-            F1->nbrsel--;
-            F1->taillesel-=F->size;
-            }
+        FicSelect(F1,i,0);
 
         if (IsDir(F))
             {
@@ -832,12 +855,7 @@ for(i=0;i<F1->nbrfic;i++)
 
     if (SelectFile(F1,i))
         {
-        if (F1->F[i]->select==1)
-            {
-            F->select=0;
-            F1->nbrsel--;
-            F1->taillesel-=F->size;
-            }
+        FicSelect(F1,i,0);
 
         if (IsDir(F))
             {
@@ -893,12 +911,7 @@ for(i=0;i<F1->nbrfic;i++)
 
     if (SelectFile(F1,i))
         {
-        if (F1->F[i]->select==1)
-            {
-            F->select=0;
-            F1->nbrsel--;
-            F1->taillesel-=F->size;
-            }
+        FicSelect(F1,i,0);
 
         if (IsDir(F))
             {
@@ -952,12 +965,7 @@ for(i=0;i<F1->nbrfic;i++)
 
     if (SelectFile(F1,i))
         {
-        if (F1->F[i]->select==1)
-            {
-            F->select=0;
-            F1->nbrsel--;
-            F1->taillesel-=F->size;
-            }
+        FicSelect(F1,i,0);
 
         if (IsDir(F))
             {
@@ -1219,6 +1227,8 @@ Window(xcop+1,5,xcop+64,11,Cfg->col[16]);
 PrintAt(xcop+2,7,"Current");
 Cadre(xcop+2,8,xcop+63,11,2,Cfg->col[55],Cfg->col[56]);
 
+Nbrfic=0;
+
 j1=0;
 j2=0;
 
@@ -1234,14 +1244,7 @@ for (i=0;i<F1->nbrfic;i++)
         Path2Abs(outpath,F->name);
 
         if (RemoveM(inpath,outpath,(F1->F[i]))==1)
-            {
-            if (F1->F[i]->select==1)
-                {
-                F1->F[i]->select=0;
-                F1->nbrsel--;
-                (F1->taillesel)-=F1->F[i]->size;
-                }
-            }
+            FicSelect(F1,i,0);
         }
     if (FicEcrase==2) break;
     }
@@ -1362,14 +1365,7 @@ for (i=0;i<F1->nbrfic;i++)
         Path2Abs(outpath,F->name);
 
         if (recopy(inpath,outpath,(F1->F[i]))==1)
-            {
-            if (F1->F[i]->select==1)
-                {
-                F1->F[i]->select=0;
-                F1->nbrsel--;
-                (F1->taillesel)-=F1->F[i]->size;
-                }
-            }
+            FicSelect(F1,i,0);
         }
     if (FicEcrase==2) break;
     }
@@ -1540,7 +1536,7 @@ if (*nbr==0) ok=-1;
 
 if (KbHit())
     {
-    while (KbHit()) Wait(0,0,0);
+    while (KbHit()) Wait(0,0);
     *size=0;
     *nbr=0;
     ok=1;
@@ -1597,14 +1593,7 @@ for (i=0;i<F1->nbrfic;i++)
     if (SelectFile(F1,i))
         {
         if (KKDrecopy(F1,i,FTrash)==1)
-            {
-            if (F1->F[i]->select==1)
-                {
-                F1->F[i]->select=0;
-                F1->nbrsel--;
-                (F1->taillesel)-=F1->F[i]->size;
-                }
-            }
+            FicSelect(F1,i,0);
         }
     if (FicEcrase==2) break;
     }
@@ -1711,14 +1700,7 @@ for (i=0;i<F1->nbrfic;i++)
     if (SelectFile(F1,i))
         {
         if (File2KKD(F1,i,FTrash)==1)
-            {
-            if (F1->F[i]->select==1)
-                {
-                F1->F[i]->select=0;
-                F1->nbrsel--;
-                (F1->taillesel)-=F1->F[i]->size;
-                }
-            }
+            FicSelect(F1,i,0);
         }
     if (FicEcrase==2) break;
     }

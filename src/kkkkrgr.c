@@ -109,7 +109,7 @@ KKR_Save();
 PrintAt(29,48,"Press a key to continue");
 ColLin(1,48,78,0*16+2);
 
-Wait(0,0,0);
+Wait(0,0);
 
 Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;

@@ -311,7 +311,7 @@ for (n=0;n<256;n++)
 Cadre(m,5,m+79,22,0,Cfg->col[55],Cfg->col[56]);
 ColWin(m+1,6,m+78,21,Cfg->col[16]);
 
-Wait(0,0,0);
+Wait(0,0);
 
 LoadScreen();
 }

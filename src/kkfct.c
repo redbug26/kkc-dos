@@ -110,7 +110,7 @@ KKCfg->hidfil=1;
 
 KKCfg->enterkkd=1;
 
-KKCfg->palafter=0;
+KKCfg->palafter=1;
 
 KKCfg->cnvhist=1;
 KKCfg->esttime=1;

@@ -342,7 +342,7 @@ if ((regs.h.al&64)==64)
 if (ok==0)
     LoadScreen();
 
-while (kbhit()) Wait(0,0,0);
+while (kbhit()) Wait(0,0);
 }
 #endif
 
@@ -955,7 +955,7 @@ if (kf1==1)
 if (kf1==2)
     {
     TeamAffLine(bar->Titre,ligne+len+1);
-    Wait(0,0,0);
+    Wait(0,0);
     }
 
 if (kf1==0)

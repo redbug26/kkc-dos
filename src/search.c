@@ -29,7 +29,7 @@ static char SearchString[42];
 static char Drive[28];
 static int sw=3;
 
-#define BreakESC  if (KbHit()) touche=Wait(0,0,0); \
+#define BreakESC  if (KbHit()) touche=Wait(0,0); \
                                              else if (touche==27) break;
 
 /*--------------------------------------------------------------------*\
@@ -464,7 +464,7 @@ if (nbr==0)
         for (n=d;n<=fin;n++)
             AffCol(n,pos+m-prem,Cfg->col[18]);
 
-        a=Wait(0,0,0);
+        a=Wait(0,0);
 
         for (n=d;n<=fin;n++)
             AffCol(n,pos+m-prem,Cfg->col[16]);

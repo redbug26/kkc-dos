@@ -592,7 +592,7 @@ struct key K[nbrkey]=   {
         0,
         "Ansi File",
         "ANS",
-        "",86,0*2+0,6},
+        "",86,8+0*2,6},
 {  "%PDF",
         4,
         0,
@@ -1008,9 +1008,15 @@ struct key K[nbrkey]=   {
     "Norton Directory List",
     "NCD",
     "Peter Norton",161,0,6},
+{   "PP20",
+    4,
+    0x0,
+    "PowerPacker Archive",
+    "PP",
+    "?",162,0,3},
     
 
-// Dernier employe: 161
+// Dernier employe: 162
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -1168,6 +1174,7 @@ void Size2Chr(int Size,char *Taille);
                               // transforme la taille indiqu‚e en chaine
 
 short Infotxt(RB_IDF *Info);   //--- Test pour voir si c'est du texte --
+short InfoSauce(RB_IDF *Info);
 short Infomtm(RB_IDF *Info);
 short Infong(RB_IDF *Info);
 short Infoexe1(RB_IDF *Info);
@@ -1281,13 +1288,15 @@ char *a;
 char *b;
 ulong result;
 
-if (position>(Info->posbuf+Info->sizebuf+4)) {
-        pos=ftell(Info->fic);
-        fread(&entier,4,1,Info->fic);
-        fseek(Info->fic,pos,SEEK_SET);
-                }
-        else
-        entier=*(ulong*)(Info->buffer+(ushort)position);
+if (position>(Info->posbuf+Info->sizebuf+4))
+    {
+    pos=ftell(Info->fic);
+    fseek(Info->fic,position,SEEK_SET);
+    fread(&entier,4,1,Info->fic);
+    fseek(Info->fic,pos,SEEK_SET);
+    }
+else
+    entier=*(ulong*)(Info->buffer+(ushort)position);
 
 if (type==1) return entier;
 if (type==2) {
@@ -1322,6 +1331,7 @@ int pos;
 if (position>(Info->posbuf+Info->sizebuf+2))
     {
     pos=ftell(Info->fic);
+    fseek(Info->fic,position,SEEK_SET);
     fread(&entier,2,1,Info->fic);
     fseek(Info->fic,pos,SEEK_SET);
     }
@@ -1354,13 +1364,15 @@ void ReadStr(RB_IDF *Info,ulong position,char *str,short taille)
 {
 int pos;
 
-if (position>(Info->posbuf+Info->sizebuf+taille)) {
-        pos=ftell(Info->fic);
-        fread(str,taille,1,Info->fic);
-        fseek(Info->fic,pos,SEEK_SET);
-         }
-        else
-        memcpy(str,Info->buffer+(ushort)position,taille);
+if (position>(Info->posbuf+Info->sizebuf+taille))
+    {
+    pos=ftell(Info->fic);
+    fseek(Info->fic,position,SEEK_SET);
+    fread(str,taille,1,Info->fic);
+    fseek(Info->fic,pos,SEEK_SET);
+    }
+else
+    memcpy(str,Info->buffer+(ushort)position,taille);
 
 
 str[taille]=0;
@@ -1375,13 +1387,15 @@ char ReadChar(RB_IDF *Info,ulong position)
 int pos;
 char a;
 
-if (position>(Info->posbuf+Info->sizebuf+1)) {
-        pos=ftell(Info->fic);
-        fread(&a,1,1,Info->fic);
-        fseek(Info->fic,pos,SEEK_SET);
-         }
-        else
-        a=Info->buffer[position];
+if (position>(Info->posbuf+Info->sizebuf+1))
+    {
+    pos=ftell(Info->fic);
+    fseek(Info->fic,position,SEEK_SET);
+    fread(&a,1,1,Info->fic);
+    fseek(Info->fic,pos,SEEK_SET);
+    }
+else
+    a=Info->buffer[position];
 
 return a;
 }
@@ -1481,6 +1495,22 @@ for (n=0;n<i;n++)
 return 0;
 
 
+}
+
+char *GetFile(char *p,char *Ficname)
+{
+int n;
+char *s;
+
+if (*p==0) return Ficname;
+
+for (n=0;n<strlen(p);n++)
+    if ( (p[n]=='\\') | (p[n]=='/') )
+        s=p+n+1;
+
+strcpy(Ficname,s);
+
+return Ficname;
 }
 
 
@@ -1635,6 +1665,9 @@ if (trv==-1)
     }
     else
     {
+    if (((K[trv].other)&8)==8)
+        InfoSauce(Info);
+
     if (*Info->format==0)
         strcpy(Info->format,K[trv].format);
     if (*Info->ext==0)
@@ -1691,6 +1724,34 @@ j--;
 while (buf[j]==32) buf[j]=0,j--;
 
 strcpy(name,buf);
+}
+
+
+short InfoSauce(RB_IDF *Info)
+{
+char buffer[6];
+int c,pos;
+
+// Teste si on a sauce ..
+
+c=ftell(Info->fic);
+fseek(Info->fic,0,SEEK_END);
+pos=ftell(Info->fic)-128;
+fseek(Info->fic,c,SEEK_SET);
+
+ReadStr(Info,pos,buffer,5);
+if (!strcmp(buffer,"SAUCE"))
+    {
+    ReadStr(Info,pos+7,Info->fullname,35);
+    ReadStr(Info,pos+42,Info->composer,20);
+    strcpy(Info->Tinfo,"Group");
+    ReadStr(Info,pos+62,Info->info,20);
+
+//  if (ReadChar(Info,pos+104)!=0) --> Commentaire avant, on s'en fout !
+    return 0;
+    }
+
+return 1;
 }
 
 
@@ -3743,22 +3804,6 @@ for(n=0;n<32768;n++)
     }
 
 return 1;
-}
-
-char *GetFile(char *p,char *Ficname)
-{
-int n;
-char *s;
-
-if (*p==0) return Ficname;
-
-for (n=0;n<strlen(p);n++)
-    if ( (p[n]=='\\') | (p[n]=='/') )
-        s=p+n+1;
-
-strcpy(Ficname,s);
-
-return Ficname;
 }
 
 

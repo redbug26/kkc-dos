@@ -68,11 +68,6 @@ if (!strcmp(F2->name,"..")) return 1;
 if (!strcmp(F1->name,".")) return -1;
 if (!strcmp(F2->name,".")) return 1;
 
-// Ne trie pas si il ne le faut pas
-//----------------------------------
-if (DFen->order==0)
-    return -1;
-
 // Affiche les repertoires tout en haut
 //--------------------------------------
 a=((F1->attrib & RB_SUBDIR)==RB_SUBDIR);
@@ -152,52 +147,9 @@ qsort((void*)Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
 }
 
 
-// 1-> erreur
-// 0-> OK
-int FicSelect(int n,char q)
-{
-if (DFen->F[n]->name[0]=='.') return 1;
-if (DFen->F[n]->name[1]==':') return 1;
-if (DFen->F[n]->name[1]=='*') return 1;
-if ((DFen->F[n]->attrib & _A_VOLID)==_A_VOLID) return 1;
-
-switch(q)
-    {
-    case 0: // Deselect
-        if (DFen->F[n]->select==1)
-            {
-            DFen->F[n]->select=0;
-            DFen->taillesel-=DFen->F[n]->size;
-            DFen->nbrsel--;
-            }
-        break;
-    case 1: // Select
-        if (DFen->F[n]->select==0)
-            {
-            DFen->F[n]->select=1;
-            DFen->taillesel+=DFen->F[n]->size;
-            DFen->nbrsel++;
-            }
-        break;
-    case 2: // inverse selection
-        if (DFen->F[n]->select==0)
-            {
-            DFen->F[n]->select=1;
-            DFen->taillesel+=DFen->F[n]->size;
-            DFen->nbrsel++;
-            }
-            else
-            {
-            DFen->F[n]->select=0;
-            DFen->taillesel-=DFen->F[n]->size;
-            DFen->nbrsel--;
-            }
-        break;
-    }
-
-return 0;
-}
-
+/*--------------------------------------------------------------------*\
+|- Erase the all the space in the name                                -|
+\*--------------------------------------------------------------------*/
 void ClearAllSpace(char *name)
 {
 char buf[1024];
@@ -205,7 +157,6 @@ short i,j;
 
 i=0;    //--- navigation dans name -------------------------------------
 j=0;    //--- position dans buf ----------------------------------------
-
 
 while (name[i]!=0)
     {
@@ -237,7 +188,6 @@ p=DFen->path;
 memcpy(old,p,256);
 
 ClearAllSpace(Ficname);
-
 
 // Conversion suivant le type de dir du systeme (pour comptabilite UNIX)
 for(n=0;n<strlen(Ficname);n++)  
@@ -429,9 +379,7 @@ if (err==0)
 
 if (KKCfg->dispath) // C'est laid mais il faut r‚actualiser les fenˆtres
     DFen->init=1;
-
 }
-
 
 /*--------------------------------------------------------------------*\
 |-                      Gestion history dir                           -|
@@ -769,8 +717,6 @@ chaine[m]=0;
 /*--------------------------------------------------------------------*\
 |-  Give Last Directory in History of command                         -|
 \*--------------------------------------------------------------------*/
-
-// toto
 char *GetLastHistCom(void)
 {
 char *dir,*dir2;
@@ -897,7 +843,6 @@ memcpy(&(KKCfg->HistCom[TabCom[i]]),chaine,strlen(chaine)+1);
 /*--------------------------------------------------------------------*\
 |-  Commandes globales                                                -|
 \*--------------------------------------------------------------------*/
-static int x0,py=0,xmax;  // position en X,Y ,X initial, Taille de X max
 static char str[256];                                // commande interne
 static int px;                                                // Chaipus
 
@@ -940,12 +885,6 @@ if (!strnicmp(chaine,"MD ",3))
     {
     MakeDir(chaine+3);
     ChangeLine();                                      // Affichage Path
-    return 1;
-    }
-if (!strnicmp(chaine,"#INIT",5))
-    {
-    sscanf(chaine+5,"%d %d %d",&x0,&py,&xmax);
-    ChangeLine();
     return 1;
     }
 
@@ -1015,25 +954,25 @@ void ChangeLine(void)
 {
 int x1,m,n,v;
 
-if ((py==0) | (DFen->nfen>=2)) return;
+if (DFen->nfen>=2) return;
 
 x1=strlen(DFen->path)+1;
 m=strlen(str);
 
-v=xmax-2-x0;
+v=Cfg->TailleX-2;
 
 
 if ( ((x1+m)>75) & (x1>40) )
     {
     n= (m>=v) ? m-v : 0;
-    PrintAt(x0,py,">%-*s",v,str+n);
-    GotoXY(x0+m-n+1,py);
+    PrintAt(0,(Cfg->TailleY)-2,">%-*s",v,str+n);
+    GotoXY(m-n+1,(Cfg->TailleY)-2);
     }
     else
     {
     n= (m>=(v+1-x1)) ? m-(v+1-x1) : 0;
-    PrintAt(x0,py,"%s>%-*s",DFen->path,v+1-x1,str+n);
-    GotoXY(x1+x0+m-n,py);
+    PrintAt(0,(Cfg->TailleY)-2,"%s>%-*s",DFen->path,v+1-x1,str+n);
+    GotoXY(x1+m-n,(Cfg->TailleY)-2);
     }
 }
 
@@ -1042,8 +981,6 @@ if ( ((x1+m)>75) & (x1>40) )
 |-     si la premiere lettre est '#', alors on n'affiche pas.         -|
 |*--------------------------------------------------------------------*|
 |-  Commandes                                                         -|
-|-  #INIT x0 y0 px                                                    -|
-|-                position initial du curseur et longueur             -|
 |-  #MEM                                                              -|
 |-                m‚moire restante                                    -|
 \*--------------------------------------------------------------------*/
@@ -1255,7 +1192,18 @@ return 1;
 }
 
 /*--------------------------------------------------------------------*\
-|- retourne 1 si c'est un vrai directory                              -|
+\*--------------------------------------------------------------------*/
+
+
+/*--------------------------------------------------------------------*\
+|- Function:     int IsDir(struct file *F)                            -|
+|-                                                                    -|
+|- Description:  Test if a file is a directory                        -|
+|-                                                                    -|
+|- Input:        F: The file                                          -|
+|-                                                                    -|
+|- Return:       0: It isn't a directory                              -|
+|-               1: It's a directory                                  -|
 \*--------------------------------------------------------------------*/
 int IsDir(struct file *F)
 {
@@ -1264,3 +1212,62 @@ if (F->name[1]==':') return 0;
 if (F->name[1]=='*') return 0;
 return 1;
 }
+
+/*--------------------------------------------------------------------*\
+|- Function:     int FicSelect(FENETRE *Fen,int n,char q)             -|
+|-                                                                    -|
+|- Description:  Selection, Deselect or inverse the select. of a file -|
+|-                                                                    -|
+|- Input:        Fen: Working pannel                                  -|
+|-               n: number of the file                                -|
+|-               q: 0 -> deselect                                     -|
+|-                  1 -> select                                       -|
+|-                  2 -> inverse selection                            -|
+|-                                                                    -|
+|- Return:       0: It's Okay...                                      -|
+|-               1: Error, you couldn't do that                       -|
+\*--------------------------------------------------------------------*/
+int FicSelect(FENETRE *Fen,int n,char q)
+{
+if (Fen->F[n]->name[0]=='.') return 1;
+if (Fen->F[n]->name[1]==':') return 1;
+if (Fen->F[n]->name[1]=='*') return 1;
+if ((Fen->F[n]->attrib & _A_VOLID)==_A_VOLID) return 1;
+
+switch(q)
+    {
+    case 0: //--- Deselect ---------------------------------------------
+        if (Fen->F[n]->select==1)
+            {
+            Fen->F[n]->select=0;
+            Fen->taillesel-=Fen->F[n]->size;
+            Fen->nbrsel--;
+            }
+        break;
+    case 1: //--- Select -----------------------------------------------
+        if (Fen->F[n]->select==0)
+            {
+            Fen->F[n]->select=1;
+            Fen->taillesel+=Fen->F[n]->size;
+            Fen->nbrsel++;
+            }
+        break;
+    case 2: //--- inverse selection ------------------------------------
+        if (Fen->F[n]->select==0)
+            {
+            Fen->F[n]->select=1;
+            Fen->taillesel+=Fen->F[n]->size;
+            Fen->nbrsel++;
+            }
+            else
+            {
+            Fen->F[n]->select=0;
+            Fen->taillesel-=Fen->F[n]->size;
+            Fen->nbrsel--;
+            }
+        break;
+    }
+
+return 0;
+}
+

@@ -15,13 +15,6 @@
                     44,63,63, 63,63,21, 43,37,30,  0, 0, 0, \
                     63,63, 0, 63,63,63, 43,37,30, 63,20,20, \
                     20,40,20,  0,40,40, 35,30,27,  0, 0, 0}
-/*
-#define RBPALDEF   {   0,0,0,   0,0,42,   0,42,0,  0,42,42, \
-                      42,0,0,  42,0,42,  42,21,0, 42,42,42, \
-                    21,21,21, 21,21,63, 21,63,21, 21,63,63, \
-                    63,21,21, 63,21,63, 63,63,21, 63,63,63 }
-*/
-
 
 #define WinError(_ErrMsg_) WinMesg("Error",_ErrMsg_,0)
 
@@ -29,9 +22,6 @@
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
-
-
-
 
 
 struct config
@@ -51,7 +41,7 @@ struct config
 
      char display;                                       // Display type
 
-     char comport;                        // Serial port number  (ex: 2)
+     char comport;                        // Serial port number  (eg: 2)
      long comspeed;                       // Speed            (eg:19200)
      char combit;                         // Number of bit        (eg:8)
      char comparity;                      // Parity             (eg:'N')
@@ -65,14 +55,12 @@ struct config
      char crc;                                              // CRC: 0x69
      };
 
-
 struct fichier
      {
      char *path;                                                 // path
      char *help;                                              // kkc.hlp
      char *LastDir;                                           // lastdir
      };
-
 
 extern struct config *Cfg;
 extern struct fichier *Fics;
@@ -87,7 +75,7 @@ extern "C"
 
   extern void (*AffChr)(long x,long y,long c);
   extern void (*AffCol)(long x,long y,long c);
-  extern long (*Wait)(long x,long y,long c);
+  extern long (*Wait)(long x,long y);
   extern int  (*KbHit)(void);
   extern void (*GotoXY)(long x,long y);
   extern void (*WhereXY)(long *x,long *y);
@@ -144,17 +132,14 @@ void ScreenSaver(void);
 void ScrollUp(void);
 
 void Pause(int n);
-void MoveText(long x1,long y1,long x2,long y2,long x3,long y4);
+void MoveText(long x1,long y1,long x2,long y2,long x3,long y3);
 
 /*--------------------------------------------------------------------*\
 |- Absolute function                                                  -|
 \*--------------------------------------------------------------------*/
 extern char _RB_screen[];
 
-// char GetChr(long x,long y);
 #define GetChr(_rx,_ry) *(_RB_screen+((_ry)*256+(_rx)))
-
-// char GetCol(long x,long y);
 #define GetCol(_rx,_ry) *(_RB_screen+((_ry)*256+(_rx))+256*128)
 
 void ColLin(long left,long top,long length,long color);
@@ -205,6 +190,12 @@ void WinLine(int x1,int y1,int xl,int type);
 void SetPal(int x,char r,char g,char b);
 void GetPal(int x,char *r,char *g,char *b);
 
+
+/*--------------------------------------------------------------------*\
+|- Function:     int FreeMem(void)                                    -|
+|-                                                                    -|
+|- Description:  Return the number of bytes available for the system  -|
+\*--------------------------------------------------------------------*/
 int FreeMem(void);
 
 /*--------------------------------------------------------------------*\
@@ -296,14 +287,22 @@ void NewEvents(int (*fct)(struct barmenu *),char *titre,int key);
 void Bar(char *);                               // Affichage de la barre
 
 //--- Retourne 0 si tout va bene ---------------------------------------
+
+/*--------------------------------------------------------------------*\
+|- Function:     int VerifyDisk(long c)                               -|
+|-                                                                    -|
+|- Description:  Verify if the disk is ready                          -|
+|-                                                                    -|
+|- Input:        The drive number (1 for disk a:)                     -|
+|-                                                                    -|
+|- Output:       0 if the drive is ready.                             -|
+\*--------------------------------------------------------------------*/
 int VerifyDisk(long c);                                   //--- 1='A'
-int __far Error_handler(unsigned deverr,unsigned errcode,
-                                                  unsigned far *devhdr);
+
 
 /*--------------------------------------------------------------------*\
 |-        Serial port function                                        -|
 \*--------------------------------------------------------------------*/
-
 void interrupt modem_isr(void);
 long com_carrier(void);
 char com_ch_ready(void);
@@ -355,12 +354,16 @@ void Help(void);
 |-                                                                    -|
 |- Notes:      - Verify that you have put the name of the help file   -|
 |-               in Fics->help                                        -|
-|-             - You could creat a topic with a '#' in column 1       -|
+|-             - You could creat a topic with a '#' in column 1 in    -|
+|-               help file                                            -|
 \*--------------------------------------------------------------------*/
 void HelpTopic(char *);
 
 
 /*--------------------------------------------------------------------*\
+|- Personnal Function                                                 -|
 \*--------------------------------------------------------------------*/
+int __far Error_handler(unsigned deverr,unsigned errcode,
+                                                  unsigned far *devhdr);
 
 

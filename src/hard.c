@@ -75,7 +75,7 @@ char _RB_screen[256*128*2];
 
 void (*AffChr)(long x,long y,long c);
 void (*AffCol)(long x,long y,long c);
-long (*Wait)(long x,long y,long c);
+long (*Wait)(long x,long y);
 int  (*KbHit)(void);
 void (*GotoXY)(long x,long y);
 void (*WhereXY)(long *x,long *y);
@@ -91,6 +91,7 @@ void Beep(void);
 void Font8x(int height);
 void InitSeg(void);
 
+
 /*--------------------------------------------------------------------*\
 |-  Fonction interne d'affichage                                      -|
 \*--------------------------------------------------------------------*/
@@ -99,20 +100,20 @@ void Norm_Window(long left,long top,long right,long bottom,long color);
 
 void Norm_Clr(void)
 {
-char i,j;
+char x,y;
 
-for(j=0;j<Cfg->TailleY;j++)
-    for (i=0;i<Cfg->TailleX;i++)
-      AffCol(i,j,7);
+for(y=0;y<Cfg->TailleY;y++)
+    for (x=0;x<Cfg->TailleX;x++)
+      AffCol(x,y,7);
 
-for(j=0;j<Cfg->TailleY;j++)
-    for (i=0;i<Cfg->TailleX;i++)
-      AffChr(i,j,32);
+for(y=0;y<Cfg->TailleY;y++)
+    for (x=0;x<Cfg->TailleX;x++)
+      AffChr(x,y,32);
 }
 
 void Norm_Window(long left,long top,long right,long bottom,long color)
 {
-int i,j;
+int x,y;
 
 _xw=left;
 _yw=top;
@@ -120,14 +121,14 @@ _yw=top;
 _xw2=right;
 _yw2=bottom;
 
-for(j=top;j<=bottom;j++)
-    for (i=left;i<=right;i++)
-        AffCol(i,j,color);
+for(y=top;y<=bottom;y++)
+    for (x=left;x<=right;x++)
+        AffCol(x,y,color);
 
 
-for(j=top;j<=bottom;j++)
-    for (i=left;i<=right;i++)
-        AffChr(i,j,32);
+for(y=top;y<=bottom;y++)
+    for (x=left;x<=right;x++)
+        AffChr(x,y,32);
 }
 
 
@@ -137,7 +138,7 @@ for(j=top;j<=bottom;j++)
 \*--------------------------------------------------------------------*/
 void Cache_AffChr(long x,long y,long c);
 void Cache_AffCol(long x,long y,long c);
-long Cache_Wait(long x,long y,long c);
+long Cache_Wait(long x,long y);
 void Cache_GotoXY(long x,long y);
 void Cache_WhereXY(long *x,long *y);
 
@@ -161,19 +162,12 @@ if (*(_RB_screen+((y<<8)+x)+256*128)!=(char)c)
     }
 }
 
-long Cache_Wait(long x,long y,long c)
+long Cache_Wait(long x,long y)
 {
 int a,b;
 clock_t Cl;
 
 int xm=0,ym=0,zm=0;
-
-char *pt;
-
-if (c!=0)
-    Beep();
-
-pt=(char*)0x41A;
 
 if ((x!=0) | (y!=0))
     GotoXY(x,y);
@@ -366,7 +360,7 @@ int _Com_col1,_Com_col2;                 // Couleur que l'on doit mettre
 int _Com_tcol;                  // Couleur que l'on a demand‚ par affcol
 int _Com_x=0,_Com_y=0;                            // precedente position
 
-char _Com_cnv[]={0,5,0,2,3,7,6,4,3,1,6,1,2,0,0,0};
+char _Com_cnv[]={0,4,2,6,1,5,3,7};
 
 long modem_buffer_count;
 
@@ -408,10 +402,11 @@ if (*(_RB_screen+((y<<8)+x)+256*128)!=_Com_tcol)
     {
     _Com_tcol=*(_RB_screen+((y<<8)+x)+256*128);
 
-    _Com_col1=_Com_cnv[_Com_tcol/16]+40;
-    _Com_col2=_Com_cnv[_Com_tcol&15]+30;
+    _Com_col1=(_Com_cnv[(_Com_tcol/16)&7])+40;
+    _Com_col2=(_Com_cnv[_Com_tcol&7])+30;
 
-    sprintf(_IntBuffe2,"\x1b[%d;%dm",_Com_col1,_Com_col2);
+    sprintf(_IntBuffe2,
+                 "\x1b[%d;%d;%dm",(_Com_tcol&8)==8,_Com_col1,_Com_col2);
     for (n=0;n<strlen(_IntBuffe2);n++)
         com_send_ch(_IntBuffe2[n]);
     }
@@ -441,7 +436,7 @@ if ( (x!=_Com_x) | (y!=_Com_y) )
 com_send_ch(c);
 }
 
-long Com_Wait(long x,long y,long c)
+long Com_Wait(long x,long y)
 {
 char buf[32];
 char n;
@@ -449,9 +444,6 @@ char cont;
 
 cont=1;
 n=0;
-
-if (c!=0)
-    Beep();
 
 if ((x!=0) | (y!=0))
     GotoXY(x,y);
@@ -845,7 +837,6 @@ LibMem(modem_buffer);
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
-
 void GetCur(char *x,char *y)
 {
 union REGS regs;
@@ -872,7 +863,7 @@ int386(0x10,&regs,&regs);
 
 void ColLin(long left,long top,long length,long color)
 {
-int i;
+long i;
 
 for (i=left;i<left+length;i++)
       AffCol(i,top,color);
@@ -880,7 +871,7 @@ for (i=left;i<left+length;i++)
 
 void ChrLin(long left,long top,long length,long color)
 {
-int i;
+long i;
 
 for (i=left;i<left+length;i++)
       AffChr(i,top,color);
@@ -936,24 +927,34 @@ for (y=0;y<Cfg->TailleY-1;y++)
 
 void MoveText(long x1,long y1,long x2,long y2,long x3,long y3)
 {
-long x,y;
+long x,y,z;
 char *_MEcran;
 
 _MEcran=(char*)GetMem(Cfg->TailleX*Cfg->TailleY*2);
 
-for (x=0;x<Cfg->TailleX;x++)
-    for (y=0;y<Cfg->TailleY;y++)
+for (y=0;y<Cfg->TailleY;y++)
+    {
+    z=(y*Cfg->TailleX)*2;
+    for (x=0;x<Cfg->TailleX;x++)
         {
-        _MEcran[(x+y*Cfg->TailleX)*2]=GetChr(x,y);
-        _MEcran[(x+y*Cfg->TailleX)*2+1]=GetCol(x,y);
+        _MEcran[z]=GetChr(x,y);
+        z++;
+        _MEcran[z]=GetCol(x,y);
+        z++;
         }
+    }
 
 for (y=y3;y<=y3+(y2-y1);y++)
+    {
+    z=(x1+(y-y3+y1)*Cfg->TailleX)*2;
     for (x=x3;x<=x3+(x2-x1);x++)
         {
-        AffChr(x,y,_MEcran[((x-x3+x1)+(y-y3+y1)*Cfg->TailleX)*2]);
-        AffCol(x,y,_MEcran[((x-x3+x1)+(y-y3+y1)*Cfg->TailleX)*2+1]);
+        AffChr(x,y,_MEcran[z]);
+        z++;
+        AffCol(x,y,_MEcran[z]);
+        z++;
         }
+    }
 
 LibMem(_MEcran);
 }
@@ -963,11 +964,33 @@ LibMem(_MEcran);
 \*--------------------------------------------------------------------*/
 
 char *_Ecran[10];                        //--- Copie de l'ecran --------
-long _EcranX[10],_EcranY[10];            //--- Position du curseur -----
-char _EcranD[10],_EcranF[10];            //--- Definition du curseur ---
 long _EcranXW[10],_EcranYW[10];          //--- Coordonnes absolues -----
 long _EcranXW2[10],_EcranYW2[10];        //--- Coordonnes absolues -----
-signed long _WhichEcran=0;              //--- Nbr d'‚cran en memoire --
+signed long _WhichEcran=0;               //--- Nbr d'‚cran en memoire --
+
+
+long _EcranX[10],_EcranY[10];            //--- Position du curseur -----
+char _EcranD[10],_EcranF[10];            //--- Definition du curseur ---
+signed long _WhichState=0;               //--- Nbr d'‚tats en memoire --
+
+
+void SaveState(void)
+{
+WhereXY(&(_EcranX[_WhichState]),&(_EcranY[_WhichState]));
+GetCur(&(_EcranD[_WhichState]),&(_EcranF[_WhichState]));
+
+_WhichState++;
+}
+
+void LoadState(void)
+{
+
+_WhichState--;
+
+GotoXY(_EcranX[_WhichState],_EcranY[_WhichState]);
+PutCur(_EcranD[_WhichState],_EcranF[_WhichState]);
+}
+
 
 void SaveScreen(void)
 {
@@ -975,7 +998,6 @@ int x,y,n;
 
 if (_Ecran[_WhichEcran]==NULL)
     _Ecran[_WhichEcran]=(char*)GetMem((Cfg->TailleY)*(Cfg->TailleX)*2);
-
 
 n=0;
 for (y=0;y<Cfg->TailleY;y++)
@@ -993,8 +1015,7 @@ for (y=0;y<Cfg->TailleY;y++)
         n++;
         }
 
-WhereXY(&(_EcranX[_WhichEcran]),&(_EcranY[_WhichEcran]));
-GetCur(&(_EcranD[_WhichEcran]),&(_EcranF[_WhichEcran]));
+SaveState();
 
 _EcranXW[_WhichEcran]=_xw;
 _EcranYW[_WhichEcran]=_yw;
@@ -1038,8 +1059,7 @@ for (y=0;y<Cfg->TailleY;y++)
         n++;
         }
 
-GotoXY(_EcranX[_WhichEcran],_EcranY[_WhichEcran]);
-PutCur(_EcranD[_WhichEcran],_EcranF[_WhichEcran]);
+LoadState();
 
 _xw=_EcranXW[_WhichEcran];
 _yw=_EcranYW[_WhichEcran];
@@ -1049,6 +1069,43 @@ _yw2=_EcranYW2[_WhichEcran];
 
 LibMem(_Ecran[_WhichEcran]);
 _Ecran[_WhichEcran]=NULL;
+}
+
+void LoadScreenPart(int x1,int y1,int x2,int y2)
+{
+int x,y,n;
+
+_WhichEcran--;
+
+#ifdef DEBUG
+if ( (_Ecran[_WhichEcran]==NULL) | (_WhichEcran<0) )
+    {
+    Clr();
+    PrintAt(0,0,"Internal Error: LoadScreen");
+    getch();
+    return;
+    }
+#endif
+
+n=0;
+for (y=0;y<Cfg->TailleY;y++)
+    for (x=0;x<Cfg->TailleX;x++)
+        {
+        if ((x<x1) | (x>x2) | (y<y1) | (y>y2))
+            AffCol(x,y,_Ecran[_WhichEcran][n*2+1]);
+        n++;
+        }
+
+n=0;
+for (y=0;y<Cfg->TailleY;y++)
+    for (x=0;x<Cfg->TailleX;x++)
+        {
+        if ((x<x1) | (x>x2) | (y<y1) | (y>y2))
+            AffChr(x,y,_Ecran[_WhichEcran][n*2]);
+        n++;
+        }
+
+_WhichEcran++;
 }
 
 /*--------------------------------------------------------------------*\
@@ -1197,6 +1254,8 @@ int ins=1; //--- insere = 1 par default --------------------------------
 
 char end,retour;
 
+SaveState();
+
 end=0;
 retour=0;
 
@@ -1227,7 +1286,7 @@ if (ins==0)
     else
     PutCur(2,7);
 
-car=Wait(colonne+i,ligne,ins);
+car=Wait(colonne+i,ligne);
 
 if (car==0)
     {
@@ -1428,7 +1487,7 @@ while (!end);
 if (couleur!=0)
     ColLin(colonne,ligne,fin,couleur);
 
-GotoXY(0,0);
+LoadState();
 
 return retour;
 }
@@ -1989,6 +2048,8 @@ int r=0;
 
 int car;
 
+SaveState();
+
 if (((Cfg->col[48])&240)==((Cfg->col[19])&240))
     {
     AffChr(x,y,'[');
@@ -2007,7 +2068,7 @@ ColLin(x,y,lng,Cfg->col[49]);                              // Couleur ON
 if (p==1)
     while (r==0)
         {
-        car=Wait(x,y,0);
+        car=Wait(x,y);
 
         if (car==0)
             {
@@ -2062,6 +2123,8 @@ if (p!=2)       //--- Mets OFF -----------------------------------------
     ColLin(x,y,lng,Cfg->col[48]);                         // Couleur OFF
     }
 
+LoadState();
+
 return r;
 }
 
@@ -2076,11 +2139,13 @@ int r=0;
 
 int car;
 
+SaveState();
+
 while (r==0)
     {
     AffChr(x+1,y,(*Val) ? 'X' : ' ');
 
-    car=Wait(x+1,y,0);
+    car=Wait(x+1,y);
 
     if (car==0)
         {
@@ -2121,6 +2186,7 @@ while (r==0)
         }
     }
 
+LoadState();
 
 return r;
 }
@@ -2142,11 +2208,13 @@ int r=0;
 
 int car;
 
+SaveState();
+
 while (r==0)
     {
     AffChr(x+1,y,(*Val)==i ? 'X' : ' ');
 
-    car=Wait(x+1,y,0);
+    car=Wait(x+1,y);
 
     if (car==0)
         {
@@ -2192,6 +2260,8 @@ while (r==0)
         }
     }
 
+LoadState();
+
 
 return r;
 }
@@ -2210,9 +2280,7 @@ static char chaine[80];
 int x1,y1,x2,y2;
 int def=-1;
 
-SaveScreen();
-
-Bar(" Help  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
+char update=1;
 
 x1=F->x1;
 y1=F->y1;
@@ -2232,13 +2300,28 @@ if (y1==-1)
     y2=y1+F->y2-1;
     }
 
+fin=0;
+
+SaveScreen();
+
+Bar(" Help  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
+
+i=first;
+
+while (fin==0) {
+
+if (update)
+{
+i2=i;
+
 Cadre(x1,y1,x2,y2,0,Cfg->col[44],Cfg->col[45]);
 Window(x1+1,y1+1,x2-1,y2-1,Cfg->col[19]);
 
 PrintAt(x1+((x2-x1+1)-(strlen(F->name)))/2,y1,F->name);
 
 for(i=0;i<nbr;i++)
-switch(T[i].type) {
+switch(T[i].type)
+    {
     case 0:
         PrintAt(x1+T[i].x,y1+T[i].y,T[i].str);
         break;
@@ -2296,11 +2379,14 @@ switch(T[i].type) {
         break;
     }
 
-fin=0;
-direct=1;
-i=first;
 
-while (fin==0) {
+direct=1;
+
+i=i2;
+
+update=0;
+}
+
 
 for(i2=0;i2<nbr;i2++)   //--- Affichage a ne faire qu'une fois ---------
     switch(T[i2].type)
@@ -2310,6 +2396,11 @@ for(i2=0;i2<nbr;i2++)   //--- Affichage a ne faire qu'une fois ---------
                            (*(T[i2].entier)==i2) ? 'X' : ' ',T[i2].str);
             break;
         }
+
+if ( (T[i].type!=2) & (T[i].type!=3) & (T[i].type!=5))
+    Puce(x1+T[def].x,y1+T[def].y,13,3);
+    else
+    Puce(x1+T[def].x,y1+T[def].y,13,0);
 
 switch(T[i].type)
     {
@@ -2374,39 +2465,72 @@ switch(direct)
         HelpTopic(F->name);      break;
     case 8:
         {
-        int px,py,j,k;
+        int px,py,pz,j,k;
         int xc1,xc2,yc1;
 
         px=MousePosX();
         py=MousePosY();
+        pz=MouseButton();
 
-        k=-1;
-        for(j=0;j<nbr;j++)
+        if ((px>=x1) & (py==y1) & (px<=x2))
             {
-            xc1=x1+T[j].x;
-            xc2=x1+T[j].x+(*(T[j].entier));
-            yc1=y1+T[j].y;
+            int ax,ay;
+            int px2,py2,pz2;
 
-            switch(T[j].type)
+            ReleaseButton();
+
+            do
                 {
-                case 11:
-                case 1:
-                case 7:
-                    if ( (py==yc1) & (px>=xc1) & (px<xc2) ) k=j;
-                    break;
-                case 2:
-                case 3:
-                case 5:
-                    if ( (px>=xc1) & (px<xc1+13) & (py==yc1) ) k=j;
-                    break;
-                case 8:
-                case 10:
-                    if ( (px==xc1+1) & (py==yc1) ) k=j;
-                    break;
+                GetPosMouse(&px2,&py2,&pz2);
                 }
-            if (k!=-1) break;
+            while ((px2==px) & (py2==py) & (pz2==pz));
+
+
+            ax=x2-x1;
+            ay=y2-y1;
+
+            if ( ((px2-px+x1)>=0) & (py2>=0) &
+             ((px2-px+x2)<Cfg->TailleX) & ((py2+ay)<Cfg->TailleY) )
+                {
+                update=1;
+                x1=px2-px+x1;
+                y1=py2;
+                x2=x1+ax;
+                y2=y1+ay;
+
+                LoadScreenPart(x1,y1,x2,y2);
+                }
             }
-        if (k!=-1) i=k;
+            else
+            {
+            k=-1;
+            for(j=0;j<nbr;j++)
+                {
+                xc1=x1+T[j].x;
+                xc2=x1+T[j].x+(*(T[j].entier));
+                yc1=y1+T[j].y;
+
+                switch(T[j].type)
+                    {
+                    case 11:
+                    case 1:
+                    case 7:
+                        if ( (py==yc1) & (px>=xc1) & (px<xc2) ) k=j;
+                        break;
+                    case 2:
+                    case 3:
+                    case 5:
+                        if ( (px>=xc1) & (px<xc1+13) & (py==yc1) ) k=j;
+                        break;
+                    case 8:
+                    case 10:
+                        if ( (px==xc1+1) & (py==yc1) ) k=j;
+                        break;
+                    }
+                if (k!=-1) break;
+                }
+            if (k!=-1) i=k;
+            }
         }
         break;
     case 4:
@@ -2417,10 +2541,7 @@ switch(direct)
 if (i==-1) i=nbr-1;
 if (i==nbr) i=0;
 
-if ( (T[i].type!=2) & (T[i].type!=3) & (T[i].type!=5))
-    Puce(x1+T[def].x,y1+T[def].y,13,3);
-    else
-    Puce(x1+T[def].x,y1+T[def].y,13,0);
+
 }
 
 LoadScreen();
@@ -2613,9 +2734,20 @@ return j1;
 \*--------------------------------------------------------------------*/
 void DefaultCfg(void)
 {
-char defcol[48]=RBPALDEF;
+char defpal[48]=RBPALDEF;
 
-memcpy(Cfg->palette,defcol,48);
+char defcol[64]={
+     7*16+6,14*16+6,13*16+8,14*16+2,7*16+5,1*16+8,1*16+2,14*16+7,7*16+4,
+   14*16+1,14*16+7,14*16+3,7*16+4,7*16+3,3*16+0,7*16+13,10*16+1,10*16+5,
+  14*16+5,10*16+1,10*16+3,14*16+3,7*16+8,7*16+12,10*16+1,10*16+3,1*16+5,
+       10*16+5,14*16+7,14*16+4,7*16+4,0,7*16+11,7*16+4,13*16+11,3*16+14,
+ 3*16+13,10*16+1,10*16+3,10*16+1,10*16+3,14*16+3,14*16+3,7*16+3,10*16+1,
+  10*16+3,14*16+1,14*16+3,14*16+3,7*16+4,4*16+13,5*16+1,10*16+1,10*16+3,
+   1*16+10,10*16+1,10*16+3,3*16+1,4*16+1,5*16+1,0*16+11,0*16+12,0*16+13,
+                                                                0*16+2};
+
+memcpy(Cfg->palette,defpal,48);
+memcpy(Cfg->col,defcol,64);
 
 Cfg->TailleY=30;
 Cfg->font=1;
@@ -2635,164 +2767,6 @@ Cfg->comspeed=19200;
 Cfg->combit=8;
 Cfg->comparity='N';
 Cfg->comstop=1;
-
-/*
-Cfg->col[0]=1*16+11;
-Cfg->col[1]=3*16+0;
-Cfg->col[2]=1*16+14;
-Cfg->col[3]=3*16+14;
-Cfg->col[4]=1*16+14;
-Cfg->col[5]=0*16+3;
-Cfg->col[6]=3*16+0;
-
-Cfg->col[7]=3*16+0;
-Cfg->col[8]=0*16+15;
-Cfg->col[9]=3*16+0;
-Cfg->col[10]=3*16+15;
-Cfg->col[11]=3*16+14;
-Cfg->col[12]=0*16+15;
-Cfg->col[13]=0*16+14;
-Cfg->col[14]=3*16+0;
-
-Cfg->col[16]=1*16+11;
-Cfg->col[17]=1*16+3;
-Cfg->col[18]=3*16+0;
-
-Cfg->col[19]=3*16+15;
-Cfg->col[20]=3*16+14;
-Cfg->col[21]=0*16+15;
-
-Cfg->col[24]=3*16+0;
-Cfg->col[25]=3*16+15;
-Cfg->col[26]=0*16+15;
-Cfg->col[27]=3*16+14;
-
-Cfg->col[28]=4*16+15;
-Cfg->col[29]=4*16+14;
-Cfg->col[30]=7*16+0;
-
-Cfg->col[37]=1*16+11;
-Cfg->col[38]=1*16+11;
-Cfg->col[39]=1*16+11;
-Cfg->col[40]=1*16+14;
-
-Cfg->col[41]=3*16+0;
-
-Cfg->col[42]=3*16+0;
-Cfg->col[43]=0*16+15;
-
-Cfg->col[44]=3*16+15;
-Cfg->col[45]=3*16+15;
-Cfg->col[46]=4*16+15;
-Cfg->col[47]=4*16+15;
-Cfg->col[48]=3*16+15;
-Cfg->col[49]=0*16+15;
-Cfg->col[50]=4*16+15;
-Cfg->col[51]=7*16+0;
-
-Cfg->col[52]=3*16+0;
-Cfg->col[53]=3*16+0;
-Cfg->col[54]=0*16+14;
-
-Cfg->col[55]=1*16+11;
-Cfg->col[56]=1*16+11;
-
-Cfg->col[15]=1*16+9;
-Cfg->col[22]=1*16+5;
-Cfg->col[23]=1*16+2;
-Cfg->col[32]=1*16+4;
-Cfg->col[33]=1*16+3;
-Cfg->col[34]=11*16+4;
-
-Cfg->col[35]=6*16+0;
-Cfg->col[36]=7*16+0;
-Cfg->col[50]=8*16+0;
-Cfg->col[51]=9*16+0;
-Cfg->col[57]=10*16+0;
-Cfg->col[58]=11*16+0;
-Cfg->col[59]=12*16+0;
-Cfg->col[60]=0*16+4;
-Cfg->col[61]=0*16+3;
-Cfg->col[62]=0*16+5;
-*/
-
-Cfg->col[0]=7*16+6;
-Cfg->col[1]=14*16+6;
-Cfg->col[2]=13*16+8;
-Cfg->col[3]=14*16+2;
-Cfg->col[4]=7*16+5;
-Cfg->col[5]=1*16+8;
-Cfg->col[6]=1*16+2;
-
-Cfg->col[7]=14*16+7;
-Cfg->col[8]=7*16+4;
-Cfg->col[9]=14*16+1;
-Cfg->col[10]=14*16+7;
-Cfg->col[11]=14*16+3;
-Cfg->col[12]=7*16+4;
-Cfg->col[13]=7*16+3;
-
-Cfg->col[14]=3*16+0;
-
-Cfg->col[16]=10*16+1;
-Cfg->col[17]=10*16+5;
-Cfg->col[18]=14*16+5;
-
-Cfg->col[19]=10*16+1;
-Cfg->col[20]=10*16+3;
-Cfg->col[21]=14*16+3;
-
-Cfg->col[24]=10*16+1;
-Cfg->col[25]=10*16+3;
-Cfg->col[26]=1*16+5;
-Cfg->col[27]=10*16+5;
-
-Cfg->col[28]=14*16+7;
-Cfg->col[29]=14*16+4;
-Cfg->col[30]=7*16+4;
-
-Cfg->col[37]=10*16+1;
-Cfg->col[38]=10*16+3;
-Cfg->col[39]=10*16+1;
-Cfg->col[40]=10*16+3;
-
-Cfg->col[41]=14*16+3;
-
-Cfg->col[42]=14*16+3;
-Cfg->col[43]=7*16+3;
-
-Cfg->col[44]=10*16+1;
-Cfg->col[45]=10*16+3;
-Cfg->col[46]=14*16+1;
-Cfg->col[47]=14*16+3;
-Cfg->col[48]=14*16+3;
-Cfg->col[49]=7*16+4;
-
-Cfg->col[52]=10*16+1;
-Cfg->col[53]=10*16+3;
-Cfg->col[54]=1*16+10;
-
-Cfg->col[55]=10*16+1;
-Cfg->col[56]=10*16+3;
-
-Cfg->col[15]=7*16+13;
-Cfg->col[22]=7*16+8;
-Cfg->col[23]=7*16+12;
-Cfg->col[32]=7*16+11;
-Cfg->col[33]=7*16+4;
-Cfg->col[34]=13*16+11;
-
-Cfg->col[35]=3*16+14;
-Cfg->col[36]=3*16+13;
-Cfg->col[50]=4*16+13;
-Cfg->col[51]=5*16+1;
-Cfg->col[57]=3*16+1;
-Cfg->col[58]=4*16+1;
-Cfg->col[59]=5*16+1;
-Cfg->col[60]=0*16+11;
-Cfg->col[61]=0*16+12;
-Cfg->col[62]=0*16+13;
-
 }
 
 /*--------------------------------------------------------------------*\
@@ -2822,8 +2796,8 @@ if (IOver==1)
 
 SaveScreen();
 
-WinCadre(19,9,61,16,0);
-Window(20,10,60,15,10*16+4);
+Cadre(19,9,61,16,0,Cfg->col[46],Cfg->col[47]);
+Window(20,10,60,15,Cfg->col[28]);
 
 PrintAt(23,10,"Disk Error: %s",((deverr&32768)==32768) ? "No":"Yes");
 
@@ -2854,22 +2828,22 @@ for(n=0;n<3;n++)
 if (erreur[0])
     {
     PrintAt(25,14,"Ignore");
-    AffCol(25,14,10*16+5);
-    WinCadre(24,13,31,15,2);
+    AffCol(25,14,Cfg->col[29]);
+    Cadre(24,13,31,15,2,Cfg->col[46],Cfg->col[47]);
     }
 
 if (erreur[1])
     {
     PrintAt(38,14,"Retry");
-    AffCol(38,14,10*16+5);
-    WinCadre(37,13,43,15,2);
+    AffCol(38,14,Cfg->col[29]);
+    Cadre(37,13,43,15,2,Cfg->col[46],Cfg->col[47]);
     }
 
 if (erreur[2])
     {
     PrintAt(51,14,"Fail");
-    AffCol(51,14,10*16+5);
-    WinCadre(50,13,55,15,2);
+    AffCol(51,14,Cfg->col[29]);
+    Cadre(50,13,55,15,2,Cfg->col[46],Cfg->col[47]);
     }
 
 IOerr=0;
@@ -3108,7 +3082,7 @@ if (ok==1)
 if (*yp==0)
     break;
 
-car=Wait(0,0,0);
+car=Wait(0,0);
 
 if (car==0)
     {
@@ -3214,6 +3188,7 @@ char bbar[61];
 int nbraff,prem;
 int xp,yp;
 int c;
+int ascen=0;
 
 xp=menu->x;
 yp=menu->y;
@@ -3262,7 +3237,10 @@ if (((menu->attr)&1)==1)
     nbraff=nbr;
 
 if (nbraff>Cfg->TailleY-yp-2)
+    {
     nbraff=Cfg->TailleY-yp-2;
+    ascen=1;  //--- Pour l'ascensceur ----------------------------------
+    }
 
 prem=0;
 
@@ -3274,8 +3252,8 @@ strcpy(bbar,fctname);
 
 if (xp<1) xp=1;
 
-Cadre(xp-1,yp-1,xp+max,yp+nbraff,3,Cfg->col[9],Cfg->col[41]);
-Window(xp,yp,xp+max-1,yp+nbraff-1,Cfg->col[10]);
+Cadre(xp-1,yp-1,xp+max+ascen,yp+nbraff,3,Cfg->col[9],Cfg->col[41]);
+Window(xp,yp,xp+max-1+ascen,yp+nbraff-1,Cfg->col[10]);
 
 fin=0;
 
@@ -3322,17 +3300,21 @@ for (n=0;n<nbraff;n++)
         }
     }
 
-if (bar[c].Help!=NULL)
-    memcpy(bbar," Help ",6);
-    else
-    memcpy(bbar," ---- ",6);
+//--- Ascensceur -------------------------------------------------------
+if (ascen)
+    {
+    AffChr(xp+max,yp,(prem!=0) ? 30 : 32);
+    AffChr(xp+max,yp+nbraff-1,(prem+nbraff<nbr) ? 31 : 32);
+    }
+
+memcpy(bbar,(bar[c].Help!=NULL) ? " Help " : " ---- ",6);
 
 Bar(bbar);
 
 if (fonction[0]!=NULL)
     fonction[0](&(bar[c]));
 
-car=Wait(0,0,0);
+car=Wait(0,0);
 
 if (car==0)
     {
@@ -3512,7 +3494,6 @@ long n;
 n=0;
 
 while ( (hlp[pos+n]!=0x0A) & (hlp[pos+n]!=0x0D) )
-
     {
     chaine[n]=hlp[pos+n];
     n++;
@@ -3678,7 +3659,7 @@ do
         PrintAt(x1+2,y1+3+n*3,chaine);
         }
 
-    c=Wait(0,0,0);
+    c=Wait(0,0);
 
     if (c==0)     //--- Pression bouton souris ---------------------------
         {
@@ -3807,7 +3788,7 @@ do
         }
     while ( (pos<prem) | (pos>dernier) );
 
-    c=Wait(0,0,0);
+    c=Wait(0,0);
 
     if (c==0)     //--- Pression bouton souris -------------------------
         {
@@ -4095,7 +4076,7 @@ if (kbhit()!=0) nbrkey=0;
 
 if (nbrkey==0)
     {
-    c=Wait(0,0,0);
+    c=Wait(0,0);
 
     if (c==0)     //--- Pression bouton souris -------------------------
         {
@@ -4478,6 +4459,4 @@ fprintf(fic,"%s",suite);
 fclose(fic);
 }
 #endif
-
-
 

@@ -14,48 +14,135 @@
 #include "kk.h"
 #include "win.h"
 
-static struct
+static struct iarapp
     {
-    char *Filename;
-    char *Titre;
-    char *Meneur;
+    char *Filename;          // Max 28 char
+    char *Titre;             // Max 38 char
+    char *Meneur;            // Max 38 char
     signed short ext;
     short NoDir;
     char type;  /* 7 6 5 4 3 2 1 0
-                   ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ Unpacker
-                   ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ Packer
-                   ÀÄÁÄÁÄÁÄÁÄÁÄÄÄÄÄÄÄ 0
+                   ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ  1 Unpacker
+                   ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ  2 Packer
+                   ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄÄ  4 Default Player
+                   ÀÄÁÄÁÄÁÄÁÄÄÄÄÄÄÄÄÄ .. 0
                  */
     char os;    /* 7 6 5 4 3 2 1 0
-                   ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ Windows
-                   ÀÄÁÄÁÄÁÄÁÄÁÄÁÄÄÄÄÄ 0
+                   ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ  1 Windows
+                   ÀÄÁÄÁÄÁÄÁÄÁÄÁÄÄÄÄÄ .. 0
                  */
-    char info;
+    char info;  /* 7 6 5 4 3 2 1 0
+                   ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ  1 CRC is OK
+                   ÀÄÁÄÁÄÁÄÁÄÁÄÁÄÄÄÄÄ .. 0
+                 */
     char dir[128];
+    int pos;
     } app[50];
 
 
 static int nbr;        // nombre d'application
-static int nbrdir; //
-static int prem,max;
+static int nbrdir;     //
 
-
-static int d,lfin;
-
-static char di;
-static int pos=0;
-
-static char a;
 static char chaine[132];
-static char col[132];
 
 static FILE *fic;
 static char key[8];
 
-static char Filename[256];
-static char Titre[256];
-static char Meneur[256];
+static char Filename[256],Titre[256],Meneur[256];
 
+void ReadIarEntry(FILE *fic,struct iarapp *app);
+int IarF0Fct(struct barmenu *bar);
+int IarF2Fct(struct barmenu *bar);
+
+void ReadIarEntry(FILE *fic,struct iarapp *app)
+{
+char n;
+
+fread(&n,1,1,fic);
+Filename[n]=0;
+fread(Filename,n,1,fic);
+
+fread(&n,1,1,fic);
+Titre[n]=0;
+fread(Titre,n,1,fic);
+if (n>=38) Titre[38]=0;
+
+fread(&n,1,1,fic);
+Meneur[n]=0;
+fread(Meneur,n,1,fic);
+
+fread(&(app->ext),2,1,fic);    //------- Numero de format --------------
+fread(&(app->NoDir),2,1,fic);  //------- Numero directory --------------
+fread(&(app->type),1,1,fic);   //------- Numero type -------------------
+fread(&(app->os),1,1,fic);     //------- Numero operating system -------
+fread(&(app->info),1,1,fic);   //------- Information sur player --------
+}
+
+void WriteIarEntry(FILE *fic,struct iarapp *app)
+{
+char n;
+
+strcpy(Filename,app->Filename);
+n=strlen(Filename);
+fwrite(&n,1,1,fic);
+fwrite(Filename,n,1,fic);
+
+strcpy(Titre,app->Titre);
+n=strlen(Titre);
+fwrite(&n,1,1,fic);
+fwrite(Titre,n,1,fic);
+
+strcpy(Meneur,app->Meneur);
+n=strlen(Meneur);
+fwrite(&n,1,1,fic);
+fwrite(Meneur,n,1,fic);
+
+fwrite(&(app->ext),2,1,fic);    //------- Numero de format -------------
+fwrite(&(app->NoDir),2,1,fic);  //------- Numero directory -------------
+fwrite(&(app->type),1,1,fic);   //------- Numero type ------------------
+fwrite(&(app->os),1,1,fic);     //------- Numero operating system ------
+fwrite(&(app->info),1,1,fic);   //------- Information sur player -------
+}
+
+int IarF5Fct(struct barmenu *bar)
+{
+FILE *fic;
+
+(app[(bar->fct)-1].type)|=4;
+
+fic=fopen(KKFics->FicIdfFile,"r+b");
+fseek(fic,app[(bar->fct)-1].pos,SEEK_SET);
+WriteIarEntry(fic,&(app[(bar->fct)-1]));
+fclose(fic);
+
+ungetch(13);
+
+return 0;
+}
+
+int IarF2Fct(struct barmenu *bar)
+{
+int n;
+char ok;
+
+ok=1;
+strcpy(Filename,app[(bar->fct)-1].Filename);
+for(n=0;n<strlen(Filename);n++)
+    if (Filename[n]=='!') ok=0;
+
+if (ok==1)
+    strcat(Filename," !:!\\!.!");
+
+MenuCreat(bar->Titre+1,Filename,app[(bar->fct)-1].dir);
+return 0;
+}
+
+int IarF0Fct(struct barmenu *bar)
+{
+PrintAt(0,0,"%40sby %-*s",bar->Titre,
+                              Cfg->TailleX-43,app[(bar->fct)-1].Meneur);
+return 0;
+}
 
 /*--------------------------------------------------------------------*\
 |-                                                                    -|
@@ -73,8 +160,10 @@ static char Meneur[256];
 
 int FicIdf(char *dest,char *name,int numero,int kefaire)
 {
-char ok,fin=0;
-int j,i,n,m;
+int j,i,n;
+MENU menu;
+static struct barmenu bar[50];
+int res=2;
 
 int car,nbrappl;
 
@@ -94,7 +183,7 @@ if (memcmp(key,"RedBLEXU",8))
 	PUTSERR("File IDFEXT.RB is bad");
 	return 1;
 	}
-di=fgetc(fic);
+fgetc(fic);
 
 fread(&nbr,1,2,fic);
 
@@ -102,31 +191,8 @@ nbrappl=0;
 
 for (j=0;j<nbr;j++)
 	{
-    char n;
-
-    fread(&n,1,1,fic);
-    Filename[n]=0;
-    fread(Filename,n,1,fic);
-
-    fread(&n,1,1,fic);
-    Titre[n]=0;
-    fread(Titre,n,1,fic);
-
-    fread(&n,1,1,fic);
-    Meneur[n]=0;
-    fread(Meneur,n,1,fic);
-
-    fread(&(app[nbrappl].ext),2,1,fic);              // Numero de format
-
-    fread(&(app[nbrappl].NoDir),2,1,fic);            // Numero directory
-
-    fread(&(app[nbrappl].type),1,1,fic);                  // Numero type
-
-    fread(&(app[nbrappl].os),1,1,fic);        // Numero operating system
-
-    fread(&(app[nbrappl].info),1,1,fic);       // Information sur player
-
-
+    ReadIarEntry(fic,&(app[nbrappl]));
+    app[nbrappl].pos=ftell(fic);
 
     if ( (app[nbrappl].ext==numero) &
           (  (app[nbrappl].os==0) |
@@ -135,176 +201,84 @@ for (j=0;j<nbr;j++)
         {
         app[nbrappl].Filename=GetMem(strlen(Filename)+1);
         strcpy(app[nbrappl].Filename,Filename);
-        app[nbrappl].Titre=GetMem(strlen(Titre)+1);
-        strcpy(app[nbrappl].Titre,Titre);
+
         app[nbrappl].Meneur=GetMem(strlen(Meneur)+1);
         strcpy(app[nbrappl].Meneur,Meneur);
+
+        app[nbrappl].Titre=GetMem(strlen(Titre)+1);
+        strcpy(app[nbrappl].Titre,Titre);
+
+        bar[nbrappl].Titre=GetMem(41);
+        sprintf(bar[nbrappl].Titre," %-39s",Titre);
+
+        bar[nbrappl].fct=nbrappl+1;
+        bar[nbrappl].Help="FicIdf";
+
         nbrappl++;
         }
+    if (nbrappl==50) break;
 	}
 
 fread(&nbrdir,1,2,fic);
 
 for(n=0;n<nbrdir;n++)
     {
-	fread(col,1,128,fic);
+    fread(chaine,1,128,fic);
+    chaine[127]=0;
     for (i=0;i<nbrappl;i++)
         {
         if (n==app[i].NoDir-1)
-            strcpy(app[i].dir,col);
+            strcpy(app[i].dir,chaine);
 		}
-	}
+    }
 
 fclose(fic);
 
 if (nbrappl==0)
     {
 	PUTSERR("No player for this file !");
-    fin=2;
+    res=0;
 	}
 
-if ( (nbrappl!=1) & (fin==0) )
-    {
-    int xx;
+n=0;
 
-    SaveScreen();
-
-    Bar(" Help CrMenu ----  ----  ----  ----  ----  ----  ----  ---- ");
-
-    m=((Cfg->TailleY)-nbrappl)/2;
-
-    if (m<2) m=2;
-    max=nbrappl;
-    if (max>Cfg->TailleY-3) max=Cfg->TailleY-3;
-
-    xx=(Cfg->TailleX-56)/2;
-
-    Cadre(xx,m-1,xx+55,m+max,0,Cfg->col[46],Cfg->col[47]);
-    Window(xx+1,m,xx+54,m+max-1,Cfg->col[28]);
-
-    PrintTo(24,1," Who? ");
-    
-    pos=0;
-	nbr=nbrappl;
-
-    d=1;
-    lfin=52;
-
-    prem=0;
-
-	do	{
-        if (pos<0) pos=0;
-        if (pos>nbrappl-1) pos=nbrappl-1;
-
-        while (pos-prem<0) prem--;
-        while (pos-prem>=max) prem++;
-
-        PrintAt(0,0,"%39s by %-*s",app[pos].Titre,
-                                       Cfg->TailleX-43,app[pos].Meneur);
-
-        for(n=0;n<max;n++)
-            PrintTo(2,n,"%-49s",app[n+prem].Titre);
-
-        for (n=d;n<=lfin;n++)
-            {
-            col[n]=GetRCol(n,pos-prem);
-            AffRCol(n,pos-prem,Cfg->col[30]);     // 7
-            }
-
-        car=Wait(0,0,0);
-
-        for (n=d;n<=lfin;n++)
-            AffRCol(n,pos-prem,col[n]);
-
-        if (car==0)
-            {
-            int button;
-
-            button=MouseButton();
-
-            if ((button&1)==1)     //--- gauche ------------------------
-                {
-                int y;
-
-                y=MouseRPosY();
-
-                if (y>=max)
-                    car=80*256;
-                    else
-                    if (y<0)
-                        car=72*256;
-                        else
-                        pos=prem+y;
-                }
-
-            if ((button&2)==2)     //--- droite ------------------------
-                car=27;
-
-            if ((button&4)==4)
-                car=13;
-            }
-
-
-        if (LO(car)==0)
-            {
-            switch(HI(car))
-                {
-                case 72:
-                    pos--;
-                    break;
-                case 80:
-                    pos++;
-                    break;
-                case 0x47:
-                    pos=0;
-                    break;
-                case 0x4F:
-                    pos=nbr-1;
-                    break;
-                case 0x51:
-                    pos+=5;
-                    break;
-                case 0x49:
-                    pos-=5;
-                    break;
-                case 0x86:
-                    WinMesg("Info. on dir",app[pos].dir,0);     // F12
-                    break;
-                case 0x3B:    //--- F1 ---------------------------------
-                    HelpTopic("FicIdf");
-                    break;
-                case 0x3C:    //--- F2 ---------------------------------
-                    ok=1;
-                    strcpy(Filename,app[pos].Filename);
-                    for(n=0;n<strlen(Filename);n++)
-                        if (Filename[n]=='!') ok=0;
-                    if (ok==1)
-                        strcat(Filename," !:!\\!.!");
-                    MenuCreat(app[pos].Titre,Filename,app[pos].dir);
-                    break;
-                }
-			}
+for(i=0;i<nbrappl;i++)
+    if (((app[i].type)&4)==4)
+        {
+        n=i;
+        nbrappl=1;
+        break;
         }
-    while ( (car!=27) & (car!=13) &
-                  (HI(car)!=0x8D) & (HI(car)!=0x4B) & (HI(car)!=0x4D) );
 
-    LoadScreen();
-
-    if (LO(car)==27) fin=3;
-    n=pos;
-	}
-	else
+if ( (nbrappl!=1) & (res!=0) )
     {
-	n=0;
-    car=13;
-    }
+    NewEvents(IarF0Fct,"IarDes",1);
+    NewEvents(IarF2Fct,"CrMenu",2);
+    NewEvents(IarF5Fct," Deflt",5);
 
-if (fin==0)
+    menu.y=((Cfg->TailleY)-nbrappl)/2;
+
+    if (menu.y<2) menu.y=2;
+
+    menu.x=(Cfg->TailleX-40)/2;
+
+    menu.attr=0;  // 2;
+
+    menu.cur=0;
+
+    res=PannelMenu(bar,nbrappl,&menu);
+
+    n=menu.cur;
+
+    ClearEvents();
+	}
+
+if (res!=0)
     {
     strcpy(chaine,app[n].dir);
     strcat(chaine,app[n].Filename);
 
-    if (car!=13) kefaire=1;
+    if (res!=2) kefaire=1;
 
     strcpy(dest,"");
 
@@ -312,7 +286,6 @@ if (fin==0)
         {
         case 0:
             FicIdfDev(dest,chaine,name);
-//            sprintf(dest,"#%s %s",chaine,name);
             break;
         case 1:
             sprintf(dest,"#%s",chaine);
@@ -325,12 +298,21 @@ if (fin==0)
 
 for (j=0;j<nbrappl;j++)
 	{
-    free(app[nbrappl].Filename);
-    free(app[nbrappl].Titre);
-    free(app[nbrappl].Meneur);
+    LibMem(bar[j].Titre);
+    LibMem(app[j].Titre);
+    LibMem(app[j].Meneur);
+    LibMem(app[j].Filename);
     }
 
-return fin;
+if (nbrappl!=0)
+    {
+    if (res==0)
+        return 3;
+        else
+        return 0;
+    }
+
+return 2;
 }
 
 /*--------------------------------------------------------------------*\
@@ -348,8 +330,6 @@ int j,i,n;
 
 int nbrappl;
 
-a=numero;
-
 fic=fopen(KKFics->FicIdfFile,"rb");
 
 if (fic==NULL)
@@ -364,7 +344,7 @@ if (memcmp(key,"RedBLEXU",8))
 	PUTSERR("File IDFEXT.RB is bad");
 	return 1;
 	}
-di=fgetc(fic);
+fgetc(fic);
 
 fread(&nbr,1,2,fic);
 
@@ -372,39 +352,19 @@ nbrappl=0;
 
 for (j=0;j<nbr;j++)
 	{
-    char n;
-
-    fread(&n,1,1,fic);
-    Filename[n]=0;
-    fread(Filename,n,1,fic);
-
-    fread(&n,1,1,fic);
-    Titre[n]=0;
-    fread(Titre,n,1,fic);
-
-    fread(&n,1,1,fic);
-    Meneur[n]=0;
-    fread(Meneur,n,1,fic);
-
-    fread(&(app[nbrappl].ext),2,1,fic);              // Numero de format
-
-    fread(&(app[nbrappl].NoDir),2,1,fic);            // Numero directory
-
-    fread(&(app[nbrappl].type),1,1,fic);                  // Numero type
-
-    fread(&(app[nbrappl].os),1,1,fic);        // Numero operating system
-
-    fread(&(app[nbrappl].info),1,1,fic);       // Information sur player
+    ReadIarEntry(fic,&(app[nbrappl]));
+    app[nbrappl].pos=ftell(fic);
 
     if ( (app[nbrappl].ext==numero) &
           (  (app[nbrappl].os==0) |
-            ((app[nbrappl].os==1) & (KKCfg->_Win95==1)) )
-       )
+            ((app[nbrappl].os==1) & (KKCfg->_Win95==1)) ) )
         {
         app[nbrappl].Filename=GetMem(strlen(Filename)+1);
         strcpy(app[nbrappl].Filename,Filename);
+
         app[nbrappl].Titre=GetMem(strlen(Titre)+1);
         strcpy(app[nbrappl].Titre,Titre);
+
         app[nbrappl].Meneur=GetMem(strlen(Meneur)+1);
         strcpy(app[nbrappl].Meneur,Meneur);
 
@@ -416,11 +376,11 @@ fread(&nbrdir,1,2,fic);
 
 for(n=0;n<nbrdir;n++)
     {
-	fread(col,1,128,fic);
+    fread(chaine,1,128,fic);
     for (i=0;i<nbrappl;i++)
         {
         if (n==app[i].NoDir-1)
-            strcpy(app[i].dir,col);
+            strcpy(app[i].dir,chaine);
 		}
 	}
 
@@ -444,9 +404,9 @@ if (nbrappl==0)
 
 for (j=0;j<nbrappl;j++)
     {
-    free(app[nbrappl].Filename);
-    free(app[nbrappl].Titre);
-    free(app[nbrappl].Meneur);
+    free(app[j].Filename);
+    free(app[j].Titre);
+    free(app[j].Meneur);
     }
 
 return fin;

@@ -869,7 +869,7 @@ for (n=prem;n<nbrkey;n++)
     }
 
 
-car=Wait(0,0,0);
+car=Wait(0,0);
 
 switch(HI(car))
     {
@@ -916,6 +916,7 @@ switch(HI(car))
 
         InputAt(26,12,Titre,38);
         InputAt(23,14,Meneur,38);
+
         InputAt(37,16,Filename,28);
 
         LoadScreen();

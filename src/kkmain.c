@@ -10,18 +10,6 @@
 #include <fcntl.h>
 #include <signal.h>                               // For handling signal
 
-/*  // PAS ANSI
-#include <dos.h>                            //  Pour redirection des I/O
-#include <direct.h>
-#include <i86.h>
-#include <conio.h>
-#include <bios.h>
-#include <io.h>
-#include <graph.h>
-#include <sys\types.h>
-#include <sys\stat.h>
-*/
-
 #include "kk.h"
 
 #include "idf.h"
@@ -164,7 +152,7 @@ if (n==1)
 
         for(i=0;i<Fen->nbrfic;i++)
             if (!WildCmp(Fen->F[i]->name,nom))
-                FicSelect(i,1);                                // Select
+                FicSelect(Fen,i,1);                            // Select
         }
     fclose(fic);
     }
@@ -240,8 +228,8 @@ void RBSetup(void)
 char bartxt[81];
 int car;
 
-if (Wait(0,0,0)!='R') return;
-if (Wait(0,0,0)!='B') return;
+if (Wait(0,0)!='R') return;
+if (Wait(0,0)!='B') return;
 
 SaveScreen();
 
@@ -250,7 +238,7 @@ ColLin( 0,0,40,Cfg->col[7]);
 ColLin(40,0,(Cfg->TailleX)-40,Cfg->col[11]);
 
 strcpy(bartxt,
-        " ----  ----  ---- SpTest ----  ----  ----  ----  ----  ---- ");
+        " ----  ----  ---- SpTest ----  ----  ----  ----  ----  Quit ");
 
 do
 {
@@ -259,7 +247,7 @@ memcpy(bartxt+12,Cfg->debug     ? "Debug " : "No deb",6);
 
 Bar(bartxt);
 
-car=Wait(0,0,0);
+car=Wait(0,0);
 
 switch(HI(car))
     {
@@ -271,6 +259,9 @@ switch(HI(car))
         break;
     case 0x3E: //--- F4 ------------------------------------------------
         SpeedTest();
+        break;
+    case 0x44: //--- F10 -----------------------------------------------
+        car=27;
         break;
     }
 
@@ -391,7 +382,6 @@ Fin();
 |- 83: Fenetre changement de dir d'apres PATH                         -|
 \*--------------------------------------------------------------------*/
 
-
 void GestionFct(int fct)
 {
 FENETRE *FenOld;
@@ -408,7 +398,7 @@ switch(fct)
         break;
     case 2:
         for (i=0;i<DFen->nbrfic;i++)
-            FicSelect(i,2);
+            FicSelect(DFen,i,2);
         break;
     case 3:
         SelectPlus();
@@ -487,12 +477,7 @@ switch(fct)
             DFen->FenTyp=0;
             }
         else
-            {
             DFen->FenTyp=2;
-//            KKCfg->FenAct=1;
-//            DFen=Fenetre[KKCfg->FenAct];
-//            ChangeLine();                              // Affichage Path
-            }
         break;
     case 15:                                       // Close right window
         DFen=Fenetre[1];
@@ -502,23 +487,18 @@ switch(fct)
             DFen->FenTyp=0;
             }
         else
-            {
             DFen->FenTyp=2;
-//            KKCfg->FenAct=0;
-//            DFen=Fenetre[KKCfg->FenAct];
-//            ChangeLine();                              // Affichage Path
-            }
         break;
     case 16:                                      // Select current file
-        FicSelect(DFen->pcur,2);
+        FicSelect(DFen,DFen->pcur,2);
 
         if (!strcmp(DFen->F[DFen->pcur]->name,"."))
             for (i=0;i<DFen->nbrfic;i++)
                 if (!WildCmp(DFen->F[i]->name,Select_Chaine))
-                    FicSelect(i,1);
+                    FicSelect(DFen,i,1);
 
         if (KKCfg->insdown==1)
-            GestionFct(36);
+            GestionFct(36);  // Descent d'une ligne --------------------
         break;
     case 17:                                           // Change palette
         strcpy(buffer,Fics->path);
@@ -542,7 +522,7 @@ switch(fct)
                  (!WildCmp(DFen->F[i]->name,"chklist.ms")) |
                  (!WildCmp(DFen->F[i]->name,"file*.chk")) |
                  (!WildCmp(DFen->F[i]->name,"*.$")) )
-                      FicSelect(i,1);                     // Select file
+                      FicSelect(DFen,i,1);                // Select file
         break;
     case 20:                                                 // Quit KKC
         break;
@@ -589,7 +569,7 @@ switch(fct)
         GestionFct(27);         //--- Reload ---------------------------
         MenuBar(4);
         break;
-    case 27:                                                   // Reload
+    case 27:                                            // Reload CTRL-R
         SaveSel(DFen);
         CommandLine("#cd .");
         LoadSel(0);
@@ -875,17 +855,7 @@ switch(fct)
         ExecCom();
         break;
     case 74:
-        DFen=Fenetre[2];                                // Fenetre trash
-        CommandLine("#CD %s",KKFics->trash);
-        FileinPath(KKFics->temp,buffer);
-        for (i=0;i<DFen->nbrfic;i++)
-            if (!WildCmp(buffer,DFen->F[i]->name))
-                {
-                DFen->pcur=i;
-                DFen->scur=i;
-                break;
-                }
-        GestionFct(8);
+        ViewFile(KKFics->temp);
         break;
     case 75:                                   // Fenetre directory tree
         DFen=DFen->Fen2;
@@ -1203,7 +1173,7 @@ for (n=0;n<DFen->nbrfic;n++)
     if ( (KKCfg->seldir==1) |
                          ((DFen->F[n]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
             if (!WildCmp(DFen->F[n]->name,Select_Chaine))
-                FicSelect(n,1);
+                FicSelect(DFen,n,1);
 }
 
 /*--------------------------------------------------------------------*\
@@ -1234,7 +1204,7 @@ for (n=0;n<DFen->nbrfic;n++)
     if ( (KKCfg->seldir==1) |
                          ((DFen->F[n]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
         if (!WildCmp(DFen->F[n]->name,Select_Chaine))
-            FicSelect(n,0);
+            FicSelect(DFen,n,0);
 }
 
 /*--------------------------------------------------------------------*\
@@ -1693,7 +1663,7 @@ do  {
         ColLin(x1+3,cpos-fpos,32,Cfg->col[18]);
 
     AffCol(drive[i],9,Cfg->col[17]);
-    car=Wait(0,0,0);
+    car=Wait(0,0);
 
     if (cpos!=50)
         ColLin(x1+3,cpos-fpos,32,Cfg->col[16]);
@@ -1852,7 +1822,7 @@ do  {
 
     AffCol(drive[i],9,Cfg->col[17]);
 
-    car=Wait(0,0,0);
+    car=Wait(0,0);
     AffCol(drive[i],9,Cfg->col[16]);
 
 } while (LO(car)!=13);
@@ -1911,7 +1881,7 @@ do
         {
         while(!KbHit());
         car3=_bios_keybrd(0x11);
-        c1=Wait(x+23,y,0);
+        c1=Wait(x+23,y);
         }
         else
         {
@@ -2298,10 +2268,10 @@ if (F1nbrsel!=0)
                 switch(n)
                     {
                     case 0:
-                        FicSelect(i,1);                        // Select
+                        FicSelect(DFen,i,1);                   // Select
                         break;
                     case 1:
-                        FicSelect(i,2);             // Inverse Selection
+                        FicSelect(DFen,i,2);        // Inverse Selection
                         break;
                     }
                 }
@@ -2446,8 +2416,8 @@ if (KKCfg->key==0)
                 else
             if ((xm>=DFen->x) & (xm<=DFen->xl))
                 {
-                if (ym>(DFen->scur+DFen->y2+3)) c=80*256;
-                if (ym<(DFen->scur+DFen->y2+3)) c=72*256;
+                if (ym>(DFen->scur+DFen->y2+1)) c=80*256;
+                if (ym<(DFen->scur+DFen->y2+1)) c=72*256;
                 oldzm=0;     // On peut laisser le bouton appuy‚ ---
                 }
                 else
@@ -2472,8 +2442,8 @@ if (KKCfg->key==0)
 
         if ((zm&4)==4)
             {
-            if ( (ym==(DFen->scur+DFen->y2+3)) &
-                 ((xm>=DFen->x) & (xm<=DFen->Fen2->xl)) )
+            if ( (ym==(DFen->scur+DFen->y2+1)) &
+                 ((xm>=DFen->x) & (xm<=DFen->xl)) )
                 c=13;
             }
 
@@ -2514,7 +2484,7 @@ if (KKCfg->key==0)
     car3=_bios_keybrd(0x11);
 
     if (c==0)
-        c=Wait(0,0,0);
+        c=Wait(0,0);
 
     KKCfg->key=(short)c;
 
@@ -3121,8 +3091,6 @@ int n;
 
 DFen=Fenetre[(KKCfg->FenAct)&1];
 
-CommandLine("##INIT 0 %d %d\n",(Cfg->TailleY)-2,Cfg->TailleX);
-
 for(n=0;n<NBWIN;n++)
     {
     if (Fenetre[n]->x!=0)
@@ -3136,8 +3104,7 @@ PrintAt(0,0,"%-40s%*s",RBTitle,Cfg->TailleX-40,"RedBug");
 ColLin( 0,0,40,Cfg->col[7]);
 ColLin(40,0,(Cfg->TailleX)-40,Cfg->col[11]);
 
-//--- Verify utility of this line --------------------------------------
-ColLin(0,Cfg->TailleY-2,Cfg->TailleX,Cfg->col[63]);
+ColLin(0,Cfg->TailleY-2,Cfg->TailleX,Cfg->col[63]); //-- Command Line --
 
 DFen->init=1;
 DFen->Fen2->init=1;
@@ -3153,7 +3120,6 @@ MenuBar(4);
 void SaveCfg(void)
 {
 int m,n,t,ns;
-// short court;
 FILE *fic;
 FENETRE *Fen;
 long taille;
@@ -3304,7 +3270,7 @@ for (t=0;t<NBWIN;t++)
 
         for (n=0;n<DFen->nbrfic;n++)
             if (!stricmp(nom,DFen->F[n]->name))
-                FicSelect(n,1);
+                FicSelect(DFen,n,1);
         }
 
     fread(&m,4,1,fic);                                // Longueur du nom
@@ -3351,7 +3317,7 @@ switch (Fen->FenTyp)
 
         if (x2>=OldX)
             {
-            Window(OldX,Fen->y,x2,Fen->yl,10*16+1);
+            Window(OldX,Fen->y,x2,Fen->yl,7);
             x2=OldX-1;
             }
 
@@ -3510,6 +3476,13 @@ int n;
 char *LC;
 
 
+/*--------------------------------------------------------------------*\
+|- Initialisation du temps                                            -|
+\*--------------------------------------------------------------------*/
+
+Info=(struct RB_info*)GetMem(sizeof(struct RB_info));   // Starting time
+Info->temps=clock();
+
 
 /*--------------------------------------------------------------------*\
 |-                     Initialisation de l'ecran                      -|
@@ -3536,13 +3509,6 @@ WhereXY(&PosX,&PosY);
 
 for (n=0;n<8000;n++)
     Screen_Buffer[n]=Screen_Adr[n];
-
-/*--------------------------------------------------------------------*\
-|- Initialisation du temps                                            -|
-\*--------------------------------------------------------------------*/
-
-Info=(struct RB_info*)GetMem(sizeof(struct RB_info));   // Starting time
-Info->temps=clock();
 
 /*--------------------------------------------------------------------*\
 |-                       Initialise les buffers                       -|
@@ -3593,7 +3559,6 @@ if (strncmp(LC,"6969",4))
     printf("This program required KK.EXE\n\n");
     exit(1);
     }
-
 
 
 /*--------------------------------------------------------------------*\
@@ -3716,7 +3681,6 @@ if (KKCfg->scrrest==0)
 /*--------------------------------------------------------------------*\
 |- verification system                                                -|
 \*--------------------------------------------------------------------*/
-
 KKCfg->_Win95=Verif95();
 
 if (KKCfg->_Win95==1)
@@ -3738,14 +3702,10 @@ if ( ( (KKCfg->currentdir==1) & (LC[4]!='0') ) |
         CommandLine("#CD %s",Fics->LastDir);
     }
 
-
 Cfg->reinit=0;
 UseCfg();                      // Emploi les parametres de configuration
 
 InitScreen(Cfg->display);
-
-CalcSizeWin(Fenetre[0]);
-CalcSizeWin(Fenetre[1]);
 
 if (KKCfg->verifhist==1)
     VerifHistDir();            // Verifie l'history pour les repertoires
@@ -3795,12 +3755,6 @@ Gestion();
 memset(SpecSortie,0,256);
 
 Fin();
-}
-
-
-void PrintMem(void)
-{
-PrintAt(0,0,"Memory: %20d octets",FreeMem());
 }
 
 void SwapLong(long *a,long *b)

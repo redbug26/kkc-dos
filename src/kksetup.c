@@ -534,7 +534,7 @@ for (n=prem;n<nbrkey;n++)
     if ( (y==(Cfg->TailleY-3)) | (n==nbrkey-1) ) break;
     }
 
-car=Wait(0,0,0);
+car=Wait(0,0);
 
 switch(HI(car))
     {
@@ -819,7 +819,7 @@ do
         else
         AffCol(drive[i],9,7*16+3);
 
-    car=Wait(0,0,0);
+    car=Wait(0,0);
 
     if (lstdrv[i]==0)
         AffCol(drive[i],9,14*16+7);
@@ -899,8 +899,7 @@ if (i!=0)
             DispMessage("%s is done",path);
             DispMessage("");
 
-            strcpy(path,dir[menu.cur].Titre);
-            Path2Abs(path,"kkdesc.bat");
+            Path2Abs(path,"..\\kkdesc.bat");
             fic=fopen(path,"wt");
             if (fic!=NULL)
                 {
@@ -1183,7 +1182,7 @@ if (todo!=0)
 
     DispMessage("");
     DispMessage("Press a key to continue");
-    Wait(0,0,0);
+    Wait(0,0);
     }
 
 SaveCfg();
@@ -1314,7 +1313,7 @@ if (nbr>0)
     PrintAt((Cfg->TailleX-22)/2,(Cfg->TailleY-3),"Press a key to continue");
     ColLin(1,(Cfg->TailleY-3),(Cfg->TailleX-2),10*16+3);
 
-    Wait(0,0,0);
+    Wait(0,0);
 
     LoadScreen();
 
@@ -1842,6 +1841,8 @@ KKCfg->currentdir=get_private_profile_int(section,"loadstartdir",
 KKCfg->saveviewpos=get_private_profile_int(section,"saveviewpos",
                                            KKCfg->saveviewpos,filename);
 
+KKCfg->Esc2Close=get_private_profile_int(section,"esc2close",
+                                             KKCfg->Esc2Close,filename);
 KKCfg->warp=get_private_profile_int(section,"warp",
                                                   KKCfg->warp,filename);
 KKCfg->autotrad=get_private_profile_int(section,"autotrad",
@@ -2026,6 +2027,8 @@ write_private_profile_int(section,"debug",Cfg->debug,filename);
 write_private_profile_int(section,"confexit",KKCfg->confexit,filename);
 write_private_profile_int(section,"sizetrash",KKCfg->mtrash,filename);
 write_private_profile_int(section,"display",Cfg->display,filename);
+write_private_profile_int(section,"esc2close",
+                                            KKCfg->Esc2Close,filename);
 
 write_private_profile_int(section,"serial_port",Cfg->comport,filename);
 write_private_profile_int(section,"serial_speed",Cfg->comspeed,
@@ -2299,7 +2302,7 @@ do
         j++;
         }
 
-    car=Wait(0,0,0);
+    car=Wait(0,0);
     switch(HI(car))
         {
         case 72:                                                   // UP
@@ -3005,7 +3008,7 @@ y=col/16;
 AffCol(x+2,1,Cfg->col[18]);
 AffCol(1,y+2,Cfg->col[18]);
 AffChr(x+2,y+2,'*');
-car=Wait(0,0,0);
+car=Wait(0,0);
 AffCol(x+2,1,Cfg->col[16]);
 AffCol(1,y+2,Cfg->col[16]);
 AffChr(x+2,y+2,'+');
@@ -3119,16 +3122,19 @@ switch(m)
         bar[1].Titre="Bright"; bar[1].Help=NULL;
         bar[1].fct=6;
 
+        bar[2].Titre="Command Line"; bar[2].Help=NULL;
+        bar[2].fct=64;
+
         n=0;
 
-        Window(60,3,77,5,0);
+        Window(60,3,77,6,0);
         AffColScreen(m);
 
         do
             {
             menu.cur=n;
 
-            retour=PannelMenu(bar,2,&menu);
+            retour=PannelMenu(bar,3,&menu);
 
             n=menu.cur;
 
@@ -3521,7 +3527,7 @@ switch(a)
         PrintAt(61,4,"normal  exe");
         PrintAt(61,5,"select  com");
         PrintAt(61,6,"current ini");
-        PrintAt(61,7,"c:\path");
+        PrintAt(61,7,"c:\\path");
         PrintAt(61,8,"cursel  rb");
         PrintAt(61,9, "normal");
         PrintAt(61,10,"bright");
@@ -3534,11 +3540,13 @@ switch(a)
         PrintAt(61,16,"xyz");
         break;
     case 1:
-        ColLin(61,4,2,Cfg->col[5]);
-        ColLin(63,4,6,Cfg->col[6]);
-        ColLin(69,4,2,Cfg->col[5]);
-        ColLin(71,4,6,Cfg->col[6]);
-        PrintAt(61,4,"F1 Help F2 Menu");
+        PrintAt(61,4,"C:\\KKC         ");
+        ColLin(61,4,15,Cfg->col[63]);
+        ColLin(61,5,2,Cfg->col[5]);
+        ColLin(63,5,6,Cfg->col[6]);
+        ColLin(69,5,2,Cfg->col[5]);
+        ColLin(71,5,6,Cfg->col[6]);
+        PrintAt(61,5,"F1 Help F2 Menu");
         break;
 
     case 2:
@@ -3645,7 +3653,7 @@ switch(a)
 void ChangePalette(void)
 {
 int x,y,i;
-char rec,reloadpal;
+char rec;
 
 int n,m,ntot;
 int nt,mt;
@@ -3787,7 +3795,7 @@ if (n<16)
 
     ColWin(x,y+m,x+8,y+m,Cfg->col[17]);
 
-    car=Wait(0,0,0);
+    car=Wait(0,0);
 
     ColWin(x,y+m,x+8,y+m,Cfg->col[16]);
 
@@ -3796,12 +3804,14 @@ if (n<16)
         case 0x47:                                               // HOME
             ChrWin(x,y+m,x+8,y+m,32);
             Cfg->palette[n*3+m]=0;
-            reloadpal=1;
+            SetPal(n,Cfg->palette[n*3],Cfg->palette[n*3+1],
+                                                   Cfg->palette[n*3+2]);
             break;
         case 0X4F:                                                // END
             ChrWin(x,y+m,x+8,y+m,32);
             Cfg->palette[n*3+m]=63;
-            reloadpal=1;
+            SetPal(n,Cfg->palette[n*3],Cfg->palette[n*3+1],
+                                                   Cfg->palette[n*3+2]);
             break;
         case 80:                                                  // bas
             m++;
@@ -3812,12 +3822,14 @@ if (n<16)
         case 0x4B:                                             // gauche
             if (Cfg->palette[n*3+m]!=0)
                 Cfg->palette[n*3+m]--;
-            reloadpal=1;
+            SetPal(n,Cfg->palette[n*3],Cfg->palette[n*3+1],
+                                                   Cfg->palette[n*3+2]);
             break;
         case 0x4D:                                             // droite
             if (Cfg->palette[n*3+m]!=63)
                 Cfg->palette[n*3+m]++;
-            reloadpal=1;
+            SetPal(n,Cfg->palette[n*3],Cfg->palette[n*3+1],
+                                                   Cfg->palette[n*3+2]);
             break;
         case 0xF:                                           // SHIFT-TAB
             n--;
@@ -3834,18 +3846,12 @@ if (n<16)
     if (m==3) n++,m=0;
     if (m<0)  n--,m=2;
     if (n<0)  n=ntot;
-
-    if (reloadpal)
-        {
-        LoadPal(Cfg->palette);
-        reloadpal=0;
-        }
     }
     else
     {
     ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),Cfg->col[17]);
 
-    car=Wait(0,0,0);
+    car=Wait(0,0);
 
     ColLin(posx[n-16],posy[n-16],strlen(Style[n-16]),Cfg->col[16]);
 

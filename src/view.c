@@ -271,7 +271,7 @@ ChrCol(78,cur2+1,(Cfg->TailleY-3)-cur2,32);
 
 posn=posd;
 
-car=Wait(0,0,0);
+car=Wait(0,0);
 
 if (car==0)     //--- Pression bouton souris ---------------------------
     {
@@ -374,8 +374,6 @@ return fin;
 }
 
 /*--------------------------------------------------------------------*\
-|- to initialize:                                                     -|
-|-   call set_screensize(<# lines to reserve>);                       -|
 |- to print through ansi interpreter:                                 -|
 |-   call ansi_out(<string>);                                         -|
 \*--------------------------------------------------------------------*/
@@ -390,32 +388,29 @@ static char ansi_terminators[] = "HFABCDnsuJKmp";
 static int touche;
 static clock_t Cl_Start;
 
-int tempo;
-
 #define MAXARGLEN       128
 
-#define NOTHING         0
-#define WASESCAPE       1
-#define WASBRKT         2
-
-void set_pos (char *argbuf,int arglen,char cmd)
+void set_pos(char *argbuf,int arglen,char cmd)
 {
-int   y,x;
+int y,x;
 char *p;
 
 if (!*argbuf || !arglen)
     {
-    curx = cury = 0;
+    curx=0;
+    cury=0;
     }
-y = atoi(argbuf) - 1;
-p = strchr(argbuf,';');
-if (y >= 0 && p)
+
+y=atoi(argbuf) - 1;
+p=strchr(argbuf,';');
+
+if ((y>=0) & (p!=NULL))
     {
-    x = atoi(p + 1) - 1;
-    if(x >= 0)
+    x = atoi(p+1) - 1;
+    if (x>=0)
         {
-        curx = x;
-        cury = y;
+        curx=x;
+        cury=y;
         }
     }
 }
@@ -425,15 +420,15 @@ void go_up (char *argbuf,int arglen,char cmd)
 int x;
 
 x = atoi(argbuf);
-if (!x)
-    x=1;
 
-for ( ; x ; x--)
+do
     {
-    if (!cury)
+    if (cury==0)
         break;
     cury--;
+    x--;
     }
+while(x>0);
 }
 
 void go_down (char *argbuf,int arglen,char cmd)
@@ -441,14 +436,15 @@ void go_down (char *argbuf,int arglen,char cmd)
 int x;
 
 x = atoi(argbuf);
-if (!x)
-    x = 1;
-for ( ; x ; x--)
+
+do
     {
     if (cury == maxy - 1)
         break;
     cury++;
+    x--;
     }
+while(x>0);
 }
 
 void go_left (char *argbuf,int arglen,char cmd)
@@ -456,14 +452,15 @@ void go_left (char *argbuf,int arglen,char cmd)
 int x;
 
 x = atoi(argbuf);
-if (!x)
-    x = 1;
-for ( ; x ; x--)
+
+do
     {
-    if(!curx)
+    if(curx==0)
         break;
     curx--;
+    x--;
     }
+while(x>0);
 }
 
 void go_right (char *argbuf,int arglen,char cmd)
@@ -471,19 +468,15 @@ void go_right (char *argbuf,int arglen,char cmd)
 int x;
 
 x = atoi(argbuf);
-if (!x)
-    x = 1;
-for ( ; x ; x--)
+
+do
     {
     if (curx == maxx - 1)
         break;
     curx++;
+    x--;
     }
-}
-
-void report (char *argbuf,int arglen,char cmd)
-{
-/* you figure out how to implement it ... */
+while(x>0);
 }
 
 void save_pos (char *argbuf,int arglen,char cmd)
@@ -504,7 +497,6 @@ if(issaved)
 }
 
 
-
 void set_colors (char *argbuf,int arglen,char cmd)
 {
 char *p,*pp;
@@ -522,119 +514,122 @@ if (*argbuf && arglen)
             }
         switch (atoi(pp))
             {
-            case 0: /* all attributes off */
+            case 0: //--- all attributes off ---------------------------
                 curattr = 7;
                 break;
 
-            case 1: /* bright on */
+            case 1: //--- Bold On --------------------------------------
                   curattr |= 8;
                   break;
 
-            case 2: /* faint on */
+            case 2: //--- Dim On ---------------------------------------
                   curattr &= (~8);
                   break;
 
-            case 3: /* italic on */
+            case 3: //--- Italic On ------------------------------------
                   break;
 
-            case 5: /* blink on */
+            case 4: //--- Underline On ---------------------------------
+                  break;
+
+            case 5: //--- Blink On -------------------------------------
                   curattr |= 128;
                   break;
 
-            case 6: /* rapid blink on */
+            case 6: //--- Rapid Blink On -------------------------------
                   break;
 
-            case 7: /* reverse video on */
+            case 7: //--- Reverse Video On -----------------------------
                   curattr = 112;
                   break;
 
-            case 8: /* concealed on */
+            case 8: //--- Invisible On ---------------------------------
                   curattr = 0;
                   break;
 
-            case 30: /* black fg */
+            case 30: //--- black fg ------------------------------------
                   curattr &= (~7);
                   break;
 
-            case 31: /* red fg */
+            case 31: //--- red fg --------------------------------------
                   curattr &= (~7);
                   curattr |= 4;
                   break;
 
-            case 32: /* green fg */
+            case 32: //--- green fg ------------------------------------
                   curattr &= (~7);
                   curattr |= 2;
                   break;
 
-            case 33: /* yellow fg */
+            case 33: //--- yellow fg -----------------------------------
                   curattr &= (~7);
                   curattr |= 6;
                   break;
 
-            case 34: /* blue fg */
+            case 34: //--- blue fg -------------------------------------
                   curattr &= (~7);
                   curattr |= 1;
                   break;
 
-            case 35: /* magenta fg */
+            case 35: //--- magenta fg ----------------------------------
                   curattr &= (~7);
                   curattr |= 5;
                   break;
 
-            case 36: /* cyan fg */
+            case 36: //--- cyan fg -------------------------------------
                   curattr &= (~7);
                   curattr |= 3;
                   break;
 
-            case 37: /* white fg */
+            case 37: //--- white fg ------------------------------------
                   curattr |= 7;
                   break;
 
-            case 40: /* black bg */
+            case 40: //--- black bg ------------------------------------
                   curattr &= (~112);
                   break;
 
-            case 41: /* red bg */
+            case 41: //--- red bg --------------------------------------
                   curattr &= (~112);
                   curattr |= (4 << 4);
                   break;
 
-            case 42: /* green bg */
+            case 42: //--- green bg ------------------------------------
                   curattr &= (~112);
                   curattr |= (2 << 4);
                   break;
 
-            case 43: /* yellow bg */
+            case 43: //--- yellow bg -----------------------------------
                   curattr &= (~112);
                   curattr |= (6 << 4);
                   break;
 
-            case 44: /* blue bg */
+            case 44: //--- blue bg -------------------------------------
                   curattr &= (~112);
                   curattr |= (1 << 4);
                   break;
 
-            case 45: /* magenta bg */
+            case 45: //--- magenta bg ----------------------------------
                   curattr &= (~112);
                   curattr |= (5 << 4);
                   break;
 
-            case 46: /* cyan bg */
+            case 46: //--- cyan bg -------------------------------------
                   curattr &= (~112);
                   curattr |= (3 << 4);
                   break;
 
-            case 47: /* white bg */
+            case 47: //--- white bg ------------------------------------
                   curattr |= 112;
                   break;
 
-            case 48: /* subscript bg */
+            case 48: //--- subscript bg --------------------------------
                   break;
 
-            case 49: /* superscript bg */
+            case 49: //--- superscript bg ------------------------------
                   break;
 
-            default: /* unsupported */
+            default: //--- unsupported ---------------------------------
                   break;
             }
         pp = p;
@@ -647,17 +642,16 @@ if (*argbuf && arglen)
 
 int ansi_out (char b)
 {
-static int  arglen = 0, ansistate = NOTHING, x;
+static int  arglen=0, ansistate=0, x;
 static char argbuf[MAXARGLEN] = "";
-
 
 switch (ansistate)
     {
-    case NOTHING:
+    case 0:
         switch (b)
             {
             case 27:
-                ansistate = WASESCAPE;
+                ansistate = 1;
                 break;
             case '\r':
                 curx = 0;
@@ -672,127 +666,124 @@ switch (ansistate)
                     {
                     AnsiAffChr(curx,cury,' ');
                     AnsiAffCol(curx,cury,curattr);
-                          curx++;
-                          if (curx > maxx - 1)
-                          {
-                          curx = 0;
-                          cury++;
-                          }
-                    }
-                    break;
-
-              case '\b':
-                    if (curx)
-                    {
-                          curx--;
-                    }
-                    break;
-
-              case '\07':                  // usually a console bell
-                    putchar('\07');
-                    break;
-
-              default:
-                    AnsiAffChr(curx,cury,b);
-                    AnsiAffCol(curx,cury,curattr);
                     curx++;
                     if (curx > maxx - 1)
                         {
                         curx = 0;
                         cury++;
                         }
-                    break;
-              }
-              break;
-
-        case WASESCAPE:
-              if (b == '[')
-              {
-                    ansistate = WASBRKT;
-                    arglen = 0;
-                    *argbuf = 0;
-                    break;
-              }
-              ansistate = NOTHING;
-              break;
-
-        case WASBRKT:
-              if (strchr(ansi_terminators, (int)b))
-              {
-                    switch ((int)b)
-                    {
-                    case 'H': //--- set cursor position ------------
-                    case 'F':
-                          set_pos(argbuf,arglen,b);
-                          break;
-
-                    case 'A': //--- up -----------------------------
-                          go_up(argbuf,arglen,b);
-                          break;
-
-                    case 'B': //--- down ---------------------------
-                          go_down(argbuf,arglen,b);
-                          break;
-
-                    case 'C':   /* right */
-                          go_right(argbuf,arglen,b);
-                          break;
-
-                    case 'D':   /* left */
-                          go_left(argbuf,arglen,b);
-                          break;
-
-                    case 'n':   /* report pos */
-                          report(argbuf,arglen,b);
-                          break;
-
-                    case 's':   /* save pos */
-                          save_pos(argbuf,arglen,b);
-                          break;
-
-                    case 'u':   /* restore pos */
-                          restore_pos(argbuf,arglen,b);
-                          break;
-
-                    case 'J':   /* clear screen */
-                       // ChrWin(0,0,maxx - 1,maxy - 1,32);
-                       // ColWin(0,0,maxx - 1,maxy - 1,curattr);
-                        curx = cury = 0;
-                        break;
-
-                    case 'K':   /* delete to eol */
-                       // ChrWin(curx,cury,maxx-1,cury,32);
-                       // ColWin(curx,cury,maxx-1,cury,curattr);
-                        break;
-
-                    case 'm':   /* set video attribs */
-                          set_colors(argbuf,arglen,b);
-                          break;
-
-                    case 'p':   /* keyboard redef -- disallowed */
-                          break;
-
-                    default:    /* unsupported */
-                          break;
                     }
-                    ansistate = NOTHING;
-                    arglen = 0;
-                    *argbuf = 0;
-              }
-              else
-              {
-                    if (arglen < MAXARGLEN)
-                    {
-                          argbuf[arglen] = b;
-                          argbuf[arglen + 1] = 0;
-                          arglen++;
-                    }
-              }
-              break;
+                break;
 
-        default:
-            WinError("Error of ANSI code");
+            case '\b':
+                if (curx)
+                    curx--;
+                break;
+
+            case '\07':                  // The beep -------------------
+                putchar('\07');
+                break;
+
+            default:
+                AnsiAffChr(curx,cury,b);
+                AnsiAffCol(curx,cury,curattr);
+                curx++;
+                if (curx > maxx - 1)
+                    {
+                    curx = 0;
+                    cury++;
+                    }
+                break;
+            }
+        break;
+
+    case 1:
+        if (b == '[')
+            {
+            ansistate = 2;
+            arglen = 0;
+            *argbuf = 0;
             break;
+            }
+        ansistate = 0;
+        break;
+
+    case 2:
+        if (strchr(ansi_terminators, (int)b))
+            {
+            switch ((int)b)
+                {
+                case 'H': //--- set cursor position --------------------
+                case 'F':
+                    set_pos(argbuf,arglen,b);
+                    break;
+
+                case 'A': //--- up -------------------------------------
+                    go_up(argbuf,arglen,b);
+                    break;
+
+                case 'B': //--- down -----------------------------------
+                    go_down(argbuf,arglen,b);
+                    break;
+
+                case 'C': //--- right ----------------------------------
+                    go_right(argbuf,arglen,b);
+                    break;
+
+                case 'D': //--- left -----------------------------------
+                    go_left(argbuf,arglen,b);
+                    break;
+
+                case 'n': //--- device statusreport pos ----------------
+                    break;
+
+                case 's': //--- save pos -------------------------------
+                    save_pos(argbuf,arglen,b);
+                    break;
+
+                case 'u': //--- restore pos ----------------------------
+                    restore_pos(argbuf,arglen,b);
+                    break;
+
+                case 'J': //--- clear screen ---------------------------
+                   // ChrWin(0,0,maxx - 1,maxy - 1,32);
+                   // ColWin(0,0,maxx - 1,maxy - 1,curattr);
+                    curx = cury = 0;
+                    break;
+
+                case 'K': //--- delete to eol --------------------------
+                   // ChrWin(curx,cury,maxx-1,cury,32);
+                   // ColWin(curx,cury,maxx-1,cury,curattr);
+                    break;
+
+                case 'm': //--- set video attribs ----------------------
+                    set_colors(argbuf,arglen,b);
+                    break;
+
+                case 'p': //--- keyboard redef -------------------------
+                    break;
+
+                default:  //--- unsupported ----------------------------
+                    break;
+                }
+            ansistate = 0;
+            arglen = 0;
+            *argbuf = 0;
+            }
+        else
+            {
+            if (arglen < MAXARGLEN)
+                {
+                argbuf[arglen] = b;
+                argbuf[arglen + 1] = 0;
+                arglen++;
+                }
+            }
+        break;
+
+    default:
+        WinError("Error of ANSI code");
+        break;
     }
 
 return cury;
@@ -841,7 +832,7 @@ do
     }
 while(n==16384);
 
-Wait(0,0,0);
+Wait(0,0);
 
 ChangeTaille(Cfg->TailleY);
 
@@ -1418,7 +1409,7 @@ posn=posd;
 
 if ( (shift!=-1) & (shift!=2) )
 {
-code=Wait(0,0,0);
+code=Wait(0,0);
 
 if (code==0)     //--- Pression bouton souris --------------------------
     {
@@ -2466,7 +2457,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
 
 if (shift!=-1)
 {
-code=Wait(0,0,0);
+code=Wait(0,0);
 
 switch(LO(code))   {
     case 0:
@@ -3244,6 +3235,8 @@ AnsiBuffer[y*160+x+80]=c;
 
 void StartAllPage(void)
 {
+char car;
+
 AnsiAffChr=BufAffChr;
 AnsiAffCol=BufAffCol;
 
@@ -3258,7 +3251,11 @@ curx=0;
 cury=0;
 
 for (posn=0;posn<taille;posn++)
-    ansi_out(ReadChar());
+    {
+    car=ReadChar();
+    if (car==0x1A) break;
+    ansi_out(car);
+    }
 
 Ansi2=cury+1-Cfg->TailleY+2;
 if (Ansi2<0) Ansi2=0;
@@ -3423,7 +3420,7 @@ if ( (shift!=-1) & (shift!=2) )
 if (KbHit())
     {
     autodown=0;
-    code=Wait(0,0,0);
+    code=Wait(0,0);
     }
 
 if (code==0)     //--- Pression bouton souris --------------------------

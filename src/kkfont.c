@@ -99,7 +99,7 @@ ChgFont(pol);
 do
 {
 AffCol(40+i1,2+j1,7*16+10);
-car=Wait(0,0,0);
+car=Wait(0,0);
 AffCol(40+i1,2+j1,10*16+7);
 
 switch(HI(car))
@@ -201,7 +201,7 @@ for(j=0;j<tx;j++)
 AffCol(pi+2,pj+2,2*16+4);
 
 AffCol(40+(cur&15),2+(cur/16),7*16+10);
-car=Wait(0,0,0);
+car=Wait(0,0);
 AffCol(40+(cur&15),2+(cur/16),10*16+7);
 
 switch(HI(car))
