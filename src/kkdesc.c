@@ -764,8 +764,8 @@ PrintAt(32,0,"Describe player");
 ColLin(32,0,20,10*16+3);
 
 PrintAt(2,(Cfg->TailleY-1),
-                          "F1: Help  F3: Information  F6:OS  F7: Compute CRC"
-                                    "  ESC: Quit & Save Modification");
+                          "F1: Help F3: Information F6: OS F7: Compute CRC"
+                                    " ESC: Quit & Save Modification");
 
 prem=0;
 pres=0;

@@ -193,6 +193,7 @@ void ChrRCol(int left,int top,int length,short color);
 void ColRCol(int left,int top,int length,short color);
 void ColRWin(int right,int top,int left,int bottom,short color);
 void ChrRWin(int right,int top,int left,int bottom,short color);
+void WinRCadre(int x1,int y1,int x2,int y2,int type);
 
 void PrintTo(int x,int y,char *string,...);
 char InputTo(int x,int y,char *string, int length);

@@ -3664,7 +3664,6 @@ if (KKCfg->_4dos==1)
 
 
 
-
 /*--------------------------------------------------------------------*\
 |-                            Initialisation                          -|
 \*--------------------------------------------------------------------*/
@@ -3712,13 +3711,7 @@ for (n=0;n<NBWIN;n++)
 
 if (LoadCfg()==-1)
     {
-    for (n=0;n<NBWIN;n++)
-        {
-        DFen=Fenetre[n];
-        CommandLine("#c:");
-        }
-    DefaultCfg();
-    DefaultKKCfg();
+    saveconfig=0;
     GestionFct(62);
     }
 
@@ -3729,7 +3722,6 @@ if (LoadCfg()==-1)
 KKCfg->_Win95=Verif95();
 
 InitMouse();
-
 
 /*--------------------------------------------------------------------*\
 |- Chargement du repertoire courant si necessaire                     -|
@@ -3761,7 +3753,6 @@ Gestion();
 \*--------------------------------------------------------------------*/
 
 memset(SpecSortie,0,256);
-
 
 Fin();
 }

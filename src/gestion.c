@@ -879,6 +879,9 @@ if (!strnicmp(chaine,"#INIT",5))
     ChangeLine();
     return 1;
     }
+
+// if (!strnicmp(chaine,"#P4",3))   P4(),  return 1;
+
 if (!strnicmp(chaine,"#MEM",4))
     {
     static int a=0;

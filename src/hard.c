@@ -49,10 +49,10 @@ static int _xm,_ym,_zm,_zmok;
 static int _dclik,_mclock;
 static char _charm;
 
-static int _xw,_yw;                        // position up left in window
-static int _xw2,_yw2;                 // position bottom right in window
+static int _xw,_yw;                // position up left in window -------
+static int _xw2,_yw2;              // position bottom right in window --
 
-char _IntBuffer[256];
+char _IntBuffer[256];              // Buffer interne multi usage -------
 
 char _RB_screen[256*128*2];
 
@@ -352,7 +352,7 @@ if (*(_RB_screen+(y*256+x)+256*128)!=c)
     {
     *(_RB_screen+(y*256+x)+256*128)=c;
 
-    *(scrseg[y]+(x<<1)+1)=c;            // --------- Echo console --
+    *(scrseg[y]+(x<<1)+1)=c;            // --------- Echo console ------
 
     Com_GenCol(x,y);
     Com_GenChr(x,y,GetChr(x,y));
@@ -368,7 +368,7 @@ if (*(_RB_screen+(y*256+x))!=c)
     {
     Com_GenCol(x,y);
 
-    *(scrseg[y]+(x<<1))=c;              // --------- Echo console --
+    *(scrseg[y]+(x<<1))=c;              // --------- Echo console ------
 
     Com_GenChr(x,y,c);
     }
@@ -376,7 +376,6 @@ if (*(_RB_screen+(y*256+x))!=c)
 
 void Com_GenCol(char x,char y)
 {
-char buffer[32];
 int n;
 
 if (*(_RB_screen+(y*256+x)+256*128)!=_Com_tcol)
@@ -386,9 +385,9 @@ if (*(_RB_screen+(y*256+x)+256*128)!=_Com_tcol)
     _Com_col1=_Com_cnv[_Com_tcol/16]+40;
     _Com_col2=_Com_cnv[_Com_tcol&15]+30;
 
-    sprintf(buffer,"\x1b[%d;%dm",_Com_col1,_Com_col2);
-    for (n=0;n<strlen(buffer);n++)
-        com_send_ch(buffer[n]);
+    sprintf(_IntBuffer,"\x1b[%d;%dm",_Com_col1,_Com_col2);
+    for (n=0;n<strlen(_IntBuffer);n++)
+        com_send_ch(_IntBuffer[n]);
     }
 }
 
@@ -472,12 +471,11 @@ return buf[0];
 
 void Com_GotoXY(char x,char y)
 {
-char buffer[32];
 int n;
 
-sprintf(buffer,"\x1b[%d;%dH",y+1,x+1);
-for (n=0;n<strlen(buffer);n++)
-    com_send_ch(buffer[n]);
+sprintf(_IntBuffer,"\x1b[%d;%dH",y+1,x+1);
+for (n=0;n<strlen(_IntBuffer);n++)
+    com_send_ch(_IntBuffer[n]);
 
 _Com_x=x;
 _Com_y=y;
@@ -493,15 +491,14 @@ return 0;
 
 void Com_Clr(void)
 {
-char buffer[32];
 int n;
 
 memset(_RB_screen+256*128,7,256*128);
 memset(_RB_screen,32,256*128);
 
-sprintf(buffer,"\x1b[0m\n\n\x1b[2J");
-for (n=0;n<strlen(buffer);n++)
-    com_send_ch(buffer[n]);
+sprintf(_IntBuffer,"\x1b[0m\n\n\x1b[2J");
+for (n=0;n<strlen(_IntBuffer);n++)
+    com_send_ch(_IntBuffer[n]);
 }
 
 void Com_Window(int left,int top,int right,int bottom,short color)
@@ -542,8 +539,7 @@ for(j=top;j<=bottom;j++)
 #define SETVECT _dos_setvect
 #define GETVECT _dos_getvect
 
-char modem_buffer[MAX_BUFFER];
-
+char *modem_buffer;
 
 short modem_pause;
 short modem_base;
@@ -666,6 +662,8 @@ short com_open(short comport,long speed,short bit,BYTE parity,BYTE stop)
 short x,  newb=0;
 char l, m;
 short d;
+
+modem_buffer=GetMem(MAX_BUFFER);
 
 INT_OFF();
 
@@ -808,6 +806,8 @@ outp(0x21, old_modem_imr);
 SETVECT(modem_irq+8, old_modem_isr);
 outp(0x20,0x20);
 modem_open=0;
+
+LibMem(modem_buffer);
 }
 
 /*--------------------------------------------------------------------*\
@@ -930,12 +930,12 @@ LibMem(_MEcran);
 |-  Routine de sauvegarde de l'ecran                                  -|
 \*--------------------------------------------------------------------*/
 
-char *_Ecran[10];
-char _EcranX[10],_EcranY[10];
-char _EcranD[10],_EcranF[10];
-char _EcranXW[10],_EcranYW[10];
-char _EcranXW2[10],_EcranYW2[10];
-signed short _WhichEcran=0;
+char *_Ecran[10];                        //--- Copie de l'ecran --------
+char _EcranX[10],_EcranY[10];            //--- Position du curseur -----
+char _EcranD[10],_EcranF[10];            //--- Definition du curseur ---
+char _EcranXW[10],_EcranYW[10];          //--- Coordonnes absolues -----
+char _EcranXW2[10],_EcranYW2[10];        //--- Coordonnes absolues -----
+signed short _WhichEcran=0;              //--- Nbr d'‚cran en memoire --
 
 void SaveScreen(void)
 {
@@ -1022,6 +1022,11 @@ _Ecran[_WhichEcran]=NULL;
 /*--------------------------------------------------------------------*\
 |- Fonction relative                                                  -|
 \*--------------------------------------------------------------------*/
+void WinRCadre(int x1,int y1,int x2,int y2,int type)
+{
+WinCadre(x1+_xw,y1+_yw,x2+_xw,y2+_yw,type);
+}
+
 void AffRChr(int x,int y,char c)
 {
 AffChr(x+_xw,y+_yw,c);
@@ -1082,16 +1087,15 @@ return InputAt(colonne+_xw,ligne+_yw,chaine,longueur);
 \*--------------------------------------------------------------------*/
 void PrintTo(int x,int y,char *string,...)
 {
-char sortie[256];      // Pas de raison que ca soit un static ici (ok ?)
 va_list arglist;
 
 char *suite;
 short xa,ya;
 
-suite=sortie;
+suite=_IntBuffer;
 
 va_start(arglist,string);
-vsprintf(sortie,string,arglist);
+vsprintf(_IntBuffer,string,arglist);
 va_end(arglist);
 
 xa=x+_xw;
@@ -1122,16 +1126,15 @@ while (*suite!=0)
 \*--------------------------------------------------------------------*/
 void PrintAt(int x,int y,char *string,...)
 {
-char sortie[256];      // Pas de raison que ca soit un static ici (ok ?)
 va_list arglist;
 
 char *suite;
 int a;
 
-suite=sortie;
+suite=_IntBuffer;
 
 va_start(arglist,string);
-vsprintf(sortie,string,arglist);
+vsprintf(_IntBuffer,string,arglist);
 va_end(arglist);
 
 a=x;
@@ -1633,17 +1636,15 @@ char *pol;
 char *buf=(char*)0xA0000;
 int n;
 
-char chaine[256];
-
 Cfg->Tfont=179;                            // Barre Verticale | with 8x?
 
-strcpy(chaine,Fics->path);
-sprintf(chaine+strlen(chaine),"\\font8x%d.cfg",height);
+strcpy(_IntBuffer,Fics->path);
+sprintf(_IntBuffer+strlen(_IntBuffer),"\\font8x%d.cfg",height);
 
 Cfg->UseFont=0;
 if (Cfg->font==0) return;
 
-fic=fopen(chaine,"rb");
+fic=fopen(_IntBuffer,"rb");
 if (fic==NULL) return;
 
 Cfg->UseFont=1;                                 // utilise les fonts 8x?
@@ -2334,13 +2335,15 @@ return 27;                                                     // ESCAPE
 \*--------------------------------------------------------------------*/
 int WinMesg(char *title,char *msg,char info)
 {
-int d,n,lng;
 static char Buffer2[70];
 
+int d,n,lng;
 static int width;
 static char length;
 char ok;
 char *Mesg[5];
+
+
 
 struct Tmt T[8] = {
       { 0,4,2,NULL,NULL},                                          // OK
@@ -3264,10 +3267,7 @@ do
 
             y=MousePosY();
 
-            if (y>(y1+3+pos*3))
-                c=80*256;
-            if (y<(y1+3+pos*3))
-                c=72*256;
+            pos=(y-3-y1)/3;
             }
         if ((button&2)==2)     //--- droite ---------------------------
             c=27;
@@ -3289,13 +3289,16 @@ do
             break;
         case 72:
             pos--;
-            if (pos==-1) pos=0;
             break;
         case 80:
             pos++;
-            if (pos==NbrMain) pos--;
+
             break;
         }
+
+    if (pos<=-1) pos=0;
+    if (pos>=NbrMain) pos=NbrMain-1;
+
     switch(car) {
         case 13:
             Hlp2Chaine(NdxMainTopic[pos],chaine);
@@ -3356,44 +3359,45 @@ prem=0;
 
 do
     {
-    for (n=prem;n<NbrSub[z];n++)
+    do
         {
-        Hlp2Chaine(NdxSubTopic[z][n],chaine);
-        if (pos==n)
-            ColLin(x1+2,y1+3+(n-prem)*2,max,1*16+5);
-            else
-            ColLin(x1+2,y1+3+(n-prem)*2,max,10*16+1);
+        if (pos<prem) prem--;
+        if (pos>dernier) prem++;
 
-        PrintAt(x1+2,y1+3+(n-prem)*2,"%-*s",max,chaine);
-
-        if (y1+3+(n-prem+1)*2>=y2)
+        for (n=prem;n<NbrSub[z];n++)
             {
-            dernier=n;
-            break;
+            Hlp2Chaine(NdxSubTopic[z][n],chaine);
+            if (pos==n)
+                ColLin(x1+2,y1+3+(n-prem)*2,max,1*16+5);
+                else
+                ColLin(x1+2,y1+3+(n-prem)*2,max,10*16+1);
+
+            PrintAt(x1+2,y1+3+(n-prem)*2,"%-*s",max,chaine);
+
+            if (y1+3+(n-prem+1)*2>=y2)
+                {
+                dernier=n;
+                break;
+                }
             }
         }
+    while ( (pos<prem) | (pos>dernier) );
 
     c=Wait(0,0,0);
 
-    if (c==0)     //--- Pression bouton souris ---------------------------
+    if (c==0)     //--- Pression bouton souris -------------------------
         {
         int button;
 
         button=MouseButton();
 
-        if ((button&1)==1)     //--- gauche --------------------------------
+        if ((button&1)==1)     //--- gauche ----------------------------
             {
-            int y;
-
-            y=MousePosY();
-
-            if (y>(y1+3+(pos-prem)*2))
-                c=80*256;
-            if (y<(y1+3+(pos-prem)*2))
-                c=72*256;
+            pos=(2*prem-3+MousePosY()-y1)/2;
+            ReleaseButton();
             }
 
-        if ((button&2)==2)     //--- droite ---------------------------
+        if ((button&2)==2)     //--- droite ----------------------------
             c=27;
 
         if ((button&4)==4)
@@ -3413,15 +3417,16 @@ do
             break;
         case 72:
             pos--;
-            if (pos==-1) pos=0;
-            if (pos<prem) prem--;
             break;
         case 80:
             pos++;
-            if (pos==NbrSub[z]) pos--;
-            if (pos>dernier) prem++;
             break;
         }
+
+    if (pos<=-1) pos=0;
+    if (pos>=NbrSub[z]) pos=NbrSub[z]-1;
+
+
     switch(car) {
         case 13:
             Page(NdxSubTopic[z][pos]);

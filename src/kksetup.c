@@ -1045,7 +1045,7 @@ SetDefaultPath(path);
 
 Fics->help=GetMem(256);
 strcpy(Fics->help,path);
-strcat(Fics->help,"\\kksetup.hlp");
+Path2Abs(Fics->help,"kksetup.hlp");
 
 
 /*--------------------------------------------------------------------*\
@@ -1144,7 +1144,8 @@ if (strlen(buffer)!=0)
     fic=fopen(buffer,"rt");
     fgets(toto,256,fic);
 
-    sprintf(tata,"@%s\\kk.exe\n",ActualPath);
+    sprintf(tata,"@%s",ActualPath);
+    Path2Abs(tata,"kk.exe\n");
 
     if (stricmp(tata,toto)!=0)
         PutInPath();
@@ -1467,7 +1468,7 @@ strcpy(nom,TabRec[NbrRec-1]);
 PrintAt(1,2,"%-78s",nom);
 
 strcpy(moi,nom);
-strcat(moi,"*.KKR");
+Path2Abs(moi,"*.KKR");
 
 if (_dos_findfirst(moi,63-_A_SUBDIR,&fic)==0)
 do
@@ -1476,7 +1477,7 @@ do
     if ((fic.attrib&_A_SUBDIR)!=_A_SUBDIR)
         {
         strcpy(moi,nom);
-        strcat(moi,fic.name);
+        Path2Abs(moi,fic.name);
         Fic=fopen(moi,"rb");
         if (Fic==NULL)
             {
@@ -1493,7 +1494,7 @@ free(TabRec[NbrRec-1]);
 NbrRec--;
 
 strcpy(moi,nom);
-strcat(moi,"*.*");
+Path2Abs(moi,"*.*");
 
 if (_dos_findfirst(moi,_A_SUBDIR,&fic)==0)
 do
@@ -1501,8 +1502,7 @@ do
     if  ( (fic.name[0]!='.') & (((fic.attrib)&_A_SUBDIR) == _A_SUBDIR) )
             {
             strcpy(moi,nom);
-            strcat(moi,fic.name);
-            strcat(moi,"\\");
+            Path2Abs(moi,fic.name);
 
             TabRec[NbrRec]=GetMem(strlen(moi)+1);
             memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
@@ -1584,7 +1584,7 @@ do
 
                         strcpy(moi,nom);
                         moi[strlen(moi)-3]=0;
-                        strcat(moi,fic.name);
+                        Path2Abs(moi,fic.name);
                         n=0;
                         while(moi[n]!=0)
                             if (moi[n]==32) moi[n]=0; else n++;
@@ -1613,7 +1613,7 @@ do
                         {
                         strcpy(moi,nom);
                         moi[strlen(moi)-3]=0;
-                        strcat(moi,fic.name);
+                        Path2Abs(moi,fic.name);
 
                         if (GVerif==0)
                             Interroge(moi,app[n],&Verif,&GVerif);
@@ -1687,8 +1687,8 @@ do
 			{
 			strcpy(moi,nom);
 			moi[strlen(moi)-3]=0;
-            strcat(moi,fic.name);
-			strcat(moi,"\\*.*");
+            Path2Abs(moi,fic.name);
+            Path2Abs(moi,"*.*");
 
             TabRec[NbrRec]=GetMem(strlen(moi)+1);
             memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
