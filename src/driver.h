@@ -1,5 +1,9 @@
+/*--------------------------------------------------------------------*\
+|- prototype de gestion de lecture des fichiers dans les directories  -|
+\*--------------------------------------------------------------------*/
 
-struct find_rb {
+struct find_rb
+    {
     int time;
     int date;
     char attrib;
@@ -14,17 +18,18 @@ struct find_rb {
 #define RB_HIDDEN   0x02
 #define RB_RDONLY   0x01
 
-#include "dos.h"
+int DOSlitfic(void);            //--- system 0 -------------------------
 
-int RARlitfic(void);            // system 1
+int RARlitfic(void);            //--- system 1 -------------------------
 
-int ARJlitfic(void);            // system 2
+int ARJlitfic(void);            //--- system 2 -------------------------
 
-int ZIPlitfic(void);            // system 3
+int ZIPlitfic(void);            //--- system 3 -------------------------
 
-int LHAlitfic(void);            // system 4
+int LHAlitfic(void);            //--- system 4 -------------------------
 
-int KKDlitfic(void);            // system 5
-void MakeKKD(struct fenetre *Fen,char *ficname);
+int KKDlitfic(void);            //--- system 5 -------------------------
+
+void MakeKKD(FENETRE *Fen,char *ficname);
 
 

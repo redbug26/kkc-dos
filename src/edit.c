@@ -1,29 +1,19 @@
 /*--------------------------------------------------------------------*\
 |-  Editor                                                            -|
 \*--------------------------------------------------------------------*/
-
 #include <ctype.h>
-
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
-
 #include <conio.h>
 #include <stdlib.h>
-
 #include <io.h>
 #include <direct.h>
-
 #include <dos.h>
 #include <fcntl.h>
-
 #include <time.h>
-
 #include <bios.h>
 
-#include "win.h"
 #include "kk.h"
-
 #include "idf.h"
 
 
@@ -422,7 +412,7 @@ for (i=0;i<10;i++)
 }
 
 
-void Edit(struct fenetre *F)
+void Edit(FENETRE *F)
 {
 FILE *fic;
 char *fichier,*liaison;

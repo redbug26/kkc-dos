@@ -6,15 +6,14 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
 
 #include <conio.h>
+#include <malloc.h>                           // uniquement pour le free
 
 #include <bios.h>                                     // Gestion clavier
 
 #include <time.h>
 
-#include "win.h"
 #include "kk.h"
 
 static char **tabnom;
@@ -106,8 +105,8 @@ short touche;
 
 char moi[256],nom[256];
 
-TabRec=malloc(500*sizeof(char*));
-TabRec[0]=malloc(strlen(nom2)+1);
+TabRec=GetMem(500*sizeof(char*));
+TabRec[0]=GetMem(strlen(nom2)+1);
 memcpy(TabRec[0],nom2,strlen(nom2)+1);
 NbrRec=1;
 
@@ -140,7 +139,7 @@ for (m=0;m<DFen->nbrfic;m++)
         {
         cont=1;
 
-        if ((error&0x10)==0x10) cont=0; // Not Subdir
+        if (IsDir(ff)) cont=0; // Not Subdir
         if ((error&0x08)==0x08) cont=0; // Not Subdir
 
 
@@ -214,14 +213,14 @@ for (m=0;m<DFen->nbrfic;m++)
 
     if ( (ff->name[0]!='.')  & (sw!=5) )
         {
-        if ( ((error&0x10)==0x10)
+        if ( (IsDir(ff))
            | ((!stricmp(getext(ff->name),"KKD")) & (Cfg->enterkkd==1)
                                                  & (DFen->system==0)) )
             {
             strcpy(moi,nom);
             Path2Abs(moi,ff->name);
 
-            TabRec[NbrRec]=malloc(strlen(moi)+1);
+            TabRec[NbrRec]=GetMem(strlen(moi)+1);
             memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
             NbrRec++;
             }
@@ -261,10 +260,10 @@ struct Tmt T[18] = {
       { 3,3,1,SearchName,&DirLength},    // 0
       { 6,2,0,"Filename",NULL},
       { 2,1,4,NULL,&CadreLength},
-      { 3,6,10, "Current drive     ",&sw},
-      { 3,7,10, "Cur.dir & subdir  ",&sw},
-      { 3,8,10,"Only current dir  ",&sw},
-      { 3,9,10,"All drive         ",&sw},
+      { 3,6,10, "Current drive",&sw},
+      { 3,7,10, "Current dir & subdir",&sw},
+      { 3,8,10, "Only current directory",&sw},
+      { 3,9,10, "All drive",&sw},
       { 3,10,10,"user defined drive",&sw},
       { 3,11,1,Drive,&DriveLen},
       { 2,5,9,&x1,&y1},
@@ -307,7 +306,7 @@ return 1;       // Erreur
 }
 
 
-void Search(struct fenetre *TempFen,struct fenetre *Fen)
+void Search(FENETRE *TempFen,FENETRE *Fen)
 {
 int n;
 char *nom;

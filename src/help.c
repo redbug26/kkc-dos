@@ -3,28 +3,34 @@
 \*--------------------------------------------------------------------*/
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
+
+#include <malloc.h>                           // uniquement pour le free
 
 #include <io.h>
 #include <conio.h>
 
-#include <time.h>
-
-#include "win.h"
 #include "kk.h"
+
+/*--------------------------------------------------------------------*\
+|- prototype                                                          -|
+\*--------------------------------------------------------------------*/
 
 void MainTopic(void);
 void SubTopic(long z);
 void Page(long z);
-
 void Hlp2Chaine(long pos,char *chaine);
 
-long NdxMainTopic[16];
-short NbrMain;
-long NdxSubTopic[16][512];
-short NbrSub[16];
 
-long lng;
+/*--------------------------------------------------------------------*\
+|- variable interne                                                   -|
+\*--------------------------------------------------------------------*/
+
+static long NdxMainTopic[16];
+static short NbrMain;
+static long NdxSubTopic[16][512];
+static short NbrSub[16];
+
+static long lng;
 char *hlp;
 
 void Hlp2Chaine(long pos,char *chaine)
@@ -66,7 +72,10 @@ hlp=GetMem(lng);
 fread(hlp,1,lng,fic);
 fclose(fic);
 
-// Creation de l'index
+/*--------------------------------------------------------------------*\
+|-  Creation de l'index                                               -|
+\*--------------------------------------------------------------------*/
+
 n=0;
 while(n<lng)
     {
@@ -86,11 +95,11 @@ while(n<lng)
     n++;
     }
 
-// Tri de l'index
+/*--------------------------------------------------------------------*\
+|-  Tri de l'index                                                    -|
+\*--------------------------------------------------------------------*/
 
 /* A faire */
-
-// MainTopic
 
 MainTopic();
 

@@ -1,2 +1,5 @@
-void Copie(struct fenetre *F1,struct fenetre *FTrash,char *path);
-void Move(struct fenetre *F1,struct fenetre *FTrash,char *path);
+/*--------------------------------------------------------------------*\
+|- prototype fonction de copie                                        -|
+\*--------------------------------------------------------------------*/
+void Copie(FENETRE *F1,FENETRE *FTrash,char *path);
+void Move(FENETRE *F1,FENETRE *FTrash,char *path);

@@ -1,34 +1,23 @@
 /*--------------------------------------------------------------------*\
 |-                             Viewer                                 -|
 \*--------------------------------------------------------------------*/
-
 #include <ctype.h>
-
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
-
 #include <conio.h>
 #include <stdlib.h>
-
 #include <io.h>
 #include <direct.h>
-
 #include <dos.h>
 #include <fcntl.h>
-
 #include <time.h>
-
 #include <bios.h>
 
-#include "win.h"
 #include "kk.h"
-
 #include "idf.h"
 
 
 static char ReadChar(void);
-static void Bar(char *bar);
 
 
 void ChangeMask(void);
@@ -46,14 +35,15 @@ static char *Keyboard_Flag1=(char*)0x417;
 static FILE *fic;
 static long taille;
 static char view_buffer[32768];
-static long pos;        // position de depart
-static long posl;       // taille du buffer
-static long posn;       // octet courant
+static long pos;        //--- position de depart -----------------------
+static long posl;       //--- taille du buffer -------------------------
+static long posn;       //--- octet courant ----------------------------
 
 static char srcch[80];
 
-// Lit l'octet se trouvant en posn
-//---------------------------------
+/*--------------------------------------------------------------------*\
+|-  Lit l'octet se trouvant en posn                                   -|
+\*--------------------------------------------------------------------*/
 
 char ReadChar(void)
 {
@@ -85,6 +75,11 @@ if (posn-pos<0)
 return view_buffer[posn-pos];
 }
 
+
+/*--------------------------------------------------------------------*\
+|- Affichage en Hexadecimal                                           -|
+\*--------------------------------------------------------------------*/
+
 int HexaView(char *fichier)
 {
 int x,y;
@@ -92,7 +87,7 @@ long cur1,cur2;
 long posd;
 int car;
 
-int fin=0; // Code de retour
+int fin=0; //--- Code de retour ----------------------------------------
 
 SaveEcran();
 PutCur(3,0);
@@ -111,7 +106,6 @@ ChrCol(34,4,(Cfg->TailleY)-6,Cfg->Tfont);
 
 PrintAt(3,1,"View File %s",fichier);
 
-//
 
 do
 {
@@ -194,7 +188,7 @@ switch(LO(car))   {
                 fin=-1;
                 break;
             case 0x3B:  // --- F1 --------------------------------------
-                Help();
+                HelpTopic("View");
                 break;
             case 0x3E:  // --- F4 --------------------------------------
                 fin=91;
@@ -500,8 +494,8 @@ int ansi_out (char *buf)
 int  arglen = 0, ansistate = NOTHING, x;
 char *b = buf, argbuf[MAXARGLEN] = "";
 
-// Gestion des SHIFT, CTRL ...
-char car;
+
+char car;      //--- Gestion des SHIFT, CTRL ... -----------------------
 
 
 while (*b)
@@ -553,7 +547,7 @@ while (*b)
                         }
                     break;
 
-                case '\t':          // so _you_ figure out what to do...
+                case '\t':
                     for (x = 0; x < tabspaces; x++)
                         {
                         AffChr(curx,cury,' ');
@@ -623,16 +617,16 @@ while (*b)
                   {
                         switch ((int)*b)
                         {
-                        case 'H':   /* set cursor position */
+                        case 'H': //--- set cursor position ------------
                         case 'F':
                               set_pos(argbuf,arglen,*b);
                               break;
 
-                        case 'A': // --- up ----------------------------
+                        case 'A': //--- up -----------------------------
                               go_up(argbuf,arglen,*b);
                               break;
 
-                        case 'B':   /* down */
+                        case 'B': //--- down ---------------------------
                               go_down(argbuf,arglen,*b);
                               break;
 
@@ -759,10 +753,11 @@ return (-1);
 }
 
 
-
+/*--------------------------------------------------------------------*\
+|- Affichage de texte                                                 -|
+\*--------------------------------------------------------------------*/
 int TxtView(char *fichier)
 {
-long xm,ym;
 int aff,wrap;
 
 long posd;
@@ -777,8 +772,9 @@ char car;
 
 char chaine[256];
 
+char autowarp=0;        // met a 1 si il faut absolument faire un nowarp
 
-int n,m;
+int m;
 
 char affichage[101];
 
@@ -801,41 +797,27 @@ static char bar[81];
 int xl2;
 int tpos;
 
-
-
-
 SaveEcran();
 PutCur(3,0);
-
-strcpy
-   (bar," Help  Wrap  ----  Hexa  ----  ---- Search Print Mask  ---- ");
-
-switch(Cfg->warp)
-    {
-    case 0: memcpy(bar+6,"Nowrap",6); break;
-    case 1: memcpy(bar+6," Wrap ",6); break;
-    case 2: memcpy(bar+6,"WoWrap",6); break;
-    }
-
-Bar(bar);
 
 wrap=0;
 aff=1;
 
-//-------------------- Calcul de la taille maximum -------------------//
-xm=0;
-ym=0;
-
-x=0;
-
-//if (taille<32768)
+/*--------------------------------------------------------------------*\
+|------------- Calcul de la taille maximum ----------------------------|
+\*--------------------------------------------------------------------*/
+if (Cfg->ajustview==1)
     {
+    int xm=0,ym=0;
+    int n;
+
+    x=0;
+
     for (n=0;n<((taille<32768) ? taille:32768);n++)
         {
         switch(view_buffer[n])
             {
             case 10:
-            
                 x=0;
                 ym++;
                 break;
@@ -847,30 +829,54 @@ x=0;
                 lchaine-=x;
                 x+=lchaine;
                 break;
+            case 32:
+                x++;
+                break;
             default:
                 x++;
                 if (x>xm) xm=x;
                 break;
             }
+        if (x>80) ym++,x=0;
         }
+    ym++;
+
+    if (xm>=79)
+        xl=80;
+        else
+        autowarp=1, xl=xm;                        //--> Longueur fenˆtre
+
+    if (ym>Cfg->TailleY-1)
+        yl=Cfg->TailleY-1;
+        else
+        yl=ym;
     }
-/*    else
+    else
     {
-    xm=80;
-    ym=50;
-    }
-*/
-ym++;
-
-if (xm>=79)
     xl=80;
-    else
-    xl=xm;                                        //--> Longueur fenˆtre
-
-if (ym>Cfg->TailleY-1)
     yl=Cfg->TailleY-1;
-    else
-    yl=ym;
+    }
+
+/*--------------------------------------------------------------------*\
+|- Affichage de la bar                                                -|
+\*--------------------------------------------------------------------*/
+
+strcpy
+   (bar," Help Nowrap ----  Hexa  ----  ---- Search Print Mask  ---- ");
+
+if (autowarp==0)
+    switch(Cfg->warp)
+        {
+        case 0: memcpy(bar+6,"Nowrap",6); break;
+        case 1: memcpy(bar+6," Wrap ",6); break;
+        case 2: memcpy(bar+6,"WoWrap",6); break;
+        }
+
+Bar(bar);
+
+/*--------------------------------------------------------------------*\
+|- Affichage de la fenetre                                            -|
+\*--------------------------------------------------------------------*/
 
 x=(80-xl)/2;                                          // centre le texte
 y=(Cfg->TailleY-yl)/2;
@@ -901,10 +907,10 @@ if ( (x>0) & (y>0) & (x+xl<80) & (y+yl<Cfg->TailleY) )
 ColWin(x,y,x+xl-1,y+yl-1,10*16+1);
 ChrWin(x,y,x+xl-1,y+yl-1,32);
 
-//--------------------------------------------------------------------//
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
 
 affichage[xl]=0;
-
 
 do
 {
@@ -917,13 +923,14 @@ y2=y;
 
 aff=0;
 
-if (xl==80)
+if (xl==80)       //--- Jusqu'ou on ecrit ------------------------------
     xl2=xl-shift;
     else
     xl2=xl;
 
-
-
+/*--------------------------------------------------------------------*\
+|- Affichage du texte                                                 -|
+\*--------------------------------------------------------------------*/
 do
     {
     tpos=x2-x-warp;
@@ -955,9 +962,9 @@ do
             break;
         }
 
-    for(n=0;n<lchaine;n++)
+    for(m=0;m<lchaine;m++)
         {
-        car=chaine[n];
+        car=chaine[m];
 
         if ( (tpos<xl+10) & (tpos>=0) )
             affichage[tpos]=car;
@@ -973,14 +980,14 @@ do
         {
         if (tpos>=xl2)
             {
-            if (Cfg->warp==1)
+            if ( (Cfg->warp==1) & (autowarp==0) )
                 {
                 aff=2;
 
                 w1=xl2;                             // Premier … retenir
                 w2=tpos;                            // Dernier … retenir
                 }
-            if (Cfg->warp==2)
+            if ( (Cfg->warp==2) & (autowarp==0) )
                 {
                 int n;
                 aff=2;
@@ -1037,10 +1044,13 @@ do
         pasfini=1;
         lchaine=xl-x2+x;
 
-        if (yl==Cfg->TailleY-1)
-            memset(affichage+x2-x,'-',lchaine);
-            else
-            memset(affichage+x2-x,' ',lchaine);
+        if (lchaine>0)
+            {
+            if (yl==Cfg->TailleY-1)
+                memset(affichage+x2-x,'-',lchaine);
+                else
+                memset(affichage+x2-x,' ',lchaine);
+            }
 
         affichage[xl]=0;
         PrintAt(x,y2,"%s",affichage);
@@ -1074,6 +1084,10 @@ if (shift==0)
         Masque(x,y,x+xl-1,y+yl-1);
     }
 
+
+/*--------------------------------------------------------------------*\
+|- Gestion des touches                                                -|
+\*--------------------------------------------------------------------*/
 
 
 while (!KbHit())
@@ -1152,9 +1166,10 @@ switch(LO(code))
     case 0:
        switch(HI(code))   {
             case 0x3B:  // F1
-                Help();
+                HelpTopic("View");
                 break;
             case 0x3C:  // F2
+                if (autowarp==1) break;
                 Cfg->warp++;
                 if (Cfg->warp==3) Cfg->warp=0;
                 switch(Cfg->warp)
@@ -1195,6 +1210,7 @@ switch(LO(code))
                 break;
             case 80:    // BAS
                 if (pasfini==1) break;
+                m=posn;
                 do
                     {
                     posn++;
@@ -1203,6 +1219,7 @@ switch(LO(code))
                         posn=taille-2;
                         break;
                         }
+                    if ((posn-m>=79) & (Cfg->warp!=0)) break;
                     }
                 while(ReadChar()!=0x0A);
                 posn++;
@@ -1211,19 +1228,20 @@ switch(LO(code))
             case 72:    // HAUT
                 if (posn==0) break;
                 posn--;
+                m=posn;
                 if (posn==0) break;
                 do
                     {
                     posn--;
-                    if (posn==0)
-                        break;
+                    if (posn==0)  break;
+                    if ((m-posn>=80) & (Cfg->warp!=0)) break;
                     }
                 while(ReadChar()!=0x0A);
                 if (posn!=0) posn++;
 
                 break;
             case 0x51:    // PGDN
-                for (n=0;n<yl;n++)
+                for (m=0;m<yl;m++)
                 {
                 if (pasfini==1) break;
                 do
@@ -1240,7 +1258,7 @@ switch(LO(code))
                 }
                 break;
             case 0x49:    // PGUP
-                for (n=0;n<yl;n++)
+                for (m=0;m<yl;m++)
                 {
                 if (posn==0) break;
                 posn--;
@@ -1257,20 +1275,20 @@ switch(LO(code))
                 break;
             case 0x4F:    // END
                 posn=taille;
-                for (n=0;n<yl;n++)
-                {
-                if (posn==0) break;
-                posn--;
-                if (posn==0) break;
-                do
+                for (m=0;m<yl;m++)
                     {
+                    if (posn==0) break;
                     posn--;
-                    if (posn==0)
-                        break;
+                    if (posn==0) break;
+                    do
+                        {
+                        posn--;
+                        if (posn==0)
+                            break;
+                        }
+                    while(ReadChar()!=0x0A);
+                    if (posn!=0) posn++;
                     }
-                while(ReadChar()!=0x0A);
-                if (posn!=0) posn++;
-                }
                 break;
             case 0x47: // HOME
                 posn=0;
@@ -1287,7 +1305,7 @@ switch(LO(code))
         break;
     }
 
-if (Cfg->warp!=0) warp=0;
+if ( (Cfg->warp!=0) & (autowarp==1) ) warp=0;
 
 if (warp<0) warp=0;
 }
@@ -1312,9 +1330,10 @@ ChargeEcran();
 return fin;
 }
 
-/*----------------------*
- - Recherche une chaine -
- *----------------------*/
+/*--------------------------------------------------------------------*\
+|-  Recherche une chaine                                              -|
+\*--------------------------------------------------------------------*/
+
 void SearchTxt(void)
 {
 static char Dir[70];
@@ -1414,6 +1433,10 @@ struct Href {
     };
 
 
+
+/*--------------------------------------------------------------------*\
+|- Affichage d'une page HTML                                          -|
+\*--------------------------------------------------------------------*/
 
 int HtmlView(char *fichier,char *liaison)
 {
@@ -1518,7 +1541,8 @@ ChrLin(0,yl+1,80,32);
 
 
 
-//--------------------------------------------------------------------//
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
 
 prem=(struct Href*)GetMem(sizeof(struct Href));
 suiv=prem;
@@ -2236,32 +2260,12 @@ if (code==13)
     return -1;
 }
 
-void Bar(char *bar)
-{
-int TY;
-int i,j,n;
 
-TY=Cfg->TailleY;
+/*--------------------------------------------------------------------*\
+|- Fonction principale du viewer                                      -|
+\*--------------------------------------------------------------------*/
 
-n=0;
-for (i=0;i<10;i++)
-    {
-    PrintAt(n,TY-1,"F%d",(i+1)%10);
-    for(j=0;j<2;j++,n++)
-        AffCol(n,TY-1,1*16+8);
-    
-    for(j=0;j<6;j++,n++)
-        {
-        AffCol(n,TY-1,1*16+2);
-        AffChr(n,TY-1,*(bar+i*6+j));
-        }
-    }
-}
-
-
-
-
-void View(struct fenetre *F)
+void View(FENETRE *F)
 {
 char *fichier,*liaison;
 short i;
@@ -2304,17 +2308,17 @@ if (fic==NULL)
 while(i!=-1)
     {
     switch(i) {
-        case 86: //Ansi
+        case 86:  // Ansi
             i=AnsiView(fichier);
             break;
-        case 91: //Texte
+        case 91:  // Texte
             i=TxtView(fichier);
             break;
         case 104: // HTML
             i=HtmlView(fichier,liaison);
             break;
-        case 37: // GIF
-        case 38: // JPG
+        case 37:  // GIF
+        case 38:  // JPG
             FicIdf(fichier,i,0);
             i=-1;
             break;
@@ -2333,6 +2337,11 @@ free(fichier);
 ChargeEcran();
 }
 
+
+
+/*--------------------------------------------------------------------*\
+|- Gestion du filtre pour l'affichage texte                           -|
+\*--------------------------------------------------------------------*/
 void Masque(short x1,short y1,short x2,short y2)
 {
 char *chaine;
@@ -2346,9 +2355,6 @@ short xt[80],yt[80];
 char trouve;
 
 struct PourMask *CMask;
-
-
-
 
 if (((Cfg->wmask)&128)==128) return;
 
@@ -2366,8 +2372,8 @@ while(y<=y2)
     AffCol(x,y,10*16+9);
     c=GetChr(x,y);
 
-    if ( ((c>='a') & (c<='z')) | ((c>='A') & (c<='Z')) |
-                                      ((c>='0') & (c<='9')) | (c=='_') )
+    if ( ((c>='a') & (c<='z')) | ((c>='A') & (c<='Z')) | (c=='_') |
+                                                 ((c>='0') & (c<='9')) )
         {
         chain2[l]=c;
         xt[l]=x;
@@ -2420,6 +2426,10 @@ while(y<=y2)
             }
         }
 
+/*--------------------------------------------------------------------*\
+|- Filtre eLiTe                                                       -|
+\*--------------------------------------------------------------------*/
+
     if (((Cfg->wmask)&64)==64)
         {
         c=toupper(c);
@@ -2441,6 +2451,10 @@ while(y<=y2)
     if (x>x2) x=x1,y++;
     }
 
+/*--------------------------------------------------------------------*\
+|- Affichage de la chaine qui a ‚t‚ trouv‚ (par F7)                   -|
+\*--------------------------------------------------------------------*/
+
 if (*srcch!=0)
     {
     y=y1;
@@ -2449,19 +2463,17 @@ if (*srcch!=0)
     chain2[x2-x1+1]=0;
 
     for (x=0;x<=(x2-x1)-strlen(srcch)+1;x++)
-        {
         if (!strnicmp(chain2+x,srcch,strlen(srcch)))
-            {
             for(l=0;l<strlen(srcch);l++)
                 AffCol(x1+l+x,y1,10*16+13);
-            }
-        }
     }
 
 }
 
 
-
+/*--------------------------------------------------------------------*\
+|- Changement du filtre pour l'affichage du texte                     -|
+\*--------------------------------------------------------------------*/
 void ChangeMask(void)
 {
 int i,n;
@@ -2574,6 +2586,14 @@ while ( (car!=27) & (car!=13) );
 ChargeEcran();
 }
 
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+
+/*--------------------------------------------------------------------*\
+|- Gestion impression                                                 -|
+\*--------------------------------------------------------------------*/
+
 char PRN_init(short lpt,char a)
 {
 union REGS regs;
@@ -2629,7 +2649,7 @@ char Font[]={27,91,3,27,51,28};
 int m;
 
 struct Tmt T[3] = {
-      {5,3,2,NULL,NULL},                // 1:Ok
+      {5,3,2,NULL,NULL},                                         // 1:Ok
       {25,3,3,NULL,NULL},
       {5,1,0,"Do you want copy this file ?",NULL}
       };
@@ -2638,10 +2658,10 @@ struct TmtWin F = {18,4,61,9, "Print file"};
 
 m=WinTraite(T,3,&F);
 
-if (m==27)  // escape
+if (m==27)  //--- escape -----------------------------------------------
     return;
     else
-    if (T[m].type==3) return;  // cancel
+    if (T[m].type==3) return;  //--- cancel ----------------------------
 
 
 lpt=0;
@@ -2654,7 +2674,7 @@ for (m=0;m<6;m++)
     PRN_print(lpt,Font[m]);
     
 
-if (n==1)   // Fichier TEXTE
+if (n==1)   //--- Fichier TEXTE ----------------------------------------
     {
     do
         {

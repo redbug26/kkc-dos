@@ -172,15 +172,15 @@ if (!strncmp(Key,"KKRB",4))
             break;
         case 5:                                                // Format
             fread(&format,2,1,Fic);
-            app[nbr]=malloc(sizeof(struct player));
+            app[nbr]=GetMem(sizeof(struct player));
 
-            app[nbr]->Filename=malloc(SFilename+1);
+            app[nbr]->Filename=GetMem(SFilename+1);
             strcpy(app[nbr]->Filename,Filename);
 
-            app[nbr]->Meneur=malloc(SMeneur+1);
+            app[nbr]->Meneur=GetMem(SMeneur+1);
             strcpy(app[nbr]->Meneur,Meneur);
 
-            app[nbr]->Titre=malloc(STitre+1);
+            app[nbr]->Titre=GetMem(STitre+1);
             strcpy(app[nbr]->Titre,Titre);
 
             app[nbr]->Checksum=Checksum;

@@ -9,7 +9,6 @@
 #include <string.h>
 #include <dos.h>
 #include <direct.h>
-#include <malloc.h>
 #include <bios.h>
 #include <io.h>
 #include <fcntl.h>
@@ -360,7 +359,7 @@ struct key K[nbrkey]=   {
         0,
         "MPEG Movie",
         "MPG",
-        "",
+        "ISO",
         52,1,0,5},
 {  {"mdat"},
         4,
@@ -486,7 +485,7 @@ struct key K[nbrkey]=   {
         0,
         "Executable file Amiga",
         "EXE",
-        "",
+        "Commodore",
         66,0,0,6},
 
 {  {0xE3,0x10,0,1,0,0,0,0},
@@ -717,11 +716,11 @@ struct key K[nbrkey]=   {
     "DSMi Module",
     "AMF",
     "Otto Chrons",106,0,1,1},   //--- Otto Chrons  (Virtual Visions ?) -
-{  {0x00,0xC3,0x50,0x01,0xCE,0xED,0x66,0x66,
+{  {0xCE,0xED,0x66,0x66,
     0xCC,0x0D,0x00,0x0B,0x03,0x73,0x00,0x83,
     0x00,0x0C,0x00,0x0D,0x00,0x08,0x11,0x1F},
-    24,
-    0x100,
+    20,
+    0x104,
     "GameBoy Cartridge",
     "GB",
     "Nintendo",107,0,1,6},
@@ -878,9 +877,30 @@ struct key K[nbrkey]=   {
      "HSI",
      "Handmade Software, Inc",   //--- HSI (Creator of alchemy) --------
      134,0,1,4},
+{  {0xFF,0xFD,0x70},
+     3,
+     0,
+     "MPEG 1 Audio Layer 2",
+     "MP2",
+     "ISO",
+     135,0,0,2},
+{  {0xFF,0xFB,0x90},
+     3,
+     0,
+     "MPEG 1 Audio Layer 3",
+     "MP3",
+     "ISO",
+     136,0,0,2},
+{  {0x63,0x6F,0x64,0x65,0x00,0x01,0x00    }, // codeúúú
+    7,
+    0x4e,
+    "Executable file Us Pilot",
+    "PRC",
+    "US Robotics",137,0,1,6},
 
 
-// Dernier employe: 134
+
+// Dernier employe: 137
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -1061,6 +1081,7 @@ short Infodsm(RB_IDF *Info);
 short Infodat(RB_IDF *Info);
 short Infotnl(RB_IDF *Info);
 short Infohsi(RB_IDF *Info);
+short Infoprc(RB_IDF *Info);
 
 
 void ClearSpace(char *name);    //--- efface les espaces inutiles ------
@@ -1263,6 +1284,8 @@ char path[256];
 
 short trv=-1;     //--- vaut -1 tant que l'on a rien trouv‚ ------------
 
+Info->numero=-1;
+
 strcpy(path,Info->path);
 
 fic=fopen(path,"rb");
@@ -1357,6 +1380,7 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case 126:err=Infolza(Info); break;
             case 133:err=Infotnl(Info); break;
             case 134:err=Infohsi(Info); break;
+            case 137:err=Infoprc(Info); break;
             default:     //--- Ca serait une erreur de ma part alors ---
                 sprintf(Info->format,"Pingouin %d",K[n].numero);
                 trv=1;
@@ -2005,6 +2029,13 @@ Lp=ReadInt(Info,6,2);  //--- Motorola mode -----------------------------
 Hp=ReadInt(Info,8,2);
 
 sprintf(Info->message[0]," Picture is    %4d * %4d / 24 Bps",Lp,Hp);
+
+return 0;
+}
+
+short Infoprc(RB_IDF *Info)
+{
+ReadStr(Info,0,Info->fullname,32);
 
 return 0;
 }

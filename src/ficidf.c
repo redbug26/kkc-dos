@@ -14,7 +14,8 @@
 #include "kk.h"
 #include "win.h"
 
-struct {
+struct
+    {
     char *Filename;
     char *Titre;
     char *Meneur;
@@ -32,7 +33,7 @@ int nbrdir; //
 int prem,max;
 
 
-int d,fin;
+int d,lfin;
 
 char di;
 int pos=0;
@@ -43,6 +44,10 @@ char col[132];
 
 FILE *fic;
 char key[8];
+
+static char Filename[256];
+static char Titre[256];
+static char Meneur[256];
 
 
 /*--------------------------------------------------------------------*\
@@ -55,29 +60,31 @@ char key[8];
 |-                                                                    -|
 |- kefaire: 0 lancer application + fichier                            -|
 |-          1 lancer application toute seule                          -|
+|-          2 mettre l'application dans le buffer *name               -|
 |-                                                                    -|
 \*--------------------------------------------------------------------*/
 
 int FicIdf(char *name,int numero,int kefaire)
 {
+char fin=0;
 int j,i,n,m;
 
 int nbrappl;
 
 a=numero;
 
-SaveEcran();
 
 fic=fopen(Fics->FicIdfFile,"rb");
 
-
-if (fic==NULL) {
+if (fic==NULL)
+    {
 	PUTSERR("IDFEXT.RB missing");
 	return 1;
 	}
 
 fread(key,1,8,fic);
-if (memcmp(key,"RedBLEXU",8)) {
+if (memcmp(key,"RedBLEXU",8))
+    {
 	PUTSERR("File IDFEXT.RB is bad");
 	return 1;
 	}
@@ -90,25 +97,18 @@ nbrappl=0;
 for (j=0;j<nbr;j++)
 	{
     char n;
-    char *a;
 
     fread(&n,1,1,fic);
-    app[nbrappl].Filename=malloc(n+1);
-    a=app[nbrappl].Filename;
-    a[n]=0;
-    fread(a,n,1,fic);
+    Filename[n]=0;
+    fread(Filename,n,1,fic);
 
     fread(&n,1,1,fic);
-    app[nbrappl].Titre=malloc(n+1);
-    a=app[nbrappl].Titre;
-    a[n]=0;
-    fread(a,n,1,fic);
+    Titre[n]=0;
+    fread(Titre,n,1,fic);
 
     fread(&n,1,1,fic);
-    app[nbrappl].Meneur=malloc(n+1);
-    a=app[nbrappl].Meneur;
-    a[n]=0;
-    fread(a,n,1,fic);
+    Meneur[n]=0;
+    fread(Meneur,n,1,fic);
 
     fread(&(app[nbrappl].ext),2,1,fic);              // Numero de format
 
@@ -116,7 +116,16 @@ for (j=0;j<nbr;j++)
 
     fread(&(app[nbrappl].type),1,1,fic);             // Numero directory
 
-    if (app[nbrappl].ext==numero)  nbrappl++;
+    if (app[nbrappl].ext==numero)
+        {
+        app[nbrappl].Filename=GetMem(strlen(Filename)+1);
+        strcpy(app[nbrappl].Filename,Filename);
+        app[nbrappl].Titre=GetMem(strlen(Titre)+1);
+        strcpy(app[nbrappl].Titre,Titre);
+        app[nbrappl].Meneur=GetMem(strlen(Meneur)+1);
+        strcpy(app[nbrappl].Meneur,Meneur);
+        nbrappl++;
+        }
 	}
 
 fread(&nbrdir,1,2,fic);
@@ -136,11 +145,13 @@ fclose(fic);
 if (nbrappl==0)
     {
 	PUTSERR("No player for this file !");
-	return 2;
+    fin=2;
 	}
 
-if (nbrappl!=1)
+if ( (nbrappl!=1) & (fin==0) )
     {
+    SaveEcran();
+
     m=((Cfg->TailleY)-nbrappl)/2;
 
     if (m<2) m=2;
@@ -149,8 +160,7 @@ if (nbrappl!=1)
 
 
     WinCadre(12,m-1,67,max,0);
-    ColWin(13,m,66,max-1,10*16+1);
-    ChrWin(13,m,66,max-1,32);
+    Window(13,m,66,max-1,10*16+1);
 
     PrintAt(37,m-1," Who? ");
     
@@ -158,7 +168,7 @@ if (nbrappl!=1)
 	nbr=nbrappl;
 
     d=14;
-    fin=65;
+    lfin=65;
 
     prem=0;
 
@@ -174,14 +184,14 @@ if (nbrappl!=1)
         for(n=m;n<max;n++)
             PrintAt(15,n,"%-49s",app[n-m+prem].Titre);
 
-		for (n=d;n<=fin;n++)
+        for (n=d;n<=lfin;n++)
             {
             col[n]=GetCol(n,pos-prem);
             AffCol(n,pos-prem,7*16+4);
             }
 
 		a=getch();
-		for (n=d;n<=fin;n++)
+        for (n=d;n<=lfin;n++)
             AffCol(n,pos-prem,col[n]);
 
 
@@ -217,7 +227,7 @@ if (nbrappl!=1)
     while ( (a!=27) & (a!=13) & (a!=0x8D) & (a!=0x4B) & (a!=0x4D) );
 	ChargeEcran();
 
-	if (a==27) return 3;
+    if (a==27) fin=3;
 	n=pos-m;
 	}
 	else
@@ -226,16 +236,35 @@ if (nbrappl!=1)
     a=13;
     }
 
-strcpy(chaine,app[n].dir);
-strcat(chaine,app[n].Filename);
+if (fin==0)
+    {
+    strcpy(chaine,app[n].dir);
+    strcat(chaine,app[n].Filename);
 
-if ((kefaire==1) | (a!=13))
-    CommandLine("#%s",chaine);
-    else
-    CommandLine("#%s %s",chaine,name);
-    
+    if (a!=13) kefaire=1;
 
-return 0;
+    switch(kefaire)
+        {
+        case 0:
+            CommandLine("#%s %s",chaine,name);
+            break;
+        case 1:
+            CommandLine("#%s",chaine);
+            break;
+        case 2:
+            strcpy(name,chaine);
+            break;
+        }
+    }
+
+for (j=0;j<nbrappl;j++)
+	{
+    free(app[nbrappl].Filename);
+    free(app[nbrappl].Titre);
+    free(app[nbrappl].Meneur);
+    }
+
+return fin;
 }
 
 /*--------------------------------------------------------------------*\
@@ -247,6 +276,8 @@ return 0;
 
 int PlayerIdf(char *name,int numero)
 {
+char fin=0;
+
 int j,i,n;
 
 int nbrappl;
@@ -276,32 +307,35 @@ nbrappl=0;
 for (j=0;j<nbr;j++)
 	{
     char n;
-    char *a;
 
     fread(&n,1,1,fic);
-    app[nbrappl].Filename=malloc(n+1);
-    a=app[nbrappl].Filename;
-    a[n]=0;
-    fread(a,n,1,fic);
+    Filename[n]=0;
+    fread(Filename,n,1,fic);
 
     fread(&n,1,1,fic);
-    app[nbrappl].Titre=malloc(n+1);
-    a=app[nbrappl].Titre;
-    a[n]=0;
-    fread(a,n,1,fic);
+    Titre[n]=0;
+    fread(Titre,n,1,fic);
 
     fread(&n,1,1,fic);
-    app[nbrappl].Meneur=malloc(n+1);
-    a=app[nbrappl].Meneur;
-    a[n]=0;
-    fread(a,n,1,fic);
+    Meneur[n]=0;
+    fread(Meneur,n,1,fic);
 
     fread(&(app[nbrappl].ext),2,1,fic);              // Numero de format
     fread(&(app[nbrappl].NoDir),2,1,fic);            // Numero directory
 
     fread(&(app[nbrappl].type),1,1,fic);             // Numero directory
 
-    if (app[nbrappl].ext==numero)  nbrappl++;
+    if (app[nbrappl].ext==numero)
+        {
+        app[nbrappl].Filename=GetMem(strlen(Filename)+1);
+        strcpy(app[nbrappl].Filename,Filename);
+        app[nbrappl].Titre=GetMem(strlen(Titre)+1);
+        strcpy(app[nbrappl].Titre,Titre);
+        app[nbrappl].Meneur=GetMem(strlen(Meneur)+1);
+        strcpy(app[nbrappl].Meneur,Meneur);
+
+        nbrappl++;
+        }
 	}
 
 fread(&nbrdir,1,2,fic);
@@ -318,16 +352,26 @@ for(n=0;n<nbrdir;n++)
 
 fclose(fic);
 
+
 if (nbrappl==0)
     {
 	PUTSERR("No player for this file !");
-	return 2;
+    fin=2;
 	}
+    else
+    {
+    strcpy(name,app[0].dir);
+    strcat(name,app[0].Filename);
+    }
 
-strcpy(name,app[0].dir);
-strcat(name,app[0].Filename);
+for (j=0;j<nbrappl;j++)
+    {
+    free(app[nbrappl].Filename);
+    free(app[nbrappl].Titre);
+    free(app[nbrappl].Meneur);
+    }
 
-return 0;
+return fin;
 }
 
 

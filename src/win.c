@@ -11,7 +11,6 @@
 #include <dos.h>
 #include <direct.h>
 #include <ctype.h>
-#include <malloc.h>
 #include <bios.h>
 #include <io.h>
 #include <fcntl.h>
@@ -19,8 +18,11 @@
 #include <sys\stat.h>
 
 #include "kk.h"
-#include "win.h"
+
 #include "idf.h"
+
+extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
+
 
 int *TailleX;
 
@@ -43,7 +45,7 @@ return Info.numero;
 |- Information with IDF                                               -|
 \*--------------------------------------------------------------------*/
 
-int InfoIDF(struct fenetre *Fen)
+int InfoIDF(FENETRE *Fen)
 {
 struct file *F;
 RB_IDF Info;
@@ -82,7 +84,7 @@ return Info.numero;
 |-  Efface la fenˆtre gestion de fichier                              -|
 \*--------------------------------------------------------------------*/
 
-void ClearNor(struct fenetre *Fen)
+void ClearNor(FENETRE *Fen)
 {
 char col;
 
@@ -191,7 +193,7 @@ ColLin(x+34,Fen->y2+2,4,col);
 }
 
 
-void FenNor(struct fenetre *Fen)
+void FenNor(FENETRE *Fen)
 {
 int j,n;                                                     // Compteur
 int date,time;
@@ -301,6 +303,11 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
         if ((Fen->F[n]->attrib & _A_HIDDEN)==_A_HIDDEN)
             ch1[8]=176;  // 176,177,178
 
+        if ( (Fen->system==5) &
+             (Fen->F[n]->desc==1) &
+             ((Fen->F[n]->attrib & _A_SUBDIR)!=_A_SUBDIR) )
+            ch1[8]=0x18;
+
         if (nom[0]=='.')
             {
             if (nom[1]!='.')
@@ -327,24 +334,23 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
 
                 if (Cfg->dispcolor==1)
                     {
-                    if (FoundExt(ext,Cfg->ExtExe))         // Executable
-                        col=7*16+13;
+                    if ((FoundExt(ext,Cfg->ExtExe)) & (Cfg->Enable_Exe))
+                        col=7*16+13;                        // Executable
                     else
-                    if (FoundExt(ext,Cfg->ExtArc))            // Archive
-                        col=7*16+8;
+                    if ((FoundExt(ext,Cfg->ExtArc)) & (Cfg->Enable_Arc))
+                        col=7*16+8;                            // Archive
                     else
-                    if (FoundExt(ext,Cfg->ExtSnd))                // Son
-                        col=7*16+12;
+                    if ((FoundExt(ext,Cfg->ExtSnd)) & (Cfg->Enable_Snd))
+                        col=7*16+12;                               // Son
                     else
-                    if (FoundExt(ext,Cfg->ExtBmp))              // Image
-                        col=7*16+11;
+                    if ((FoundExt(ext,Cfg->ExtBmp)) & (Cfg->Enable_Bmp))
+                        col=7*16+11;                             // Image
                     else
-                    if (FoundExt(ext,Cfg->ExtTxt))              // Texte
-                         col=7*16+4;
+                    if ((FoundExt(ext,Cfg->ExtTxt)) & (Cfg->Enable_Txt))
+                         col=7*16+4;                             // Texte
                     else
-                    if (FoundExt(ext,Cfg->ExtUsr))       // User defined
-                         col=13*16+11;
-
+                    if ((FoundExt(ext,Cfg->ExtUsr)) & (Cfg->Enable_Usr))
+                         col=13*16+11;                    // User defined
                     }
                 }
                 else
@@ -457,11 +463,11 @@ strcat(Buf,"                                    \r\n");
 return;
 }
 
-void FenDIZ(struct fenetre *Fen)
+void FenDIZ(FENETRE *Fen)
 {
 char *Buf;
 RB_IDF Info;
-struct fenetre *Fen2;
+FENETRE *Fen2;
 struct file *F;
 int x,y,i;
 
@@ -478,7 +484,7 @@ Path2Abs(Info.path,F->name);
 
 Traitefic(&Info);
 
-Buf=malloc(4000);
+Buf=GetMem(4000);
 
 Makediz(&Info,Buf);
 
@@ -514,12 +520,12 @@ Fen->init=0;
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
-void ClearInfo(struct fenetre *Fen)
+void ClearInfo(FENETRE *Fen)
 {
 int i;
 struct file *F;
 RB_IDF Info;
-struct fenetre *Fen2;
+FENETRE *Fen2;
 
 SaveEcran();
 
@@ -577,7 +583,7 @@ PrintAt(Fen2->x+1,Fen2->y+Fen2->yl-1,"Use this at your own risk ;)");
 \*--------------------------------------------------------------------*/
 
 
-void InfoSelect(struct fenetre *Fen)
+void InfoSelect(FENETRE *Fen)
 {
 char temp[20];
 
@@ -649,9 +655,8 @@ static char bar[4][60]=
  {" Help  ----  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
   " ---- Attrib View  Edit  Host Rename ----  ----  ----  ---- ",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
-  " Drv1  Drv2  FDiz  ----  ----  ---- Search Type  Line  Disp "}; //ALT
+  " Drv1  Drv2  FDiz FileID ----  Hist Search Type  Line  Disp "}; //ALT
 
-char i,j,n;
 static signed char d=-1;
 int TY;
 
@@ -678,19 +683,33 @@ switch(c) {
         break;
     }
 
+Bar(bar[c]);
+}
+
+/*--------------------------------------------------------------------*\
+|- Affichage de la barre en dessous de l'ecran                        -|
+\*--------------------------------------------------------------------*/
+
+void Bar(char *bar)
+{
+int TY;
+int i,j,n;
+
+TY=Cfg->TailleY;
+
 n=0;
 for (i=0;i<10;i++)
     {
-	PrintAt(n,TY-1,"F%d",(i+1)%10);
+    PrintAt(n,TY-1,"F%d",(i+1)%10);
     for(j=0;j<2;j++,n++)
         AffCol(n,TY-1,1*16+8);
+    
     for(j=0;j<6;j++,n++)
         {
         AffCol(n,TY-1,1*16+2);
-        AffChr(n,TY-1,*(bar[c]+i*6+j));
+        AffChr(n,TY-1,*(bar+i*6+j));
         }
-	}
-
+    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -811,40 +830,41 @@ LoadPal();
 
 void Setup(void)
 {
-static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14;
+static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14,l15,l16;
 
 static char x1=32,x2=32,x3=32;
-static int y1=8,y2=3,y3=15;
+static int y1=9,y2=2,y3=15;
 
-struct Tmt T[23] = {
-      {6,17,2,NULL,NULL},                                       // le OK
-      {21,17,3,NULL,NULL},                                  // le CANCEL
+struct Tmt T[25] = {
+      {40,17,2,NULL,NULL},                                      // le OK
+      {55,17,3,NULL,NULL},                                  // le CANCEL
 
-      {5,3,7, "Size Trash   ",&l1},
-      {5,4,7, "Ansi Speed   ",&l2},
-      {5,5,7, "Screen Saver ",&l7},
+      {5, 3,8,"Convert History",&l7},
+      {5, 4,8,"Debug",&l3},
+      {5, 5,8,"Point SubDir",&l4},
+      {5, 6,8,"LogFile",&l5},
+      {5, 7,8,"ESC to close windows",&l6},
+      {5, 8,8,"Display Hidden File",&l8},
+      {5, 9,8,"Auto Reload Directory",&l9},
+      {5,10,8,"Verify History Directory",&l10},
+      {5,11,8,"Quick Palette",&l11},
+      {5,12,8,"Highlight groups",&l12},
+      {5,13,8,"Insert move down",&l13},
+      {5,14,8,"Select directories",&l14},
+      {5,15,8,"Estimated copying time",&l15},
+      {5,16,8,"Auto adjust viewer size",&l16},
 
-      {5,8,8, "Debug",&l3},
-      {5,9,8, "Point SubDir",&l4},
-      {5,10,8,"LogFile",&l5},
-      {5,11,8,"Use Font",&l6},
-      {5,12,8,"Display Hidden File",&l8},
-      {5,13,8,"Auto Reload Directory",&l9},
-      {5,14,8,"Verify History Directory",&l10},
-      {5,15,8,"Quick Palette",&l11},
+      {39,3,7, "Size Trash   ",&l1},
+      {39,4,7, "Ansi Speed   ",&l2},
 
-      {39,3,8,"Highlight groups",&l12},
-      {39,4,8,"Insert move down",&l13},
-      {39,5,8,"Select directories",&l14},
+      {3,2,9,&x3,&y3},
+      {37,6,9,&x1,&y1},
+      {37,2,9,&x2,&y2},
 
-      {3,7,9,&x1,&y1},
-      {3,2,9,&x2,&y2},
-      {37,2,9,&x3,&y3},
-
-      {40, 7,5," Serial Port ",NULL},        // la gestion du port serie
-      {55, 7,5," Mask Setup  ",NULL},          // la gestion des masques
-      {40, 9,5," File Setup  ",NULL},          // la gestion des masques
-      {55, 9,5," Ext. Setup  ",NULL}        // la gestion des extensions
+      {40, 8,5," Serial Port ",&l1},         // la gestion du port serie
+      {55, 8,5," Mask Setup  ",&l2},           // la gestion des masques
+      {40,10,5," File Setup  ",&l3},           // la gestion des masques
+      {55,10,5," Ext. Setup  ",&l4}         // la gestion des extensions
       };
 
 struct TmtWin F = {3,3,76,22,"Setup"};
@@ -856,8 +876,8 @@ l2=Cfg->AnsiSpeed;
 l3=Cfg->debug;
 l4=Cfg->pntrep;
 l5=Cfg->logfile;
-l6=Cfg->font;
-l7=Cfg->SaveSpeed;
+l6=Cfg->Esc2Close;
+l7=Cfg->cnvhist;
 l8=Cfg->hidfil;
 l9=Cfg->autoreload;
 l10=Cfg->verifhist;
@@ -865,21 +885,22 @@ l11=Cfg->palafter;
 l12=Cfg->dispcolor;
 l13=Cfg->insdown;
 l14=Cfg->seldir;
-// l15=Cfg->currentdir;
+l15=Cfg->esttime;
+l16=Cfg->ajustview;
 
 do
 {
-n=WinTraite(T,23,&F);
+n=WinTraite(T,25,&F);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
 if (T[n].type==5)
     {
-    if (n==19)  SerialSetup();
-    if (n==20)  MasqueSetup();
-    if (n==21)  FileSetup();
-    if (n==22)  ExtSetup();
+    if (T[n].entier==&l1)  SerialSetup();
+    if (T[n].entier==&l2)  MasqueSetup();
+    if (T[n].entier==&l3)  FileSetup();
+    if (T[n].entier==&l4)  ExtSetup();
     }
 }
 while(T[n].type==5);
@@ -890,8 +911,8 @@ Cfg->AnsiSpeed=l2;
 Cfg->debug=l3;
 Cfg->pntrep=l4;
 Cfg->logfile=l5;
-Cfg->font=l6;
-Cfg->SaveSpeed=l7;
+Cfg->Esc2Close=l6;
+Cfg->cnvhist=l7;
 Cfg->hidfil=l8;
 Cfg->autoreload=l9;
 Cfg->verifhist=l10;
@@ -899,7 +920,8 @@ Cfg->palafter=l11;
 Cfg->dispcolor=l12;
 Cfg->insdown=l13;
 Cfg->seldir=l14;
-// Cfg->currentdir=l15;
+Cfg->esttime=l15;
+Cfg->ajustview=l16;
 
 SaveCfg();
 
@@ -923,15 +945,19 @@ UseCfg();
 
 void FileSetup(void)
 {
+char buffer[256];
+
 static char Edit[64],View[64];
 static int DirLength=63;
 
 
-struct Tmt T[6] = {
-      { 8,3,1,Edit,&DirLength},
-      { 8,5,1,View,&DirLength},
-      { 1,3,0, "Editor:",NULL},
-      { 1,5,0, "Viewer:",NULL},
+struct Tmt T[7] = {
+      { 8,3,1,View,&DirLength},
+      { 8,5,1,Edit,&DirLength},
+      { 1,3,0, "Viewer:",NULL},
+      { 1,5,0, "Editor:",NULL},
+      
+      { 3,7,5," Auto Editor ",NULL}, // Copy All
 
       {3,10,2,NULL,NULL},                                       // le OK
       {18,10,3,NULL,NULL}                                   // le CANCEL
@@ -940,14 +966,40 @@ struct Tmt T[6] = {
 struct TmtWin F = {3,5,76,18,"File Setup"};
 
 int n;
+char fin;
 
 strcpy(Edit,Cfg->editeur);
 strcpy(View,Cfg->vieweur);
 
-n=WinTraite(T,6,&F);
+do
+{
+fin=1;
+
+n=WinTraite(T,7,&F);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
+
+if (n==4)
+    {
+    switch(FicIdf(buffer,91,2))
+        {
+        case 0:
+            strcpy(Edit,buffer);
+            break;
+        case 1:
+            WinError("Run Main Setup before");
+            break;  //--- error ----------------------------------------
+        case 2:
+            WinError("No player found");
+            break;  //--- no player ------------------------------------
+        case 3:
+            break; //--- Escape ----------------------------------------
+        }
+    fin=0;
+    }
+}
+while(!fin);
 
 strcpy(Cfg->editeur,Edit);
 strcpy(Cfg->vieweur,View);
@@ -955,32 +1007,39 @@ strcpy(Cfg->vieweur,View);
 
 void ExtSetup(void)
 {
+static int l1,l2,l3,l4,l5,l6;
 static char Txt[64],Bmp[64],Snd[64],Arc[64],Exe[64],Usr[64];
 static int DirLength=63;
 
 
-struct Tmt T[14] = {
-      { 9, 1,1,Txt,&DirLength},
-      { 9, 3,1,Bmp,&DirLength},
-      { 9, 5,1,Snd,&DirLength},
-      { 9, 7,1,Arc,&DirLength},
-      { 9, 9,1,Exe,&DirLength},
-      { 9,11,1,Usr,&DirLength},
-      { 1, 1,0, "Text:",NULL},
-      { 1, 3,0, "Bitmap:",NULL},
-      { 1, 5,0, "Sound :",NULL},
-      { 1, 7,0, "Arc.:",NULL},
-      { 1, 9,0, "Exec:",NULL},
-      { 1,11,0, "User:",NULL},
+struct Tmt T[16] = {
+      { 1, 1,8,"Text:         ",&l1},
+      { 9, 2,1,Txt,&DirLength},
+      { 1, 3,8,"Bitmap:       ",&l2},
+      { 9, 4,1,Bmp,&DirLength},
+      { 1, 5,8,"Sound:        ",&l3},
+      { 9, 6,1,Snd,&DirLength},
+      { 1, 7,8,"Archive:      ",&l4},
+      { 9, 8,1,Arc,&DirLength},
+      { 1, 9,8,"Executable:   ",&l5},
+      { 9,10,1,Exe,&DirLength},
+      { 1,11,8,"User Defined: ",&l6},
+      { 9,12,1,Usr,&DirLength},
 
-
-      {13,13,2,NULL,NULL},                                      // le OK
-      {50,13,3,NULL,NULL}                                   // le CANCEL
+      {13,14,2,NULL,NULL},                                      // le OK
+      {50,14,3,NULL,NULL}                                   // le CANCEL
       };
 
-struct TmtWin F = {3,5,76,20,"Extension Setup"};
+struct TmtWin F = {3,5,76,21,"Extension Setup"};
 
 int n;
+
+l1=Cfg->Enable_Txt;
+l2=Cfg->Enable_Bmp;
+l3=Cfg->Enable_Snd;
+l4=Cfg->Enable_Arc;
+l5=Cfg->Enable_Exe;
+l6=Cfg->Enable_Usr;
 
 strcpy(Txt,Cfg->ExtTxt);
 strcpy(Bmp,Cfg->ExtBmp);
@@ -1000,6 +1059,78 @@ strcpy(Cfg->ExtSnd,Snd);
 strcpy(Cfg->ExtArc,Arc);
 strcpy(Cfg->ExtExe,Exe);
 strcpy(Cfg->ExtUsr,Usr);
+
+Cfg->Enable_Txt=l1;
+Cfg->Enable_Bmp=l2;
+Cfg->Enable_Snd=l3;
+Cfg->Enable_Arc=l4;
+Cfg->Enable_Exe=l5;
+Cfg->Enable_Usr=l6;
+}
+
+void ScreenSetup(void)
+{
+static int sw,sy;
+
+static int l1,l2;
+
+static char x1=32,x2=32,x3=32;
+static int y1=3,y2=2,y3=4;
+
+struct Tmt T[16] = {
+      { 5, 2,10,"25 lines",&sw},
+      { 5, 3,10,"30 lines",&sw},
+      { 5, 4,10,"50 lines",&sw},
+      { 5, 7, 8,"Use Font",&l1},
+      { 5, 8, 7,"Screen Saver ",&l2},
+
+      {39, 2,10,"Norton like ",&sy},
+      {39, 3,10,"7-bit mode  ",&sy},
+      {39, 4,10,"Thin mode   ",&sy},
+      {39, 5,10,"Ketchup Mode",&sy},
+
+      {3,1,9,&x1,&y1},
+      {3,6,9,&x2,&y2},
+      {37,1,9,&x3,&y3},
+
+      {11,1,0," Number of lines ",NULL},
+      {46,1,0," Window Design ",NULL},
+
+      {13,13,2,NULL,NULL},                                      // le OK
+      {50,13,3,NULL,NULL}                                   // le CANCEL
+      };
+
+struct TmtWin F = {3,5,76,20,"Window & Color"};
+
+int n;
+
+switch(Cfg->TailleY)
+    {
+    case 25:  sw=0; break;
+    case 50:  sw=2; break;
+    case 30:  
+    default:  sw=1; break;
+    }
+sy=Cfg->fentype+4;
+l1=Cfg->font;
+l2=Cfg->SaveSpeed;
+
+n=WinTraite(T,16,&F);
+
+if (n==27) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+switch(sw)
+    {
+    case 0:  Cfg->TailleY=25; break;
+    case 1:  Cfg->TailleY=30; break;
+    case 2:  Cfg->TailleY=50; break;
+    }
+Cfg->fentype=sy-4;
+Cfg->font=l1;
+Cfg->SaveSpeed=l2;
+
+GestionFct(67);                                    // Rafraichit l'ecran
 }
 
 
@@ -1186,9 +1317,7 @@ while(chaine[n]!=0)
 
 void UseCfg(void)
 {
-ChangeTaille(Cfg->TailleY);                        // Rafraichit l'ecran
-
-ChangeLine();
+GestionFct(67);                                    // Rafraichit l'ecran
 
 if (Cfg->speedkey==1)
     {
@@ -1215,15 +1344,15 @@ if (Cfg->speedkey==1)
 |-  Information on disk                                               -|
 \*--------------------------------------------------------------------*/
 
-void FenDisk(struct fenetre *Fen)
+void FenDisk(FENETRE *Fen)
 {
 char *Buf,temp[32],disk[4],volume[32];
 char InfoVol[32];
 
-struct fenetre *Fen2;
+FENETRE *Fen2;
 struct file *F;
 int n,m,x,y;
-//struct find_t ff;
+struct find_t ff;
 int error;
 
 static char chaine[80];
@@ -1251,7 +1380,7 @@ if (Fen->init==1)
 
 _dos_getdiskfree(toupper(Fen2->path[0])-'A'+1,&d);
 tfree=(d.avail_clusters)*(d.sectors_per_cluster);
-tfree=tfree*(d.bytes_per_sector);
+tfree=tfree*(d.bytes_per_sector)/1024;
 
 if ( (tfree!=oldfree) | (strcmp(oldpath,Fen2->path)!=0) )
     Fen->init=1;
@@ -1293,7 +1422,7 @@ switch ( WindowsActif )
         sprintf(chaine,"Windows/386 V 2.x");
         break;
     case 0x83:
-        sprintf(chaine,"Windows V %d.%d Exended Mode",HVer,NVer);
+        sprintf(chaine,"Windows V %d.%d Extended Mode",HVer,NVer);
         break;
     }
 
@@ -1304,14 +1433,12 @@ drive=toupper(disk[0])-'A';
 strcpy(volume,disk);
 strcat(volume,"*.*");
 
-/*
 error=_dos_findfirst(volume,_A_VOLID,&ff);
 
 if (error!=0)
-*/
     strcpy(volume,"Unknow");
-//    else
-//    strcpy(volume,ff.name);
+    else
+    strcpy(volume,ff.name);
 
 n=0;
 while (volume[n]!=0)
@@ -1368,7 +1495,7 @@ ColLin(x+1,y+5,37,10*16+3);
 
 PrintAt(x+1,y+6,"%s [%s] %s",disk,volume,InfoVol);
 
-PrintAt(x+1,y+7,"Free space: %12s bytes",Long2Str(tfree,temp));
+PrintAt(x+1,y+7,"Free space: %8s kilobytes",Long2Str(tfree,temp));
 PrintAt(x+1,y+8,"Capacity:   %8s kilobytes",Long2Str(ttotal,temp));
 
 ChrLin(x,y+9,38,196);
@@ -1385,6 +1512,143 @@ strcpy(oldpath,Fen2->path);
 
 Fen->init=0;
 
+}
+
+/*--------------------------------------------------------------------*\
+|-  Information on FILE_ID.DIZ                                        -|
+\*--------------------------------------------------------------------*/
+
+void FenFileID(FENETRE *Fen)
+{
+int x,y,n,l,i;
+char c;
+FENETRE *Fen2;
+char path[256];
+FILE *fic;
+struct file *F1,*F2;
+FENETRE *OldFen;
+int j;
+
+x=Fen->x+1;
+y=Fen->y+1;
+
+j=-1;
+for (i=0;i<Fen->Fen2->nbrfic;i++)
+    if (!strnicmp("FILE_ID.DIZ",Fen->Fen2->F[i]->name,13))
+        {
+        j=i;
+        break;
+        }
+if ( (j==-1) | (Fen->Fen2->system==5) )
+    {
+    WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
+    Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+1);
+    PrintAt(x+1,y+1,"FILE_ID.DIZ doesn't exist !!");
+    Fen->init=1;
+    return;
+    }
+
+if (Fen->Fen2->system!=0)
+    {
+    if (stricmp(Fics->trash,Fenetre[3]->path)!=0)
+        {
+        OldFen=DFen;
+        DFen=Fenetre[3];
+        CommandLine("#CD %s",Fics->trash);
+        DFen=OldFen;
+
+        for (i=0;i<Fenetre[3]->nbrfic;i++)
+            if (!strnicmp("FILE_ID.DIZ",Fenetre[3]->F[i]->name,13))
+                {
+                Fenetre[3]->pcur=i;
+                Fenetre[3]->scur=i;
+                break;
+                }
+        }
+    }
+
+F1=Fenetre[3]->F[Fenetre[3]->pcur];
+F2=Fen->Fen2->F[j];
+
+if ((F1->size!=F2->size) | (F1->time!=F2->time) | (F1->date!=F2->date))
+    {
+    OldFen=DFen;
+    DFen=Fenetre[3];
+    CommandLine("#CD %s",Fen->Fen2->path);
+    DFen=OldFen;
+    Fen->init=1;
+    }
+
+if (Fen->init==0)
+    {
+    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"?");
+    return;
+    }
+
+OldFen=DFen;
+DFen=Fenetre[3];
+for (i=0;i<Fenetre[3]->nbrfic;i++)
+    if (!strnicmp("FILE_ID.DIZ",Fenetre[3]->F[i]->name,13))
+        {
+        Fenetre[3]->pcur=i;
+        Fenetre[3]->scur=i;
+        break;
+        }
+AccessFile();
+DFen=OldFen;
+
+WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+1);
+
+Fen2=Fenetre[3];
+
+strcpy(path,Fen2->path);
+Path2Abs(path,Fen2->F[Fen2->pcur]->name);
+
+
+/*--------------------------------------------------------------------*\
+|- Affichage du file_id.diz dans la fenetre                           -|
+\*--------------------------------------------------------------------*/
+
+fic=fopen(path,"rb");
+if (fic==NULL)
+    {
+    PrintAt(x+1,y+1,"FILE_ID.DIZ doesn't exist !");
+    return;
+    }
+
+l=filelength(fileno(fic));
+
+if (l>32768) l=32768;
+
+for(n=0;n<l;n++)
+    {
+    c=fgetc(fic);
+
+    switch(c)
+        {
+        case 10:
+            x=Fen->x+1;
+            y++;
+            break;
+        case 7:
+        case 13:
+            break;
+        default:
+            if (x<Fen->x+Fen->xl)
+                {
+                PrintAt(x,y,"%c",c);
+                x++;
+                }
+            break;
+        }
+    if (y>Fen->y+Fen->yl-2) break;
+    }
+fclose(fic);
+
+
+PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
+Fen->init=0;
 }
 
 /*--------------------------------------------------------------------*\
@@ -1448,7 +1712,6 @@ switch ( regs.h.al )
 /*--------------------------------------------------------------------*\
 |- S E C R E T                                                P A R T -|
 \*--------------------------------------------------------------------*/
-
 
 
 /*--------------------------------------------------------------------*\
@@ -1536,10 +1799,10 @@ ChargeEcran();
 |-  Fenˆtre avec les infos sur fichiers d'apres header                -|
 \*--------------------------------------------------------------------*/
 
-void FenInfo(struct fenetre *Fen)
+void FenInfo(FENETRE *Fen)
 {
 int n;                                                       // Compteur
-struct fenetre *Fen2;
+FENETRE *Fen2;
 
 short i;
 

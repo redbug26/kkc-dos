@@ -1,8 +1,5 @@
 #define VERSION "0.5"
-
 #define RBTitle "Ketchup Killers Commander V0.5"
-
-#define ENTIER short
 
 #define CALLING __cdecl
 
@@ -11,7 +8,10 @@
 #define GAUCHE 0x4B
 #define DROITE 0x4D
 
-#include "driver.h"
+#define BYTE unsigned char
+#define WORD unsigned short
+#define ULONG unsigned long
+
 
 struct file {
     char *name;
@@ -21,87 +21,88 @@ struct file {
     unsigned short time;
     unsigned short date;
     char *info;
+    char desc;
 };
 
 
-void Shell(char *string,...);
 
-
-void SaveCfg(void);
-int LoadCfg(void);
-void AffFen(struct fenetre *Fen);
-
-
-struct fenetre
+typedef struct _fenetre
      {
-     ENTIER IDFSpeed;    // Nombre de clock avant de lire la description
+     short x,y;                    // position haut droite de la fenˆtre
+     short xl,yl;                                // taille de la fenˆtre
+     short x2,y2;                                   // position calculee
+     short xl2,yl2;                                   // taille calculee
+     short x3,y3;                            // position de l'infoselect
+
+     short IDFSpeed;     // Nombre de clock avant de lire la description
      long nbrfic;
      long taillefic;
      long nbrsel;
      long taillesel;
      char actif;
      struct file **F;
-     ENTIER x,y;                   // position haut droite de la fenˆtre
-     ENTIER xl,yl;                               // taille de la fenˆtre
-     ENTIER x2,y2;                                  // position calculee
-     ENTIER xl2,yl2;                                  // taille calculee
-     ENTIER x3,y3;                           // position de l'infoselect
-     ENTIER pcur;                             // positon dans le tableau
-     ENTIER scur;                        // positon du curseur … l'‚cran
-     ENTIER oldscur;                             // dernier scur affiche
-     ENTIER oldpcur;                             // dernier pcur affiche
+     
+     short pcur;                              // positon dans le tableau
+     short scur;                         // positon du curseur … l'‚cran
+     short oldscur;                              // dernier scur affiche
+     short oldpcur;                              // dernier pcur affiche
      char path[256];               // path complete (disk et repertoire)
                   // La lettre du disque ne peut prendre que 1 caractere
                            //                  et doit etre en majuscule
                  // Le repertoire ne doit pas finir par '/' sauf le ROOT
-     ENTIER FenTyp;                    // Type de fenetre: 0:norm, 1:diz
-     ENTIER init;        // si =1 --> r‚initialise fenˆtre (bordure ...)
-     struct fenetre *Fen2;
+     short FenTyp;                     // Type de fenetre: 0:norm, 1:diz
+     short init;         // si =1 --> r‚initialise fenˆtre (bordure ...)
+     struct _fenetre *Fen2;
 
      // Affichage
-     ENTIER order;                              // 1: normal, 2: inverse
-     ENTIER sorting;     // 1: Name, 2: ext, 3: date, 4: size, 0: unsort
+     short order;                               // 1: normal, 2: inverse
+     short sorting;      // 1: Name, 2: ext, 3: date, 4: size, 0: unsort
 
      // Systeme
-     ENTIER system;    // 0: DOS, 1: RAR, 2: ARJ, 3: ZIP, 4: LHA, 5: KKD
+     short system;     // 0: DOS, 1: RAR, 2: ARJ, 3: ZIP, 4: LHA, 5: KKD
 
      char VolName[255];                                 // Nom du volume
      char nfen;                                  // Numero de la fenetre
 
-};
+     char KKDdrive;                     // Numero du drive pour les .KKD
 
-extern struct fenetre *DFen;
+} FENETRE;
 
+
+void Shell(char *string,...);
+void SaveCfg(void);
+int LoadCfg(void);
+void AffFen(FENETRE *Fen);
+
+int ChangeToKKD(void);
+
+void GestionFct(int fct);
+char *AccessFile(void);
+
+extern FENETRE *DFen;
 extern char *Screen_Buffer;
-
 extern int IOver;        // Vaut 1 si on veut pas faire de verifications
 extern int IOerr;
 
 #include "ficidf.h"
 #include "hard.h"
 #include "gestion.h"
-
 #include "copie.h"
 #include "delete.h"
-
 #include "search.h"
-
-#include "help.h"
-
 #include "view.h"
 #include "edit.h"
-
 #include "util.h"
-
 #include "reddies.h"
+#include "driver.h"
+#include "win.h"
 
 #ifdef DEBUG
-#define PUTSERR(__Chaine) PrintAt(0,0,"DEBUG MODE ERROR: %s",__Chaine); getch()
+#define PUTSERR(__Ch) PrintAt(0,0,"DEBUG MODE ERROR: %s",__Ch);  getch()
 #else
-#define PUTSERR(__Chaine)
+#define PUTSERR(__Ch)
 #endif
 
+#define NBWIN 4
 
-#define BYTE unsigned char
-#define WORD unsigned short
-#define ULONG unsigned long
+

@@ -19,6 +19,8 @@
 #include "kk.h"
 #include "idf.h"
 
+#define MAXDIR 250
+
 char *RBTitle2="Ketchup Killers Setup V"VERSION" / RedBug";
 
 #define GAUCHE 0x4B
@@ -47,14 +49,14 @@ struct player {
     char type;
     } *app[5000];
 
-char dir[50][128];          // 50 directory diff‚rents de 128 caracteres
+char dir[MAXDIR][128];      // 50 directory diff‚rents de 128 caracteres
 
 short nbr;              // nombre d'application lu dans les fichiers KKR
 short nbrdir;
 
 char OldY;
 
-struct fenetre *Fenetre[3];
+FENETRE *Fenetre[NBWIN];
 
 void SSearch(char *nom);
 void ApplSearch(void);
@@ -529,7 +531,7 @@ void SaveCfg(void)
 int m,n,t;
 FILE *fic;
 short taille;
-struct fenetre *Fen;
+FENETRE *Fen;
 
 Cfg->FenTyp[0]=0;
 Cfg->FenTyp[1]=0;
@@ -549,13 +551,13 @@ for(n=0;n<16;n++)
     fwrite(Mask[n]->title,taille,1,fic);
     }
 
-for(t=0;t<3;t++)
+for(t=0;t<NBWIN;t++)
 {
 Fen=Fenetre[t];
 
 fwrite(Fen->path,256,1,fic);
-fwrite(&(Fen->order),sizeof(ENTIER),1,fic);
-fwrite(&(Fen->sorting),sizeof(ENTIER),1,fic);
+fwrite(&(Fen->order),sizeof(short),1,fic);
+fwrite(&(Fen->sorting),sizeof(short),1,fic);
 
 fwrite(&(Fen->nbrsel),4,1,fic);
 
@@ -566,7 +568,7 @@ for (n=0;n<=Fen->nbrfic;n++)
     fwrite(Fen->F[n]->name,1,m,fic);
     }
 
-fwrite(&(Fen->scur),sizeof(ENTIER),1,fic);
+fwrite(&(Fen->scur),sizeof(short),1,fic);
 }
 
 
@@ -586,14 +588,13 @@ int i,t,n,m;
 FILE *fic;
 short taille;
 char nom[256];
-struct fenetre *DFen;
+FENETRE *DFen;
 
 
 fic=fopen(Fics->CfgFile,"rb");
 if (fic==NULL) return -1;
 
 fread((void*)Cfg,sizeof(struct config),1,fic);
-
 
 for(n=0;n<16;n++)
     {
@@ -607,15 +608,15 @@ for(n=0;n<16;n++)
     Mask[n]->title[taille]=0;
     }
 
-for (t=0;t<3;t++)
+for (t=0;t<NBWIN;t++)
     {
     DFen=Fenetre[t];
 
     DFen->FenTyp=Cfg->FenTyp[t];
     
     fread(DFen->path,256,1,fic);
-    fread(&(DFen->order),sizeof(ENTIER),1,fic);
-    fread(&(DFen->sorting),sizeof(ENTIER),1,fic);
+    fread(&(DFen->order),sizeof(short),1,fic);
+    fread(&(DFen->sorting),sizeof(short),1,fic);
 
     fread(&nbr,4,1,fic);
 
@@ -635,7 +636,7 @@ for (t=0;t<3;t++)
 
     DFen->nbrsel=nbr;
 
-    fread(&(DFen->scur),sizeof(ENTIER),1,fic);
+    fread(&(DFen->scur),sizeof(short),1,fic);
     }
 
 
@@ -815,7 +816,7 @@ for(i=0;i<k;i++)
     if (path[i]==';')
         path[i]=0;
 
-dir=GetMem(50*sizeof(char *));
+dir=GetMem(MAXDIR*sizeof(char *));
 
 j=0;
 Mlen=0;
@@ -978,14 +979,17 @@ for (n=strlen(path);n>0;n--) {
 |-  Initialisation des variables                                      -|
 \*--------------------------------------------------------------------*/
 
-Fenetre[0]=GetMem(sizeof(struct fenetre));
-Fenetre[0]->F=GetMem(TOTFIC*sizeof(void *)); // allocation des pointeurs
+Fenetre[0]=GetMem(sizeof(FENETRE));
+Fenetre[0]->F=GetMem(TOTFIC*sizeof(void *));
 
-Fenetre[1]=GetMem(sizeof(struct fenetre));
-Fenetre[1]->F=GetMem(TOTFIC*sizeof(void *)); // allocation des pointeurs
+Fenetre[1]=GetMem(sizeof(FENETRE));
+Fenetre[1]->F=GetMem(TOTFIC*sizeof(void *));
 
-Fenetre[2]=GetMem(sizeof(struct fenetre));
-Fenetre[2]->F=GetMem(TOTFIC*sizeof(void *)); // allocation des pointeurs
+Fenetre[2]=GetMem(sizeof(FENETRE));
+Fenetre[2]->F=GetMem(TOTFIC*sizeof(void *));
+
+Fenetre[3]=GetMem(sizeof(FENETRE));
+Fenetre[3]->F=GetMem(TOTFIC*sizeof(void *));
 
 Cfg=GetMem(sizeof(struct config));
 Fics=GetMem(sizeof(struct fichier));
@@ -1011,7 +1015,7 @@ strcat(Fics->help,"\\kksetup.hlp");
 
 if (LoadCfg()==-1)
     {
-    struct fenetre *DFen;
+    FENETRE *DFen;
     int t;
 
     DefaultCfg();
@@ -1226,7 +1230,7 @@ for (n=0;n<26;n++)
 
 if (nbr>0)
     {
-    fic=fopen("idfext.rb","wb");
+    fic=fopen(Fics->FicIdfFile,"wb");
     if (fic!=NULL)
         {
         fwrite("RedBLEXU",1,8,fic);
@@ -1351,15 +1355,15 @@ if (!strncmp(Key,"KKRB",4))
             break;
         case 5:                                                // Format
             fread(&format,2,1,Fic);
-            app[nbr]=malloc(sizeof(struct player));
+            app[nbr]=GetMem(sizeof(struct player));
 
-            app[nbr]->Filename=malloc(SFilename+1);
+            app[nbr]->Filename=GetMem(SFilename+1);
             strcpy(app[nbr]->Filename,Filename);
 
-            app[nbr]->Meneur=malloc(SMeneur+1);
+            app[nbr]->Meneur=GetMem(SMeneur+1);
             strcpy(app[nbr]->Meneur,Meneur);
 
-            app[nbr]->Titre=malloc(STitre+1);
+            app[nbr]->Titre=GetMem(STitre+1);
             strcpy(app[nbr]->Titre,Titre);
 
             app[nbr]->Checksum=Checksum;
@@ -1409,8 +1413,8 @@ FILE *Fic;
 char **TabRec;              // Tableau qui remplace les appels recursifs
 int NbrRec;                          // Nombre d'element dans le tableau
 
-TabRec=malloc(500*sizeof(char*));
-TabRec[0]=malloc(strlen(nom2)+1);
+TabRec=GetMem(500*sizeof(char*));
+TabRec[0]=GetMem(strlen(nom2)+1);
 memcpy(TabRec[0],nom2,strlen(nom2)+1);
 NbrRec=1;
 
@@ -1458,7 +1462,7 @@ do
             strcat(moi,fic.name);
             strcat(moi,"\\");
 
-            TabRec[NbrRec]=malloc(strlen(moi)+1);
+            TabRec[NbrRec]=GetMem(strlen(moi)+1);
             memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
             NbrRec++;
             }
@@ -1493,8 +1497,8 @@ int NbrRec;                          // Nombre d'element dans le tableau
 
 char *StrVerif,Verif;
 
-TabRec=malloc(500*sizeof(char*));
-TabRec[0]=malloc(strlen(nom2)+1);
+TabRec=GetMem(500*sizeof(char*));
+TabRec[0]=GetMem(strlen(nom2)+1);
 memcpy(TabRec[0],nom2,strlen(nom2)+1);
 NbrRec=1;
 
@@ -1619,7 +1623,7 @@ do
                     ok=1;
                     wok=n;
 
-                //--- Editeur par default ---
+                //--- Editeur par default ------------------------------
                     if (app[n]->ext==91)
                         if (Cfg->editeur[0]==0)
                             if (strlen(app[n]->Filename)<63)
@@ -1641,7 +1645,6 @@ do
 
         PrintAt(3,posy,"Found %s in %s",app[wok]->Titre,dir[o-1]);
         posy++;
-
 
         if (posy>(Cfg->TailleY-2))
                 {
@@ -1666,7 +1669,7 @@ do
             strcat(moi,fic.name);
 			strcat(moi,"\\*.*");
 
-            TabRec[NbrRec]=malloc(strlen(moi)+1);
+            TabRec[NbrRec]=GetMem(strlen(moi)+1);
             memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
             NbrRec++;
 			}
@@ -1987,7 +1990,7 @@ char key[9];
 FILE *fic;
 short prem,paff,j,k,nbr;
 int car,y;
-char di;    // Ne sert … rien
+char di;    //--- Ne sert … rien ---------------------------------------
 
 int ndir;
 char name[256],dir[129];
@@ -2053,19 +2056,19 @@ do
         char *a;
 
         fread(&n,1,1,fic);
-        IDF_app.Filename=malloc(n+1);
+        IDF_app.Filename=GetMem(n+1);
         a=IDF_app.Filename;
         a[n]=0;
         fread(a,n,1,fic);
 
         fread(&n,1,1,fic);
-        IDF_app.Titre=malloc(n+1);
+        IDF_app.Titre=GetMem(n+1);
         a=IDF_app.Titre;
         a[n]=0;
         fread(a,n,1,fic);
 
         fread(&n,1,1,fic);
-        IDF_app.Meneur=malloc(n+1);
+        IDF_app.Meneur=GetMem(n+1);
         a=IDF_app.Meneur;
         a[n]=0;
         fread(a,n,1,fic);

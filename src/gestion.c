@@ -10,7 +10,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#include <malloc.h>
 #include <bios.h>
 #include <io.h>
 #include <fcntl.h>
@@ -19,10 +18,7 @@
 
 #include <dos.h>
 
-#include "gestion.h"
-
 #include "kk.h"
-
 #include "win.h"
 
 
@@ -143,9 +139,11 @@ return c;
 
 /*--------------------------------------------------------------------*\
 |-  Classe les fichiers                                               -|
+|- Sauf si il ne faut pas ou si c'est une fenetre cach‚e              -|
 \*--------------------------------------------------------------------*/
-void SortFic(struct fenetre *Fen)
+void SortFic(FENETRE *Fen)
 {
+if ((DFen->nfen>=2) | ((DFen->order&15)==0)) return;
 qsort(Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
 }
 
@@ -207,8 +205,6 @@ int n;
 int err;
 char *p;
 
-// PrintAt(0,0,"%-80s","Wait Please");
-
 p=DFen->path;
 memcpy(old,p,256);
 
@@ -236,7 +232,6 @@ if (DFen->system==0)
     static char buf[256];
     int i;
 
-//    PrintAt(0,0,"Enter in directory: %-60s",DFen->path);
     if (chdir(DFen->path)!=0)
         {
         strcpy(nom2,DFen->path);
@@ -304,6 +299,7 @@ if (DFen->system==0)
                         DFen->system=4;
                         break;
                     case 102:   // KKD
+                        DFen->KKDdrive=0;
                         DFen->system=5;
                         break;
                     }
@@ -327,7 +323,7 @@ switch(DFen->system)
         err=DOSlitfic();
         if (err==0)
             {
-            if (strcmp(Ficname,"..")!=0)
+            if ( (strcmp(Ficname,"..")!=0) & (DFen->Fen2!=DFen) )
                 PutInHistDir();
             }
         break;
@@ -356,8 +352,7 @@ while(err==1);
 
 strupr(DFen->path);
 
-if (DFen->nfen!=2)
-    SortFic(DFen);  // On trie pas la fenetre cach‚e
+SortFic(DFen);  
 
 if (err==0)
     {
@@ -374,16 +369,16 @@ if (err==0)
     else
     memcpy(p,old,256);
 
-// PrintAt(0,0,"%-40s%40s","Ketchup Killers Commander","RedBug");
-
 }
 
 
 /*--------------------------------------------------------------------*\
-|-                      Gestion history                               -|
+|-                      Gestion history dir                           -|
 \*--------------------------------------------------------------------*/
 
-// Give Last Directory in History
+/*--------------------------------------------------------------------*\
+|-  Give Last Directory in History                                    -|
+\*--------------------------------------------------------------------*/
 char *GetLastHistDir(void)
 {
 char *dir,*dir2;
@@ -414,6 +409,9 @@ int j;
 
 j=0;
 
+SaveEcran();
+ColLin(0,0,80,1*16+4);
+
 while(1) {
     dir=&(Cfg->HistDir[j]);
     if ( (dir[0]==0) | (j>=256) ) break;
@@ -436,9 +434,13 @@ while(1) {
     }
 if (j<256)
     memset(&(Cfg->HistDir[j]),0,256-j);
+
+ChargeEcran();
 }
 
-// Retire directory de a0 jusque a1
+/*--------------------------------------------------------------------*\
+|-  Retire directory de a0 jusque a1                                  -|
+\*--------------------------------------------------------------------*/
 void RemoveHistDir(int a0,int a1)
 {
 int i;
@@ -480,7 +482,7 @@ do
 
     for (k=0;k<i;k++)
         {
-        if (!memcmp(DFen->path,
+        if (!strnicmp(DFen->path,
                        &(Cfg->HistDir[TabDir[k]]),strlen(DFen->path)+1))
             {
             a=k+1;
@@ -499,6 +501,13 @@ while (a!=0);
 memcpy(&(Cfg->HistDir[TabDir[i]]),DFen->path,strlen(DFen->path)+1);
 }
 
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+
+/*--------------------------------------------------------------------*\
+|- Creation des repertoires                                           -|
+\*--------------------------------------------------------------------*/
 void MakeDir(char *Ficname)
 {
 Path2Abs(DFen->path,Ficname);
@@ -518,6 +527,269 @@ switch(DFen->system)
         }
 }
 
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------*\
+|- Gestion history                                                    -|
+\*--------------------------------------------------------------------*/
+void Line2History(char *s)
+{
+int n,m;
+char chaine[256];
+
+if (Cfg->cnvhist==1)
+    {
+    chaine[0]=0;
+    m=n=0;
+
+    while(s[n]!=0)
+        {
+        if (!strnicmp(s+n,DFen->path,2))
+            {
+            strcat(chaine+m,"!:");
+            m+=2;
+            n+=2;
+            }
+        else
+        if (!strnicmp(s+n,DFen->Fen2->path+2,
+                                            strlen(DFen->Fen2->path)-2))
+            {
+            strcat(chaine+m,"$\\");
+            m+=2;
+            n+=strlen(DFen->Fen2->path)-2;
+            }
+        else
+        if (!strnicmp(s+n,DFen->path+2,strlen(DFen->path)-2))
+            {
+            strcat(chaine+m,"!\\");
+            m+=2;
+            n+=strlen(DFen->path)-2;
+            }
+        else
+        if (!strnicmp(s+n,DFen->F[DFen->pcur]->name,
+                                     strlen(DFen->F[DFen->pcur]->name)))
+            {
+            strcat(chaine+m,"!.!");
+            m+=3;
+            n+=strlen(DFen->F[DFen->pcur]->name);
+            }
+        else
+        if (!strnicmp(s+n,DFen->Fen2->path,2))
+            {
+            strcat(chaine+m,"$:");
+            m+=2;
+            n+=2;
+            }
+        else
+        if (!strnicmp(s+n,DFen->Fen2->F[DFen->Fen2->pcur]->name,
+                         strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name)))
+            {
+            strcat(chaine+m,"$.$");
+            m+=3;
+            n+=strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name);
+            }
+        else
+           {
+           chaine[m]=s[n];
+           m++;
+           n++;
+           }
+        chaine[m]=0;
+        }
+    PutInHistCom(chaine);
+    }
+    else
+    PutInHistCom(s);
+}
+
+void History2Line(char *s,char *chaine)
+{
+int n,m;
+
+chaine[0]=0;
+m=n=0;
+
+while(s[n]!=0)
+{
+if (!strnicmp(s+n,"!:",2))
+    {
+    memcpy(chaine+m,DFen->path,2);
+    m+=2;
+    n+=2;
+    }
+else
+if (!strnicmp(s+n,"!\\",2))
+    {
+    memcpy(chaine+m,DFen->path+2,strlen(DFen->path)-2);
+    m+=strlen(DFen->path)-2;
+    n+=2;
+    }
+else
+if (!strnicmp(s+n,"!.!",3))
+    {
+    memcpy(chaine+m,DFen->F[DFen->pcur]->name,
+                                     strlen(DFen->F[DFen->pcur]->name));
+    m+=strlen(DFen->F[DFen->pcur]->name);
+    n+=3;
+    }
+else
+if (!strnicmp(s+n,"$:",2))
+    {
+    memcpy(chaine+m,DFen->Fen2->path,2);
+    m+=2;
+    n+=2;
+    }
+else
+if (!strnicmp(s+n,"$\\",2))
+    {
+    memcpy(chaine+m,DFen->Fen2->path+2,strlen(DFen->Fen2->path)-2);
+    m+=strlen(DFen->Fen2->path)-2;
+    n+=2;
+    }
+else
+if (!strnicmp(s+n,"$.$",3))
+    {
+    memcpy(chaine+m,DFen->Fen2->F[DFen->Fen2->pcur]->name,
+                         strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name));
+    m+=strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name);
+    n+=3;
+    }
+else
+   {
+   chaine[m]=s[n];
+   m++;
+   n++;
+   }
+chaine[m]=0;
+}
+
+}
+
+
+/*--------------------------------------------------------------------*\
+|-  Give Last Directory in History of command                         -|
+\*--------------------------------------------------------------------*/
+
+// toto
+char *GetLastHistCom(void)
+{
+char *dir,*dir2;
+int j,k;
+
+j=0;
+
+if ( (Cfg->posinhist<=0) | (Cfg->posinhist>512) )
+    Cfg->posinhist=512;
+
+while(1)
+    {
+    dir=&(Cfg->HistCom[j]);
+    if (strlen(dir)==0) break;
+
+    dir2=dir;
+    k=j;
+
+    while ( (j!=Cfg->posinhist) & (Cfg->HistCom[j]!=0) ) j++;
+    j++;
+    if (j==Cfg->posinhist) break;
+    }
+
+Cfg->posinhist=k;
+
+return dir2;
+}
+
+/*--------------------------------------------------------------------*\
+|-  Verify history of command                                         -|
+\*--------------------------------------------------------------------*/
+void VerifHistCom(void)
+{
+char *dir;
+int j;
+
+j=0;
+
+while(1) {
+    dir=&(Cfg->HistCom[j]);
+    if ( (dir[0]==0) | (j>=512) ) break;
+
+    dir=strupr(dir);
+
+    IOver=1;
+    IOerr=0;
+
+    while ( (j!=512) & (Cfg->HistCom[j]!=0) ) j++;
+    j++;
+
+    IOver=0;
+    }
+if (j<512)
+    memset(&(Cfg->HistCom[j]),0,512-j);
+}
+
+/*--------------------------------------------------------------------*\
+|-  Retire commande  de a0 jusque a1                                  -|
+\*--------------------------------------------------------------------*/
+void RemoveHistCom(int a0,int a1)
+{
+int i;
+
+for (i=a0;i<512;i++)
+    {
+    if (i<512-(a1-a0))
+        Cfg->HistCom[i]=Cfg->HistCom[a1-a0+i];
+        else
+        Cfg->HistCom[i]=0;
+    }
+}
+
+
+void PutInHistCom(char *chaine)
+{
+int i,j,k;
+static int TabCom[100];
+
+int a;
+
+do
+    {
+    a=0;
+
+    j=0;
+    for (i=0;i<100;i++)
+        {
+        TabCom[i]=j;
+        if (Cfg->HistCom[j]==0) break;
+        while ( (j!=512) & (Cfg->HistCom[j]!=0) ) j++;
+        j++;
+        }
+
+    // Retire a qui empeche le nouveau de se placer
+
+    if ((j+strlen(chaine))>=512)
+        a=1;
+
+    for (k=0;k<i;k++)
+        {
+        if (!strnicmp(chaine,
+                           &(Cfg->HistCom[TabCom[k]]),strlen(chaine)+1))
+            {
+            a=k+1;
+            break;
+            }
+        }
+
+    // Retire celui qui se trouve en a-1
+
+    if (a!=0)
+        RemoveHistCom(TabCom[a-1],TabCom[a]);
+    }
+while (a!=0);
+
+memcpy(&(Cfg->HistCom[TabCom[i]]),chaine,strlen(chaine)+1);
+}
+
 
 /*--------------------------------------------------------------------*\
 |-   Gestion ligne de commande                                        -|
@@ -526,7 +798,7 @@ switch(DFen->system)
 /*--------------------------------------------------------------------*\
 |-  Commandes globales                                                -|
 \*--------------------------------------------------------------------*/
-static int x0,py,xmax;   // position en X,Y ,X initial, Taille de X max.
+static int x0,py,xmax;    // position en X,Y ,X initial, Taille de X max
 static char str[256];                                // commande interne
 static int px;                                                // Chaipus
 static char flag;                 // direction flag pour plein de choses
@@ -579,10 +851,11 @@ if (!strnicmp(chaine,"#INIT",5))
     }
 if (!strnicmp(chaine,"#MEM",4))
     {
+    static int a=0;
     int tail[12];
+    a++;
     GetFreeMem((void*)tail);  // inconsistent ?
-    PrintAt(0,0,"Memory: %d octets",tail[0]);
-    getch();
+    PrintAt(0,0,"Memory: %20d octets     (%10d)",tail[0],a);
     return 1;
     }
 if (!strnicmp(chaine,"#DF",4))
@@ -593,6 +866,8 @@ if (!strnicmp(chaine,"#DF",4))
 
 return 0;
 }
+
+
 
 /*--------------------------------------------------------------------*\
 |-  Affichage de la ligne de commande                                 -|
@@ -654,16 +929,16 @@ char *suite;
 va_list parameter;
 
 int n;
-char a;                       // caracter lu
+char a;                                                   // caracter lu
 
-char *chaine;                 // pointeur sur chaine pour traitement
-char affich;                  // vaut 1 si on doit afficher
-int pos;                      // position dans chaine
+char *chaine;                     // pointeur sur chaine pour traitement
+char affich;                               // vaut 1 si on doit afficher
+int pos;                                         // position dans chaine
 
-char inter[256];              // commande interne
+char inter[256];                                     // commande interne
 
-char FctType;                 // =1 suite[0]=='#'
-                              // =2 commande de ligne
+char FctType;                                        // =1 suite[0]=='#'
+                                                 // =2 commande de ligne
 
 int traite=0;                      // vaut 1 si on doit traiter la ligne
 
@@ -697,6 +972,8 @@ if ( (suite[0]=='\n') & (px==0)) return 0;
 
 if ( (suite[0]==32) & (px==0)) return 0;
 
+if ( (suite[0]=='\r') & (px==0)) return 0;
+
 do {
     a=suite[n];
 
@@ -705,10 +982,10 @@ do {
 		case '\r':
             while (pos!=0)  pos--;
             break;
-		case 8: 			// delete
+        case 8:        //--- delete ------------------------------------
 			if (pos>0) pos--;
 			break;
-        case 0X7F:  // CTRL-DEL
+        case 0X7F:     //--- CTRL-DEL ----------------------------------
             while (pos!=0)
                 {
 				pos--;
@@ -716,7 +993,7 @@ do {
 				chaine[pos]=0;
 				}
 			break;
-		case '\n':          // passage … la ligne
+        case '\n':     //--- passage … la ligne ------------------------
 			traite=1;
 			break;
 		default:
@@ -735,6 +1012,9 @@ if (affich==1)
 /*--------------------------------------------------------------------*\
 |-Traite les commandes normales (mˆme si traite==0) ! mettre … 1 aprŠs-|
 \*--------------------------------------------------------------------*/
+
+if ( (traite==1) & (affich==1) )
+    Line2History(chaine);
 
 if (FctType==1) traite=1;
 
@@ -795,9 +1075,8 @@ if ( (chaine[1]==':') & (chaine[0]!=0) & (chaine[2]==0) & (traite==1) )
 if (traite==1)
     {
     if (Run(chaine)==0)
-        {
         Shell(">%s",chaine);
-        }
+
     goto Ligne_Traite;
     }
 
@@ -836,3 +1115,12 @@ if (traite==1)
 return 1;
 }
 
+/*--------------------------------------------------------------------*\
+|- retourne 1 si c'est un vrai directory                              -|
+\*--------------------------------------------------------------------*/
+int IsDir(struct file *F)
+{
+if ( (F->attrib & _A_SUBDIR)!=_A_SUBDIR) return 0;
+if (F->name[1]==':') return 0;
+return 1;
+}

@@ -2,14 +2,13 @@
 |- procedure d'effacement                                             -|
 \*--------------------------------------------------------------------*/
 #include <io.h>
+#include <dos.h>
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
 #include <direct.h>
 
 #include <time.h>
 
-#include "win.h"
 #include "kk.h"
 #include "gestion.h"
 
@@ -148,7 +147,7 @@ return n;
 }
 
 
-void Delete(struct fenetre *F1)                       // Delete Multiple
+void Delete(FENETRE *F1)                       // Delete Multiple
 {
 int i;
 

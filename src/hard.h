@@ -1,3 +1,8 @@
+/*--------------------------------------------------------------------*\
+|-  Header of hard-function                                           -|
+\*--------------------------------------------------------------------*/
+
+
 #define BYTE unsigned char
 #define WORD unsigned short
 #define ULONG unsigned long
@@ -8,7 +13,7 @@
                     63,63, 0, 63,63,63, 43,37,30, 63,20,20, \
                     20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
 
-// Header of hard-function
+
 
 extern void (*AffChr)(short x,short y,short c);
 extern void (*AffCol)(short x,short y,short c);
@@ -16,11 +21,11 @@ extern int (*Wait)(int x,int y,char c);
 extern int (*KbHit)(void);
 extern void (*GotoXY)(char x,char y);
 extern void (*WhereXY)(char *x,char *y);
-extern void (*Window)(int left,int top,int right,int bottom,short color);
+extern void(*Window)(int left,int top,int right,int bottom,short color);
 
 
 
-void TXTMode(char lig);    // Nombre de ligne
+void TXTMode(char lig);                               // Nombre de ligne
 
 void LoadPal(void);
 void NoFlash(void);
@@ -60,7 +65,7 @@ void WinLine(int x1,int y1,int xl,int type);
 
 void SetPal(char x,char r,char g,char b);
 
-int crc32file(char *name,unsigned long *crc);   // Compute CRC-32 of file
+int crc32file(char *name,unsigned long *crc);  // Compute CRC-32 of file
 
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F);
 int WinError(char*);
@@ -70,9 +75,9 @@ int Gradue(int x,int y,int length,int from,int to,int total);
 
 void DefaultCfg(void);
 
-/*-------------------------------------------*
- -       Gestion de la barre de menu         -
- *-------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-        Gestion de la barre de menu                                 -|
+\*--------------------------------------------------------------------*/
 
 int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
 int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
@@ -90,7 +95,7 @@ struct TmtWin {
      };
 
 struct Tmt {
-     int x,y;              // position
+     int x,y;                                                // position
      char type;
      char *str;
      int *entier;
@@ -116,94 +121,105 @@ struct config
      {
     // Selon user
     //-----------
-     long SaveSpeed;       // Temps a attendre avant d'activer le screen saver
+     long SaveSpeed; // Temps a attendre avant d'activer le screen saver
      long AnsiSpeed;
 
-     short fentype;       // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
-     short TailleY;       // Nombre de caratctere verticalement
+     short fentype;    // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
+     short TailleY;                // Nombre de caratctere verticalement
 
-     char palette[48];     // The PALETTE
+     char palette[48];                                    // The PALETTE
 
-     unsigned char wmask;  // C'est quel masque kon emploie ?
+     unsigned char wmask;             // C'est quel masque kon emploie ?
 
-     char pntrep;          // vaut 1 si on affiche le repertoire "."
-     char hidfil;          // vaut 1 si on affiche les fichiers caches
+     char pntrep;              // vaut 1 si on affiche le repertoire "."
+     char hidfil;            // vaut 1 si on affiche les fichiers caches
 
-     char logfile;         // vaut 1 si on utilise un logfile
-     char debug;           // vaut 1 si on est en mode DEBUG
+     char logfile;                    // vaut 1 si on utilise un logfile
+     char debug;                       // vaut 1 si on est en mode DEBUG
 
-     char autoreload;      // Reload automatiquement lorsque les deux fenˆtres sont les mˆmes
-     char verifhist;       // Verify history at any loading of KK (CTRL-PGDN)
-     char palafter;        // Load the palette only when configuration is ok
-     char noprompt;        // Si x&1 vaut 1 alors on ne prompte pdt la copie
-     char currentdir;      // Va dans le repertoire courant
+     char autoreload;   // Reload auto. quand les 2 fen. sont identiques
+     char verifhist;  // Verify history at any loading of KK (CTRL-PGDN)
+     char palafter;    // Load the palette only when configuration is ok
+     char noprompt;    // Si x&1 vaut 1 alors on ne prompte pdt la copie
+     char currentdir;                   // Va dans le repertoire courant
 
-     char font;            // utilisation des fonts
-     char dispcolor;       // Highlight les fichiers suivant les extensions
-     char speedkey;        // vaut 1 si on veut accelerer les touches
+     char font;                                 // utilisation des fonts
+     char dispcolor;    // Highlight les fichiers suivant les extensions
+     char speedkey;           // vaut 1 si on veut accelerer les touches
 
-     char insdown;         // vaut 1 si on descent quand on appuie sur insert
-     char seldir;          // vaut 1 si on selectionne les repertoires avec +
+     char insdown;    // vaut 1 si on descent quand on appuie sur insert
+     char seldir;     // vaut 1 si on selectionne les repertoires avec +
 
-     long strash;          // taille actuelle de la trash
+     long strash;                         // taille actuelle de la trash
 
-     char display;         // type d'affichage
+     char display;                                   // type d'affichage
 
-     char comport;         // Numero du port serie (ex: 2)
-     int comspeed;         // Vitesse              (ex:19200)
-     char combit;          // bit                  (ex:8)
-     char comparity;       // parity               (ex:'N')
-     char comstop;         // Bit de stop          (ex=1)
+     char comport;                       // Numero du port serie (ex: 2)
+     int comspeed;                    // Vitesse              (ex:19200)
+     char combit;                         // bit                  (ex:8)
+     char comparity;                    // parity               (ex:'N')
+     char comstop;                        // Bit de stop          (ex=1)
 
-     char enterkkd;        // entre dans les kkd pendant la recherche
-     char warp;            // 0: pas de warp, 1: word, 2: entier
+     char enterkkd;           // entre dans les kkd pendant la recherche
+     char warp;                    // 0: pas de warp, 1: word, 2: entier
 
-     char editeur[64];     // ligne de commande pour l'editeur
-     char vieweur[64];     // ligne de commande pour le viewer
+     char cnvhist;          // 1: si on converit a chaque fois l'history
+     char esttime;                 // estime le temps pendant la copie ?
 
-     char ExtTxt[64];
-     char ExtBmp[64];
-     char ExtSnd[64];
-     char ExtArc[64];
-     char ExtExe[64];
-     char ExtUsr[64];
+     char editeur[64];               // ligne de commande pour l'editeur
+     char vieweur[64];               // ligne de commande pour le viewer
+
+     char ExtTxt[64],Enable_Txt;
+     char ExtBmp[64],Enable_Bmp;
+     char ExtSnd[64],Enable_Snd;
+     char ExtArc[64],Enable_Arc;
+     char ExtExe[64],Enable_Exe;
+     char ExtUsr[64],Enable_Usr;
+
+     char ajustview;
+
+     char Esc2Close;   // vaut 1 si on doit fermer les fenˆtres avec ESC
 
     // Pas touche
     //-----------
-     long mtrash;          // taille maximum de la trash
-     long FenAct;          // Quelle fenˆtre est active ?
-     int _4dos;            // equal 1 if 4DOS found
+     long mtrash;                          // taille maximum de la trash
+     long FenAct;                         // Quelle fenˆtre est active ?
+     int _4dos;                                 // equal 1 if 4DOS found
 
-     char HistDir[256];    // History of disk
-     char overflow;        // Vaut tjs 0 (pour overflow)
+     char HistDir[256];                                // History of dir
+     char overflow1;
 
-     char extens[39];      // extension qui viennent tout devant
+     char HistCom[512];                            // History of command
+     char overflow2;                        // Vaut tjs 0 (pour overflow)
+     short posinhist;                   // Position in history of command
 
-     short FenTyp[3];     // Type des fenˆtres SHELL
-     short KeyAfterShell; // Vaut 1 si wait key after dosshell
-     short UseFont;       // Type de Font (0:normal, 1:8x8)
-     char Tfont;           // Caracteres employ‚s pour la ligne verticale
+     char extens[39];              // extension qui viennent tout devant
 
-     short key;            // code touche a reutiliser
-     char FileName[256];   // Nom du dernier fichier selectionne for F3 on arc.
-     char crc;             // Vaut tjs 0x69 (genre de crc)
+     short FenTyp[3];                         // Type des fenˆtres SHELL
+     short KeyAfterShell;           // Vaut 1 si wait key after dosshell
+     short UseFont;                    // Type de Font (0:normal, 1:8x8)
+     char Tfont;          // Caracteres employ‚s pour la ligne verticale
+
+     short key;                              // code touche a reutiliser
+     char FileName[256]; // Nom du dernier fichier select. for F3 on arc
+     char crc;                           // Vaut tjs 0x69 (genre de crc)
      };
 
 struct RB_info
      {
-     clock_t temps;        // Temps entre le main() et l'appel utilisateur
+     int temps;          // Temps entre le main() et l'appel utilisateur
      };
 
 struct fichier
      {
-     char *FicIdfFile;     // idfext.rb
-     char *CfgFile;        // kkrb.cfg
-     char *path;           // path
-     char *help;           // kkc.hlp
-     char *temp;           // temp.tmp
-     char *trash;          // repertoire trash
-     char *log;            // logfile
-     char *LastDir;        // lastdir
+     char *FicIdfFile;                                      // idfext.rb
+     char *CfgFile;                                          // kkrb.cfg
+     char *path;                                                 // path
+     char *help;                                              // kkc.hlp
+     char *temp;                                             // temp.tmp
+     char *trash;                                    // repertoire trash
+     char *log;                                               // logfile
+     char *LastDir;                                           // lastdir
      };
 
 struct PourMask
@@ -231,9 +247,9 @@ int __far Error_handler(unsigned deverr,unsigned errcode,
                                                   unsigned far *devhdr);
 
 
-/*--------------------------------------------------------------------*
- -                       Gestion du port s‚rie                        -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                        Gestion du port s‚rie                       -|
+\*--------------------------------------------------------------------*/
 
 void interrupt modem_isr(void);
 short com_carrier(void);
@@ -243,5 +259,11 @@ void com_send_ch(unsigned char ch);
 short com_open(short port,long speed,short bit,BYTE parity,BYTE stop);
 void com_close(void);
 
-/*--------------------------------------------------------------------*
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------*\
+|-  Header for help-functions                                         -|
+\*--------------------------------------------------------------------*/
+void Help(void);
+void HelpTopic(char *);

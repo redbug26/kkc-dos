@@ -1,1 +1,4 @@
-void Search(struct fenetre *TempFen,struct fenetre *Fen);
+/*--------------------------------------------------------------------*\
+|- prototype pour la recherche de fichiers                            -|
+\*--------------------------------------------------------------------*/
+void Search(FENETRE *TempFen,FENETRE *Fen);

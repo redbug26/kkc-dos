@@ -3,18 +3,14 @@
 \*--------------------------------------------------------------------*/
 #include <ctype.h>
 #include <io.h>
-
 #include <stdio.h>
 #include <string.h>
-#include <malloc.h>
-
 #include <conio.h>
 #include <dos.h>
 #include <bios.h>                                     // Gestion clavier
 #include <fcntl.h>
 #include <time.h>
 
-#include "win.h"
 #include "kk.h"
 
 #include "util.h"
