@@ -470,6 +470,7 @@ exit(1);
  32: Switch les fontes
  33: Switch special sort
  34: Efface la trash
+ 35: Affiche les infos
 */
 
 void GestionFct(int fct)
@@ -561,37 +562,12 @@ switch(fct)
             }
         break;
     case 16:    // Select current file
+        FicSelect(DFen->pcur,2);
+
         if (!strcmp(DFen->F[DFen->pcur]->name,"."))
-            {
-            int i;
-
             for (i=0;i<DFen->nbrfic;i++)
-                {
-                if ((DFen->F[i]->select==0) & (DFen->F[i]->name[0]!='.'))
-                    {
-                    DFen->F[i]->select=1;
-                    DFen->taillesel+=DFen->F[i]->size;
-                    DFen->nbrsel++;
-                    }
-                }
-                break;
-            }
-
-        if (DFen->F[DFen->pcur]->name[0]!='.')
-            {
-            if (DFen->F[DFen->pcur]->select==1)
-                {
-                DFen->F[DFen->pcur]->select=0;
-                DFen->nbrsel--;
-                DFen->taillesel-=DFen->F[DFen->pcur]->size;
-                }
-            else
-                {
-                DFen->F[DFen->pcur]->select=1;
-                DFen->nbrsel++;
-                DFen->taillesel+=DFen->F[DFen->pcur]->size;
-                }
-            } 
+                if (!WildCmp(DFen->F[i]->name,Select_Chaine))
+                    FicSelect(i,1);
         break;
     case 17:    // Change palette
         ChangePalette(0);
@@ -674,9 +650,12 @@ switch(fct)
         CommandLine("%s ",DFen->F[DFen->pcur]->name);
         break;
     case 31:    // Configuration
+        Setup();
+        /*
         strcpy(buffer,Fics->path);
         Path2Abs(buffer,"kksetup.ini");
         CommandLine("#%s %s",Fics->edit,buffer);
+        */
         break;
     case 32:    // Switch les fontes
         Cfg->font^=1;
@@ -714,6 +693,9 @@ switch(fct)
 
         Cfg->strash=0;
         break;
+    case 35:
+        WinInfo();
+        break;
     }
 
 
@@ -740,8 +722,8 @@ retour=0;
 
 do
 {
-strcpy(bar[0].titre,"Panel");
-strcpy(bar[1].titre,"File");
+strcpy(bar[0].titre,"File");
+strcpy(bar[1].titre,"Panel");
 strcpy(bar[2].titre,"Disk");
 strcpy(bar[3].titre,"Selection");
 strcpy(bar[4].titre,"Tools");
@@ -769,19 +751,6 @@ if (u==0)
 switch (poscur)
     {
     case 0:
-        strcpy(bar[0].titre, "Close left window    CTRL-F1");  bar[0].fct=14;
-        strcpy(bar[1].titre, "Close right window   CTRL-F2");  bar[1].fct=15;
-        strcpy(bar[2].titre, "");                              bar[2].fct=0;
-        strcpy(bar[3].titre, "DIZ Window");                    bar[3].fct=21;
-        strcpy(bar[4].titre, "");                              bar[4].fct=0;
-        strcpy(bar[5].titre, "Name                 CTRL-F3");  bar[5].fct=22;
-        strcpy(bar[6].titre, "Extension            CTRL-F4");  bar[6].fct=23;
-        strcpy(bar[7].titre, "Time/Date            CTRL-F5");  bar[7].fct=24;
-        strcpy(bar[8].titre, "Size                 CTRL-F6");  bar[8].fct=25;
-        strcpy(bar[9].titre, "Unsort               CTRL-F7");  bar[9].fct=26;
-        nbmenu=10;
-        break;
-    case 1:
         strcpy(bar[0].titre,"View                F3");  bar[0].fct=7;
         strcpy(bar[1].titre,"Quick View    Shift-F3");  bar[1].fct=8;
         strcpy(bar[2].titre,"Edit                F4");  bar[2].fct=9;
@@ -794,6 +763,19 @@ switch (poscur)
         strcpy(bar[9].titre,"Exit               F10");  bar[9].fct=20;
         nbmenu=10;
         break;
+    case 1:
+        strcpy(bar[0].titre, "Close left window    CTRL-F1");  bar[0].fct=14;
+        strcpy(bar[1].titre, "Close right window   CTRL-F2");  bar[1].fct=15;
+        strcpy(bar[2].titre, "");                              bar[2].fct=0;
+        strcpy(bar[3].titre, "DIZ Window            ALT-F3");  bar[3].fct=21;
+        strcpy(bar[4].titre, "");                              bar[4].fct=0;
+        strcpy(bar[5].titre, "Name                 CTRL-F3");  bar[5].fct=22;
+        strcpy(bar[6].titre, "Extension            CTRL-F4");  bar[6].fct=23;
+        strcpy(bar[7].titre, "Time/Date            CTRL-F5");  bar[7].fct=24;
+        strcpy(bar[8].titre, "Size                 CTRL-F6");  bar[8].fct=25;
+        strcpy(bar[9].titre, "Unsort               CTRL-F7");  bar[9].fct=26;
+        nbmenu=10;
+        break;
     case 2:
         strcpy(bar[0].titre,"Create KKD");           bar[0].fct=6;
         strcpy(bar[1].titre,"");                     bar[1].fct=0;
@@ -803,7 +785,7 @@ switch (poscur)
     case 3:
         strcpy(bar[0].titre, "Select group...     Gray '+'");  bar[0].fct=3;
         strcpy(bar[1].titre, "Unselect group...   Gray '-'");  bar[1].fct=4;
-        strcpy(bar[2].titre, "Invert Selection");              bar[2].fct=2;
+        strcpy(bar[2].titre, "Invert Selection    Gray '*'");  bar[2].fct=2;
         nbmenu=3;
         break;
     case 4:
@@ -817,7 +799,7 @@ switch (poscur)
         nbmenu=2;
         break;
     case 6:
-        strcpy(bar[0].titre,"Help");    bar[0].fct=1;
+        strcpy(bar[0].titre,"Help ");    bar[0].fct=1;
         strcpy(bar[1].titre,"About");   bar[1].fct=18;
         nbmenu=2;
         break;
@@ -847,48 +829,6 @@ return fin;
 }
 
 //-----------------------------------------------------------------------
-
-void ChangeTaille(int i)
-{
-int n;
-
-if (i==0)
-    switch(Cfg->TailleY) {
-        case 25:
-            for (n=0;n<2000;n++)  {
-                Screen_Buffer[4000+n*2]=Screen_Buffer[n*2];
-                Screen_Buffer[4001+n*2]=Screen_Buffer[1+n*2];
-                Screen_Buffer[n*2]=32;
-                Screen_Buffer[n*2+1]=7;
-                }
-            Cfg->TailleY=30;
-            break;
-        case 30:
-            Cfg->TailleY=50;
-            break;
-        default:
-            for (n=0;n<2000;n++)  {
-                Screen_Buffer[n*2]=Screen_Buffer[4000+n*2];
-                Screen_Buffer[1+n*2]=Screen_Buffer[4001+n*2];
-                Screen_Buffer[4000+n*2]=32;
-                Screen_Buffer[4000+n*2+1]=7;
-                }
-            Cfg->TailleY=25;
-            break;
-    }
-    else
-    {
-    if (Cfg->TailleY==25)
-            for (n=0;n<2000;n++)
-                {
-                Screen_Buffer[4000+n*2]=32;
-                Screen_Buffer[4001+n*2]=7;
-                }
-    Cfg->TailleY=i;
-    }
-
-SetTaille();
-}
 
 
 
@@ -1028,14 +968,15 @@ if (i!=0)
             break;
         case 0x49:      // PGUP
             pos-=5;
+            if (pos<0) pos=0;
             break;
         case 0x51:      // PGDN
             pos+=5;
+            if (pos>=i) pos=i-1;
             break;
         }
-    if (pos==-1) pos=i-1;
+    if (pos==1) pos=i-1;
     if (pos==i) pos=0;
-
     }
     while ( (car!=13) & (car!=27) );
 
@@ -1129,9 +1070,7 @@ static int DirLength=70;
 static int CadreLength=71;
 
 struct Tmt T[5] = {
-      { 2,3,1,
-        Dir,
-        &DirLength},
+      { 2,3,1,Dir,&DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 5,2,0,"Name the KKD file to be created",NULL},
@@ -1148,7 +1087,18 @@ n=WinTraite(T,5,&F);
 
 strcpy(Name,DFen->Fen2->path);
 
-if ( (n==0) | (n==1) ) {
+for (n=strlen(Dir);n>0;n--)  {
+    if (Dir[n]=='\\') break;
+    if (Dir[n]=='.')
+        {
+        Dir[n]=0;
+        break;
+        }
+    }
+strcat(Dir,".kkd");
+
+if ( (n==0) | (n==1) )
+    {
     Path2Abs(Name,Dir);
     MakeKKD(DFen,Name);
     }
@@ -1825,8 +1775,8 @@ DFen=Fen;
  *************************************************************************/
 void Gestion(void)
 {
-char buffer[256];
 struct fenetre *FenOld;
+char *ext;
 
 clock_t Cl,Cl_Start;
 char car,car2;
@@ -1846,6 +1796,7 @@ do
         {
         case 1:
         case 2:
+            if ( ((DFen->Fen2->FenTyp)==1) | ((DFen->Fen2->FenTyp)==2) ) break;
             Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
             DFen=Fenetre[Cfg->FenAct];
             ChangeLine();      // Affichage Path
@@ -1997,6 +1948,13 @@ do
             ChangeLine();      // Affichage Path
             break;
         case 13:    // ENTER
+            ext=getext(DFen->F[DFen->pcur]->name);
+            if ( (!stricmp(ext,"COM")) | (!stricmp(ext,"BAT")) |
+                 ((!stricmp(ext,"BTM")) & (Cfg->_4dos==1)) )
+                {
+                CommandLine("%s\n",DFen->F[DFen->pcur]->name);
+                break;
+                }
             switch(i=EnterArchive())
                 {
                 case 0:
@@ -2006,13 +1964,7 @@ do
                     CommandLine("%s\n",DFen->F[DFen->pcur]->name);
                     break;
                 default:
-                    getext(DFen->F[DFen->pcur]->name,buffer);
-                    if ( (!stricmp(buffer,"COM")) | (!strcmp(buffer,"BAT")) |
-                         ((!stricmp(buffer,"BTM")) & (Cfg->_4dos==1)) )
-                        {
-                        CommandLine("%s\n",DFen->F[DFen->pcur]->name);
-                        break;
-                        }
+
                     switch(FicIdf(DFen->F[DFen->pcur]->name,i)) {
                         case 0:
                             CommandLine("\n");
@@ -2029,6 +1981,9 @@ do
 
         case 0x0A:  // CTRL-ENTER
             GestionFct(30);
+            break;
+        case 0x0C:  // CTRL-L
+            GestionFct(35);
             break;
         case 27:    // ESCAPE
             CommandLine("\r");
@@ -2212,7 +2167,19 @@ do
             break;
     }  // switch(car);
 
-
+/*
+    switch(inp(0x60))
+        {
+        case 72:         // HAUT
+            DFen->scur--;
+            DFen->pcur--;
+            break;
+        case 80:         // BAS
+            DFen->scur++;
+            DFen->pcur++;
+            break;
+        }
+*/
     }
 while(car2!=0x44);      // F10
 }
@@ -2243,7 +2210,6 @@ strcpy(ShellAdr,suite);
 
 Fin();
 }
-
 
 
 
@@ -2304,6 +2270,8 @@ ChangeLine();
 MenuBar(3);
 }
 
+// TXTMode(OldY);
+
 
 /**************************
  - Affichage des fenetres -
@@ -2311,7 +2279,9 @@ MenuBar(3);
 
 void AffFen(struct fenetre *Fen)
 {
-int x,y,n;
+int x,y;
+
+int nbuf,nscr;
 
 switch (Fen->FenTyp) {
     case 0:
@@ -2320,12 +2290,31 @@ switch (Fen->FenTyp) {
     case 1:      // FenDIZ --> A lieu au moment de IDF
         break;
     case 2:      // OFF
-        for(y=Fen->y;y<=Fen->y+Fen->yl;y++)  {        // NON !
-            n=y*160;
-            n+=(Fen->x)*2;
-            for(x=0;x<(Fen->xl+1)*2;x++)   {
-                Screen_Adr[n]=Screen_Buffer[n];
-                n++;
+        for(y=0;y<=Fen->yl;y++)
+            {
+            nscr=(y+Fen->y)*160;
+            nbuf=(y-Fen->yl+OldY-1)*160;
+
+            nbuf+=(Fen->x)*2;
+            nscr+=(Fen->x)*2;
+            for(x=0;x<(Fen->xl+1)*2;x++)
+                {
+                if (nbuf<0)
+                    {
+                    if ((x&1)==0)
+                        Screen_Adr[nscr]=32;
+                        else
+                        Screen_Adr[nscr]=7;
+                    }
+                    else
+                    {
+                    if ((x&1)==0)
+                        Screen_Adr[nscr]=CnvASCII(Screen_Buffer[nbuf]);
+                        else
+                        Screen_Adr[nscr]=Screen_Buffer[nbuf];
+                    }
+                nbuf++;
+                nscr++;
                 }
             }
         break;
@@ -2350,13 +2339,110 @@ switch(tolower(DFen->path[0])-'A'+1) {
 
 }
 
+
+/****************
+ - Gestion 4DOS -
+ ****************/
+
+// Put Cfg->_4dos on if 4dos found
+void _4DOSverif(void)
+{
+union REGS R;
+
+R.w.ax=0xD44D;
+R.h.bh=0;
+
+int386(0x2F,&R,&R);
+
+if (R.w.ax==0x44DD)  {
+    Cfg->_4dos=1;
+//  PrintAt(0,0,"Found 4DOS V%d.%d",R.h.bl,R.h.bh);
+    }
+    else
+    {
+    Cfg->_4dos=0;
+    }
+}
+
+void _4DOSLhistdir(void)
+{
+unsigned short seg;
+unsigned short *adr;
+
+char a;
+
+register unsigned char n;
+
+union REGS R;
+
+R.w.ax=0xD44D;
+R.h.bh=0;
+
+int386(0x2F,&R,&R);
+
+if (R.w.ax==0x44DD)  {
+    Cfg->_4dos=1;
+
+    seg=R.w.cx;
+    adr=(unsigned short*)(seg*16+0x290);
+
+    seg=adr[1];
+    adr=(unsigned short*)(seg*16+0x4C60);
+
+    for (n=0;n<255;n++)  {
+        a=((char*)adr)[n];
+        Cfg->HistDir[n]=a;
+        }
+    }
+    else
+    {
+    Cfg->_4dos=0;
+    }
+}
+
+void _4DOSShistdir(void)
+{
+unsigned short seg;
+unsigned short *adr;
+
+char a;
+
+register unsigned char n;
+
+union REGS R;
+
+R.w.ax=0xD44D;
+R.h.bh=0;
+
+int386(0x2F,&R,&R);
+
+if (R.w.ax==0x44DD)  {
+    Cfg->_4dos=1;
+
+    seg=R.w.cx;
+    adr=(unsigned short*)(seg*16+0x290);
+
+    seg=adr[1];
+    adr=(unsigned short*)(seg*16+0x4C60);
+
+    for (n=0;n<255;n++)  {
+        a=Cfg->HistDir[n];
+        ((char*)adr)[n]=a;
+        }
+    }
+    else
+    {
+    Cfg->_4dos=0;
+    }
+}
+
 /***************************
  - Save Configuration File -
  ***************************/
 
 void SaveCfg(void)
 {
-int m,n,t;
+int m,n,t,ns;
 FILE *fic;
 struct fenetre *Fen;
 short taille;
@@ -2390,12 +2476,17 @@ fwrite(&(Fen->sorting),sizeof(ENTIER),1,fic);
 
 
 fwrite(&(Fen->nbrsel),4,1,fic);
+ns=Fen->nbrsel;
 
-for (n=0;n<Fen->nbrfic;n++)  {
-    if (Fen->F[n]->select==1) {
+for (n=0;n<Fen->nbrfic;n++)
+    {
+    if (Fen->F[n]->select==1)
+        {
+        ns--;
         m=strlen(Fen->F[n]->name);
         fwrite(&m,4,1,fic);
         fwrite(Fen->F[n]->name,1,m,fic);
+        if (ns==0) break;
         }
     }
 
@@ -2556,103 +2647,6 @@ fclose(fic);
 return 0;
 }
 
-
-
-/****************
- - Gestion 4DOS -
- ****************/
-
-// Put Cfg->_4dos on if 4dos found
-void _4DOSverif(void)
-{
-union REGS R;
-
-R.w.ax=0xD44D;
-R.h.bh=0;
-
-int386(0x2F,&R,&R);
-
-if (R.w.ax==0x44DD)  {
-    Cfg->_4dos=1;
-//  PrintAt(0,0,"Found 4DOS V%d.%d",R.h.bl,R.h.bh);
-    }
-    else
-    {
-    Cfg->_4dos=0;
-    }
-}
-
-void _4DOSLhistdir(void)
-{
-unsigned short seg;
-unsigned short *adr;
-
-char a;
-
-register unsigned char n;
-
-union REGS R;
-
-R.w.ax=0xD44D;
-R.h.bh=0;
-
-int386(0x2F,&R,&R);
-
-if (R.w.ax==0x44DD)  {
-    Cfg->_4dos=1;
-
-    seg=R.w.cx;
-    adr=(unsigned short*)(seg*16+0x290);
-
-    seg=adr[1];
-    adr=(unsigned short*)(seg*16+0x4C60);
-
-    for (n=0;n<255;n++)  {
-        a=((char*)adr)[n];
-        Cfg->HistDir[n]=a;
-        }
-    }
-    else
-    {
-    Cfg->_4dos=0;
-    }
-}
-
-void _4DOSShistdir(void)
-{
-unsigned short seg;
-unsigned short *adr;
-
-char a;
-
-register unsigned char n;
-
-union REGS R;
-
-R.w.ax=0xD44D;
-R.h.bh=0;
-
-int386(0x2F,&R,&R);
-
-if (R.w.ax==0x44DD)  {
-    Cfg->_4dos=1;
-
-    seg=R.w.cx;
-    adr=(unsigned short*)(seg*16+0x290);
-
-    seg=adr[1];
-    adr=(unsigned short*)(seg*16+0x4C60);
-
-    for (n=0;n<255;n++)  {
-        a=Cfg->HistDir[n];
-        ((char*)adr)[n]=a;
-        }
-    }
-    else
-    {
-    Cfg->_4dos=0;
-    }
-}
 
 
 /* 旼컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴� *\

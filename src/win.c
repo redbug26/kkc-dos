@@ -977,3 +977,209 @@ if (car==27)
     else
     return 2;
 }
+
+/*----------------------------------------------------------------------------*/
+
+/*---------------------------------*
+ - Recherche des infos sur Windows -
+ *---------------------------------*/
+short windows(short *HVersion, short *NVersion )
+{
+union  REGS  regs;          // Registres pour l'appel d'interruption
+struct SREGS sregs;           // Segment pour l'appel d'interruption
+
+*HVersion = 0;                    // Initialise le num‚ro de version
+*NVersion = 0;
+
+           //-- Identifie Windows x.y en mode Etendu -----------------
+
+regs.w.ax = 0x1600;                // Test d'installation de Windows
+segread( &sregs );                  // Lire les registres de segment
+int386x(0x2F, &regs, &regs, &sregs );
+
+switch ( regs.h.al )
+    {
+    case 0x01:
+    case 0xFF:
+        *HVersion = 2;        // Hauptversion
+        *NVersion = 0;        // Version secondaire inconnue
+        return 1;             // Windows /386 Version 2.x
+
+    case 0x00:
+    case 0x80:
+        regs.w.ax = 0x4680;           // Modes R‚el et Standard
+        int386x( 0x2F, &regs, &regs, &sregs );
+        if( regs.h.al == 0x80 )
+            return 0;           // Windows ne fonctionne pas
+            else
+            {
+               //-- Windows en mode R‚el ou Standard -----------------
+
+            regs.w.ax = 0x1605;        // Simuler l'initialiation
+            regs.w.bx = regs.w.si = regs.w.cx =  sregs.es = sregs.ds = 0;
+            regs.w.dx = 0x0001;
+            int386x( 0x2F, &regs, &regs, &sregs );
+            if( regs.w.cx == 0x0000 )
+                {
+                 //-- Windows en mode R‚el ---------------------------
+
+                regs.w.ax = 0x1606;
+                int386x(0x2F, &regs, &regs, &sregs );
+                return 0x81;
+                }
+            else
+                return 0x82;
+            }
+
+ //-- Windows en mode Etendu, ax contient le num‚ro de version -------
+
+    default:
+        *HVersion = regs.h.al;  // Afficher la version de Windows
+        *NVersion = regs.h.ah;
+        return 0x83;              // Windows en mode Etendu
+    }
+}
+
+/*-----------------------------*
+ - Change la taille de l'ecran -
+ *-----------------------------*/
+void ChangeTaille(int i)
+{
+int n;
+
+if (i==0)
+    switch(Cfg->TailleY) {
+        case 25:
+            Cfg->TailleY=30;
+            break;
+        case 30:
+            Cfg->TailleY=50;
+            break;
+        default:
+            Cfg->TailleY=25;
+            break;
+    }
+    else
+    {
+    Cfg->TailleY=i;
+    }
+
+SetTaille();
+}
+
+
+/*----------------------------------*
+ - Affiche les infos sur le systeme -
+ *----------------------------------*/
+void WinInfo(void)
+{
+static char chaine[80];
+short WindowsActif,HVer,NVer;
+
+SaveEcran();
+
+WinCadre(19,9,61,16,0);
+ColWin(20,10,60,15,10*16+4);
+ChrWin(20,10,60,15,32);
+
+PrintAt(23,10,"System Information");
+
+WindowsActif = windows( &HVer, &NVer );
+
+switch ( WindowsActif )
+    {
+    case 0:
+        sprintf(chaine,"Windows non actif");
+        break;
+    case 0x81:
+        sprintf(chaine,"Windows actif en mode R‚el");
+        break;
+    case 0x82:
+        sprintf(chaine,"Windows actif en mode Standard");
+        break;
+    case 0x01:
+        sprintf(chaine,"Windows/386 V 2.x actif");
+        break;
+    case 0x83:
+        sprintf(chaine,"Windows V %d.%d actif en %s", HVer, NVer, "mode Etendu" );
+        break;
+    }
+PrintAt(21,12," %s",chaine);
+
+Wait(0,0,0);
+ChargeEcran();
+}
+
+
+
+
+
+/*-------*
+ - Setup -
+ *-------*/
+void Setup(void)
+{
+static int l1,l2,l3,l4,l5,l6,l7,l8;
+
+static char x1=30,x2=30,x3=32;
+static int y1=5,y2=3,y3=15;
+
+struct Tmt T[14] = {
+      {5,3,7, "Size Trash   ",&l1},
+      {5,4,7, "Ansi Speed   ",&l2},
+      {5,5,7, "Screen Saver ",&l7},
+
+      {5,8,8, "Debug",&l3},
+      {5,9,8, "Point SubDir",&l4},
+      {5,10,8,"LogFile",&l5},
+      {5,11,8,"Use Font",&l6},
+      {5,12,8,"Hidden File",&l8},
+
+      {3,7,9,&x1,&y1},
+      {3,2,9,&x2,&y2},
+      {36,2,9,&x3,&y3},
+
+      {5,14,0,"Under Construction",NULL},
+
+      {5,17,2,NULL,NULL},           // le OK
+      {20,17,3,NULL,NULL}            // le CANCEL
+      };
+
+struct TmtWin F = {3,3,76,22,"Setup"};
+
+int n;
+
+l1=Cfg->mtrash;
+l2=Cfg->AnsiSpeed;
+l3=Cfg->debug;
+l4=Cfg->pntrep;
+l5=Cfg->logfile;
+l6=Cfg->font;
+l7=Cfg->SaveSpeed;
+l8=Cfg->hidfil;
+
+n=WinTraite(T,14,&F);
+
+if (n==27) return;
+
+Cfg->mtrash=l1;
+Cfg->AnsiSpeed=l2;
+Cfg->debug=l3;
+Cfg->pntrep=l4;
+Cfg->logfile=l5;
+Cfg->font=l6;
+Cfg->SaveSpeed=l7;
+Cfg->hidfil=l8;
+
+SaveCfg();
+
+DFen=DFen->Fen2;
+CommandLine("#cd .");
+DFen=DFen->Fen2;
+CommandLine("#cd .");
+
+LoadCfg();
+
+ChangeTaille(Cfg->TailleY); // Rafraichit l'ecran
+ChangeLine();
+}

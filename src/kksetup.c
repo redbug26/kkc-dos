@@ -1047,7 +1047,7 @@ do
                         SaveEcran();
                         PutCur(32,0);
 
-                        WinCadre(t-1,9,t+x,15,2);
+                        WinCadre(t-1,9,t+x,15,0);
                         ColWin(t,10,t+x-1,14,10*16+2);
                         ChrWin(t,10,t+x-1,14,32);
                         PrintAt(t,10,"Do you think that");

@@ -910,22 +910,9 @@ do
         case 13:
             chaine[0]=0;
             break;
-        case 'Š': chaine[0]=232; break;
-        case '‚': chaine[0]=233; break;
-        case 'ˆ': chaine[0]=234; break;
-        case '‰': chaine[0]=235; break;
-
-        case '…': chaine[0]=224; break;
-        case ' ': chaine[0]=225; break;
-        case 'ƒ': chaine[0]=226; break;
-        case '„': chaine[0]=227; break;
-
-        case '‡': chaine[0]='c'; break;
-        case '—': chaine[0]='u'; break;
-
-        case 0xFA: chaine[0]=7; break;
 
         default:
+            chaine[0]=CnvASCII(chaine[0]);
             break;
         }
 
@@ -1489,6 +1476,7 @@ switch(car)  {
 //            if (!stricmp(titre,"LI"))
             if (!stricmp(titre,"BR"))  aff=1;        // C‚sure forc‚e
             if (!stricmp(titre,"P")) aff=1;         // fin de paragraphe
+            if (!stricmp(titre,"/P")) aff=1;         // fin de paragraphe
             if (!stricmp(titre,"OL"))  listt[nlist]=2,listn[nlist]=1,nlist++;
             if (!stricmp(titre,"/OL")) listt[nlist]=0,listn[nlist]=0,nlist--,aff=1;
             if (!stricmp(titre,"UL"))  listt[nlist]=1,listn[nlist]=1,nlist++;
@@ -1639,28 +1627,8 @@ for (k=0;k<lentit;k++)
         case 1:
             aff=1,car=0;
             break;
-        case 'Š':
-            car=232; break;
-        case '‚':
-            car=233; break;
-        case 'ˆ':
-            car=234; break;
-        case '‰':
-            car=235; break;
-
-        case '‡':
-            car=231; break;
-
-        case '…':
-            car=224; break;
-        case ' ':
-            car=225; break;
-        case 'ƒ':
-            car=226; break;
-        case '„':
-            car=227; break;
-
         default:
+            car=CnvASCII(car);
             break;
         }
 

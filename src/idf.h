@@ -15,7 +15,7 @@ struct key      {
         char type;              // type de fichier
         };
 
-#define nbrkey 124
+#define nbrkey 125
         // Nombre of format + 6
 
 struct info

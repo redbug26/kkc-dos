@@ -809,6 +809,12 @@ struct key K[nbrkey]=	{
     "TAR Archive",
     "TAR",
     "?",118,0,0,3},
+{  {"JCH"},
+    3,
+    0,
+    "JCH module",
+    "D00",
+    "?",119,0,0,1},
 
 /*******************************************
  - structures … traiter en dernier ressort -

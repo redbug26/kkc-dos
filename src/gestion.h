@@ -25,6 +25,8 @@ char GetDrive(void);
 void SetDrive(char i);
 
 int FicSelect(int n,char q);
-char *getext(const char *nom,char *ext);
+char *getext(const char *nom);
 
 void SortFic(struct fenetre *Fen);
+
+char CnvASCII(char car);

@@ -69,8 +69,13 @@ struct Tmt {
         1 --> String
         2 --> OK OK OK
         3 --> CANCEL
-        4 --> Cadre 4 de hauteur
+        4 --> Cadre de 4 de hauteur
         5 --> Bouton personnalis‚
+        6 --> Cadre de 3 de hauteur
+        7 --> Entier (de 9 caracteres)
+        8 --> Switch
+        9 --> Cadre personnalise
+
 */
 
 

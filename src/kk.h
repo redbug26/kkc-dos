@@ -23,8 +23,10 @@ struct file {
 
 
 void Shell(char *string,...);
-
 void AffFen(struct fenetre *Fen);
+
+void SaveCfg(void);
+int LoadCfg(void);
 
 
 void InfoSupport(void);

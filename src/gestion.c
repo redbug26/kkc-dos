@@ -30,6 +30,69 @@ void GetFreeMem(char *buffer);
 	"int 31h" \
 	parm [edi];
 
+/*-----------------------------------------------------------*
+ - Fonction qui convertit les caracteres ASCII en RedBug one -
+ *-----------------------------------------------------------*/
+char CnvASCII(char car)
+{
+switch(car)
+    {
+    case 'Š':
+        return 232;
+    case '‚':
+        return 233;
+    case 'ˆ':
+        return 234;
+    case '‰':
+        return 235;
+
+    case '—':
+        return 'u';
+    case '£':
+        return 'u';
+    case '–':
+        return 'u';
+    case '':
+        return 'u';
+
+    case '':
+        return 'i';
+    case '¡':
+        return 'i';
+    case 'Œ':
+        return 'i';
+    case '‹':
+        return 'i';
+
+    case '•':
+        return 'o';
+    case '¢':
+        return 'o';
+    case '“':
+        return 'o';
+    case '”':
+        return 'o';
+
+
+    case '…':
+        return 224;
+    case ' ':
+        return 225;
+    case 'ƒ':
+        return 226;
+    case '„':
+        return 227;
+
+    case '‡':
+        return 231;
+
+    case 0xFA:
+        return 7;
+    default:
+        return car;
+    }
+}
+
 
 /*-----------------------------------------------------*
  -  Fonction utilis‚e pour le classement des fichiers  -
@@ -79,8 +142,8 @@ if ( a ^ b )
 
 // Place les extensions speciales toute en haut
 //----------------------------------------------
-e1=getext(F1->name,e1);
-e2=getext(F2->name,e2);
+e1=getext(F1->name);
+e2=getext(F2->name);
 
 if ((DFen->order&16)==16)
     {
@@ -144,9 +207,9 @@ qsort(Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
 /*------------------------------*
  - Renvoit l'extension d'un nom -
  *------------------------------*/
-char *getext(const char *nom,char *ext)
+char *getext(const char *nom)
 {
-char *e;
+char *e,*ext;
 
 e=strchr(nom,'.');
 

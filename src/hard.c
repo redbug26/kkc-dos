@@ -1135,7 +1135,7 @@ ColLin(x,y,lng,2*16+5);        // Couleur
 
 if (p==1)
     while (r==0)  {
-        car=Wait(0,0,0);
+        car=Wait(x,y,0);
 
         switch(car%256)
             {
@@ -1176,6 +1176,53 @@ ColLin(x,y,lng,2*16+3);        // Couleur
 return r;
 }
 
+// si p vaut 0 mets off
+// si p vaut 1 interroge
+// retourne -1 si SHIFT TAB, 1 si TAB
+int Switch(int x,int y,int *Val)
+{
+int r=0;
+
+int car;
+
+while (r==0)
+    {
+    AffChr(x+1,y,(*Val) ? 'X' : ' ');
+
+    car=Wait(x+1,y,0);
+
+    switch(car%256)
+        {
+        case 13:
+            return 0;
+        case 27:
+            r=1;
+            break;
+        case 9:
+            r=2;
+            break;
+        case 32:
+            (*Val)^=1;
+            break;
+        case 0:
+            switch(car/256)
+                {
+                case 15:
+                case 72:
+                    r=3;
+                    break;
+                case 80:
+                    r=2;
+                    break;
+                }
+            break;
+        }
+    }
+
+
+return r;
+}
+
 
 // Retourne 27 si escape
 // Retourne numero de la liste sinon
@@ -1184,7 +1231,8 @@ int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F)
 {
 char fin;       // si =0 continue
 char direct;    // direction du tab
-int i;
+int i,j;
+static char chaine[80];
 
 SaveEcran();
 
@@ -1203,6 +1251,7 @@ switch(T[i].type) {
     case 1:
         ColLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),1*16+5);
         ChrLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),32);
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
         break;
     case 2:
         PrintAt(F->x1+T[i].x,F->y1+T[i].y,"      OK     ");
@@ -1222,6 +1271,17 @@ switch(T[i].type) {
     case 6:
         WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+2,2);
         break;
+    case 7:
+        j=strlen(T[i].str)+2;
+        ColLin(F->x1+T[i].x+j,F->y1+T[i].y,9,1*16+5);
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"%s: %-9d",T[i].str,*(T[i].entier));
+        break;
+    case 8:
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"[%c] %s",*(T[i].entier) ? 'X' : ' ',T[i].str);
+        break;
+    case 9:
+        WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].str)+F->x1+T[i].x+1,*(T[i].entier)+F->y1+T[i].y+1,2);
+        break;
     }
 
 fin=0;
@@ -1233,6 +1293,7 @@ while (fin==0) {
 switch(T[i].type) {
     case 0:
     case 4:
+    case 9:
         break;
     case 1:
         direct=InputAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str,*(T[i].entier));
@@ -1245,6 +1306,14 @@ switch(T[i].type) {
         break;
     case 5:
         direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
+        break;
+    case 7:
+        sprintf(chaine,"%d",*(T[i].entier));
+        direct=InputAt(F->x1+T[i].x+strlen(T[i].str)+2,F->y1+T[i].y,chaine,9);
+        sscanf(chaine,"%d",T[i].entier);
+        break;
+    case 8:
+        direct=Switch(F->x1+T[i].x,F->y1+T[i].y,T[i].entier);
         break;
     }
 

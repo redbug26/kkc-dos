@@ -30,6 +30,8 @@ int Truemove(char *inpath,char *outpath);
 
 static int FicEcrase;
 
+int FenCopie(struct fenetre *F2);
+int FenMove(struct fenetre *F2);
 
 
 // Copytree
@@ -318,35 +320,73 @@ return ok;
 // retourne 0 si pas copie
 //-------------------------
 
-int FenCopie(char *dest)
+int FenCopie(struct fenetre *F2)
 {
-
+static int DirLength=70;
 static int CadreLength=71;
-static int Dir[256];
+static char Dir[256];
+static int n;
 
 struct Tmt T[5] = {
-      {15,5,2,NULL,NULL},
-      {45,5,3,NULL,NULL},
-      { 5,3,1,Dir,NULL},
+      { 2,3,1,Dir,&DirLength},
+      {15,5,2,NULL,NULL},           // le OK
+      {45,5,3,NULL,NULL},           // le CANCEL
       { 5,2,0,"Copy files to",NULL},
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = {
-    3,10,76,17,
-    "Copy"};
+struct TmtWin F = {3,10,76,17,"Copy"};
 
-int n;
-
-memcpy(Dir,dest,255);
+memcpy(Dir,F2->path,255);
 
 n=WinTraite(T,5,&F);
 
-if (n==0)
-    return 1;
-    else
-    return 0;
+if ( (n==1) | (n==0) )
+    {
+    if (!strcmp(Dir,F2->path)) return 1;
 
+    DFen=F2;
+    CommandLine("#cd %s",Dir);
+    return 1;
+    }
+
+return 0;
+}
+
+// retourne 0 si pas move
+//-------------------------
+
+int FenMove(struct fenetre *F2)
+{
+static int DirLength=70;
+static int CadreLength=71;
+static char Dir[256];
+static int n;
+
+struct Tmt T[5] = {
+      { 5,3,1,Dir,&DirLength},
+      {15,5,2,NULL,NULL},
+      {45,5,3,NULL,NULL},
+      { 5,2,0,"Move files to",NULL},
+      { 1,1,4,NULL,&CadreLength}
+      };
+
+struct TmtWin F = {3,10,76,17,"Move"};
+
+memcpy(Dir,F2->path,255);
+
+n=WinTraite(T,5,&F);
+
+if ( (n==1) | (n==0) )
+    {
+    if (!strcmp(Dir,F2->path)) return 1;
+
+    DFen=F2;
+    CommandLine("#cd %s",Dir);
+    return 1;
+    }
+
+return 0;
 }
 
 void CopieRar(struct fenetre *F1,struct fenetre *F2)
@@ -875,39 +915,7 @@ return ok;
 }
 
 
-// retourne 0 si pas move
-//-------------------------
 
-int FenMove(char *dest)
-{
-
-static int CadreLength=71;
-static int Dir[256];
-
-struct Tmt T[5] = {
-      {15,5,2,NULL,NULL},
-      {45,5,3,NULL,NULL},
-      { 5,3,0,Dir,NULL},
-      { 5,2,0,"Move files to",NULL},
-      { 1,1,4,NULL,&CadreLength}
-      };
-
-struct TmtWin F = {
-    3,10,76,17,
-    "Move"};
-
-int n;
-
-memcpy(Dir,dest,255);
-
-n=WinTraite(T,5,&F);
-
-if (n==0)
-    return 1;
-    else
-    return 0;
-
-}
 
 /*-----------------------------*
  - Fonction de MOVE principale -
@@ -959,7 +967,7 @@ if (!strcmp(F1->path,F2->path))
 TailleTotale=F1->taillesel;
 TailleRest=0;
 
-if (FenMove(F2->path)==0) return;
+if (FenMove(F2)==0) return;
 
 F=F1->F[F1->pcur];
 
@@ -985,7 +993,7 @@ for (i=0;i<F1->nbrfic;i++)
         Path2Abs(inpath,F->name);
 
         strcpy(outpath,F2->path);
-        Path2Abs(inpath,F->name);
+        Path2Abs(outpath,F->name);
 
         if (RemoveM(inpath,outpath,(F1->F[i]))==1)
             {
@@ -1070,7 +1078,7 @@ if (!strcmp(F1->path,F2->path))
 TailleTotale=F1->taillesel;
 TailleRest=0;
 
-if (FenCopie(F2->path)==0) return;
+if (FenCopie(F2)==0) return;
 
 F=F1->F[F1->pcur];
 
@@ -1096,7 +1104,7 @@ for (i=0;i<F1->nbrfic;i++)
         Path2Abs(inpath,F->name);
 
         strcpy(outpath,F2->path);
-        Path2Abs(inpath,F->name);
+        Path2Abs(outpath,F->name);
 
         if (recopy(inpath,outpath,(F1->F[i]))==1)
             {
