@@ -223,10 +223,13 @@ return s;
 /*---------------------------------------------*
  - Make absolue path from old path and ficname -
  *---------------------------------------------*/
-void Path2Abs(char *p,char *Ficname)
+void Path2Abs(char *p,const char *relatif)
 {
+static char Ficname[256];
 int l,m,n;
 char car;
+
+strcpy(Ficname,relatif);
 
 for(n=0;n<strlen(p);n++)
     if (p[n]=='/') p[n]='\\';

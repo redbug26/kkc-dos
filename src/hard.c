@@ -1709,6 +1709,8 @@ Cfg->autoreload=1;
 Cfg->verifhist=1;
 Cfg->palafter=0;
 
+Cfg->noprompt=0;
+
 Cfg->crc=0x69;
 
 Cfg->debug=0;

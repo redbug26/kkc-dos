@@ -29,9 +29,7 @@
 void Fin(void);
 
 void SaveSel(struct fenetre *F1);
-void LoadSel(struct fenetre *F1,int n);
-
-void Move(struct fenetre *F1,struct fenetre *F2);
+void LoadSel(int n);
 
 /*---------------------------*
  * Declaration des variables *
@@ -400,6 +398,8 @@ exit(1);
  40: Fenetre history des directories
  41: Va dans le r‚p‚rtoire pere
  42: Va dans le r‚p‚rtoire trash
+ 43: Active la fenetre principal (Cfg->FenAct)
+ 44: Rename Window
 */
 
 void GestionFct(int fct)
@@ -426,7 +426,7 @@ switch(fct)
         SelectMoins();
         break;
     case 5:
-        Search(Fenetre[2],DFen);
+        Search(Fenetre[2],DFen);    // Fenetre[2]: Fenetre pas visible
         break;
     case 6:
         CreateKKD();
@@ -447,22 +447,26 @@ switch(fct)
         CommandLine("#%s %s",Fics->edit,DFen->F[DFen->pcur]->name);
         break;
     case 10:    // Copy
-        Copie(DFen,DFen->Fen2);
+        Copie(DFen,Fenetre[2],DFen->Fen2->path);  // Fenetre[2]: Fenetre pas visible
         if (Cfg->autoreload==1)
             {
+            DFen=Fenetre[0];
             GestionFct(27);
-            DFen=DFen->Fen2;
+            DFen=Fenetre[1];
             GestionFct(27);
             }
+        GestionFct(43); // Active la fenetre principal (Cfg->FenAct)
         break;
     case 11:    // Move
-        Move(DFen,DFen->Fen2);
+        Move(DFen,Fenetre[2],DFen->Fen2->path);    // Fenetre[2]: Fenetre pas visible
         if (Cfg->autoreload==1)
             {
+            DFen=Fenetre[0];
             GestionFct(27);
-            DFen=DFen->Fen2;
+            DFen=Fenetre[1];
             GestionFct(27);
             }
+        GestionFct(43); // Active la fenetre principal (Cfg->FenAct)
         break;
     case 12:    // Create Directory
         CreateDirectory();
@@ -471,12 +475,13 @@ switch(fct)
         SaveSel(DFen);
         Delete(DFen);
         CommandLine("#cd .");
-        LoadSel(DFen,0);
+        LoadSel(0);
         if (Cfg->autoreload==1)
             {
             DFen=DFen->Fen2;
             GestionFct(27);
             }
+        GestionFct(43); // Active la fenetre principal (Cfg->FenAct)
         break;
     case 14:    // Close left window
         DFen=Fenetre[0];
@@ -587,7 +592,7 @@ switch(fct)
     case 27:    // Reload
         SaveSel(DFen);
         CommandLine("#cd .");
-        LoadSel(DFen,0);
+        LoadSel(0);
         break;
     case 28:    // Table ASCII
         ASCIItable();
@@ -630,12 +635,13 @@ switch(fct)
 
         if (Cfg->autoreload==1)
             {
+            DFen=Fenetre[0];
             GestionFct(27);
-            DFen=DFen->Fen2;
+            DFen=Fenetre[1];
             GestionFct(27);
             }
-
         Cfg->strash=0;
+        GestionFct(43); // Active la fenetre principal (Cfg->FenAct)
         break;
     case 35:
         WinInfo(Fenetre);
@@ -663,14 +669,16 @@ switch(fct)
             DFen->Fen2->FenTyp=2;
             }
         break;
-    case 39:
+    case 39: // Change les attributs
+        WinAttrib();
         if (Cfg->autoreload==1)
             {
+            DFen=Fenetre[0];
             GestionFct(27);
-            DFen=DFen->Fen2;
+            DFen=Fenetre[1];
             GestionFct(27);
             }
-        WinAttrib();
+        GestionFct(43); // Active la fenetre principal (Cfg->FenAct)
         break;
     case 40:
         HistDir();
@@ -680,6 +688,22 @@ switch(fct)
         break;
     case 42:
         CommandLine("#CD %s",Fics->trash);
+        break;
+    case 43:
+        Cfg->FenAct=(Cfg->FenAct)&1;
+        DFen=Fenetre[Cfg->FenAct];
+        ChangeLine();      // Affichage Path
+        break;
+    case 44:    // Fenetre pour renomation ;)
+        WinRename(DFen,DFen->Fen2);
+        if (Cfg->autoreload==1)
+            {
+            DFen=Fenetre[0];
+            GestionFct(27);
+            DFen=Fenetre[1];
+            GestionFct(27);
+            }
+        GestionFct(43); // Active la fenetre principal (Cfg->FenAct)
         break;
     }
 
@@ -1534,7 +1558,8 @@ switch (DFen->system)
         Cfg->strash+=DFen->F[DFen->pcur]->size;
 
         // Copie les fichiers dans la trash
-        Copie(DFen,Fenetre[2]);    // Quitte aprŠs
+        (Cfg->noprompt)=(Cfg->noprompt)|1;
+        Copie(DFen,Fenetre[2],Fenetre[2]->path);    // Quitte aprŠs
 
         break;
     case 5: // KKD
@@ -1546,16 +1571,11 @@ switch (DFen->system)
             strcat(nom,(DFen->path)+strlen(DFen->VolName)+1);
             }
 
-//        DFen=DFen->Fen2;
         DFen=Fenetre[2];                //
         Cfg->FenAct= (Cfg->FenAct)+2;   //
 
         ChangeToKKD();
         CommandLine("#cd %s",nom);
-
-//        Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
-//        DFen=Fenetre[Cfg->FenAct];
-//        ChangeLine();      // Affichage Path
 
         ChangePos=1;
         break;
@@ -1649,7 +1669,6 @@ fprintf(fic,"%s\n",F1->F[F1->pcur]->name);
 fprintf(fic,"%d %d\n",F1->pcur,F1->scur);   // position a l'ecran
 
 
-
 for(i=0;i<F1->nbrfic;i++)
     {
     F=F1->F[i];
@@ -1660,13 +1679,11 @@ for(i=0;i<F1->nbrfic;i++)
 fclose(fic);
 }
 
-void LoadSel(struct fenetre *F1,int n)
+void LoadSel(int n)
 {
 char nom[256];
-struct file *F;
 FILE *fic;
 int i,j;
-
 
 fic=fopen(Fics->temp,"rt");
 if (fic==NULL) return;
@@ -1674,40 +1691,37 @@ if (fic==NULL) return;
 fgets(nom,256,fic);
 nom[strlen(nom)-1]=0;
 
-fscanf(fic,"%d%d",&(F1->pcur),&(F1->scur));
+fscanf(fic,"%d%d",&(DFen->pcur),&(DFen->scur));
 
 j=1;
-for (i=0;i<F1->nbrfic;i++)
-    if (!strncmp(nom,F1->F[i]->name,strlen(nom)))  {
-        F1->pcur=i;
+for (i=0;i<DFen->nbrfic;i++)
+    if (!strncmp(nom,DFen->F[i]->name,strlen(nom)))
+        {
+        DFen->pcur=i;
 
         j=0;
         break;
         }
 
 if (j==1)
-    F1->pcur=F1->scur;
+    DFen->pcur=DFen->scur;
 
 while(!feof(fic))
     {
     fgets(nom,256,fic);
     nom[strlen(nom)-1]=0;
 
-    for(i=0;i<F1->nbrfic;i++)
+    for(i=0;i<DFen->nbrfic;i++)
         {
-        F=F1->F[i];
-
-        if (!stricmp(F->name,nom))
+        if (!stricmp(DFen->F[i]->name,nom))
             {
-            switch(n)   {
+            switch(n)
+                {
                 case 0:
-                    F->select=1;
+                    FicSelect(i,1); // Select
                     break;
                 case 1:
-                    if (F->select==0)
-                        F->select=1;
-                        else
-                        F->select=0;
+                    FicSelect(i,2); // Inverse Selection
                     break;
                 }
             }
@@ -1723,24 +1737,19 @@ fclose(fic);
 void WinRename(struct fenetre *F1,struct fenetre *F2)
 {
 static char Dir[70];
-static char Name[256];
+static char Name[256],Temp[256];
 static int DirLength=70;
 static int CadreLength=71;
-struct fenetre *Fen;
 
 struct Tmt T[5] = {
-      { 2,3,1,
-        Dir,
-        &DirLength},
+      { 2,3,1, Dir, &DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 5,2,0,"Move/rename file to",NULL},
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = {
-    3,10,76,17,
-    "Move/rename"};
+struct TmtWin F = {3,10,76,17,"Move/rename"};
 
 int n;
 
@@ -1752,20 +1761,16 @@ Path2Abs(Name,F1->F[DFen->pcur]->name);
 
 n=WinTraite(T,5,&F);
 
+strcpy(Temp,F1->path);
+Path2Abs(Temp,Dir);
+
+
+
 if ( (n==0) | (n==1) )
     {
-    if (rename(Name,Dir)!=0)
+    if (rename(Name,Temp)!=0)
         WinError("Couldn't rename file");
     }
-
-Fen=DFen;
-
-DFen=F1;
-CommandLine("#cd .");
-DFen=F2;
-CommandLine("#cd .");
-
-DFen=Fen;
 }
 
 
@@ -1788,14 +1793,14 @@ int i;  // Compteur
 
 do
     {
+    (Cfg->noprompt)=(Cfg->noprompt)&126; // Retire le dernier bit
+
     if ( (Cfg->key==0) & (Cfg->strash>=Cfg->mtrash) & (Cfg->mtrash!=0) )
         GestionFct(34);  // Efface la trash si trop plein
 
     if ( (Cfg->key==0) & (Cfg->FenAct>1) )
         {
-        Cfg->FenAct=(Cfg->FenAct)&1;
-        DFen=Fenetre[Cfg->FenAct];
-        ChangeLine();      // Affichage Path
+        GestionFct(43);
         }
         else
         {
@@ -1964,7 +1969,8 @@ do
         }
 
 //-Switch car------------------------------------------------------------------
-    switch (car)  {
+    switch (car)
+        {
         case 0x12:    // CTRL-R
             GestionFct(27);
             break;
@@ -2108,8 +2114,7 @@ do
         case 0x8D:      // CTRL-UP
             GestionFct(8);            break;
         case 0x59:       // SHIFT-F6
-            WinRename(DFen,DFen->Fen2);
-            break;
+            GestionFct(44);           break;
         case 0x5E:       // CTRL-F1
             GestionFct(14);           break;
         case 0x5F:       // CTRL-F2

@@ -231,6 +231,7 @@ if (DFen->system!=0)
 if (DFen->system==0)
     {
     static char tnom[256],nom2[256];
+    static char buf[256];
     int i;
 
     if (chdir(DFen->path)!=0)
@@ -240,26 +241,30 @@ if (DFen->system==0)
         do
             {
             n=0;
-            for (i=0;i<strlen(DFen->path);i++)
+            for (i=0;i<strlen(DFen->path)-1;i++)
                 if (DFen->path[i]=='\\') n=i;
 
             if (n==0) break;
 
             strcpy(tnom,DFen->path+n+1);
             DFen->path[n]=0;
-            if (chdir(DFen->path)==0) break;
+
+            strcpy(buf,DFen->path);
+            if (buf[strlen(buf)-1]==':')
+                strcat(buf,"\\");
+
+            if (chdir(buf)==0) break;
             }
         while(1);
 
         if (n==0)
             {
-            WinError("Drive Not Ready");
+            if (IOver==0)
+                WinError("Drive Not Ready");
             memcpy(DFen->path,"C:\\",4);
             }
             else
             {
-            static char buf[256];
-
             strcpy(buf,DFen->path);
             Path2Abs(buf,tnom);
 
@@ -305,7 +310,8 @@ if (DFen->system==0)
                 }
                 else
                 {
-                WinMesg("Invalid Path",nom2);
+                if (IOver==0)
+                    WinMesg("Invalid Path",nom2);
 //                strcpy(DFen->path,GetLastHistDir());
                 }
             }

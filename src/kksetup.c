@@ -818,9 +818,18 @@ switch(HI(car))
 
 } while ( (HI(car)!=0x44) & (LO(car)!=27) );
 
-PrintAt(10,(Cfg->TailleY-6),"KK.BAT & KKDESC.BAT are now in PATH (%s)",PathOfKK);
-PrintAt(20,(Cfg->TailleY-5),"-> You could run KK from everywhere");
-PrintAt(10,(Cfg->TailleY-4),"%s is done",chaine);
+if (strlen(PathOfKK)!=0)
+    {
+    PrintAt(10,(Cfg->TailleY-6),"KK.BAT & KKDESC.BAT are now in PATH (%s)",PathOfKK);
+    PrintAt(20,(Cfg->TailleY-5),"-> You could run KK from everywhere");
+    PrintAt(10,(Cfg->TailleY-4),"%s is done",chaine);
+    }
+    else
+    {
+    PrintAt(10,(Cfg->TailleY-5),"WARNING: You couldn't run KK from everywhere (Reload KKSETUP)");
+    PrintAt(10,(Cfg->TailleY-4),"%s is done",chaine);
+    }
+
 
 PrintAt(29,(Cfg->TailleY-2),"Press a key to continue");
 ColLin(1,(Cfg->TailleY-2),78,0*16+2);

@@ -78,6 +78,9 @@ if (Fen->system!=0)
 strcpy(Info.path,DFen->path);
 Path2Abs(Info.path,F->name);
 
+strcpy(Info.format,"Invalid Name");
+strcpy(Info.fullname,"");
+
 Traitefic(&Info);
 
 Info.fullname[40]=0;

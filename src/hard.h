@@ -103,6 +103,7 @@ struct config {
      char autoreload;       // Reload automatiquement lorsque les deux fenˆtres sont les mˆmes
      char verifhist;        // Verify history at any loading of KK (CTRL-PGDN)
      char palafter;         // Load the palette only when configuration is ok
+     char noprompt;         // Si x&1 vaut 1 alors on ne prompte pdt la copie
 
      char font;             // utilisation des fonts
 

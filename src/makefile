@@ -8,7 +8,7 @@
 
 #.SILENT
 
-#DEBUG = 0
+DEBUG = 0
 
 CA = wasm
 CC = wcc386

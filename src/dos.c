@@ -96,7 +96,7 @@ switch(toupper(DFen->path[0]))
         DFen->IDFSpeed=2*18;
         break;
     default:
-        DFen->IDFSpeed=10*18;
+        DFen->IDFSpeed=5*18;
         break;
    }
 

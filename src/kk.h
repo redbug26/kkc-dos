@@ -68,7 +68,7 @@ extern struct fenetre *DFen;
 
 extern char *Screen_Buffer;
 
-extern int IOver;
+extern int IOver;       // Vaut 1 si on veut pas faire de verifications
 extern int IOerr;
 
 #include "ficidf.h"

@@ -177,7 +177,7 @@ do
         }
 
     }
-while(car!=27);
+while ( (c!=27) & (c!=0x8D00) );
 
 ChargeEcran();
 
@@ -208,7 +208,7 @@ for (n=0;n<NbrSub[z];n++)
 
 
 x1=(82-max)/2;
-y1=((Cfg->TailleY)-2*NbrSub[z])/2;
+y1=((Cfg->TailleY-1)-2*NbrSub[z])/2;
 
 x2=x1+max+3;
 y2=y1+(NbrSub[z]+1)*2;
@@ -278,7 +278,7 @@ do
         }
 
     }
-while(car!=27);
+while ( (c!=27) & (c!=0x8D00) );
 
 ChargeEcran();
 
@@ -290,7 +290,7 @@ ChargeEcran();
 void Page(long z)
 {
 char car,car2;
-int c;
+unsigned int c;
 
 long n;
 
@@ -424,7 +424,10 @@ if (nbrkey==0)
     car2=HI(c);
     }
     else
+    {
     nbrkey--;
+    c=0;
+    }
 
 if (pres!=z)
     {
@@ -475,7 +478,7 @@ switch(car2)
         break;
     }
 }
-while(car!=27);
+while ( (c!=27) & (c!=0x8D00) );
 
 ChargeEcran();
 
