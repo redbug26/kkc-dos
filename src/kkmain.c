@@ -425,6 +425,8 @@ switch(fct)
         if ((DFen->F[DFen->pcur]->attrib & RB_SUBDIR)==RB_SUBDIR)
             break;
 
+        if (DFen->FenTyp!=0) return;
+
         strcpy(buffer,DFen->path);
         Path2Abs(buffer,DFen->F[DFen->pcur]->name);
 
@@ -2559,7 +2561,10 @@ if (KKCfg->key==0)
             {
             if ( (ym==(DFen->scur+DFen->y2+1)) &
                  ((xm>=DFen->x) & (xm<=DFen->xl)) )
+                {
                 c=13;
+                ReleaseButton();
+                }
             }
 
         if ( ( ((clock()-Cl_Start)>DFen->IDFSpeed) & (Cl_Start!=0)) |
@@ -3278,6 +3283,7 @@ FILE *fic;
 char nom[256];
 short taille;
 struct PourMask **Mask;
+char *viewhist;
 
 fic=fopen(KKFics->CfgFile,"rb");
 if (fic==NULL) return -1;
@@ -3297,6 +3303,8 @@ if (Cfg->crc!=0x69)
     }
 
 Mask=KKCfg->V.Mask;
+viewhist=KKCfg->V.viewhist;
+
 
 if (fread((void*)KKCfg,sizeof(struct kkconfig),1,fic)==0)
     {
@@ -3305,6 +3313,7 @@ if (fread((void*)KKCfg,sizeof(struct kkconfig),1,fic)==0)
     }
 
 KKCfg->V.Mask=Mask;
+KKCfg->V.viewhist=viewhist;
 
 if ( (KKCfg->overflow1!=0) | (KKCfg->crc!=0x69) )
     {

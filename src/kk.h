@@ -1,5 +1,5 @@
-#define VERSION "0.8"
-#define RBTitle "Ketchup Killers Commander V0.8"
+#define VERSION "0.81"
+#define RBTitle "Ketchup Killers Commander V0.81"
 
 #define CALLING __cdecl
 

@@ -646,6 +646,7 @@ short taille;
 char nom[256];
 FENETRE *DFen;
 struct PourMask **Mask;
+char *viewhist;
 
 
 fic=fopen(KKFics->CfgFile,"rb");
@@ -654,8 +655,10 @@ if (fic==NULL) return -1;
 fread((void*)Cfg,sizeof(struct config),1,fic);
 
 Mask=KKCfg->V.Mask;
+viewhist=KKCfg->V.viewhist;
 fread((void*)KKCfg,sizeof(struct kkconfig),1,fic);
 KKCfg->V.Mask=Mask;
+KKCfg->V.viewhist=viewhist;
 
 for(n=0;n<16;n++)
     {
