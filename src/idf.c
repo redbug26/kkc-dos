@@ -875,20 +875,7 @@ struct key K[nbrkey]=   {
      "HSI",
      "Handmade Software, Inc",   //--- HSI (Creator of alchemy) --------
      134,0,1,4},
-{  "",
-     0,
-     0,
-     "MPEG 2 Audio Layer 2",
-     "MP2",
-     "ISO",
-     135,1,1,2},
-{  "",
-     0,
-     0,
-     "MPEG 2 Audio Layer 3",
-     "MP3",
-     "ISO",
-     136,1,1,2},
+
 {  {0x63,0x6F,0x64,0x65,0x00,0x01,0x00    }, // codeúúú
     7,
     0x4e,
@@ -1019,6 +1006,20 @@ struct key K[nbrkey]=   {
         "Device Driver",
         "SYS",
         "",93,0,0,6},
+{  "",
+     0,
+     0,
+     "MPEG 2 Audio Layer 2",
+     "MP2",
+     "ISO",
+     135,1,1,2},
+{  "",
+     0,
+     0,
+     "MPEG 2 Audio Layer 3",
+     "MP3",
+     "ISO",
+     136,1,1,2},
 {  {0x80},
     1,
     0,
@@ -3569,7 +3570,7 @@ for (i=0;i<15;i++)
             }
     }
 
-sprintf(Info->message[1]," %d,%d/%d",val,nm,Info->sizemax);
+// sprintf(Info->message[1]," %d,%d/%d",val,nm,Info->sizemax);
 
 val=((val/15)*nm)/Info->sizemax;
 if (val<50)

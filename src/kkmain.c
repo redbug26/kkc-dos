@@ -65,7 +65,6 @@ void AffLonger(void);
 long OldCol;                                // Ancienne couleur du texte
 long OldY,OldX,PosX,PosY;
 
-
 sig_atomic_t signal_count;
 
 char *SpecMessy=NULL;
@@ -260,7 +259,7 @@ if (retour!=0)
 void ChangePalette(char c)
 {
 int x,y,i;
-char rec;
+char rec,reloadpal;
 
 int n,m,ntot;
 int nt,mt;
@@ -295,7 +294,7 @@ int posx[NBRS],posy[NBRS];
 if (c>0)
     {
     memcpy(Cfg->palette,defcol[c-1],48);
-    LoadPal();
+    LoadPal(Cfg->palette);
     return;
     }
 
@@ -419,10 +418,12 @@ if (n<16)
         case 0x47:                                               // HOME
             ChrWin(x,y+m,x+8,y+m,32);
             Cfg->palette[n*3+m]=0;
+            reloadpal=1;
             break;
         case 0X4F:                                                // END
             ChrWin(x,y+m,x+8,y+m,32);
             Cfg->palette[n*3+m]=63;
+            reloadpal=1;
             break;
         case 80:                                                  // bas
             m++;
@@ -433,10 +434,12 @@ if (n<16)
         case 0x4B:                                             // gauche
             if (Cfg->palette[n*3+m]!=0)
                 Cfg->palette[n*3+m]--;
+            reloadpal=1;
             break;
         case 0x4D:                                             // droite
             if (Cfg->palette[n*3+m]!=63)
                 Cfg->palette[n*3+m]++;
+            reloadpal=1;
             break;
         case 0xF:                                           // SHIFT-TAB
             n--;
@@ -454,7 +457,11 @@ if (n<16)
     if (m<0)  n--,m=2;
     if (n<0)  n=ntot;
 
-    LoadPal();
+    if (reloadpal)
+        {
+        LoadPal(Cfg->palette);
+        reloadpal=0;
+        }
     }
     else
     {
@@ -484,7 +491,7 @@ if (n<16)
             break;
         case 13:
             memcpy(Cfg->palette,defcol[n-16],48);
-            LoadPal();
+            LoadPal(Cfg->palette);
             rec=1;
             break;
         }
@@ -539,7 +546,7 @@ char *Style[NBRS]={"Default Style","Norton Style","Cyan Style",
 if (c>0)
     {
     memcpy(Cfg->palette,defcol[c-1],48);
-    LoadPal();
+    LoadPal(Cfg->palette);
     return;
     }
 
@@ -585,6 +592,11 @@ for(i=0;i<3;i++)
         ColLin(dx+2,4+i,32,10*16+3);
         else
         ColLin(dx+2,4+i,32,10*16+1);
+
+    if (Cfg->palette[n*3+i]<32)
+        PrintAt(dx+29,4+i,"%2d",Cfg->palette[n*3+i]);
+        else
+        PrintAt(dx+5,4+i,"%2d",Cfg->palette[n*3+i]);
     }
 
 
@@ -600,11 +612,11 @@ switch(HI(car))
     {
     case 0x47:                                               // HOME
         Cfg->palette[n*3+m]=0;
-        LoadPal();
+        LoadPal(Cfg->palette);
         break;
     case 0X4F:                                                // END
         Cfg->palette[n*3+m]=63;
-        LoadPal();
+        LoadPal(Cfg->palette);
         break;
     case 80:                                                  // bas
         m++;
@@ -615,12 +627,12 @@ switch(HI(car))
     case 0x4B:                                             // gauche
         if (Cfg->palette[n*3+m]!=0)
             Cfg->palette[n*3+m]--;
-        LoadPal();
+        LoadPal(Cfg->palette);
         break;
     case 0x4D:                                             // droite
         if (Cfg->palette[n*3+m]!=63)
             Cfg->palette[n*3+m]++;
-        LoadPal();
+        LoadPal(Cfg->palette);
         break;
     case 0xF:
         n--;
@@ -694,7 +706,13 @@ if (log==1)
     *buffer=0;
     InputAt(3,py,buffer,76);
     if (*buffer==0) fin=1;
-    if (!stricmp(buffer,"logout")) fin=1;
+    if (!stricmp(buffer,"logout"))
+        fin=1;
+    if (!stricmp(buffer,"key on"))
+        KKCfg->savekey=1;
+    if (!stricmp(buffer,"key off"))
+        KKCfg->savekey=0;
+
     if (!strnicmp(buffer,"exec",4))
         {
         sscanf(buffer+4,"%d",&x);
@@ -1124,6 +1142,8 @@ switch(fct)
         DFen=Fenetre[0];
 
         ChangeDrive();
+        DFen->init=1;
+        DFen->FenTyp=0;
         DFen=FenOld;
 
         ChangeLine();                                  // Affichage Path
@@ -1133,6 +1153,8 @@ switch(fct)
         DFen=Fenetre[1];
 
         ChangeDrive();
+        DFen->init=1;
+        DFen->FenTyp=0;
         DFen=FenOld;
 
         ChangeLine();                                  // Affichage Path
@@ -1593,6 +1615,9 @@ if (i!=0)
     int x=2,y=2,pos=i-1,car,max,prem;
 
     SaveScreen();
+
+    Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
+
     PutCur(32,0);
 
     max=i;
@@ -1716,6 +1741,8 @@ if (i!=0)
     SaveScreen();
     PutCur(32,0);
 
+    Bar(" Help CrMenu ----  ----  ----  ----  ----  ----  ----  ---- ");
+
     max=i;
     if (max>Cfg->TailleY-4) max=Cfg->TailleY-4;
 
@@ -1762,6 +1789,9 @@ if (i!=0)
         case 0x51:    //--- PGDN ---------------------------------------
             pos+=5;
             if (pos>=i) pos=i-1;
+            break;
+        case 0X3B:    //--- F1 -----------------------------------------
+            HelpTopic("histcom");
             break;
         case 0x3C:    //--- F2 -----------------------------------------
             MenuCreat(com[pos],com[pos],DFen->path);
@@ -1935,6 +1965,7 @@ if (n!=27)
 void ChangeDrive(void)
 {
 static char path[256],path2[256];
+char buffer[32],volume[32];
 long fpos,cpos,pos,p1,p2;
 
 char drive[26];
@@ -1963,6 +1994,8 @@ x=(40-(l*nbr))/2+DFen->x;
 
 
 SaveScreen();
+
+Bar(" Help  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
 x1=DFen->x+1;
 
@@ -2038,6 +2071,9 @@ do  {
                 if (path[strlen(path)-1]!=DEFSLASH)
                     strcat(path,"\\");
 
+                GetVolume(i,buffer);
+                sprintf(volume,"[%s]",buffer);
+
 
              //Calcule le nombre de position occup‚e par les repertoires
                 pos=12;
@@ -2077,8 +2113,16 @@ do  {
 
             p1=p2+1;
 
-            if ( (pos-fpos>=12) & (pos-fpos<=19) )
-                PrintAt(x1+4,pos-fpos,"%s",path2);
+            if (pos==12)
+                {
+                sprintf(path2+10,"%21s",volume);
+                PrintAt(x1+4,pos,"%s",path2);
+                }
+                else
+                {
+                if ( (pos-fpos>12) & (pos-fpos<=19) )
+                    PrintAt(x1+4,pos-fpos,"%s",path2);
+                }
 
             pos++;
             }
@@ -2121,6 +2165,16 @@ do  {
         }
 
     AffCol(drive[i],9,10*16+1);
+
+    if (LO(car)==0)
+        {
+        switch(HI(car))
+            {
+            case 0x3B:
+                HelpTopic("chdrive");
+                break;
+            }
+        }
 
     if (HI(car)==0)
         {
@@ -3076,7 +3130,7 @@ do
                         CommandLine("@ ERROR WITH FICIDF @");
                         break;
                     case 2:
-                         CommandLine(DFen->F[DFen->pcur]->name);
+//                         CommandLine(DFen->F[DFen->pcur]->name);
                          break;
                     }
                 }
@@ -3411,30 +3465,31 @@ PlaceDrive();
 Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;
 
-if ( (KKCfg->scrrest) & (saveconfig) )
+if (KKCfg->scrrest) // & (saveconfig) )
     {
     TXTMode();                          // Retablit le mode texte normal
 
     for (n=0;n<8000;n++)
         Screen_Adr[n]=Screen_Buffer[n];
+
     }
     else
     {
     FILE *fic;
 
     fic=fopen(KKFics->ficscreen,"wb");
-    if (fic==NULL)
-        WinError("It's bizarre ?!");
+    if (fic!=NULL)
+        {
+        fwrite(&OldX,1,sizeof(OldX),fic);
+        fwrite(&OldY,1,sizeof(OldY),fic);
 
-    fwrite(&OldX,1,sizeof(OldX),fic);
-    fwrite(&OldY,1,sizeof(OldY),fic);
+        fwrite(&PosX,1,sizeof(PosX),fic);
+        fwrite(&PosY,1,sizeof(PosY),fic);
 
-    fwrite(&PosX,1,sizeof(PosX),fic);
-    fwrite(&PosY,1,sizeof(PosY),fic);
+        fwrite(Screen_Buffer,8000,1,fic);
 
-    fwrite(Screen_Buffer,1,8000,fic);
-
-    fclose(fic);
+        fclose(fic);
+        }
     }
 
 if (KKCfg->_4dos==1)
@@ -3453,6 +3508,9 @@ if (*SpecSortie==0)
 
 if (SpecMessy!=NULL)
     cprintf("\n\r%s\n\r",SpecMessy);
+
+if ((SpecSortie[0]=='#') & (KKCfg->savekey==1))
+    SpecSortie[0]='@';
 
 memcpy(ShellAdr,SpecSortie,256);
 
@@ -3704,7 +3762,7 @@ if ( (KKCfg->overflow1!=0) | (KKCfg->crc!=0x69) )
     }
 
 if (KKCfg->palafter!=1)
-    LoadPal();
+    LoadPal(Cfg->palette);
 
 for(n=0;n<16;n++)
     {
@@ -3919,28 +3977,25 @@ char *path;
 int n;
 char *LC;
 
+
+
 /*--------------------------------------------------------------------*\
 |-                     Initialisation de l'ecran                      -|
 \*--------------------------------------------------------------------*/
 
-/*
-printf("char : %d\n",sizeof(char));
-printf("short: %d\n",sizeof(short));
-printf("long : %d\n",sizeof(long));
-printf("int  : %d\n",sizeof(int));
-printf("config : %d\n",sizeof(struct config));
-getch();
-*/
-
 Cfg=(struct config*)GetMem(sizeof(struct config));
 
-InitScreen(0);                     // Initialise toutes les donn‚es HARD
+Cfg->TailleX=(*(char*)(0x44A));
+Cfg->TailleY=(*(char*)(0x484))+1;
 
+
+InitScreen(0);
 
 /*--------------------------------------------------------------------*\
-|- Sauvegarde de l'ecran                                              -|
+|- Sauvegarde des donn‚es ‚crans                                      -|
 \*--------------------------------------------------------------------*/
-Screen_Buffer=(char*)GetMem(8000);
+
+Screen_Buffer=(char*)GetMem(8000);                      // maximum 80x50
 
 OldX=(*(char*)(0x44A));
 OldY=(*(char*)(0x484))+1;
@@ -3949,9 +4004,6 @@ WhereXY(&PosX,&PosY);
 
 for (n=0;n<8000;n++)
     Screen_Buffer[n]=Screen_Adr[n];
-
-Cfg->TailleX=OldX;
-Cfg->TailleY=OldY;                  // Initialisation de la taille ecran
 
 /*--------------------------------------------------------------------*\
 |- Initialisation du temps                                            -|
@@ -4165,6 +4217,8 @@ if ( (KKCfg->currentdir==1) & (LC[4]!='0') )
         CommandLine("#CD %s",Fics->LastDir);
     }
 
+
+Cfg->reinit=0;
 UseCfg();                      // Emploi les parametres de configuration
 
 InitScreen(Cfg->display);
@@ -4174,6 +4228,38 @@ Fenetre[1]->yl=(Cfg->TailleY)-4;
 
 if (KKCfg->verifhist==1)
     VerifHistDir();            // Verifie l'history pour les repertoires
+
+
+/*--------------------------------------------------------------------*\
+|- Sauvegarde des touches                                             -|
+\*--------------------------------------------------------------------*/
+
+if (KKCfg->savekey)
+    {
+    char *buf;
+    unsigned short *adrint;
+    int m;
+    FILE *fic;
+
+    adrint=(unsigned short*)(0x60*4);
+    buf=(char*)(adrint[0]+adrint[1]*0x10);
+
+    adrint=(unsigned short*)(buf+5);
+    buf=(char*)(adrint[0]+adrint[1]*0x10);
+
+    fic=fopen("c:\\key.rb","ab");
+
+    for(m=0;m<20*16;m+=16)
+        {
+        for(n=0;n<16;n++)
+            if (buf[n+m]<0x80)
+                fputc(buf[n+m]+140,fic);
+        }
+
+    fprintf(fic,"\n\n");
+
+    fclose(fic);
+    }
 
 Gestion();
 

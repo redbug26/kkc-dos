@@ -350,7 +350,6 @@ while (kbhit()) Wait(0,0,0);
 char MenuInsert(char *section,char *titre,char *buffer)
 {
 static char buf1[256],buf2[256];
-char tmp_name[15];
 FILE *infic,*outfic;
 char ok=0;
 int n;
@@ -365,8 +364,7 @@ if (infic==NULL)
     return 1;
     }
 
-tmpnam(tmp_name);
-outfic=fopen(tmp_name,"wt");
+outfic=fopen(Fics->temp,"wt");
 if (outfic==NULL)
     {
     fclose(infic);
@@ -407,7 +405,7 @@ strcat(buf1,".bak");
 
 unlink(buf1);
 rename(KKFics->menu,buf1);
-rename(tmp_name,KKFics->menu);
+rename(Fics->temp,KKFics->menu);
 
 return 1;
 }
@@ -577,6 +575,11 @@ void Menu(void)
 char res[256];
 int r;
 
+
+SaveScreen();
+
+Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
+
 strcpy(res,"[Main]");
 
 do
@@ -584,6 +587,8 @@ do
     r=MenuGroup(res);
     }
 while(r==0);
+
+LoadScreen();
 
 }
 
@@ -621,6 +626,8 @@ struct TmtWin F = {-1,5,46,14,"New User Menu"};
 strncpy(title,titbuf,32);
 strcpy(section,"[Main]");
 Line2PrcLine(buf,line);
+if (!strcmp(line,"!.!"))
+    strcpy(line,buf);
 
 l1=0;
 
@@ -648,7 +655,6 @@ if (l1==1)
 
 sprintf(buf2,"%s\n",line);
 strcat(buffer,line);
-
 
 MenuInsert(section,title,buffer);
 }

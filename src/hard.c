@@ -29,6 +29,19 @@
 #define DOOR 1
 
 /*--------------------------------------------------------------------*\
+|- Les petits pragma                                                  -|
+\*--------------------------------------------------------------------*/
+void outportb(unsigned short,char);
+#pragma aux outportb parm [dx] [al] = "out dx,al"
+
+void outportw(unsigned short,unsigned short);
+#pragma aux outportw parm [dx] [ax] = "out dx,ax"
+
+#define outpw(_valx,_valy)   outportw(_valx,_valy)
+#define outp(_valx,_valy)    outportb(_valx,_valy)
+
+
+/*--------------------------------------------------------------------*\
 |- variable globale                                                   -|
 \*--------------------------------------------------------------------*/
 
@@ -1822,45 +1835,64 @@ void TXTMode(void)
 char *TX=(char*)0x44A;
 char *TY=(char*)0x484;
 long lig;
-
-Clr();
+char ok;
 
 if (Cfg->TailleX==0) Cfg->TailleX=80;
 if (Cfg->TailleY==0) Cfg->TailleY=25;
 
-lig=Cfg->TailleY;
-
 Cfg->UseFont=0;
-switch (lig)
+
+if ((Cfg->reinit) | ((Cfg->TailleY-1)!=(*TY)) | ((Cfg->TailleX)!=(*TX)))
+    ok=1;
+    else
+    ok=0;
+
+if (ok)
     {
-    case 25:
-        Mode25();
-        break;
-    case 30:
-        Mode30();
-        break;
-    case 50:
-        Mode50();
-        break;
+    lig=Cfg->TailleY;
+    switch (lig)
+        {
+        case 25:
+            Mode25();
+            break;
+        case 30:
+            Mode30();
+            break;
+        case 50:
+            Mode50();
+            break;
+        }
+    (*TY)=(char)(Cfg->TailleY-1);
+
+    switch(Cfg->TailleX)
+        {
+        case 80:
+            Mode80();
+            break;
+        case 90:
+            Mode90();
+            break;
+        }
+    (*TX)=(char)(Cfg->TailleX);
+
+    Clr();
     }
 
-switch(Cfg->TailleX)
-    {
-    case 80:
-        Mode80();
-        break;
-    case 90:
-        Mode90();
-        break;
-    }
-
-(*TX)=(char)(Cfg->TailleX);
-(*TY)=(char)(Cfg->TailleY-1);
+Cfg->reinit=1;
 
 InitSeg();
 }
 
-void LoadPal(void)
+
+void SavePal(char *pal)
+{
+int n;
+
+for(n=0;n<16;n++)
+    GetPal(n,&(pal[n*3]),&(pal[n*3+1]),&(pal[n*3+2]));
+}
+
+void LoadPal(char *pal)
 {
 union REGS regs;
 int n;
@@ -1887,6 +1919,26 @@ outp(0x3C8,x);
 outp(0x3C9,r);
 outp(0x3C9,g);
 outp(0x3C9,b);
+}
+
+void GetPal(int x,char *r,char *g,char *b)
+{
+union REGS R;
+
+R.w.ax=0x1015;
+R.h.bl=x;
+
+int386(0x10,&R,&R);
+(*r)=R.h.dh;
+(*g)=R.h.ch;
+(*b)=R.h.cl;
+
+/*
+outp(0x3C7,x);
+(*r)=inp(0x3C9);
+(*g)=inp(0x3C9);
+(*b)=inp(0x3C9);
+*/
 }
 
 void LibMem(void *mem)
@@ -2140,6 +2192,8 @@ static char chaine[80];
 int x1,y1,x2,y2;
 
 SaveScreen();
+
+Bar(" Help  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
 x1=F->x1;
 y1=F->y1;
@@ -2444,8 +2498,7 @@ return ok;
 \*--------------------------------------------------------------------*/
 int Gradue(int x,int y,int length,int from,int to,int total)
 {
-long j1,j2;
-int j3;
+long j1,j2,j3;
 
 if (total==0) return 0;
 
@@ -4056,6 +4109,38 @@ switch (Cfg->TailleY)
     }
 }
 
+/*--------------------------------------------------------------------*\
+|- Affichage de la barre en dessous de l'ecran                        -|
+\*--------------------------------------------------------------------*/
+
+void Bar(char *bar)
+{
+int TY;
+int i,j,n;
+
+TY=Cfg->TailleY-1;
+
+n=0;
+for (i=0;i<10;i++)
+    {
+    PrintAt(n,TY,"F%d",(i+1)%10);
+    for(j=0;j<2;j++,n++)
+        AffCol(n,TY,1*16+8);
+    
+    for(j=0;j<6;j++,n++)
+        {
+        AffCol(n,TY,1*16+2);
+        AffChr(n,TY,*(bar+i*6+j));
+        }
+    if (Cfg->TailleX==90)
+        {
+        AffCol(n,TY,1*16+2);
+        AffChr(n,TY,32);
+        n++;
+        }
+    }
+}
+
 #ifdef DEBUG
 void Debug(char *string,...)
 {
@@ -4076,3 +4161,5 @@ fprintf(fic,"%s",suite);
 fclose(fic);
 }
 #endif
+
+

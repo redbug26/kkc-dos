@@ -101,7 +101,7 @@ if (argc==3)
         TXTMode();
         InitFont();
 
-        LoadPal();
+        LoadPal(Cfg->palette);
         Help();
 
         Cfg->TailleX=OldX;
@@ -153,7 +153,7 @@ Cfg->TailleY=30;
 TXTMode();
 InitFont();
 
-LoadPal();
+LoadPal(Cfg->palette);
 
 strcpy(KKRname,argv[1]);
 for (n=strlen(KKRname);n>0;n--)  {

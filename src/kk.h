@@ -160,6 +160,8 @@ struct kkconfig
 
      char dispath;              // Affiche la path en haut de la fenˆtre
 
+     char savekey; // Vaut 1 si on sauvegarde les touches dans un buffer
+
     //--- Variable pour le viewer --------------------------------------
 
      char warp;                    // 0: pas de warp, 1: word, 2: entier

@@ -25,6 +25,7 @@
 |- prototype interne                                                  -|
 \*--------------------------------------------------------------------*/
 int SortTest(const void *P1,const void *P2);
+void ClearAllSpace(char *name);
 
 
 void GetFreeMem(char *buffer);
@@ -205,6 +206,29 @@ switch(q)
 return 0;
 }
 
+void ClearAllSpace(char *name)
+{
+char buf[1024];
+short i,j;
+
+i=0;    //--- navigation dans name -------------------------------------
+j=0;    //--- position dans buf ----------------------------------------
+
+
+while (name[i]!=0)
+    {
+    if (name[i]!=32)
+        {
+        buf[j]=name[i];
+        j++;
+        }
+    i++;
+    }
+buf[j]=0;
+
+strcpy(name,buf);
+}
+
 
 /*--------------------------------------------------------------------*\
 |-   Change de repertoire                                             -|
@@ -219,6 +243,8 @@ char *p;
 
 p=DFen->path;
 memcpy(old,p,256);
+
+ClearAllSpace(Ficname);
 
 
 // Conversion suivant le type de dir du systeme (pour comptabilite UNIX)
@@ -909,9 +935,10 @@ if (!strnicmp(chaine,"CD ",3))
     ChangeLine();                                      // Affichage Path
     return 1;
     }
-if (!strnicmp(chaine,"CD..",4))
+if ( (!strnicmp(chaine,"CD..",4)) | (!strnicmp(chaine,"CD\\",3)) |
+                                           (!strnicmp(chaine,"CD/",3)) )
     {
-    ChangeDir("..");
+    ChangeDir(chaine+2);
     ChangeLine();                                      // Affichage Path
     return 1;
     }

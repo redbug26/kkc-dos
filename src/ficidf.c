@@ -165,6 +165,8 @@ if ( (nbrappl!=1) & (fin==0) )
 
     SaveScreen();
 
+    Bar(" Help CrMenu ----  ----  ----  ----  ----  ----  ----  ---- ");
+
     m=((Cfg->TailleY)-nbrappl)/2;
 
     if (m<2) m=2;

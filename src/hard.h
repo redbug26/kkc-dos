@@ -58,6 +58,7 @@ struct config
      char comstop;                        // Stop bit             (eg:1)
 
      char Tfont;                 // Character used for the vertical line
+     char reinit;
 
      char crc;                                              // CRC: 0x69
      };
@@ -104,7 +105,8 @@ extern "C"
 |- Display function                                                   -|
 \*--------------------------------------------------------------------*/
 void TXTMode(void);
-void LoadPal(void);
+void LoadPal(char *);
+void SavePal(char *);
 void InitFont(void);
 
 /*--------------------------------------------------------------------*\
@@ -203,6 +205,7 @@ void WinCadre(int x1,int y1,int x2,int y2,int type);
 void WinLine(int x1,int y1,int xl,int type);
 
 void SetPal(int x,char r,char g,char b);
+void GetPal(int x,char *r,char *g,char *b);
 
 
 /*--------------------------------------------------------------------*\
@@ -260,6 +263,8 @@ void SetDefaultPath(char *path);                      // Set up the file
 /*--------------------------------------------------------------------*\
 |-        Menu & Pannel function                                      -|
 \*--------------------------------------------------------------------*/
+void Bar(char *);                               // Affichage de la barre
+
 int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
 int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
 

@@ -2838,7 +2838,7 @@ void InitMode(void)
 TXTMode();
 InitFont();
 
-LoadPal();
+LoadPal(Cfg->palette);
 
 WinCadre(0,1,Cfg->TailleX-1,(Cfg->TailleY-2),1);
 Window(1,2,Cfg->TailleX-2,(Cfg->TailleY-3),10*16+1);

@@ -1,7 +1,6 @@
 /*--------------------------------------------------------------------*\
 |-             Procedure pour gestion des fenˆtres                    -|
 \*--------------------------------------------------------------------*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
@@ -20,6 +19,8 @@
 #include "kk.h"
 
 #include "idf.h"
+
+static char winbuffer[256];      //--- Buffer interne ------------------
 
 extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
 
@@ -543,7 +544,9 @@ int x,y,i;
 Fen2=Fen->Fen2;
 F=Fen2->F[Fen2->pcur];
 
-if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR) return;
+if ( ( (F->attrib & _A_SUBDIR)==_A_SUBDIR) & (F->name[0]=='.') )
+    return;
+
 if (Fen2->system!=0) return;
 
 WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
@@ -551,7 +554,45 @@ WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
 strcpy(Info.path,Fen2->path);
 Path2Abs(Info.path,F->name);
 
-Traitefic(&Info);
+if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
+    {
+    FENETRE *OldDFen;
+    int nbr,size;
+    int sel;
+    char temp[32];
+
+    memset(&Info,0,sizeof(RB_IDF));
+
+    if (KKCfg->_Win95==1)
+        {
+        InfoLongFile(Fen2,winbuffer);
+        strncpy(Info.fullname,winbuffer,80);
+        Info.fullname[79]=0;
+        }
+        else
+        strcpy(Info.fullname,F->name);
+
+    OldDFen=DFen;
+
+    sel=F->select;
+    F->select=1;
+
+    CountRepSize(Fen2,Fenetre[2],&nbr,&size);
+
+    F->select=sel;
+
+    DFen=OldDFen;
+
+    strcpy(Info.format,"Directory");
+
+    Long2Str(size,temp);
+
+    sprintf(Info.message[0]," %-12s bytes in %d files",temp,nbr);
+    }
+    else
+    {
+    Traitefic(&Info);
+    }
 
 Buf=GetMem(4000);
 
@@ -687,7 +728,7 @@ PrintAt(DFen->x3,DFen->y3,"%-36s",buffer);
 void MenuBar(char c)
 {
 static char bar[4][60]=
- {" Help  Menu  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
+ {" Help  User  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
   " ---- Attrib View  Edit  Host Rename ----  ----   Row  ---- ",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
   " Drv1  Drv2  FDiz FileID ----  Hist Search Type  Line  Disp "}; //ALT
@@ -747,38 +788,6 @@ if (c!=4)
             Tbar[47]=0x0F;
         }
     Bar(Tbar);
-    }
-}
-
-/*--------------------------------------------------------------------*\
-|- Affichage de la barre en dessous de l'ecran                        -|
-\*--------------------------------------------------------------------*/
-
-void Bar(char *bar)
-{
-int TY;
-int i,j,n;
-
-TY=Cfg->TailleY-1;
-
-n=0;
-for (i=0;i<10;i++)
-    {
-    PrintAt(n,TY,"F%d",(i+1)%10);
-    for(j=0;j<2;j++,n++)
-        AffCol(n,TY,1*16+8);
-    
-    for(j=0;j<6;j++,n++)
-        {
-        AffCol(n,TY,1*16+2);
-        AffChr(n,TY,*(bar+i*6+j));
-        }
-    if (Cfg->TailleX==90)
-        {
-        AffCol(n,TY,1*16+2);
-        AffChr(n,TY,32);
-        n++;
-        }
     }
 }
 
@@ -877,14 +886,14 @@ if (i==0)
     Cfg->TailleY=i;
 
 TXTMode();
+LoadPal(Cfg->palette);
+
 InitFont();
 
 Fenetre[0]->yl=(Cfg->TailleY)-4;
 Fenetre[1]->yl=(Cfg->TailleY)-4;
 
 AfficheTout();
-
-LoadPal();
 }
 
 
@@ -1363,9 +1372,7 @@ char InfoVol[32];
 
 FENETRE *Fen2;
 struct file *F;
-int n,m,x,y;
-struct find_t ff;
-int error;
+int x,y;
 
 static char chaine[80];
 short WindowsActif,HVer,NVer;
@@ -1413,11 +1420,6 @@ if (strlen(Buf)>37) Buf+=(strlen(Buf)-37);
 ttotal=(d.total_clusters)*(d.sectors_per_cluster);
 ttotal=ttotal*(d.bytes_per_sector)/1024;
 
-/*
-R.w.ax=0x0900;     // PQ ICI ?
-int386(0x16,&R,&R);
-*/
-
 WindowsActif = windows( &HVer, &NVer );
 
 switch ( WindowsActif )
@@ -1443,25 +1445,7 @@ memcpy(disk,Fen2->path,3);
 disk[3]=0;
 drive=toupper(disk[0])-'A';
 
-strcpy(volume,disk);
-strcat(volume,"*.*");
-
-error=_dos_findfirst(volume,_A_VOLID,&ff);
-
-if (error!=0)
-    strcpy(volume,"Unknow");
-    else
-    strcpy(volume,ff.name);
-
-n=0;
-while (volume[n]!=0)
-    {
-    if (volume[n]=='.')
-        for (m=n;m<strlen(volume);m++)
-            volume[m]=volume[m+1];
-        else
-        n++;
-    }
+GetVolume(drive,volume);
 
 InfoVol[0]=0;
 
@@ -1503,6 +1487,7 @@ ColLin(x+1,y+2,37,10*16+3);
 PrintAt(x+1,y+3,"%s",Buf);
 ChrLin(x,y+4,38,196);
 
+
 PrintAt(x+1,y+5,"Current disk");
 ColLin(x+1,y+5,37,10*16+3);
 
@@ -1511,7 +1496,7 @@ PrintAt(x+1,y+6,"%s [%s] %s",disk,volume,InfoVol);
 PrintAt(x+1,y+7,"Free space: %8s kilobytes",Long2Str(tfree,temp));
 PrintAt(x+1,y+8,"Capacity:   %8s kilobytes",Long2Str(ttotal,temp));
 
-ChrLin(x,y+9,38,196);
+ChrLin(x,y+9 ,38,196);
 PrintAt(x+1,y+10,"System Information");
 ColLin(x+1,y+10,37,10*16+3);
 
@@ -1934,7 +1919,7 @@ if (SearchInfo(Fen)!=0)
 |-  Fenetre TREE                                                      -|
 \*--------------------------------------------------------------------*/
 
-void FenTree(FENETRE *Fen)  //marjo
+void FenTree(FENETRE *Fen)
 {
 int x,y,n,i,j,t,pos;
 FENETRE *OldFen;
@@ -2009,3 +1994,31 @@ for(;i<Fen->yl-Fen->y-1;i++)
 DFen=OldFen;
 }
 
+/*--------------------------------------------------------------------*\
+|-  disk 0 --> 'A:'                                                   -|
+\*--------------------------------------------------------------------*/
+void GetVolume(char disk,char *volume)
+{
+struct find_t ff;
+int n,m;
+int error;
+
+sprintf(volume,"%c:\\*.*",disk+'A');
+
+error=_dos_findfirst(volume,_A_VOLID,&ff);
+
+if (error!=0)
+    strcpy(volume,"Unknow");
+    else
+    strcpy(volume,ff.name);
+
+n=0;
+while (volume[n]!=0)
+    {
+    if (volume[n]=='.')
+        for (m=n;m<strlen(volume);m++)
+            volume[m]=volume[m+1];
+        else
+        n++;
+    }
+}

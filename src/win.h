@@ -26,7 +26,6 @@ void ASCIItable(void);
 void YouMad(char *s);
 
 void MenuBar(char c);         // Bar de menu (tout en dessous) F1.. F2..
-void Bar(char *);                               // Affichage de la barre
 
 void UseCfg(void);
 
@@ -35,6 +34,8 @@ void Setup(void);
 extern int *TailleX;
 
 void RemplisVide(void);  // Remplissage du vide pour les plus de 80 col.
+
+void GetVolume(char disk,char *volume);
 
 /*--------------------------------------------------------------------*\
 |-  Fonction de la secret part                                        -|

@@ -4,41 +4,43 @@
 
 .286
 
-;== Donn‚es ============================================================
+UseKey                 = 0
 
-data segment para 'DATA'              ; D‚finition du segment de donn‚es
+b equ byte ptr
+w equ word ptr
+d equ dword ptr
+q equ qword ptr
+s equ short
+f equ far
 
-prgname   db 256 dup (0)                    ; Nom du programme … appeler
-prgpara   db "/c "
-prgtrue   db 256 dup (0)           ; Les paramŠtres sont transmis au Prg
-                                                       ; toujours KKMAIN
-
-prgpos    dw 0                                     ; longueur de la path
-
-prgparas  db "/c "
-prgsys    db 256 dup (0)
-
-kkmainp   db "kkmain 69690",0
-kkmainp1  db "kkmain 6969",0
-
-Scomspec  db "COMSPEC=",0
-
-data ends                                     ;Fin du segment de donn‚es
 
 ;== Code ===============================================================
 
 code segment para 'CODE'                  ;D‚finition du code de segment
 
-assume cs:code, ds:data, ss:stackseg
+assume cs:code, ds:code, ss:stackseg
 
 exec proc far
-    mov  ax,data                    ;Charge adresse segment du DATA seg.
-    mov  ds,ax                                      ;dans le registre DS
+    push cs
+    pop ds
 
     call ComsPec
     call InitPath
 
     call setfree                          ;Lib‚rer la m‚moire inutilis‚e
+
+    mov ax,3560h
+    int 21h              ;--- renvoit es:bx ----------------------------
+    mov w[int_00h],bx
+    mov w[int_00h+2],es
+
+    mov dx,offset et_int00h
+    mov ax,2560h
+    int 21h
+
+    mov ax,offset sav_ecran_buf
+    mov w[sav_ecran],ax
+    mov w[sav_ecran+2],ds
 
     call kkmaind
 
@@ -51,21 +53,47 @@ boucle:
 ;--- Appel commande systeme --------------------------------------------
 ;-----------------------------------------------------------------------
     call System      ; Pr‚pare l'execution du programme voulu par KKMAIN
-    cmp al,0
-    je fin
+    cmp al,'#'
+    je @case23
+    cmp al,'@'
+    je @case40
+    jmp fin
 
-;    mov si,offset prgsys
-;    mov al,[si]
-;    cmp al,0
-;    je fin
+@case23:
+;--- Case pour appel normal d'un programme -----------------------------
+    mov dx,offset prgname                       ;Offset nom de programme
+    mov si,offset prgparas                ;Offset de ligne d'instruction
+    call exeprg                                    ;Appeler le programme
+    jmp @break
+
+
+@case40:
+;--- Case avec sauvegarde des touches ----------------------------------
+    mov ax,3509h
+    int 21h              ;--- renvoit es:bx ----------------------------
+    mov w[int_09h],bx
+    mov w[int_09h+2],es
+
+    mov dx,offset et_int09h
+    mov ax,2509h
+    int 21h
 
     mov dx,offset prgname                       ;Offset nom de programme
     mov si,offset prgparas                ;Offset de ligne d'instruction
     call exeprg                                    ;Appeler le programme
 
+    push ds
+    mov dx,cs:w[int_09h]
+    mov ds,cs:w[int_09h+2]
+    mov ax,2509h
+    int 21h              ;--- a besoin de ds:dx ------------------------
+    pop ds
+
+    jmp @break
 
 ;--- Rappel de KKMAIN --------------------------------------------------
 ;-----------------------------------------------------------------------
+@break:
     call kkmain                ; Pr‚pare l'‚x‚cution de KKMAIN.EXE 69690
 
     mov dx,offset prgname                       ;Offset nom de programme
@@ -74,10 +102,15 @@ boucle:
 
     jmp boucle
 
+;--- Fin du programme --------------------------------------------------
 fin:
+    mov dx,cs:w[int_00h]
+    mov ds,cs:w[int_00h+2]
+    mov ax,2560h
+    int 21h              ;--- a besoin de ds:dx ------------------------
+
     mov ax,4C00h                        ; FIN programme par fonction DOS
     int 21h                          ;en transmettant le code d'erreur 0
-
 
 exec endp
 
@@ -197,7 +230,7 @@ exeprg endp
 ;-----------------------------------------------------------------------
 ; copie la chaine que KKMAIN veut executer dans prgsys -----------------
 ; renvoit al: caractere de controle                                    -
-------------------------------------------------------------------------
+;-----------------------------------------------------------------------
 System proc near
     push es
     push ds
@@ -205,8 +238,9 @@ System proc near
     push ds
     pop es
 
-    mov ax,0BA00h
-    mov ds,ax
+    push 0BA00h
+    pop ds
+
     xor si,si              ;--- source ---------------------------------
     mov al,ds:[si]
     inc si
@@ -273,7 +307,7 @@ ComsPec proc near
     push es
     push ds
 
-    mov ax,data
+    mov ax,cs
     mov ds,ax
 
     mov ah,62h
@@ -394,6 +428,79 @@ oui:
     popa
     ret
 InitPath endp
+
+
+;=== Gestion des touches ===============================================
+et_int09h:
+    push ax
+    push bx
+    push cx
+    push dx
+    push di
+    push si
+    push es
+    push ds
+    pushf
+
+    mov es,cs:[sav_ecran+2]
+    mov di,cs:[sav_ecran]
+    in al,60h
+    add di,cs:[taille_buf]
+
+    inc cs:word ptr[taille_buf]
+
+    mov es:byte ptr[di],al
+
+    cmp cs:word ptr[taille_buf],1995 ;--Taille buffer > espace libre ?--
+    jne continue
+    mov cs:word ptr[taille_buf],0  ; Buffer=0
+
+continue:
+    popf
+    pop ds
+    pop es
+    pop si
+    pop di
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+
+    jmp cs:dword ptr[int_09h]
+
+
+et_int00h:
+    jmp cs:dword ptr[int_00h]
+
+sav_ecran      dw 0,0
+taillemax      dw 2048
+taille_buf     dw 0
+sav_ecran_buf  db 2048 dup (0FFh)
+
+;== Donn‚es ============================================================
+
+
+; gestion touche
+int_09h   dw 0,0
+int_00h   dw 0,0
+
+; fin gestion touche
+
+prgname   db 256 dup (0)                    ; Nom du programme … appeler
+prgpara   db "/c "
+prgtrue   db 256 dup (0)           ; Les paramŠtres sont transmis au Prg
+                                                       ; toujours KKMAIN
+
+prgpos    dw 0                                     ; longueur de la path
+
+prgparas  db "/c "
+prgsys    db 256 dup (0)
+
+kkmainp   db "kkmain 69690",0
+kkmainp1  db "kkmain 6969",0
+
+Scomspec  db "COMSPEC=",0
+
 
 ;-----------------------------------------------------------------------
 ; Affiche une chaine                                                   -

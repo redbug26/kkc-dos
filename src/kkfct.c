@@ -11,6 +11,8 @@ short Nm[]={72,68,42,40,3,63};
 
 KKCfg->KeyAfterShell=0;
 
+KKCfg->savekey=0;           //--- Vaut 0 par defaut --------------------
+
 memcpy(KKCfg->Qmenu,"ChgDrive"
                     "  Swap  "
                     "Go Trash"

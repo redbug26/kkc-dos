@@ -37,6 +37,11 @@ int HexaView(char *fichier);
 int TxtView(char *fichier);
 int HtmlView(char *fichier,char *liaison);
 
+
+int TxtDown(int xl);
+int TxtUp(int xl);
+
+
 static char *Keyboard_Flag1=(char*)0x417;
 
 
@@ -113,7 +118,7 @@ static char ficname[256];
 if (KKCfg->saveviewpos==1)
     {
     strcpy(ficname,Fics->trash);
-    Path2Abs(ficname,"kkview.tmp");
+    Path2Abs(ficname,"kkview.rb");
     fic=fopen(ficname,"rb");
     if (fic!=NULL)
         {
@@ -145,7 +150,7 @@ static char ficname[256];
 if (KKCfg->saveviewpos==1)
     {
     strcpy(ficname,Fics->trash);
-    Path2Abs(ficname,"kkview.tmp");
+    Path2Abs(ficname,"kkview.rb");
     fic=fopen(ficname,"r+b");
     if (fic==NULL)
         fic=fopen(ficname,"w+b");
@@ -886,6 +891,77 @@ posn=0;
 KKCfg->cnvtable=numtrad;
 }
 
+
+/*--------------------------------------------------------------------*\
+|- Deplace le texte d'une ligne vers le bas                           -|
+|- Renvoit 0 si il faut arreter                                       -|
+\*--------------------------------------------------------------------*/
+int TxtDown(int xl)
+{
+int car,m;
+
+m=0;
+do
+    {
+    posn++;
+    if (posn==taille)
+        {
+        posn=taille-1;
+        return 0;
+        }
+    car=ReadChar();
+    if ( ((car==10) & (KKCfg->lnfeed==0)) |
+         ((car==13) & (KKCfg->lnfeed==1)) |
+         ((car==10) & (KKCfg->lnfeed==2)) |
+         ((car==10) & (KKCfg->lnfeed==4)) |
+         ((car==KKCfg->userfeed) & (KKCfg->lnfeed==3)))
+        {
+        posn++;
+        return 1;
+        }
+    if ((car!=10) & (car!=13)) m++;
+    if ((m>=xl) & (KKCfg->warp!=0)) return 1;
+    }
+while(1);
+}
+
+
+/*--------------------------------------------------------------------*\
+|- Deplace le texte d'une ligne vers le haut                          -|
+|- Renvoit 0 si il faut arreter                                       -|
+\*--------------------------------------------------------------------*/
+int TxtUp(int xl)
+{
+int car,m;
+
+if (posn==0) return 0;
+posn--;
+m=0;
+if (posn==0) return 0;
+do
+    {
+    posn--;
+    if (posn==0)
+        {
+        if (posn!=0) posn++;
+        return 0;
+        }
+    car=ReadChar();
+    if ( ((car==10) & (KKCfg->lnfeed==0)) |
+         ((car==13) & (KKCfg->lnfeed==1)) |
+         ((car==10) & (KKCfg->lnfeed==2)) |
+         ((car==10) & (KKCfg->lnfeed==4)) |
+         ((car==KKCfg->userfeed) & (KKCfg->lnfeed==3)))
+        {
+        if (posn!=0) posn++;
+        return 1;
+        }
+    if ((car!=10) & (car!=13)) m++;
+    if ((m>=xl-1) & (KKCfg->warp!=0)) return 1;
+    }        // m>xl-1
+while(1);
+}
+
 /*--------------------------------------------------------------------*\
 |- Affichage de texte                                                 -|
 \*--------------------------------------------------------------------*/
@@ -1434,109 +1510,24 @@ switch(LO(code))
                 break;
             case 80:    //--- DOWN -------------------------------------
                 if (pasfini==1) break;
-                m=0;
-                do
-                    {
-                    posn++;
-                    if (posn==taille)
-                        {
-                        posn=taille-1;
-                        break;
-                        }
-                    car=ReadChar();
-                    if ( ((car==10) & (KKCfg->lnfeed==0)) |
-                         ((car==13) & (KKCfg->lnfeed==1)) |
-                         ((car==10) & (KKCfg->lnfeed==2)) |
-                         ((car==10) & (KKCfg->lnfeed==4)) |
-                         ((car==KKCfg->userfeed) & (KKCfg->lnfeed==3)))
-                        {
-                        posn++;
-                        break;
-                        }
-                    if ((car!=10) & (car!=13)) m++;
-                    if ((m>=xl) & (KKCfg->warp!=0)) break;
-                    }
-                while(1);
-
+                TxtDown(xl);
                 break;
             case 72:    //--- UP ---------------------------------------
-                if (posn==0) break;
-                posn--;
-                m=0;
-                if (posn==0) break;
-                do
-                    {
-                    posn--;
-                    if (posn==0)
-                        {
-                        if (posn!=0) posn++;
-                        break;
-                        }
-                    car=ReadChar();
-                    if ( ((car==10) & (KKCfg->lnfeed==0)) |
-                         ((car==13) & (KKCfg->lnfeed==1)) |
-                         ((car==10) & (KKCfg->lnfeed==2)) |
-                         ((car==10) & (KKCfg->lnfeed==4)) |
-                         ((car==KKCfg->userfeed) & (KKCfg->lnfeed==3)))
-                        {
-                        if (posn!=0) posn++;
-                        break;
-                        }
-                    if ((car!=10) & (car!=13)) m++;
-                    if ((m>xl-1) & (KKCfg->warp!=0)) break;
-                    }
-                while(1);
-
+                TxtUp(xl);
                 break;
             case 0x51:    //--- PGDN -----------------------------------
-                for (m=0;m<yl;m++)
-                {
                 if (pasfini==1) break;
-                do
-                    {
-                    posn++;
-                    if (posn==taille)
-                        {
-                        posn=taille-2;
-                        break;
-                        }
-                    }
-                while(ReadChar()!=10);
-                posn++;
-                }
+                for (m=0;m<yl;m++)
+                    if (!TxtDown(xl)) break;
                 break;
             case 0x49:    //--- PGUP -----------------------------------
                 for (m=0;m<yl;m++)
-                {
-                if (posn==0) break;
-                posn--;
-                if (posn==0) break;
-                do
-                    {
-                    posn--;
-                    if (posn==0)
-                        break;
-                    }
-                while(ReadChar()!=10);
-                if (posn!=0) posn++;
-                }
+                    if (!TxtUp(xl)) break;
                 break;
             case 0x4F:    //--- END ------------------------------------
                 posn=taille;
                 for (m=0;m<yl;m++)
-                    {
-                    if (posn==0) break;
-                    posn--;
-                    if (posn==0) break;
-                    do
-                        {
-                        posn--;
-                        if (posn==0)
-                            break;
-                        }
-                    while(ReadChar()!=10);
-                    if (posn!=0) posn++;
-                    }
+                    TxtUp(xl);
                 break;
             case 0x47:  //--- HOME -------------------------------------
                 posn=0;
@@ -1702,6 +1693,9 @@ char c1,c2;
 int testhexa=0;
 
 a=posn;
+
+if (strlen(Hexa)!=0)
+    posn++;
 
 n=WinTraite(T,8,&F,0);
 
@@ -2746,7 +2740,7 @@ while ((y<=y2) | (ok==0) )
 \*--------------------------------------------------------------------*/
 
     if ( ((c>='a') & (c<='z')) | ((c>='A') & (c<='Z')) | (c=='_') |
-                                                 ((c>='0') & (c<='9')) )
+            ((c>=0xE0) & (c<=0xEB)) |            ((c>='0') & (c<='9')) )
         {
         chain2[l]=c;
         xt[l]=x;

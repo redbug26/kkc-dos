@@ -96,7 +96,7 @@ Cfg->TailleY=50;
 TXTMode();
 InitFont();
 
-LoadPal();
+LoadPal(Cfg->palette);
 
 
 WinCadre(0,0,79,49,1);

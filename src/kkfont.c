@@ -320,7 +320,7 @@ TXTMode();
 
 InitFont();
 
-LoadPal();
+LoadPal(Cfg->palette);
 
 
 WinCadre(0,0,79,Cfg->TailleY-1,1);
