@@ -151,7 +151,7 @@ if ( (nbrappl!=1) & (fin==0) )
     {
     int xx;
 
-    SaveEcran();
+    SaveScreen();
 
     m=((Cfg->TailleY)-nbrappl)/2;
 
@@ -258,7 +258,7 @@ if ( (nbrappl!=1) & (fin==0) )
     while ( (car!=27) & (car!=13) &
                   (HI(car)!=0x8D) & (HI(car)!=0x4B) & (HI(car)!=0x4D) );
 
-	ChargeEcran();
+    LoadScreen();
 
     if (LO(car)==27) fin=3;
     n=pos;

@@ -29,29 +29,30 @@ struct barmenu
         };
 
 
-struct TmtWin {
+struct TmtWin
+     {
      int x1,y1,x2,y2;
      char *name;
      };
 
 struct Tmt {
-     int x,y;                                                // position
+     int x,y;
      char type;
      char *str;
      int *entier;
      };
 
 /* Tmt:
-  Type: 0 --> Title
-        1 --> String
-        2 -->   OK
-        3 --> CANCEL
-        4 --> Cadre de 4 de hauteur
-        5 --> Bouton personnalis‚ (13 bytes length)
-        6 --> Cadre de 3 de hauteur
-        7 --> Entier (de 9 caracteres)
-        8 --> Switch
-        9 --> Cadre personnalise
+  Type:  0 --> Title
+         1 --> String
+         2 --> [    OK     ]
+         3 --> [  CANCEL   ]
+         4 --> Cadre with width = 4, length = *str
+         5 --> Bouton personnalis‚ (13 bytes length)
+         6 --> Cadre with width = 3, length = *str
+         7 --> Integer (length = 9)
+         8 --> Switch
+         9 --> Cadre with width = *str, length = *entier
         10 --> Switch Multiple
 
 */
@@ -59,39 +60,18 @@ struct Tmt {
 
 struct config
      {
-    // Selon user
-    //-----------
-     long SaveSpeed; // Temps a attendre avant d'activer le screen saver
-     long AnsiSpeed;
+     long SaveSpeed;  // Number of ticks before calling the screen saver
 
-     short fentype;    // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
-     short TailleY;                 // Nombre de caractere verticalement
-     short TailleX;               // Nombre de caractere horizontalement
+     short TailleY;                               // Width of the screen
+     short TailleX;                              // Length of the screen
 
      char palette[48];                                    // The PALETTE
 
-     unsigned char wmask;             // C'est quel masque kon emploie ?
+     char debug;                                         // DEBUG mode ?
+     char speedkey;                                       // Turbo key ?
+     char font;                                   // You will use font ?
 
-     char pntrep;              // vaut 1 si on affiche le repertoire "."
-     char hidfil;            // vaut 1 si on affiche les fichiers caches
-
-     char logfile;                    // vaut 1 si on utilise un logfile
-     char debug;                       // vaut 1 si on est en mode DEBUG
-
-     char autoreload;   // Reload auto. quand les 2 fen. sont identiques
-     char verifhist;  // Verify history at any loading of KK (CTRL-PGDN)
-     char palafter;    // Load the palette only when configuration is ok
-     char noprompt;    // Si x&1 vaut 1 alors on ne prompte pdt la copie
-     char currentdir;                   // Va dans le repertoire courant
-
-     char font;                                 // utilisation des fonts
-     char dispcolor;    // Highlight les fichiers suivant les extensions
-     char speedkey;           // vaut 1 si on veut accelerer les touches
-
-     char insdown;    // vaut 1 si on descent quand on appuie sur insert
-     char seldir;     // vaut 1 si on selectionne les repertoires avec +
-
-     long strash;                                       // Size of trash
+     short UseFont;                // Result after calling font fonction
 
      char display;                                       // Display type
 
@@ -101,60 +81,11 @@ struct config
      char comparity;                      // Parity             (eg:'N')
      char comstop;                        // Stop bit             (eg:1)
 
-     char enterkkd;           // entre dans les kkd pendant la recherche
-     char warp;                    // 0: pas de warp, 1: word, 2: entier
+     char Tfont;                 // Character used for the vertical line
 
-     char cnvhist;         // 1: si on convertit a chaque fois l'history
-     char esttime;                 // estime le temps pendant la copie ?
-
-     char editeur[64];               // ligne de commande pour l'editeur
-     char vieweur[64];               // ligne de commande pour le viewer
-
-     char ExtTxt[64],Enable_Txt;
-     char ExtBmp[64],Enable_Bmp;
-     char ExtSnd[64],Enable_Snd;
-     char ExtArc[64],Enable_Arc;
-     char ExtExe[64],Enable_Exe;
-     char ExtUsr[64],Enable_Usr;
-
-     char Qmenu[48];
-     short Nmenu[8];
-
-     char ajustview;                  // Fit the width of file in viewer
-     char saveviewpos;                // Save position of file in viewer
-
-     char Esc2Close;   // vaut 1 si on doit fermer les fenˆtres avec ESC
-
-    //--- Don't look this ----------------------------------------------
-
-     long mtrash;                          // taille maximum de la trash
-     long FenAct;                         // Quelle fenˆtre est active ?
-     char _4dos;                                // equal 1 if 4DOS found
-     char _Win95;                                    // Support nom long
-
-     char HistDir[256];                                // History of dir
-     char overflow1;
-
-     char HistCom[512];                            // History of command
-     char overflow2;                       // Vaut tjs 0 (pour overflow)
-     short posinhist;                  // Position in history of command
-
-     char extens[39];              // extension qui viennent tout devant
-
-     short FenTyp[3];                         // Type des fenˆtres SHELL
-     short KeyAfterShell;           // Vaut 1 si wait key after dosshell
-     short UseFont;                    // Type de Font (0:normal, 1:8x8)
-     char Tfont;          // Caracteres employ‚s pour la ligne verticale
-
-     short key;                              // code touche a reutiliser
-     char FileName[256]; // Nom du dernier fichier select. for F3 on arc
-     char crc;                           // Vaut tjs 0x69 (genre de crc)
+     char crc;                                              // CRC: 0x69
      };
 
-struct RB_info
-     {
-     int temps;          // Temps entre le main() et l'appel utilisateur
-     };
 
 struct fichier
      {
@@ -168,18 +99,9 @@ struct fichier
      char *LastDir;                                           // lastdir
      };
 
-struct PourMask
-     {
-     char Ignore_Case;                         // 1 si on ignore la case
-     char Other_Col;                  // 1 si on colorie les autres noms
-     char chaine[1024];  // chaine de comparaison EX: "asm break case @"
-     char title[40];                                 // nom de ce masque
-     };
 
 extern struct config *Cfg;
-extern struct RB_info *Info;
 extern struct fichier *Fics;
-extern struct PourMask **Mask;
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
@@ -241,8 +163,13 @@ void MoveText(int x1,int y1,int x2,int y2,int x3,int y4);
 /*--------------------------------------------------------------------*\
 |- Absolute function                                                  -|
 \*--------------------------------------------------------------------*/
-char GetChr(short x,short y);
-char GetCol(short x,short y);
+extern char _RB_screen[];
+
+// char GetChr(short x,short y);
+#define GetChr(_rx,_ry) *(_RB_screen+((_ry)*256+(_rx)))
+
+// char GetCol(short x,short y);
+#define GetCol(_rx,_ry) *(_RB_screen+((_ry)*256+(_rx))+256*128)
 
 void ColLin(int left,int top,int length,short color);
 void ChrLin(int left,int top,int length,short color);
@@ -251,14 +178,14 @@ void ColCol(int left,int top,int length,short color);
 void ColWin(int right,int top,int left,int bottom,short color);
 void ChrWin(int right,int top,int left,int bottom,short color);
 
-void PrintAt(int x,int y,char *string,...);
-char InputAt(char colonne,char ligne,char *chaine, int longueur);
+void PrintAt(int x,int y,char *str,...);
+char InputAt(int x,int y,char *str, int length);
 
 /*--------------------------------------------------------------------*\
 |- Relative function                                                  -|
 \*--------------------------------------------------------------------*/
-char GetRChr(short x,short y);
-char GetRCol(short x,short y);
+char GetRChr(int x,int y);
+char GetRCol(int x,int y);
 
 void ColRLin(int left,int top,int length,short color);
 void ChrRLin(int left,int top,int length,short color);
@@ -268,27 +195,26 @@ void ColRWin(int right,int top,int left,int bottom,short color);
 void ChrRWin(int right,int top,int left,int bottom,short color);
 
 void PrintTo(int x,int y,char *string,...);
-char InputTo(char colonne,char ligne,char *chaine, int longueur);
+char InputTo(int x,int y,char *string, int length);
 
-void AffRChr(char x,char y,char c);
-void AffRCol(char x,char y,char c);
+void AffRChr(int x,int y,char c);
+void AffRCol(int x,int y,char c);
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
-
 void Delay(long ms);
 
-void SaveEcran(void);
-void ChargeEcran(void);
+void SaveScreen(void);
+void LoadScreen(void);
 
-void *GetMem(int);      // Malloc avec mise … z‚ro
-void *GetMemSZ(int);    // Malloc sans mise … z‚ro
+void *GetMem(int);           // Memory allocation with set space to zero
+void *GetMemSZ(int);      // Memory allocation without set space to zero
 void LibMem(void *);
 
 void WinCadre(int x1,int y1,int x2,int y2,int type);
 void WinLine(int x1,int y1,int xl,int type);
 
-void SetPal(char x,char r,char g,char b);
+void SetPal(int x,char r,char g,char b);
 
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F);
 int WinMesg(char *,char *);
@@ -297,17 +223,13 @@ int Gradue(int x,int y,int length,int from,int to,int total);
 
 void DefaultCfg(void);
 
-void SetDefaultPath(char *path);   // Initialise les fichiers selon path
+void SetDefaultPath(char *path);                      // Set up the file
 
 /*--------------------------------------------------------------------*\
-|-        Gestion de la barre de menu                                 -|
+|-        Menu & Pannel function                                      -|
 \*--------------------------------------------------------------------*/
-
 int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
 int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
-
-
-
 
 
 
@@ -316,9 +238,8 @@ int VerifyDisk(char c);  // 1='A'
 int __far Error_handler(unsigned deverr,unsigned errcode,
                                                   unsigned far *devhdr);
 
-
 /*--------------------------------------------------------------------*\
-|-                        Gestion du port s‚rie                       -|
+|-        Serial port function                                        -|
 \*--------------------------------------------------------------------*/
 
 void interrupt modem_isr(void);

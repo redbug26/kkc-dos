@@ -509,6 +509,14 @@ struct key K[nbrkey]=   {
         "DIG",
         "",
         69,0,0,6},
+
+{  {"AIL3MDI"},
+        7,
+        0,
+        "AIL 3.0 Midi Driver",
+        "MDI",
+        "",
+        142,0,0,6},      //000000D6h   14       13
 {  {"DMS!"},
         4,
         0,
@@ -912,7 +920,7 @@ struct key K[nbrkey]=   {
     139,0,0,3},
 
 
-// Dernier employe: 141
+// Dernier employe: 142
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|

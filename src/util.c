@@ -229,7 +229,7 @@ char buf[32];
 int n;
 char ok=0;
 
-SaveEcran();
+SaveScreen();
 
 WinCadre(19,4,61,11,0);
 Window(20,5,60,10,10*16+4);
@@ -288,7 +288,7 @@ if ((regs.h.al&64)==64)
 
     if (ok==1)
         {
-        ChargeEcran();
+        LoadScreen();
         Cfg->font=0;
         ChangeTaille(25);                          // Rafraichit l'ecran
         DFen->yl=(Cfg->TailleY)-4;
@@ -310,9 +310,10 @@ if ((regs.h.al&64)==64)
     }
 
 if (ok==0)
-    ChargeEcran();
+    LoadScreen();
 
 while (kbhit()) Wait(0,0,0);
 }
+
 
 

@@ -275,3 +275,98 @@ DOS_Free();
 return a;
 }
 
+
+/*--------------------------------------------------------------------*\
+|- Ejection du CD                                                     -|
+\*--------------------------------------------------------------------*/
+void EjectCD(FENETRE *Fen)
+{
+char *buf;
+int i;
+long l;
+union REGS RR;
+
+char lect;
+
+lect=toupper(Fen->path[0])-'A';
+
+RR.w.ax=0x150B;
+RR.w.cx=lect;
+int386(0x2F,&RR,&RR);
+if ( (RR.w.bx!=0xADAD) | (RR.w.ax==0) )
+    return;
+
+DOS_Alloc();
+
+l=DOSbuf1*16;
+buf=(char*)l;
+
+buf[0]=13;
+buf[1]=lect;
+buf[2]=0;
+for(i=3;i<32;i++)
+    buf[i]=0;
+
+R.eax=0X1510;
+R.ebx=0;
+R.ecx=lect;
+R.es=DOSbuf1;
+
+
+buf[0]=13;
+buf[1]=lect;
+buf[2]=12;
+for(i=3;i<32;i++)
+    buf[i]=0;
+
+buf[14]=26;     // BYTE 26
+buf[15]=0;
+buf[16]=DOSbuf1&255;
+buf[17]=DOSbuf1/256;
+
+buf[18]=0;      // Taille du bloc
+buf[19]=1;      // Taille du bloc
+
+buf[26]=0;   // Open CD ------------------------------------------------
+
+R.eax=0X1510;
+R.ebx=0;
+R.ecx=lect;
+R.es=DOSbuf1;
+
+DOS_Int(0x2F,&R);
+
+WinMesg("Information Message","Put a CD-ROM is in the tray");
+
+buf[0]=13;
+buf[1]=lect;
+buf[2]=12;
+for(i=3;i<32;i++)
+    buf[i]=0;
+
+buf[14]=26;     // BYTE 26
+buf[15]=0;
+buf[16]=DOSbuf1&255;
+buf[17]=DOSbuf1/256;
+
+buf[18]=1;  // Taille du bloc
+buf[19]=0;  // Taille du bloc
+
+buf[26]=5;  // Close CD ------------------------------------------------
+
+R.eax=0X1510;
+R.ebx=0;
+R.ecx=lect;
+R.es=DOSbuf1;
+
+DOS_Int(0x2F,&R);
+
+DOS_Free();
+
+Delay(100);
+
+IOver=1;
+
+CommandLine("#CD .");
+}
+

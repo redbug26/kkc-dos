@@ -297,10 +297,6 @@ for (n=strlen(path);n>0;n--) {
 
 Fics=GetMem(sizeof(struct fichier));
 
-Mask=GetMem(sizeof(struct PourMask*)*16);
-for (n=0;n<16;n++)
-    Mask[n]=GetMem(sizeof(struct PourMask));
-
 Fics->FicIdfFile=GetMem(256);
 strcpy(Fics->FicIdfFile,path);
 strcat(Fics->FicIdfFile,"\\idfext.rb");
@@ -451,7 +447,7 @@ olddir=GetMem(256);
 curdir=GetMem(256);
 buffer=GetMem(256);
 
-SaveEcran();
+SaveScreen();
 
 getcwd(olddir,256);
 
@@ -669,7 +665,7 @@ strcpy(name,curdir);
 
 chdir(olddir);
 
-ChargeEcran();
+LoadScreen();
 
 free(olddir);
 free(curdir);

@@ -13,6 +13,8 @@
 
 #include "kk.h"
 
+extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
+
 static char **tabnom;
 static char **tabpath;
 static int *tabtime;
@@ -103,6 +105,7 @@ static char **TabRec;
 int NbrRec;
 int n,m;
 static char moi[256],nom[256];
+
 
 TabRec=GetMem(500*sizeof(char*));
 
@@ -211,7 +214,7 @@ for (m=0;m<DFen->nbrfic;m++)
     if ( (ff->name[0]!='.')  & (sw!=5) )
         {
         if ( (IsDir(ff))
-           | ((!stricmp(getext(ff->name),"KKD")) & (Cfg->enterkkd==1)
+           | ((!stricmp(getext(ff->name),"KKD")) & (KKCfg->enterkkd==1)
                                                  & (DFen->system==0)) )
             {
             strcpy(moi,nom);
@@ -283,7 +286,7 @@ int n;
 
 strcpy(SearchOld,SearchName);
 
-l1=Cfg->enterkkd;
+l1=KKCfg->enterkkd;
 
 n=WinTraite(T,18,&F);
 
@@ -291,7 +294,7 @@ if (n!=27)  // pas escape
     {
     if (T[n].type!=3)
         {
-        Cfg->enterkkd=l1;
+        KKCfg->enterkkd=l1;
         return 0;  // pas cancel
         }
     }
@@ -316,12 +319,33 @@ int d,fin;      //--- debut et fin de la ligne -------------------------
 
 int prem;       //--- premier visible ----------------------------------
 
+int i,k;
+
+FENETRE *SFen;
+
 if (WinSearch()==1) return;
+
+SFen=GetMem(sizeof(FENETRE));
+SFen->F=GetMem(TOTFIC*sizeof(void *));
+
+SFen->x=40;
+SFen->actif=0;
+SFen->nfen=7;
+SFen->FenTyp=0;
+SFen->Fen2=SFen;
+SFen->y=1;
+SFen->yl=(Cfg->TailleY)-4;
+SFen->xl=39;
+SFen->order=17;
+SFen->pcur=0;
+SFen->scur=0;
+
+
 
 nbr=0;
 nbrmax=200;
 
-SaveEcran();
+SaveScreen();
 PutCur(32,0);
 
 ColLin(0,0,Cfg->TailleX,1*16+4);
@@ -345,6 +369,8 @@ tabsize=GetMem(sizeof(int)*nbrmax);
 /*--------------------------------------------------------------------*\
 |-  Setup of all                                                      -|
 \*--------------------------------------------------------------------*/
+
+Bar(" Help  ----  View  ----  ----  ----  ---- Delete ----  ---- ");
 
 WinCadre(0,1,Cfg->TailleX-1,(Cfg->TailleY)-2,1);
 Window(1,2,Cfg->TailleX-2,(Cfg->TailleY)-3,10*16+1);
@@ -399,7 +425,7 @@ DFen=Fen;
 if (nbr==0)
     {
     WinError("No file found");
-    ChargeEcran();
+    LoadScreen();
     }
     else
     {
@@ -441,26 +467,134 @@ if (nbr==0)
         for (n=d;n<=fin;n++)
             AffCol(n,pos+m-prem,10*16+1);
 
-        if (a==72*256)      pos--;
-        if (a==80*256)      pos++;
-        if (a==0x4700)    pos=0;
-        if (a==0x4F00)    pos=nbr-1;
-        if (a==0x5100)    pos+=5;
-        if (a==0x4900)    pos-=5;
+        if (a==0)     //--- Pression bouton souris ---------------------
+            {
+            int button;
+
+            button=MouseButton();
+
+            if ((button&1)==1)     //--- gauche ------------------------
+                {
+                int x,y;
+
+                x=MousePosX();
+                y=MousePosY();
+
+
+                if (y==Cfg->TailleY-1)
+                    if (Cfg->TailleX==90)
+                        a=(0x3B+(x/9))*256;
+                        else
+                        a=(0x3B+(x/8))*256;
+                    else
+                    {
+                    pos=y-m+prem;
+                    ReleaseButton();
+                    }
+                }
+
+            if ((button&2)==2)     //--- droite ---------------------------
+                {
+                a=27;
+                }
+            }
+
+
+        switch(HI(a))
+            {
+            case 72:
+                pos--;
+                break;
+            case 80:
+                pos++;
+                break;
+            case 0x47:
+                pos=0;
+                break;
+            case 0x4F:
+                pos=nbr-1;
+                break;
+            case 0x51:
+                pos+=5;
+                break;
+            case 0x49:
+                pos-=5;
+                break;
+            case 0x3D:      //--- F3 -----------------------------------
+            case 0x8D:      //--- CTRL-UP ------------------------------
+                if (strcmp(tabpath[pos],"*")!=0)
+                    {
+                    DFen=SFen;
+                    CommandLine("#CD %s",tabpath[pos]);
+                    k=-1;
+                    for (i=0;i<DFen->nbrfic;i++)
+                        if (!WildCmp(tabnom[pos],DFen->F[i]->name))
+                            {
+                            DFen->pcur=i;
+                            DFen->scur=i;
+                            k=i;
+                            break;
+                            }
+
+                    if (k==-1)
+                        WinError("Error");
+                        else
+                        {
+                        AccessFile(k);
+                        View(DFen);
+                        }
+                    }
+                break;
+            case 0x42:      //--- F8 -----------------------------------
+                KKCfg->noprompt=(KKCfg->noprompt)&254;      // bit 0 = 0
+                for (n=0;n<nbr;n++)
+                    {
+                    if (strcmp(tabpath[n],"*")!=0)
+                        {
+                        DFen=SFen;
+                        CommandLine("#CD %s",tabpath[n]);
+                        k=-1;
+                        for (i=0;i<DFen->nbrfic;i++)
+                            if (!WildCmp(tabnom[n],DFen->F[i]->name))
+                                {
+                                DFen->pcur=i;
+                                DFen->scur=i;
+                                k=i;
+                                break;
+                                }
+                        if (k==-1)
+                            WinError("Error");
+                            else
+                            {
+                            k=Delete(SFen);
+                            if (k==1) break;
+                            if (k==4)
+                                KKCfg->noprompt=(KKCfg->noprompt)|1;
+                            if ( (k==4) | (k==3) )
+                                {
+                                strcpy(tabnom[n],"[DELETED]");
+                                strcpy(tabpath[n],"*");
+                                }
+                            }
+                        }
+                    }
+                break;
+            }
         }
     while ( (a!=27) & (a!=13) );
 
-    ChargeEcran();
+    LoadScreen();
 
-    if (a==13)
+    if ( (a==13) & (strcmp(tabpath[pos],"*")!=0) )
         {
+        DFen=Fen;
         CommandLine("#CD %s",tabpath[pos]);
 
-        for (n=0;n<Fen->nbrfic;n++)
-            if (!stricmp(tabnom[pos],Fen->F[n]->name))
+        for (n=0;n<DFen->nbrfic;n++)
+            if (!WildCmp(tabnom[pos],DFen->F[n]->name))
                 {
-                Fen->pcur=n;
-                Fen->scur=n;
+                DFen->pcur=n;
+                DFen->scur=n;
                 }
         }
     }
@@ -468,7 +602,6 @@ if (nbr==0)
 /*--------------------------------------------------------------------*\
 |-  Free Memory                                                       -|
 \*--------------------------------------------------------------------*/
-
 
 LibMem(tabsize);
 LibMem(tabdate);
@@ -481,5 +614,8 @@ LibMem(tabpath);
 for (n=0;n<nbrmax;n++)
     LibMem(tabnom[n]);
 LibMem(tabnom);
+
+LibMem(SFen->F);
+LibMem(SFen);
 }
 

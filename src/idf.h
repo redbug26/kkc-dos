@@ -2,7 +2,7 @@
 #define BYTE unsigned char
 #define WORD unsigned short
 
-#define nbrkey 147
+#define nbrkey 148
         // number of format + 6
 
 /*--------------------------------------------------------------------*\

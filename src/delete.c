@@ -148,7 +148,7 @@ return n;
 }
 
 
-void Delete(FENETRE *F1)                       // Delete Multiple
+int Delete(FENETRE *F1)  //--- Delete Multiple -------------------------
 {
 int i;
 int x1;
@@ -161,9 +161,10 @@ char inpath[128];
 
 struct file *F;
 
-if (F1->FenTyp!=0) return;
+if (F1->FenTyp!=0)
+    return -1;
 
-SaveEcran();
+SaveScreen();
 
 x1=(Cfg->TailleX-66)/2;
 
@@ -178,8 +179,12 @@ if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') )
     F1->taillesel+=F1->F[F1->pcur]->size;
     }
 
-test=1;
 fin=0;
+
+if ((KKCfg->noprompt&1)==1)
+    test=0;
+    else
+    test=1;
 
 for (i=0;i<F1->nbrfic;i++)
     {
@@ -214,6 +219,7 @@ for (i=0;i<F1->nbrfic;i++)
                             F1->F[i]->select=0;
                             F1->nbrsel--;
                             (F1->taillesel)-=F1->F[i]->size;
+                            car=7;
                             }
                         else
                         if (DelErr(inpath)!=0)
@@ -229,6 +235,20 @@ for (i=0;i<F1->nbrfic;i++)
     if (fin==1) break;
     }
 
-ChargeEcran();
+LoadScreen();
+
+if (fin==1) return 1;
+
+if (test==0) return 4;
+
+if (car==7) return 3;
+
+return 2;
+
 }
 
+// Retour:
+// 1: Annuler tout
+// 2: Le dernier n'a pas ‚t‚ ‚ffac‚
+// 3: Le dernier … ‚t‚ ‚ffac‚
+// 4: Efface tout

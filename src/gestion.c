@@ -53,8 +53,13 @@ F2=*FF2;
 
 // Place les X:Reload en haut
 //----------------------------
-if (F1->name[1]==':') return -1;
-if (F2->name[1]==':') return 1;
+if (F1->name[1]==':') return 1;
+if (F2->name[1]==':') return -1;
+
+// Place les X* Eject en bas
+//---------------------------
+if (F1->name[1]=='*') return 1;
+if (F2->name[1]=='*') return -1;
 
 
 // Place les .. et . en haut
@@ -95,16 +100,16 @@ if ((DFen->order&16)==16)
         {
         c3++;
 
-        if ( (Cfg->extens[c3]==32) | (Cfg->extens[c3]==0) )
+        if ( (KKCfg->extens[c3]==32) | (KKCfg->extens[c3]==0) )
             {
-            memcpy(e,Cfg->extens+c4,4);
+            memcpy(e,KKCfg->extens+c4,4);
             e[3]=0;
             if (!stricmp(e,e1)) c1=c3;
             if (!stricmp(e,e2)) c2=c3;
             c4=c3+1;
             }
         }
-    while(Cfg->extens[c3]!=0);
+    while(KKCfg->extens[c3]!=0);
 
     if (c1==0) c1=1000;
     if (c2==0) c2=1000;
@@ -155,6 +160,7 @@ int FicSelect(int n,char q)
 {
 if (DFen->F[n]->name[0]=='.') return 1;
 if (DFen->F[n]->name[1]==':') return 1;
+if (DFen->F[n]->name[1]=='*') return 1;
 if ((DFen->F[n]->attrib & _A_VOLID)==_A_VOLID) return 1;
 
 switch(q)
@@ -414,12 +420,12 @@ j=0;
 
 while(1)
     {
-    dir=&(Cfg->HistDir[j]);
+    dir=&(KKCfg->HistDir[j]);
     if (strlen(dir)==0) break;
 
     dir2=dir;
 
-    while ( (j!=256) & (Cfg->HistDir[j]!=0) ) j++;
+    while ( (j!=256) & (KKCfg->HistDir[j]!=0) ) j++;
     j++;
     }
 return dir2;
@@ -438,7 +444,7 @@ j=0;
 ColLin(0,0,Cfg->TailleX,1*16+4);
 
 while(1) {
-    dir=&(Cfg->HistDir[j]);
+    dir=&(KKCfg->HistDir[j]);
     if ( (dir[0]==0) | (j>=256) ) break;
 
     dir=strupr(dir);
@@ -451,14 +457,14 @@ while(1) {
         RemoveHistDir(j,j+strlen(dir)+1);
         else
         {
-        while ( (j!=256) & (Cfg->HistDir[j]!=0) ) j++;
+        while ( (j!=256) & (KKCfg->HistDir[j]!=0) ) j++;
         j++;
         }
 
     IOver=0;
     }
 if (j<256)
-    memset(&(Cfg->HistDir[j]),0,256-j);
+    memset(&(KKCfg->HistDir[j]),0,256-j);
 
 }
 
@@ -472,9 +478,9 @@ int i;
 for (i=a0;i<256;i++)
     {
     if (i<256-(a1-a0))
-        Cfg->HistDir[i]=Cfg->HistDir[a1-a0+i];
+        KKCfg->HistDir[i]=KKCfg->HistDir[a1-a0+i];
         else
-        Cfg->HistDir[i]=0;
+        KKCfg->HistDir[i]=0;
     }
 }
 
@@ -494,8 +500,8 @@ do
     for (i=0;i<100;i++)
         {
         TabDir[i]=j;
-        if (Cfg->HistDir[j]==0) break;
-        while ( (j!=256) & (Cfg->HistDir[j]!=0) ) j++;
+        if (KKCfg->HistDir[j]==0) break;
+        while ( (j!=256) & (KKCfg->HistDir[j]!=0) ) j++;
         j++;
         }
 
@@ -507,7 +513,7 @@ do
     for (k=0;k<i;k++)
         {
         if (!strnicmp(DFen->path,
-                       &(Cfg->HistDir[TabDir[k]]),strlen(DFen->path)+1))
+                     &(KKCfg->HistDir[TabDir[k]]),strlen(DFen->path)+1))
             {
             a=k+1;
             break;
@@ -522,7 +528,7 @@ do
 while (a!=0);
 
 
-memcpy(&(Cfg->HistDir[TabDir[i]]),DFen->path,strlen(DFen->path)+1);
+memcpy(&(KKCfg->HistDir[TabDir[i]]),DFen->path,strlen(DFen->path)+1);
 }
 
 /*--------------------------------------------------------------------*\
@@ -562,7 +568,7 @@ void Line2History(char *s)
 int n,m;
 char chaine[256];
 
-if (Cfg->cnvhist==1)
+if (KKCfg->cnvhist==1)
     {
     chaine[0]=0;
     m=n=0;
@@ -703,23 +709,23 @@ int j,k;
 
 j=0;
 
-if ( (Cfg->posinhist<=0) | (Cfg->posinhist>512) )
-    Cfg->posinhist=512;
+if ( (KKCfg->posinhist<=0) | (KKCfg->posinhist>512) )
+    KKCfg->posinhist=512;
 
 while(1)
     {
-    dir=&(Cfg->HistCom[j]);
+    dir=&(KKCfg->HistCom[j]);
     if (strlen(dir)==0) break;
 
     dir2=dir;
     k=j;
 
-    while ( (j!=Cfg->posinhist) & (Cfg->HistCom[j]!=0) ) j++;
+    while ( (j!=KKCfg->posinhist) & (KKCfg->HistCom[j]!=0) ) j++;
     j++;
-    if (j==Cfg->posinhist) break;
+    if (j==KKCfg->posinhist) break;
     }
 
-Cfg->posinhist=k;
+KKCfg->posinhist=k;
 
 return dir2;
 }
@@ -735,7 +741,7 @@ int j;
 j=0;
 
 while(1) {
-    dir=&(Cfg->HistCom[j]);
+    dir=&(KKCfg->HistCom[j]);
     if ( (dir[0]==0) | (j>=512) ) break;
 
     dir=strupr(dir);
@@ -743,13 +749,13 @@ while(1) {
     IOver=1;
     IOerr=0;
 
-    while ( (j!=512) & (Cfg->HistCom[j]!=0) ) j++;
+    while ( (j!=512) & (KKCfg->HistCom[j]!=0) ) j++;
     j++;
 
     IOver=0;
     }
 if (j<512)
-    memset(&(Cfg->HistCom[j]),0,512-j);
+    memset(&(KKCfg->HistCom[j]),0,512-j);
 }
 
 /*--------------------------------------------------------------------*\
@@ -762,9 +768,9 @@ int i;
 for (i=a0;i<512;i++)
     {
     if (i<512-(a1-a0))
-        Cfg->HistCom[i]=Cfg->HistCom[a1-a0+i];
+        KKCfg->HistCom[i]=KKCfg->HistCom[a1-a0+i];
         else
-        Cfg->HistCom[i]=0;
+        KKCfg->HistCom[i]=0;
     }
 }
 
@@ -784,8 +790,8 @@ do
     for (i=0;i<100;i++)
         {
         TabCom[i]=j;
-        if (Cfg->HistCom[j]==0) break;
-        while ( (j!=512) & (Cfg->HistCom[j]!=0) ) j++;
+        if (KKCfg->HistCom[j]==0) break;
+        while ( (j!=512) & (KKCfg->HistCom[j]!=0) ) j++;
         j++;
         }
 
@@ -797,7 +803,7 @@ do
     for (k=0;k<i;k++)
         {
         if (!strnicmp(chaine,
-                           &(Cfg->HistCom[TabCom[k]]),strlen(chaine)+1))
+                           &(KKCfg->HistCom[TabCom[k]]),strlen(chaine)+1))
             {
             a=k+1;
             break;
@@ -811,7 +817,7 @@ do
     }
 while (a!=0);
 
-memcpy(&(Cfg->HistCom[TabCom[i]]),chaine,strlen(chaine)+1);
+memcpy(&(KKCfg->HistCom[TabCom[i]]),chaine,strlen(chaine)+1);
 }
 
 
@@ -834,7 +840,7 @@ int Run(char *chaine)
 FILE *fic;
 time_t t;
 
-if ( (chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (Cfg->logfile==1) )
+if ((chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (KKCfg->logfile==1))
     {
     t=time(NULL);
     fic=fopen(Fics->log,"at");
@@ -894,7 +900,7 @@ void ChangeLine(void)
 {
 int x1,m,n,v;
 
-if (DFen->nfen==2) return;
+if (DFen->nfen>=2) return;
 
 x1=strlen(DFen->path)+1;
 m=strlen(str);
@@ -1140,5 +1146,6 @@ int IsDir(struct file *F)
 {
 if ( (F->attrib & _A_SUBDIR)!=_A_SUBDIR) return 0;
 if (F->name[1]==':') return 0;
+if (F->name[1]=='*') return 0;
 return 1;
 }

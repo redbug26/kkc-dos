@@ -1,9 +1,6 @@
 /*--------------------------------------------------------------------*\
 |-                             Viewer                                 -|
 \*--------------------------------------------------------------------*/
-#pragma aux View export;
-#pragma aux toto export;
-
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,6 +19,7 @@
 
 static char ReadChar(void);
 
+void RefreshBar(char *bar);
 
 void ChangeMask(void);
 void Masque(short x1,short y1,short x2,short y2);
@@ -92,7 +90,7 @@ unsigned char n;
 long s,size;
 static char ficname[256];
 
-if (Cfg->saveviewpos==1)
+if (KKCfg->saveviewpos==1)
     {
     strcpy(ficname,Fics->trash);
     Path2Abs(ficname,"kkview.tmp");
@@ -124,7 +122,7 @@ unsigned char n;
 long s,size;
 static char ficname[256];
 
-if (Cfg->saveviewpos==1)
+if (KKCfg->saveviewpos==1)
     {
     strcpy(ficname,Fics->trash);
     Path2Abs(ficname,"kkview.tmp");
@@ -179,7 +177,7 @@ int car;
 
 int fin=0; //--- Code de retour ----------------------------------------
 
-SaveEcran();
+SaveScreen();
 PutCur(3,0);
 
 Bar(" Help  ----  ----  Text  ----  ---- Search ----  ----  ---- ");
@@ -215,14 +213,13 @@ for (y=0;y<Cfg->TailleY-6;y++)
             a=ReadChar();
             PrintAt(x*3+11,y+4,"%02X",a);
             AffChr(x+60,y+4,a);
+            posn++;
             }
             else
             {
             PrintAt(x*3+11,y+4,"  ");
             AffChr(x+60,y+4,32);
             }
-
-        posn++;
         }
     }
 
@@ -242,7 +239,6 @@ if (taille<1024*1024)
     cur2=(posn/1024)*(Cfg->TailleY-7);
     cur2=cur2/(taille/1024)+4;
     }
-
 
 ChrCol(78,4,cur1-4,32);
 ChrCol(78,cur1,cur2-cur1+1,219);
@@ -346,7 +342,7 @@ while(fin==0);
 
 SavePosition(fichier,posn);
 
-ChargeEcran();
+LoadScreen();
 
 return fin;
 }
@@ -650,7 +646,7 @@ while (*b)
         else
         break;
 
-    if ( (tempo>=Cfg->AnsiSpeed) & ((car&2)!=2) )
+    if ( (tempo>=KKCfg->AnsiSpeed) & ((car&2)!=2) )
         {
         tempo=0;
         
@@ -849,7 +845,7 @@ if (fic==NULL)
 
 buffer=GetMem(32768);
 
-SaveEcran();
+SaveScreen();
 
 maxx=80;
 maxy=Cfg->TailleY;
@@ -878,13 +874,64 @@ Wait(0,0,0);
 
 ChangeTaille(Cfg->TailleY);
 
-ChargeEcran();
+LoadScreen();
 free(buffer);
 fclose(fic);
 
 return (-1);
 }
 
+
+void RefreshBar(char *bar)
+{
+switch(KKCfg->warp)      //--- F2 --------------------------------------
+    {
+    case 0: memcpy(bar+6,"Nowrap",6); break;
+    case 1: memcpy(bar+6," Wrap ",6); break;
+    case 2: memcpy(bar+6,"WoWrap",6); break;
+    }
+
+switch(KKCfg->cnvtable)  //--- F6 --------------------------------------
+    {
+    case 0: memcpy(bar+30," Norm ",6); break;
+    case 1: memcpy(bar+30,"  BBS ",6); break;
+    case 2: memcpy(bar+30," Latin",6); break;
+    }
+
+switch(KKCfg->autotrad)  //--- F5 --------------------------------------
+    {
+    case 0: memcpy(bar+24,"NoAuto",6); break;
+    case 1: memcpy(bar+24," Auto ",6); break;
+    }
+
+}
+
+void AutoTrad(void)
+{
+int i,j;
+char car;
+
+int maxtrad,numtrad,trad;
+
+maxtrad=0;
+numtrad=0;
+
+for (i=0;i<3;i++)
+    {
+    trad=0;
+    for (j=0;j<((taille<32768) ? taille:32768);j++)
+        {
+        posn=j;
+        car=ReadChar();
+        if (car>0xB0)
+        if (CnvASCII(i,car)<0xB0)
+            trad++;
+        }
+    if (trad>maxtrad) maxtrad=trad,numtrad=i;
+    }
+posn=0;
+KKCfg->cnvtable=numtrad;
+}
 
 /*--------------------------------------------------------------------*\
 |- Affichage de texte                                                 -|
@@ -931,16 +978,22 @@ static char bar[81];
 int xl2;
 int tpos;
 
-SaveEcran();
+SaveScreen();
 PutCur(3,0);
 
 wrap=0;
 aff=1;
 
 /*--------------------------------------------------------------------*\
+|------------- Recherche de la meilleur traduction --------------------|
+\*--------------------------------------------------------------------*/
+if (KKCfg->autotrad)
+    AutoTrad();
+
+/*--------------------------------------------------------------------*\
 |------------- Calcul de la taille maximum ----------------------------|
 \*--------------------------------------------------------------------*/
-if (Cfg->ajustview==1)
+if (KKCfg->ajustview)
     {
     int xm=0,ym=0;
     int n;
@@ -998,13 +1051,9 @@ if (Cfg->ajustview==1)
 strcpy
    (bar," Help Nowrap ----  Hexa  ----  ---- Search Print Mask  ---- ");
 
-if (autowarp==0)
-    switch(Cfg->warp)
-        {
-        case 0: memcpy(bar+6,"Nowrap",6); break;
-        case 1: memcpy(bar+6," Wrap ",6); break;
-        case 2: memcpy(bar+6,"WoWrap",6); break;
-        }
+
+
+RefreshBar(bar);
 
 Bar(bar);
 
@@ -1098,7 +1147,7 @@ do
             break;
 
         default:
-            chaine[0]=CnvASCII(chaine[0]);
+            chaine[0]=CnvASCII(KKCfg->cnvtable,chaine[0]);
             break;
         }
 
@@ -1120,14 +1169,14 @@ do
         {
         if (tpos>=xl2)
             {
-            if ( (Cfg->warp==1) & (autowarp==0) )
+            if ( (KKCfg->warp==1) & (autowarp==0) )
                 {
                 aff=2;
 
                 w1=xl2;                             // Premier … retenir
                 w2=tpos;                            // Dernier … retenir
                 }
-            if ( (Cfg->warp==2) & (autowarp==0) )
+            if ( (KKCfg->warp==2) & (autowarp==0) )
                 {
                 int n;
                 aff=2;
@@ -1243,7 +1292,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
     char temp[132];
 
     if (shift==0)
-        SaveEcran();
+        SaveScreen();
 
     if (posn>taille) posn=taille;
 
@@ -1355,14 +1404,22 @@ switch(LO(code))
                 break;
             case 0x3C:  // F2
                 if (autowarp==1) break;
-                Cfg->warp++;
-                if (Cfg->warp==3) Cfg->warp=0;
-                switch(Cfg->warp)
-                    {
-                    case 0: memcpy(bar+6,"Nowrap",6); break;
-                    case 1: memcpy(bar+6," Wrap ",6); break;
-                    case 2: memcpy(bar+6,"WoWrap",6); break;
-                    }
+                KKCfg->warp++;
+                if (KKCfg->warp==3) KKCfg->warp=0;
+                RefreshBar(bar);
+                Bar(bar);
+                break;
+            case 0x40:  // F6
+                KKCfg->cnvtable++;
+                if (KKCfg->cnvtable==3) KKCfg->cnvtable=0;
+                RefreshBar(bar);
+                Bar(bar);
+                break;
+            case 0x3F:  // F5
+                KKCfg->autotrad^=1;
+                if (KKCfg->autotrad)
+                    AutoTrad();
+                RefreshBar(bar);
                 Bar(bar);
                 break;
             case 0x3E:  // F4
@@ -1407,7 +1464,7 @@ switch(LO(code))
                     car=ReadChar();
                     if (car==0x0A) { posn++; break; }
                     if ((car!=0x0A) & (car!=0x0D)) m++;
-                    if ((m>=xl) & (Cfg->warp!=0)) break;
+                    if ((m>=xl) & (KKCfg->warp!=0)) break;
                     }
                 while(1);
 
@@ -1432,7 +1489,7 @@ switch(LO(code))
                         break;
                         }
                     if ((car!=0x0A) & (car!=0x0D)) m++;
-                    if ((m>xl-1) & (Cfg->warp!=0)) break;
+                    if ((m>xl-1) & (KKCfg->warp!=0)) break;
                     }
                 while(1);
 
@@ -1502,7 +1559,7 @@ switch(LO(code))
         break;
     }
 
-if ( (Cfg->warp!=0) & (autowarp==1) ) warp=0;
+if ( (KKCfg->warp!=0) & (autowarp==1) ) warp=0;
 
 if (warp<0) warp=0;
 }
@@ -1511,7 +1568,7 @@ else
 if (shift==-1)
     {
     shift=0;
-    ChargeEcran();
+    LoadScreen();
     }
 if (shift==2)
     {
@@ -1523,7 +1580,7 @@ while(!fin);
 
 SavePosition(fichier,posn);
 
-ChargeEcran();
+LoadScreen();
 
 return fin;
 }
@@ -1812,7 +1869,7 @@ if (taille==0) return -1;
 buffer=GetMem(32768);
 
 
-SaveEcran();
+SaveScreen();
 PutCur(3,0);
 
 x=1;
@@ -2179,7 +2236,7 @@ for (k=0;k<lentit;k++)
             aff=1,car=0;
             break;
         default:
-            car=CnvASCII(car);
+            car=CnvASCII(KKCfg->cnvtable,car);
             break;
         }
 
@@ -2334,7 +2391,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
     char temp[132];
 
     if (shift==0)
-        SaveEcran();
+        SaveScreen();
 
     if (posn>taille2) posn=taille2;
 
@@ -2517,7 +2574,7 @@ switch(LO(code))   {
 else
 {
 shift=0;
-ChargeEcran();
+LoadScreen();
 }
 
 }
@@ -2533,7 +2590,7 @@ while(prem->next!=NULL)
     }
 free(prem);
 
-ChargeEcran();
+LoadScreen();
 
 fclose(fic);
 
@@ -2559,9 +2616,10 @@ static char buffer[256];
 char *fichier,*liaison;
 short i;
 
+
 if (F->FenTyp!=0) return;
 
-SaveEcran();
+SaveScreen();
 
 Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
@@ -2626,8 +2684,9 @@ if (fic!=NULL)
 free(liaison);
 free(fichier);
 
-ChargeEcran();
+LoadScreen();
 }
+
 
 
 
@@ -2636,6 +2695,7 @@ ChargeEcran();
 \*--------------------------------------------------------------------*/
 void Masque(short x1,short y1,short x2,short y2)
 {
+char ok=1;
 char *chaine;
 char chain2[132];
 short m1,m2;
@@ -2649,9 +2709,9 @@ char cont,trouve=0;
 
 struct PourMask *CMask;
 
-if (((Cfg->wmask)&128)==128) return;
+if (((KKCfg->wmask)&128)==128) return;
 
-CMask=Mask[(Cfg->wmask)&15];
+CMask=Mask[(KKCfg->wmask)&15];
 
 chaine=CMask->chaine;
 
@@ -2660,9 +2720,16 @@ y=y1;
 
 l=0;
 
-while(y<=y2)
+while ((y<=y2) | (ok==0) )
     {
-    c=GetChr(x,y);
+    if (ok)
+        c=GetChr(x,y);
+        else
+        c=32;
+
+/*--------------------------------------------------------------------*\
+|- Filtre Font de m... -> dos                                         -|
+\*--------------------------------------------------------------------*/
 
     if ( ((c>='a') & (c<='z')) | ((c>='A') & (c<='Z')) | (c=='_') |
           (c=='-') |                             ((c>='0') & (c<='9')) )
@@ -2746,14 +2813,15 @@ while(y<=y2)
                 l=0;
                 }
             }
-        AffCol(x,y,10*16+9);
+        if (ok)
+            AffCol(x,y,10*16+9);
         }
 
 /*--------------------------------------------------------------------*\
 |- Filtre eLiTe                                                       -|
 \*--------------------------------------------------------------------*/
 
-    if (((Cfg->wmask)&64)==64)
+    if (((KKCfg->wmask)&64)==64)
         {
         c=toupper(c);
         switch(c)
@@ -2770,8 +2838,21 @@ while(y<=y2)
         AffChr(x,y,c);
         }
 
-    x++;
-    if (x>x2) x=x1,y++;
+    if (ok==1)
+        {
+        x++;
+        if (x>x2)
+            {
+            x--;
+            ok=0;
+            }
+        }
+        else
+        {
+        x=x1;
+        y++;
+        ok=1;
+        }
     }
 
 /*--------------------------------------------------------------------*\
@@ -2807,7 +2888,7 @@ int dernier;
 int c;
 char car,car2;
 
-SaveEcran();
+SaveScreen();
 
 n=0;
 max=0;
@@ -2816,7 +2897,7 @@ pos=0;
 for(i=0;i<16;i++)
     if (strlen(Mask[i]->title)>0)
         {
-        if ( ((Cfg->wmask)&15) ==i) pos=n;
+        if ( ((KKCfg->wmask)&15) ==i) pos=n;
         s[n]=i;
         n++;
         if (strlen(Mask[i]->title)>max) max=strlen(Mask[i]->title);
@@ -2846,10 +2927,10 @@ ChrLin(0,(Cfg->TailleY)-1,Cfg->TailleX,32);
 
 do
     {
-    PrintAt( 1,(Cfg->TailleY)-1,"F8: Look %3s",
-                                    (Cfg->wmask&64)==64 ? "ON" : "OFF");
+    PrintAt(1,(Cfg->TailleY)-1,"F8: Look %3s",
+                                  (KKCfg->wmask&64)==64 ? "ON" : "OFF");
     PrintAt(17,(Cfg->TailleY)-1,"F9: Mask %3s",
-                                  (Cfg->wmask&128)==128 ? "OFF" : "ON");
+                                (KKCfg->wmask&128)==128 ? "OFF" : "ON");
     PrintAt(40,(Cfg->TailleY)-1,"%-40s",Mask[s[pos]]->title);
 
     for (i=prem;i<n;i++)
@@ -2890,15 +2971,15 @@ do
             if (pos>dernier) prem++;
             break;
         case 0x42: // F8
-            Cfg->wmask^=64;
+            KKCfg->wmask^=64;
             break;
         case 0x43: // F9
-            Cfg->wmask^=128;
+            KKCfg->wmask^=128;
             break;
         }
     switch(car) {
         case 13:
-            Cfg->wmask=((Cfg->wmask)&240)|s[pos];
+            KKCfg->wmask=((KKCfg->wmask)&240)|s[pos];
             break;
         }
 
@@ -2906,7 +2987,7 @@ do
 while ( (car!=27) & (car!=13) );
 
 
-ChargeEcran();
+LoadScreen();
 }
 
 /*--------------------------------------------------------------------*\

@@ -51,7 +51,7 @@ RB_IDF Info;
 
 F=Fen->F[Fen->pcur];
 
-if (Cfg->_Win95==1)
+if (KKCfg->_Win95==1)
     InfoLongFile(Fen,buffer);
     else
     strcpy(buffer,F->name);
@@ -128,7 +128,7 @@ Fen->xl2=Fen->xl;
 Fen->x3=x+2;
 Fen->y3=y+Fen->yl-1;
 
-switch (Cfg->fentype)
+switch (KKCfg->fentype)
     {
     case 1:
         Cfg->Tfont=179;
@@ -291,16 +291,22 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
         sprintf(ch4,"%02d:%02d",(time>>11)&31,(time>>5)&63);
 
         if ((Fen->F[n]->attrib & _A_SUBDIR)==_A_SUBDIR)
-            memcpy(ch2,"SUB--DIR",10);
+            strcpy(ch2,"SUB--DIR");
 
         if ((Fen->F[n]->attrib & _A_VOLID)==_A_VOLID)
-            memcpy(ch2,"##Vol-ID##",10);
+            strcpy(ch2,"##Vol-ID##");
 
         if (nom[1]==':')
             {
-            memcpy(ch2,"##Reload##",10);
+            strcpy(ch2,"##Reload##");
             strcpy(ch3,"        ");
             strcpy(ch4,"     ");
+            }
+
+        if (nom[1]=='*')
+            {
+            strcpy(ch1,"CD-ROM Drive");
+            strcpy(ch2," RELOAD ");
             }
 
         if (Fen->F[n]->select!=0)
@@ -338,24 +344,30 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
                 {
                 col=7*16+6;
 
-                if (Cfg->dispcolor==1)
+                if (KKCfg->dispcolor==1)
                     {
-                    if ((FoundExt(ext,Cfg->ExtExe)) & (Cfg->Enable_Exe))
+                    if ((FoundExt(ext,KKCfg->ExtExe)) &
+                                                    (KKCfg->Enable_Exe))
                         col=7*16+13;                       // Executable
                     else
-                    if ((FoundExt(ext,Cfg->ExtArc)) & (Cfg->Enable_Arc))
+                    if ((FoundExt(ext,KKCfg->ExtArc)) &
+                                                    (KKCfg->Enable_Arc))
                         col=7*16+8;                           // Archive
                     else
-                    if ((FoundExt(ext,Cfg->ExtSnd)) & (Cfg->Enable_Snd))
+                    if ((FoundExt(ext,KKCfg->ExtSnd)) &
+                                                    (KKCfg->Enable_Snd))
                         col=7*16+12;                              // Son
                     else
-                    if ((FoundExt(ext,Cfg->ExtBmp)) & (Cfg->Enable_Bmp))
+                    if ((FoundExt(ext,KKCfg->ExtBmp)) &
+                                                    (KKCfg->Enable_Bmp))
                         col=7*16+11;                            // Image
                     else
-                    if ((FoundExt(ext,Cfg->ExtTxt)) & (Cfg->Enable_Txt))
+                    if ((FoundExt(ext,KKCfg->ExtTxt)) &
+                                                    (KKCfg->Enable_Txt))
                          col=7*16+4;                            // Texte
                     else
-                    if ((FoundExt(ext,Cfg->ExtUsr)) & (Cfg->Enable_Usr))
+                    if ((FoundExt(ext,KKCfg->ExtUsr)) &
+                                                    (KKCfg->Enable_Usr))
                          col=13*16+11;                   // User defined
                     }
                 }
@@ -613,7 +625,7 @@ void MenuBar(char c)
 {
 static char bar[4][60]=
  {" Help  ----  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
-  " ---- Attrib View  Edit  Host Rename ----  ----  ----  ---- ",//SHIFT
+  " ---- Attrib View  Edit  Host Rename ----  ----   Row  ---- ",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
   " Drv1  Drv2  FDiz FileID ----  Hist Search Type  Line  Disp "}; //ALT
 
@@ -699,7 +711,7 @@ void ASCIItable(void)
 {
 int n,x,y,m;
 
-SaveEcran();
+SaveScreen();
 
 m=((Cfg->TailleX)-80)/2;
 
@@ -717,7 +729,7 @@ ColWin(m+1,6,m+78,21,10*16+5);
 
 Wait(0,0,0);
 
-ChargeEcran();
+LoadScreen();
 }
 
 
@@ -845,24 +857,24 @@ struct TmtWin F = {-1,3,74,22,"Setup"};
 
 int n;
 
-l1=Cfg->mtrash;
-l2=Cfg->AnsiSpeed;
+l1=KKCfg->mtrash;
+l2=KKCfg->AnsiSpeed;
 l3=Cfg->debug;
-l4=Cfg->pntrep;
-l5=Cfg->logfile;
-l6=Cfg->Esc2Close;
-l7=Cfg->cnvhist;
-l8=Cfg->hidfil;
-l9=Cfg->autoreload;
-l10=Cfg->verifhist;
-l11=Cfg->palafter;
-l12=Cfg->dispcolor;
-l13=Cfg->insdown;
-l14=Cfg->seldir;
-l15=Cfg->esttime;
-l16=Cfg->ajustview;
-l17=Cfg->currentdir;
-l18=Cfg->saveviewpos;
+l4=KKCfg->pntrep;
+l5=KKCfg->logfile;
+l6=KKCfg->Esc2Close;
+l7=KKCfg->cnvhist;
+l8=KKCfg->hidfil;
+l9=KKCfg->autoreload;
+l10=KKCfg->verifhist;
+l11=KKCfg->palafter;
+l12=KKCfg->dispcolor;
+l13=KKCfg->insdown;
+l14=KKCfg->seldir;
+l15=KKCfg->esttime;
+l16=KKCfg->ajustview;
+l17=KKCfg->currentdir;
+l18=KKCfg->saveviewpos;
 
 do
 {
@@ -882,24 +894,24 @@ if (T[n].type==5)
 while(T[n].type==5);
 
 
-Cfg->mtrash=l1;
-Cfg->AnsiSpeed=l2;
+KKCfg->mtrash=l1;
+KKCfg->AnsiSpeed=l2;
 Cfg->debug=l3;
-Cfg->pntrep=l4;
-Cfg->logfile=l5;
-Cfg->Esc2Close=l6;
-Cfg->cnvhist=l7;
-Cfg->hidfil=l8;
-Cfg->autoreload=l9;
-Cfg->verifhist=l10;
-Cfg->palafter=l11;
-Cfg->dispcolor=l12;
-Cfg->insdown=l13;
-Cfg->seldir=l14;
-Cfg->esttime=l15;
-Cfg->ajustview=l16;
-Cfg->currentdir=l17;
-Cfg->saveviewpos=l18;
+KKCfg->pntrep=l4;
+KKCfg->logfile=l5;
+KKCfg->Esc2Close=l6;
+KKCfg->cnvhist=l7;
+KKCfg->hidfil=l8;
+KKCfg->autoreload=l9;
+KKCfg->verifhist=l10;
+KKCfg->palafter=l11;
+KKCfg->dispcolor=l12;
+KKCfg->insdown=l13;
+KKCfg->seldir=l14;
+KKCfg->esttime=l15;
+KKCfg->ajustview=l16;
+KKCfg->currentdir=l17;
+KKCfg->saveviewpos=l18;
 
 SaveCfg();
 
@@ -946,8 +958,8 @@ struct TmtWin F = {-1,5,74,18,"File Setup"};
 int n;
 char fin;
 
-strcpy(Edit,Cfg->editeur);
-strcpy(View,Cfg->vieweur);
+strcpy(Edit,KKCfg->editeur);
+strcpy(View,KKCfg->vieweur);
 
 do
 {
@@ -985,8 +997,8 @@ if (n==4)
 }
 while(!fin);
 
-strcpy(Cfg->editeur,Edit);
-strcpy(Cfg->vieweur,View);
+strcpy(KKCfg->editeur,Edit);
+strcpy(KKCfg->vieweur,View);
 }
 
 void ExtSetup(void)
@@ -1018,38 +1030,38 @@ struct TmtWin F = {-1,5,74,21,"Extension Setup"};
 
 int n;
 
-l1=Cfg->Enable_Txt;
-l2=Cfg->Enable_Bmp;
-l3=Cfg->Enable_Snd;
-l4=Cfg->Enable_Arc;
-l5=Cfg->Enable_Exe;
-l6=Cfg->Enable_Usr;
+l1=KKCfg->Enable_Txt;
+l2=KKCfg->Enable_Bmp;
+l3=KKCfg->Enable_Snd;
+l4=KKCfg->Enable_Arc;
+l5=KKCfg->Enable_Exe;
+l6=KKCfg->Enable_Usr;
 
-strcpy(Txt,Cfg->ExtTxt);
-strcpy(Bmp,Cfg->ExtBmp);
-strcpy(Snd,Cfg->ExtSnd);
-strcpy(Arc,Cfg->ExtArc);
-strcpy(Exe,Cfg->ExtExe);
-strcpy(Usr,Cfg->ExtUsr);
+strcpy(Txt,KKCfg->ExtTxt);
+strcpy(Bmp,KKCfg->ExtBmp);
+strcpy(Snd,KKCfg->ExtSnd);
+strcpy(Arc,KKCfg->ExtArc);
+strcpy(Exe,KKCfg->ExtExe);
+strcpy(Usr,KKCfg->ExtUsr);
 
 n=WinTraite(T,14,&F);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
-strcpy(Cfg->ExtTxt,Txt);
-strcpy(Cfg->ExtBmp,Bmp);
-strcpy(Cfg->ExtSnd,Snd);
-strcpy(Cfg->ExtArc,Arc);
-strcpy(Cfg->ExtExe,Exe);
-strcpy(Cfg->ExtUsr,Usr);
+strcpy(KKCfg->ExtTxt,Txt);
+strcpy(KKCfg->ExtBmp,Bmp);
+strcpy(KKCfg->ExtSnd,Snd);
+strcpy(KKCfg->ExtArc,Arc);
+strcpy(KKCfg->ExtExe,Exe);
+strcpy(KKCfg->ExtUsr,Usr);
 
-Cfg->Enable_Txt=l1;
-Cfg->Enable_Bmp=l2;
-Cfg->Enable_Snd=l3;
-Cfg->Enable_Arc=l4;
-Cfg->Enable_Exe=l5;
-Cfg->Enable_Usr=l6;
+KKCfg->Enable_Txt=l1;
+KKCfg->Enable_Bmp=l2;
+KKCfg->Enable_Snd=l3;
+KKCfg->Enable_Arc=l4;
+KKCfg->Enable_Exe=l5;
+KKCfg->Enable_Usr=l6;
 }
 
 void ScreenSetup(void)
@@ -1095,7 +1107,7 @@ switch(Cfg->TailleY)
     case 30:  
     default:  sw=1; break;
     }
-sy=Cfg->fentype+4;
+sy=KKCfg->fentype+4;
 l1=Cfg->font;
 l2=Cfg->SaveSpeed;
 
@@ -1110,7 +1122,7 @@ switch(sw)
     case 1:  Cfg->TailleY=30; break;
     case 2:  Cfg->TailleY=50; break;
     }
-Cfg->fentype=sy-4;
+KKCfg->fentype=sy-4;
 Cfg->font=l1;
 Cfg->SaveSpeed=l2;
 
@@ -1489,7 +1501,7 @@ ColLin(x+1,y+10,37,10*16+3);
 PrintAt(x+1,y+11,"þ %s",chaine);            // Information about windows
 PrintAt(x+1,y+12,"þ Initialisation: %d clocks ",Info->temps);
 PrintAt(x+1,y+13,"þ Long filenames support: %s ",
-                                              Cfg->_Win95 ?"Yes": "No");
+                                            KKCfg->_Win95 ?"Yes": "No");
 
 PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
 
@@ -1548,7 +1560,7 @@ if (fic!=NULL)
 
 k=-1;
 for (i=0;i<Fen->Fen2->nbrfic;i++)
-    if (!stricmp("FILE_ID.DIZ",Fen->Fen2->F[i]->name))
+    if (!WildCmp("FILE_ID.DIZ",Fen->Fen2->F[i]->name))
         {
         k=i;
         break;
@@ -1703,7 +1715,7 @@ struct Tmt T[6] =  {
 
 struct TmtWin F = {-1,3,74,22,"Speed Test"};
 
-SaveEcran();
+SaveScreen();
 
 c=(rand()*80)/RAND_MAX+32;
 m=0;
@@ -1741,9 +1753,9 @@ while((clock()-Cl)<270)
     }
 Cl2=n;
 
-ChargeEcran();
+LoadScreen();
 
-SaveEcran();
+SaveScreen();
          
 fvit1=(Cl1*CLOCKS_PER_SEC)/270;
 fvit2=(Cl2*CLOCKS_PER_SEC)/270;
@@ -1753,7 +1765,7 @@ sprintf(vit2,"%f characters/seconds",fvit2);
 
 n=WinTraite(T,6,&F);
 
-ChargeEcran();
+LoadScreen();
 }
 
 

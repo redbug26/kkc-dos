@@ -70,8 +70,6 @@ for (n=strlen(path);n>0;n--) {
 
 Fics=GetMem(sizeof(struct fichier));
 
-Cfg->_4dos=0;
-
 Fics->FicIdfFile=GetMem(256);
 strcpy(Fics->FicIdfFile,path);
 strcat(Fics->FicIdfFile,"\\idfext.rb");

@@ -186,7 +186,7 @@ fclose(fic);
 
 haut=prem;
 
-SaveEcran();
+SaveScreen();
 PutCur(3,0);
 
 Bar(" Help  ----  ----  Hexa  ----  ---- Search Print Mask  ---- ");
@@ -338,7 +338,7 @@ if (cy>=ym)
 }
 while(car!=27);
 
-ChargeEcran();
+LoadScreen();
 
 
 /*--------------------------------------------------------------------*\
@@ -379,7 +379,7 @@ void Edit(char *name)
 {
 char *fichier;
 
-SaveEcran();
+SaveScreen();
 
 Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
@@ -395,7 +395,7 @@ TxtEdit(fichier);
 free(fichier);
 
 
-ChargeEcran();
+LoadScreen();
 }
 
 

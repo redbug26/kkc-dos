@@ -98,7 +98,7 @@ Fic[0]->select=0;
 
 DFen->nbrfic=1;
 
-if (Cfg->pntrep==1)
+if (KKCfg->pntrep==1)
     {
     Fic[1]=GetMem(sizeof(struct file));
     Fic[1]->name=GetMem(2);
@@ -249,7 +249,7 @@ if (Header.FType!=2)
 
 fclose(fic);
 
-if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0)
+if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0)
                                                   & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
@@ -327,7 +327,7 @@ Fic[0]->select=0;
 
 DFen->nbrfic=1;
 
-if (Cfg->pntrep==1)
+if (KKCfg->pntrep==1)
     {
     Fic[1]=GetMem(sizeof(struct file));
     Fic[1]->name=GetMem(2);
@@ -416,7 +416,7 @@ pos=pos+Lt.TeteSize;
 if (Lt.Flags & 0x8000) pos+=Lt.PackSize;        //--- LONG_BLOCK -------
 }
 
-if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) &
+if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
                                                     (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
@@ -494,7 +494,7 @@ Fic[0]->select=0;
 
 DFen->nbrfic=1;
 
-if (Cfg->pntrep==1)
+if (KKCfg->pntrep==1)
     {
     Fic[1]=GetMem(sizeof(struct file));
     Fic[1]->name=GetMem(2);
@@ -620,7 +620,7 @@ pos=ftell(fic)+Header.PackSize+Header.ExtraField;
 
 fclose(fic);
 
-if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0)
+if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0)
                                                   & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
@@ -696,7 +696,7 @@ Fic[0]->select=0;
 
 DFen->nbrfic=1;
 
-if (Cfg->pntrep==1)
+if (KKCfg->pntrep==1)
     {
     Fic[1]=GetMem(sizeof(struct file));
     Fic[1]->name=GetMem(2);
@@ -818,7 +818,7 @@ pos+=Header.HSize+Header.PackSize+2;     //--- CRC ? -------------------
 
 fclose(fic);
 
-if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) &
+if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
                                                     (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
@@ -874,7 +874,7 @@ Fic=DFen->F;
 
 DFen->nbrfic=0;
 
-if (Cfg->pntrep==1)
+if (KKCfg->pntrep==1)
     {
     Fic[0]=GetMem(sizeof(struct file));
     Fic[0]->name=GetMem(2);
@@ -1070,7 +1070,7 @@ Fic[0]->select=0;
 
 DFen->nbrfic=1;
 
-if (Cfg->pntrep==1)
+if (KKCfg->pntrep==1)
     {
     Fic[1]=GetMem(sizeof(struct file));
     Fic[1]->name=GetMem(2);
@@ -1127,7 +1127,7 @@ for(n=0;n<nbr;n++)
 
 fclose(fic);
 
-if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) &
+if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
                                                     (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
@@ -1180,8 +1180,8 @@ if (dirp!=NULL)
     ff=readdir(dirp);
     if (ff==NULL) break;
 
-    if ( ((Cfg->pntrep==1) |  (strcmp(ff->d_name,".")!=0)) &
-         ((Cfg->hidfil==1) | (((ff->d_attr)&_A_HIDDEN)!=_A_HIDDEN)) &
+    if ( ((KKCfg->pntrep==1) |  (strcmp(ff->d_name,".")!=0)) &
+         ((KKCfg->hidfil==1) | (((ff->d_attr)&_A_HIDDEN)!=_A_HIDDEN)) &
          (((ff->d_attr)&_A_VOLID)!=_A_VOLID)
          )
         {
@@ -1217,6 +1217,34 @@ if ( ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
     Fic[DFen->nbrfic]->size=0;
     DFen->nbrfic++;
     }
+
+/*--------------------------------------------------------------------*\
+|- Test si c'est un CD-ROM                                            -|
+\*--------------------------------------------------------------------*/
+
+if (1)
+    {
+    union REGS R;
+
+    R.w.ax=0x150B;
+    R.w.cx=toupper(DFen->path[0])-'A';
+    int386(0x2F,&R,&R);
+
+    if ( (R.w.bx==0xADAD) & (R.w.ax!=0) )
+        {
+        Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+
+        Fic[DFen->nbrfic]->name=GetMem(4);                // Pour Reload
+        memcpy(Fic[DFen->nbrfic]->name,"****",4);
+        Fic[DFen->nbrfic]->time=0;
+        Fic[DFen->nbrfic]->date=0;
+        Fic[DFen->nbrfic]->attrib=_A_SUBDIR;
+        Fic[DFen->nbrfic]->select=0;
+        Fic[DFen->nbrfic]->size=0;
+        DFen->nbrfic++;
+        }
+    }
+
 
 ChangeLine();
 
@@ -1311,7 +1339,7 @@ Nbdir=0;
 Nbfic=0;
 
 
-SaveEcran();
+SaveScreen();
 ColLin(0,0,80,1*16+4);
 
 oldpos=3+1+256+4+4;
@@ -1436,7 +1464,7 @@ Fichier[Nbfic-1]->next=0;
 }
 while (NbrRec>0);
 
-ChargeEcran();
+LoadScreen();
 
 
 fprintf(fic,"KKD");

@@ -46,7 +46,8 @@ int FenMove(FENETRE *F1,FENETRE *F2);
 
 int UserInt(void);      //--- Interruption par l'utilisateur -----------
 
-void CountRepSize(FENETRE *F1,FENETRE *FTrash,int *nbr,int *size);
+int CountRepSize(FENETRE *F1,FENETRE *FTrash,int *nbr,int *size);
+                    //--- Renvoit -1 si le nombre de fichier est nul ---
 
 /*--------------------------------------------------------------------*\
 |- internal variable                                                  -|
@@ -92,7 +93,7 @@ Path2Abs(inpath,"..");      Path2Abs(outpath,"..");
 
 mkdir(outpath);
 
-if (Cfg->_Win95==1)
+if (KKCfg->_Win95==1)
     UpdateLongName(inpath,outpath);
 
 if (dirp!=NULL)
@@ -311,7 +312,7 @@ while ((fin==0) & (Taille>0))
         PrintAt(12,14,"Copying %9d of %9d",Sizecur+TailleRest,Sizefic);
         j4=LongGradue(10,15,60,j4,Sizecur+TailleRest,Sizefic);
 
-        if (Cfg->esttime==1)
+        if (KKCfg->esttime==1)
             {
             int n1,n2;
 
@@ -400,7 +401,7 @@ if (ok==1)
     if (outhand!=NULL)
         {
         fclose(outhand);
-        if (((Cfg->noprompt)&1)==0)
+        if (((KKCfg->noprompt)&1)==0)
             if (FileExist(outpath)==1)
                 ok=0;
         }
@@ -442,7 +443,7 @@ if ( (ok==1) & (fin==0) )      //--- Mise a l'heure --------------------
     _dos_setftime(handle,d,t);
     _dos_close(handle);
 
-    if (Cfg->_Win95==1)
+    if (KKCfg->_Win95==1)
         UpdateLongName(inpath,outpath);
     }
 
@@ -500,7 +501,7 @@ if (Nbrfic!=0)
 memcpy(Dir,FTrash->path,255);
 
 n=0;
-if (((Cfg->noprompt)&1)==0)
+if (((KKCfg->noprompt)&1)==0)
     n=WinTraite(T,5,&F);
 
 Path2Abs(Dir,".");
@@ -573,7 +574,7 @@ struct TmtWin F = {-1,10,74,17,"Move"};
 memcpy(Dir,FTrash->path,255);
 
 n=0;
-if (((Cfg->noprompt)&1)==0)
+if (((KKCfg->noprompt)&1)==0)
     n=WinTraite(T,5,&F);
 
 Path2Abs(Dir,".");
@@ -1271,7 +1272,7 @@ switch(FTrash->system)
         break;
     }
 
-SaveEcran();
+SaveScreen();
 
 WinCadre(7,4,73,15,0);
 ColWin(8,5,72,14,10*16+1);
@@ -1311,7 +1312,7 @@ for (i=0;i<F1->nbrfic;i++)
 // Fenˆtre 1 ne change pas
 
 
-ChargeEcran();
+LoadScreen();
 }
 
 /*--------------------------------------------------------------------*\
@@ -1332,7 +1333,7 @@ FicEcrase=0;
 
 Nbrcur=0;
 Sizecur=0;
-CountRepSize(F1,FTrash,&Nbrfic,&Sizefic);
+if (CountRepSize(F1,FTrash,&Nbrfic,&Sizefic)==-1) return;
 Clock_Dep=clock();
 
 DFen=FTrash;
@@ -1386,7 +1387,7 @@ switch(FTrash->system)
     }
 
 
-SaveEcran();
+SaveScreen();
 
 if (Nbrfic!=0)
     {
@@ -1435,7 +1436,7 @@ for (i=0;i<F1->nbrfic;i++)
     if (FicEcrase==2) break;
     }
 
-ChargeEcran();
+LoadScreen();
 }
 
 /*--------------------------------------------------------------------*\
@@ -1443,7 +1444,11 @@ ChargeEcran();
 \*--------------------------------------------------------------------*/
 int SelectFile(FENETRE *F1,int i)
 {
-if (((Cfg->noprompt)&1)==0)
+if (F1->F[i]->name[0]=='.') return 0;
+if (F1->F[i]->name[1]==':') return 0;
+if (F1->F[i]->name[1]=='*') return 0;
+
+if (((KKCfg->noprompt)&1)==0)
     {
     if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
         return 1;
@@ -1491,7 +1496,7 @@ return j1;
 /*--------------------------------------------------------------------*\
 |- Calcul de la taille d'un repertoire                                -|
 \*--------------------------------------------------------------------*/
-void CountRepSize(FENETRE *F1,FENETRE *FTrash,int *nbr, int *size)
+int CountRepSize(FENETRE *F1,FENETRE *FTrash,int *nbr, int *size)
 {
 char cont;
 struct file *ff;
@@ -1505,7 +1510,9 @@ char moi[256],nom[256];
 
 int i;
 
-SaveEcran();
+int ok=1;
+
+SaveScreen();
 
 Window(25,6,56,10,10*16+1);
 WinCadre(24,5,57,11,0);
@@ -1617,15 +1624,19 @@ if (SelectFile(F1,i))
 
 } //--- END FOR --------------------------------------------------------
 
+if (*nbr==0) ok=-1;
 
 if (KbHit())
     {
     while (KbHit()) Wait(0,0,0);
     *size=0;
     *nbr=0;
+    ok=1;
     }
 
-ChargeEcran();
+LoadScreen();
+
+return ok;
 }
 
 /*--------------------------------------------------------------------*\
@@ -1641,7 +1652,7 @@ int j1,j2;                           // postion du compteur (read,write)
 
 struct file *F;
 
-SaveEcran();
+SaveScreen();
 
 if (Nbrfic!=0)
     {
@@ -1684,7 +1695,7 @@ for (i=0;i<F1->nbrfic;i++)
     if (FicEcrase==2) break;
     }
 
-ChargeEcran();
+LoadScreen();
 }
 
 
@@ -1752,7 +1763,7 @@ int j1,j2;                           // postion du compteur (read,write)
 
 struct file *F;
 
-SaveEcran();
+SaveScreen();
 
 if (Nbrfic!=0)
     {
@@ -1795,7 +1806,7 @@ for (i=0;i<F1->nbrfic;i++)
     if (FicEcrase==2) break;
     }
 
-ChargeEcran();
+LoadScreen();
 }
 
 struct kkdesc

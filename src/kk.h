@@ -12,7 +12,22 @@
 #define WORD unsigned short
 #define ULONG unsigned long
 
+struct PourMask
+     {
+     char Ignore_Case;                         // 1 si on ignore la case
+     char Other_Col;                  // 1 si on colorie les autres noms
+     char chaine[1024];  // chaine de comparaison EX: "asm break case @"
+     char title[40];                                 // nom de ce masque
+     };
 
+extern struct PourMask **Mask;
+
+struct RB_info
+     {
+     int temps;          // Temps entre le main() et l'appel utilisateur
+     };
+
+extern struct RB_info *Info;
 
 struct file
     {
@@ -80,7 +95,89 @@ typedef struct _fenetre
 
 } FENETRE;
 
+struct kkconfig
+     {
+    // Selon user
+    //-----------
 
+
+     short fentype;    // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
+
+     char pntrep;              // vaut 1 si on affiche le repertoire "."
+     char hidfil;            // vaut 1 si on affiche les fichiers caches
+
+     char logfile;                    // vaut 1 si on utilise un logfile
+
+     char autoreload;   // Reload auto. quand les 2 fen. sont identiques
+     char verifhist;  // Verify history at any loading of KK (CTRL-PGDN)
+     char palafter;    // Load the palette only when configuration is ok
+     BYTE noprompt;    // Si x&1 vaut 1 alors on ne prompte pdt la copie
+     char currentdir;                   // Va dans le repertoire courant
+
+     char dispcolor;    // Highlight les fichiers suivant les extensions
+
+     char insdown;    // vaut 1 si on descent quand on appuie sur insert
+     char seldir;     // vaut 1 si on selectionne les repertoires avec +
+
+     long strash;                                       // Size of trash
+
+     char enterkkd;           // entre dans les kkd pendant la recherche
+
+     char editeur[64];               // ligne de commande pour l'editeur
+     char vieweur[64];               // ligne de commande pour le viewer
+
+     char ExtTxt[64],Enable_Txt;
+     char ExtBmp[64],Enable_Bmp;
+     char ExtSnd[64],Enable_Snd;
+     char ExtArc[64],Enable_Arc;
+     char ExtExe[64],Enable_Exe;
+     char ExtUsr[64],Enable_Usr;
+
+     char Qmenu[48];
+     short Nmenu[8];
+
+     char Esc2Close;   // vaut 1 si on doit fermer les fenˆtres avec ESC
+
+     char cnvhist;         // 1: si on convertit a chaque fois l'history
+     char esttime;                 // estime le temps pendant la copie ?
+
+    //--- Variable pour le viewer --------------------------------------
+
+     char warp;                    // 0: pas de warp, 1: word, 2: entier
+     char cnvtable;                // Table de conversion pour le viewer
+     char autotrad;                  // Traduit automatiquement un table
+     char ajustview;                  // Fit the width of file in viewer
+     char saveviewpos;                // Save position of file in viewer
+     unsigned char wmask;             // C'est quel masque kon emploie ?
+
+     long AnsiSpeed;
+
+    //--- Don't look this ----------------------------------------------
+
+     long mtrash;                          // taille maximum de la trash
+     long FenAct;                         // Quelle fenˆtre est active ?
+     char _4dos;                                // equal 1 if 4DOS found
+     char _Win95;                                    // Support nom long
+
+     char HistDir[256];                                // History of dir
+     char overflow1;
+
+     char HistCom[512];                            // History of command
+     char overflow2;                       // Vaut tjs 0 (pour overflow)
+     short posinhist;                  // Position in history of command
+
+     char extens[39];              // extension qui viennent tout devant
+
+     short FenTyp[3];                         // Type des fenˆtres SHELL
+     short KeyAfterShell;           // Vaut 1 si wait key after dosshell
+
+     short key;                              // code touche a reutiliser
+     char FileName[256]; // Nom du dernier fichier select. for F3 on arc
+     char crc;                           // Vaut tjs 0x69 (genre de crc)
+     };
+
+
+extern struct kkconfig *KKCfg;
 
 void Shell(char *string,...);
 void SaveCfg(void);
@@ -119,4 +216,4 @@ extern int IOerr;
 
 #define NBWIN 4
 
-
+void DefaultKKCfg(void);

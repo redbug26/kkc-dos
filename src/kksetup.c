@@ -34,6 +34,8 @@ char ActualPath[256];
 
 char LoadDefCfg;
 
+struct kkconfig *KKCfg;
+struct PourMask **Mask;
 
 /*--------------------------------------------------------------------*\
 |- prototype                                                          -|
@@ -451,7 +453,7 @@ int info;
 
 int prem;
 
-SaveEcran();
+SaveScreen();
 PutCur(32,0);
 
 info=0;
@@ -552,7 +554,7 @@ if (prem>nbrkey-(Cfg->TailleY-6))
 }
 while (car!=27);
 
-ChargeEcran();
+LoadScreen();
 }
 
 void SaveCfg(void)
@@ -562,11 +564,13 @@ FILE *fic;
 short taille;
 FENETRE *Fen;
 
-Cfg->FenTyp[0]=0;
-Cfg->FenTyp[1]=0;
+KKCfg->FenTyp[0]=0;
+KKCfg->FenTyp[1]=0;
 
 fic=fopen(Fics->CfgFile,"wb");
 fwrite((void*)Cfg,sizeof(struct config),1,fic);
+
+fwrite((void*)KKCfg,sizeof(struct kkconfig),1,fic);
 
 for(n=0;n<16;n++)
     {
@@ -625,6 +629,8 @@ if (fic==NULL) return -1;
 
 fread((void*)Cfg,sizeof(struct config),1,fic);
 
+fread((void*)KKCfg,sizeof(struct kkconfig),1,fic);
+
 for(n=0;n<16;n++)
     {
     fread(&(Mask[n]->Ignore_Case),1,1,fic);
@@ -641,7 +647,7 @@ for (t=0;t<NBWIN;t++)
     {
     DFen=Fenetre[t];
 
-    DFen->FenTyp=Cfg->FenTyp[t];
+    DFen->FenTyp=KKCfg->FenTyp[t];
     
     fread(DFen->path,256,1,fic);
     fread(&(DFen->order),sizeof(short),1,fic);
@@ -700,7 +706,7 @@ if (nbr<5) l=6;
 if (nbr<2) l=9;
 x=(Cfg->TailleX-(l*nbr))/2;
 
-SaveEcran();
+SaveScreen();
 PutCur(32,0);
 
 WinCadre(x-2,6,x+l*nbr+1,11,0);
@@ -803,7 +809,7 @@ do	{
 
 } while ( (LO(car)!=27) & (LO(car)!=13));
 
-ChargeEcran();
+LoadScreen();
 
 if (car==27)
     for (n=0;n<26;n++)
@@ -862,7 +868,7 @@ if (i!=0)
 
     y=MesgY;
 
-    SaveEcran();
+    SaveScreen();
     PutCur(32,0);
 
     max=i;
@@ -914,7 +920,7 @@ if (i!=0)
     }
     while ( (car!=13) & (car!=27) & (HI(car)!=0x8D) );
 
-    ChargeEcran();
+    LoadScreen();
 
 
 
@@ -991,6 +997,8 @@ InitScreen(0);                     // Initialise toutes les donn‚es HARD
 |-  Gestion des erreurs                                               -|
 \*--------------------------------------------------------------------*/
 
+KKCfg=GetMem(sizeof(struct kkconfig));
+
 _harderr(Error_handler);
 
 path=GetMem(256);
@@ -1050,6 +1058,7 @@ if (LoadCfg()==-1)
     int t;
 
     DefaultCfg();
+    DefaultKKCfg();
 
     LoadDefCfg=1;
     
@@ -1057,7 +1066,7 @@ if (LoadCfg()==-1)
         {
         DFen=Fenetre[t];
 
-        DFen->FenTyp=Cfg->FenTyp[t];
+        DFen->FenTyp=KKCfg->FenTyp[t];
 
         strcpy(DFen->path,Fics->path);
         DFen->order=1;
@@ -1208,7 +1217,7 @@ GVerif=0;
 St_App=0;
 St_Dir=0;
 
-SaveEcran();
+SaveScreen();
 PutCur(32,0);
 
 ChrWin(1,3,Cfg->TailleX-2,Cfg->TailleY-3,32);
@@ -1301,7 +1310,7 @@ if (nbr>0)
     ColWin(1,2,Cfg->TailleX-2,Cfg->TailleY-3,0*16+1);
     ChrWin(1,2,Cfg->TailleX-2,Cfg->TailleY-3,32);  // '±'
 
-    ChargeEcran();
+    LoadScreen();
 
     DispMessage("Statistics");
     DispMessage("I have found %3d applications",St_App);
@@ -1310,7 +1319,7 @@ if (nbr>0)
     }
     else
     {
-    ChargeEcran();
+    LoadScreen();
     }
 }
 
@@ -1622,11 +1631,11 @@ do
 
                 //--- Editeur par default ------------------------------
                     if (app[n]->ext==91)
-                        if (Cfg->editeur[0]==0)
+                        if (KKCfg->editeur[0]==0)
                             if (strlen(app[n]->Filename)<63)
                                 {
-                                strcpy(Cfg->editeur,moi);
-                                Path2Abs(Cfg->editeur,app[n]->Filename);
+                                strcpy(KKCfg->editeur,moi);
+                                Path2Abs(KKCfg->editeur,app[n]->Filename);
                                 }
                     }
                 }
@@ -1756,28 +1765,29 @@ strcpy(section,part);
 strcpy(filename,Fics->path);
 Path2Abs(filename,"kksetup.ini");
 
-Cfg->wmask=get_private_profile_int(section,"mask",Cfg->wmask,filename);
+KKCfg->wmask=get_private_profile_int(section,"mask",
+                                                 KKCfg->wmask,filename);
 Cfg->TailleY=get_private_profile_int(section,"vsize",
                                                  Cfg->TailleY,filename);
 Cfg->TailleX=get_private_profile_int(section,"hsize",
                                                  Cfg->TailleX,filename);
-Cfg->fentype=get_private_profile_int(section,"wintype",
-                                                 Cfg->fentype,filename);
-Cfg->AnsiSpeed=get_private_profile_int(section,"ansispeed",
-                                               Cfg->AnsiSpeed,filename);
+KKCfg->fentype=get_private_profile_int(section,"wintype",
+                                               KKCfg->fentype,filename);
+KKCfg->AnsiSpeed=get_private_profile_int(section,"ansispeed",
+                                             KKCfg->AnsiSpeed,filename);
 Cfg->SaveSpeed=get_private_profile_int(section,"ssaverspeed",
                                                Cfg->SaveSpeed,filename);
-Cfg->pntrep=get_private_profile_int(section,"directpoint",
-                                                  Cfg->pntrep,filename);
-Cfg->hidfil=get_private_profile_int(section,"hiddenfile",
-                                                  Cfg->hidfil,filename);
-Cfg->logfile=get_private_profile_int(section,"logfile",
-                                                 Cfg->logfile,filename);
+KKCfg->pntrep=get_private_profile_int(section,"directpoint",
+                                                KKCfg->pntrep,filename);
+KKCfg->hidfil=get_private_profile_int(section,"hiddenfile",
+                                                KKCfg->hidfil,filename);
+KKCfg->logfile=get_private_profile_int(section,"logfile",
+                                               KKCfg->logfile,filename);
 Cfg->font=get_private_profile_int(section,"font",Cfg->font,filename);
 Cfg->debug=get_private_profile_int(section,"debug",
                                                    Cfg->debug,filename);
-Cfg->mtrash=get_private_profile_int(section,"sizetrash",
-                                                  Cfg->mtrash,filename);
+KKCfg->mtrash=get_private_profile_int(section,"sizetrash",
+                                                  KKCfg->mtrash,filename);
 Cfg->display=get_private_profile_int(section,"display",
                                                  Cfg->display,filename);
 Cfg->comport=get_private_profile_int(section,"serial_port",
@@ -1788,26 +1798,35 @@ Cfg->combit=get_private_profile_int(section,"serial_databit",Cfg->combit
                                                              ,filename);
 get_private_profile_string(section,"serial_parity","N",buffer,16,
                                                               filename);
-Cfg->autoreload=get_private_profile_int(section,"autoreload",
-                                              Cfg->autoreload,filename);
-Cfg->verifhist=get_private_profile_int(section,"verifhist",
-                                               Cfg->verifhist,filename);
-Cfg->palafter=get_private_profile_int(section,"palafter",
-                                                Cfg->palafter,filename);
-Cfg->dispcolor=get_private_profile_int(section,"dispcolor",
-                                               Cfg->dispcolor,filename);
-Cfg->insdown=get_private_profile_int(section,"insdown",
-                                                 Cfg->insdown,filename);
-Cfg->seldir=get_private_profile_int(section,"seldir",
-                                                  Cfg->seldir,filename);
-Cfg->esttime=get_private_profile_int(section,"esttime",
-                                                 Cfg->esttime,filename);
-Cfg->ajustview=get_private_profile_int(section,"ajustview",
-                                               Cfg->ajustview,filename);
-Cfg->currentdir=get_private_profile_int(section,"loadstartdir",
-                                              Cfg->currentdir,filename);
-Cfg->saveviewpos=get_private_profile_int(section,"saveviewpos",
-                                             Cfg->saveviewpos,filename);
+KKCfg->autoreload=get_private_profile_int(section,"autoreload",
+                                            KKCfg->autoreload,filename);
+KKCfg->verifhist=get_private_profile_int(section,"verifhist",
+                                             KKCfg->verifhist,filename);
+KKCfg->palafter=get_private_profile_int(section,"palafter",
+                                              KKCfg->palafter,filename);
+KKCfg->dispcolor=get_private_profile_int(section,"dispcolor",
+                                             KKCfg->dispcolor,filename);
+KKCfg->insdown=get_private_profile_int(section,"insdown",
+                                               KKCfg->insdown,filename);
+KKCfg->seldir=get_private_profile_int(section,"seldir",
+                                                KKCfg->seldir,filename);
+KKCfg->esttime=get_private_profile_int(section,"esttime",
+                                               KKCfg->esttime,filename);
+KKCfg->ajustview=get_private_profile_int(section,"ajustview",
+                                             KKCfg->ajustview,filename);
+KKCfg->currentdir=get_private_profile_int(section,"loadstartdir",
+                                            KKCfg->currentdir,filename);
+KKCfg->saveviewpos=get_private_profile_int(section,"saveviewpos",
+                                           KKCfg->saveviewpos,filename);
+
+KKCfg->warp=get_private_profile_int(section,"warp",
+                                                  KKCfg->warp,filename);
+KKCfg->autotrad=get_private_profile_int(section,"autotrad",
+                                              KKCfg->autotrad,filename);
+KKCfg->cnvtable=get_private_profile_int(section,"cnvtable",
+                                              KKCfg->cnvtable,filename);
+
+
 Pal2Str(Cfg->palette,buf);
 get_private_profile_string(section,"palette",buf,buf,48,filename);
 Str2Pal(buf,Cfg->palette);
@@ -1826,10 +1845,10 @@ switch(toupper(buffer[0]))
 Cfg->comstop=get_private_profile_int(section,"serial_stopbit",
                                                  Cfg->comstop,filename);
 
-get_private_profile_string(section,"editor",Cfg->editeur,Cfg->editeur,
-                                                           63,filename);
-get_private_profile_string(section,"viewer",Cfg->vieweur,Cfg->vieweur,
-                                                           63,filename);
+get_private_profile_string(section,"editor",KKCfg->editeur,
+                                            KKCfg->editeur,63,filename);
+get_private_profile_string(section,"viewer",KKCfg->vieweur,
+                                            KKCfg->vieweur,63,filename);
 
 for (n=11;n<15;n++)
     {
@@ -1944,19 +1963,20 @@ strcpy(section,"current");
 strcpy(filename,Fics->path);
 Path2Abs(filename,"kksetup.ini");
 
-write_private_profile_int(section,"mask",Cfg->wmask,filename);
+write_private_profile_int(section,"mask",KKCfg->wmask,filename);
 write_private_profile_int(section,"hsize",Cfg->TailleX,filename);
 write_private_profile_int(section,"vsize",Cfg->TailleY,filename);
-write_private_profile_int(section,"wintype",Cfg->fentype,filename);
-write_private_profile_int(section,"ansispeed",Cfg->AnsiSpeed,filename);
+write_private_profile_int(section,"wintype",KKCfg->fentype,filename);
+write_private_profile_int(section,"ansispeed",KKCfg->AnsiSpeed,
+                                                              filename);
 write_private_profile_int(section,"ssaverspeed",Cfg->SaveSpeed,
                                                               filename);
-write_private_profile_int(section,"directpoint",Cfg->pntrep,filename);
-write_private_profile_int(section,"hiddenfile",Cfg->hidfil,filename);
-write_private_profile_int(section,"logfile",Cfg->logfile,filename);
+write_private_profile_int(section,"directpoint",KKCfg->pntrep,filename);
+write_private_profile_int(section,"hiddenfile",KKCfg->hidfil,filename);
+write_private_profile_int(section,"logfile",KKCfg->logfile,filename);
 write_private_profile_int(section,"font",Cfg->font,filename);
 write_private_profile_int(section,"debug",Cfg->debug,filename);
-write_private_profile_int(section,"sizetrash",Cfg->mtrash,filename);
+write_private_profile_int(section,"sizetrash",KKCfg->mtrash,filename);
 write_private_profile_int(section,"display",Cfg->display,filename);
 
 write_private_profile_int(section,"serial_port",Cfg->comport,filename);
@@ -1969,22 +1989,28 @@ write_private_profile_string(section,"serial_parity",buffer,filename);
 write_private_profile_int(section,"serial_stopbit",Cfg->comstop,
                                                               filename);
 
-write_private_profile_int(section,"autoreload",Cfg->autoreload,
+write_private_profile_int(section,"autoreload",KKCfg->autoreload,
                                                               filename);
-write_private_profile_int(section,"verifhist",Cfg->verifhist,filename);
-write_private_profile_int(section,"palafter",Cfg->palafter,filename);
-write_private_profile_int(section,"dispcolor",Cfg->dispcolor,filename);
-write_private_profile_int(section,"insdown",Cfg->insdown,filename);
-write_private_profile_int(section,"seldir",Cfg->seldir,filename);
-write_private_profile_int(section,"esttime",Cfg->esttime,filename);
-write_private_profile_int(section,"ajustview",Cfg->ajustview,filename);
-write_private_profile_int(section,"loadstartdir",Cfg->currentdir,
+write_private_profile_int(section,"verifhist",KKCfg->verifhist,
+                                                              filename);
+write_private_profile_int(section,"palafter",KKCfg->palafter,filename);
+write_private_profile_int(section,"dispcolor",KKCfg->dispcolor,
+                                                              filename);
+write_private_profile_int(section,"insdown",KKCfg->insdown,filename);
+write_private_profile_int(section,"seldir",KKCfg->seldir,filename);
+write_private_profile_int(section,"esttime",KKCfg->esttime,filename);
+write_private_profile_int(section,"ajustview",KKCfg->ajustview,
+                                                              filename);
+write_private_profile_int(section,"loadstartdir",KKCfg->currentdir,
                                                               filename);
 write_private_profile_int(section,"saveviewpos",
-                                             Cfg->saveviewpos,filename);
+                                             KKCfg->saveviewpos,filename);
+write_private_profile_int(section,"warp",KKCfg->warp,filename);
+write_private_profile_int(section,"autotrad",KKCfg->autotrad,filename);
+write_private_profile_int(section,"cnvtable",KKCfg->cnvtable,filename);
 
-write_private_profile_string(section,"editor",Cfg->editeur,filename);
-write_private_profile_string(section,"viewer",Cfg->vieweur,filename);
+write_private_profile_string(section,"editor",KKCfg->editeur,filename);
+write_private_profile_string(section,"viewer",KKCfg->vieweur,filename);
 
 
 Pal2Str(Cfg->palette,buf1);
@@ -2061,7 +2087,7 @@ if (fread(&nbr,1,2,fic)==0) return 0;
 if (nbr==0) return 0;
 
 
-SaveEcran();
+SaveScreen();
 PutCur(32,0);
 
 ChrWin(1,3,78,(Cfg->TailleY-3),32);
@@ -2233,7 +2259,7 @@ do
 while(car!=27);
 
 
-ChargeEcran();
+LoadScreen();
 
 return 1;
 }
@@ -2255,7 +2281,7 @@ short fin;
 
 static int cpos[20],poscur;
 
-SaveEcran();
+SaveScreen();
 PutCur(32,0);
 
 retour=0;
@@ -2332,7 +2358,7 @@ if (retour==2)
 }
 while(1);
 
-ChargeEcran();
+LoadScreen();
 
 return fin;
 }
@@ -2361,11 +2387,11 @@ switch(i)
     case 0:
         break;  // Quit
     case 1:
-        SaveEcran();
+        SaveScreen();
         PutCur(32,0);
         ChrWin(0,0,Cfg->TailleX-1,Cfg->TailleY-1,32);
         Help();
-        ChargeEcran();
+        LoadScreen();
         break;
     case 2:
         WinMesg("About",RBTitle);
@@ -2516,18 +2542,18 @@ void DefaultConfig(int a)
 switch(a)
     {
     case 0:                                  //--- Configuration normale
-        Cfg->enterkkd=1;                        //--- Entre dans les KKD
-        Cfg->ajustview=1;        //--- Ajuste l'affichage pour le viewer
-        Cfg->cnvhist=1;                    //--- Conversion de l'history
-        Cfg->dispcolor=1;                    //--- Souligne les couleurs
-        Cfg->hidfil=1;                 //--- Affiche les fichiers caches
+        KKCfg->enterkkd=1;                      //--- Entre dans les KKD
+        KKCfg->ajustview=1;      //--- Ajuste l'affichage pour le viewer
+        KKCfg->cnvhist=1;                  //--- Conversion de l'history
+        KKCfg->dispcolor=1;                  //--- Souligne les couleurs
+        KKCfg->hidfil=1;               //--- Affiche les fichiers caches
         break;
     case 1:
-        Cfg->enterkkd=0;                  //--- N'entre pas dans les KKD
-        Cfg->ajustview=0;  //--- N'ajuste pas l'affichage pour le viewer
-        Cfg->cnvhist=0;             //--- Pas de conversion de l'history
-        Cfg->dispcolor=0;             //--- Ne souligne pas les couleurs
-        Cfg->hidfil=0;           //--- N'affiche pas les fichiers caches
+        KKCfg->enterkkd=0;                //--- N'entre pas dans les KKD
+        KKCfg->ajustview=0;//--- N'ajuste pas l'affichage pour le viewer
+        KKCfg->cnvhist=0;           //--- Pas de conversion de l'history
+        KKCfg->dispcolor=0;           //--- Ne souligne pas les couleurs
+        KKCfg->hidfil=0;         //--- N'affiche pas les fichiers caches
         break;
     }
 }
@@ -2594,8 +2620,8 @@ struct TmtWin F = {3,5,76,18,"File Setup"};
 int n;
 char fin;
 
-strcpy(Edit,Cfg->editeur);
-strcpy(View,Cfg->vieweur);
+strcpy(Edit,KKCfg->editeur);
+strcpy(View,KKCfg->vieweur);
 
 do
 {
@@ -2627,8 +2653,8 @@ if (n==4)
 }
 while(!fin);
 
-strcpy(Cfg->editeur,Edit);
-strcpy(Cfg->vieweur,View);
+strcpy(KKCfg->editeur,Edit);
+strcpy(KKCfg->vieweur,View);
 }
 
 /*--------------------------------------------------------------------*\

@@ -95,7 +95,6 @@ if (  (argc!=2) & (argc!=4) )
 Cfg=GetMem(sizeof(struct config));
 Fics=GetMem(sizeof(struct fichier));
 
-Cfg->_4dos=0;
 
 /*--------------------------------------------------------------------*\
 |-                      Initialisation des fichiers                   -|
@@ -487,7 +486,7 @@ olddir=GetMem(256);
 curdir=GetMem(256);
 buffer=GetMem(256);
 
-SaveEcran();
+SaveScreen();
 
 getcwd(olddir,256);
 
@@ -694,7 +693,7 @@ strcpy(name,curdir);
 
 chdir(olddir);
 
-ChargeEcran();
+LoadScreen();
 
 free(olddir);
 free(curdir);
@@ -735,7 +734,7 @@ int info;
 int prem;
 int pres;
 
-SaveEcran();
+SaveScreen();
 
 info=0;
 
@@ -839,7 +838,7 @@ switch(HI(car))
         Help();
         break;
     case 0x3D:    // F3
-        SaveEcran();
+        SaveScreen();
 
         WinCadre(9,10,70,17,0);
         ChrWin(10,11,69,16,32);
@@ -862,7 +861,7 @@ switch(HI(car))
         InputAt(23,14,Meneur,38);
         InputAt(37,16,Filename,28);
 
-        ChargeEcran();
+        LoadScreen();
         break;
     case 0x41:      // F7  (CRC-32)
         strcpy(buf,Filename);
@@ -896,7 +895,7 @@ if (prem>nbrkey-Cfg->TailleY+6) prem=nbrkey-Cfg->TailleY+6;
 }
 while (car!=27);
 
-ChargeEcran();
+LoadScreen();
 }
 
 
