@@ -6,8 +6,8 @@
 #define WORD unsigned short
 #define ULONG unsigned long
 
-#define HI(qsd) (qsd/256)
-#define LO(qsd) (qsd%256)
+#define HI(qsd) ((char)(qsd/256))
+#define LO(qsd) ((char)(qsd%256))
 
 #define DEFSLASH '\\'
 
@@ -18,14 +18,16 @@
 
 #define WinError(_ErrMsg_) WinMesg("Error",_ErrMsg_,0)
 
+#define MAX(_rx,_ry) ((_rx>_ry) ? _rx : _ry)
+
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
 struct barmenu
         {
         char titre[20];
-        char help[80];
-        short fct;
+//        char *help;
+        int fct;
         };
 
 
@@ -62,8 +64,8 @@ struct config
      {
      long SaveSpeed;  // Number of ticks before calling the screen saver
 
-     short TailleY;                               // Width of the screen
-     short TailleX;                              // Length of the screen
+     long TailleY;                                // Width of the screen
+     long TailleX;                               // Length of the screen
 
      char palette[48];                                    // The PALETTE
 
@@ -71,12 +73,12 @@ struct config
      char speedkey;                                       // Turbo key ?
      char font;                                   // You will use font ?
 
-     short UseFont;                // Result after calling font fonction
+     char UseFont;                 // Result after calling font fonction
 
      char display;                                       // Display type
 
      char comport;                        // Serial port number  (ex: 2)
-     int comspeed;                        // Speed            (eg:19200)
+     long comspeed;                       // Speed            (eg:19200)
      char combit;                         // Number of bit        (eg:8)
      char comparity;                      // Parity             (eg:'N')
      char comstop;                        // Stop bit             (eg:1)
@@ -105,13 +107,24 @@ extern struct fichier *Fics;
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
-extern void (*AffChr)(short x,short y,short c);
-extern void (*AffCol)(short x,short y,short c);
-extern int (*Wait)(int x,int y,char c);
-extern int (*KbHit)(void);
-extern void (*GotoXY)(char x,char y);
-extern void (*WhereXY)(char *x,char *y);
-extern void(*Window)(int left,int top,int right,int bottom,short color);
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+  extern void (*AffChr)(long x,long y,long c);
+  extern void (*AffCol)(long x,long y,long c);
+  extern long (*Wait)(long x,long y,long c);
+  extern int  (*KbHit)(void);
+  extern void (*GotoXY)(long x,long y);
+  extern void (*WhereXY)(long *x,long *y);
+  extern void (*Window)(long left,long top,long right,long bottom,long color);
+  extern void (*Clr)(void);
+
+#ifdef __cplusplus
+};
+#endif
 
 /*--------------------------------------------------------------------*\
 |- Display function                                                   -|
@@ -158,48 +171,48 @@ void ScreenSaver(void);
 void ScrollUp(void);
 
 void Pause(int n);
-void MoveText(int x1,int y1,int x2,int y2,int x3,int y4);
+void MoveText(long x1,long y1,long x2,long y2,long x3,long y4);
 
 /*--------------------------------------------------------------------*\
 |- Absolute function                                                  -|
 \*--------------------------------------------------------------------*/
 extern char _RB_screen[];
 
-// char GetChr(short x,short y);
+// char GetChr(long x,long y);
 #define GetChr(_rx,_ry) *(_RB_screen+((_ry)*256+(_rx)))
 
-// char GetCol(short x,short y);
+// char GetCol(long x,long y);
 #define GetCol(_rx,_ry) *(_RB_screen+((_ry)*256+(_rx))+256*128)
 
-void ColLin(int left,int top,int length,short color);
-void ChrLin(int left,int top,int length,short color);
-void ChrCol(int left,int top,int length,short color);
-void ColCol(int left,int top,int length,short color);
-void ColWin(int right,int top,int left,int bottom,short color);
-void ChrWin(int right,int top,int left,int bottom,short color);
+void ColLin(long left,long top,long length,long color);
+void ChrLin(long left,long top,long length,long color);
+void ChrCol(long left,long top,long length,long color);
+void ColCol(long left,long top,long length,long color);
+void ColWin(long right,long top,long left,long bottom,long color);
+void ChrWin(long right,long top,long left,long bottom,long color);
 
-void PrintAt(int x,int y,char *str,...);
-char InputAt(int x,int y,char *str, int length);
+void PrintAt(long x,long y,char *str,...);
+char InputAt(long x,long y,char *str, long length);
 
 /*--------------------------------------------------------------------*\
 |- Relative function                                                  -|
 \*--------------------------------------------------------------------*/
-char GetRChr(int x,int y);
-char GetRCol(int x,int y);
+long GetRChr(long x,long y);
+long GetRCol(long x,long y);
 
-void ColRLin(int left,int top,int length,short color);
-void ChrRLin(int left,int top,int length,short color);
-void ChrRCol(int left,int top,int length,short color);
-void ColRCol(int left,int top,int length,short color);
-void ColRWin(int right,int top,int left,int bottom,short color);
-void ChrRWin(int right,int top,int left,int bottom,short color);
-void WinRCadre(int x1,int y1,int x2,int y2,int type);
+void ColRLin(long left,long top,long length,long color);
+void ChrRLin(long left,long top,long length,long color);
+void ChrRCol(long left,long top,long length,long color);
+void ColRCol(long left,long top,long length,long color);
+void ColRWin(long right,long top,long left,long bottom,long color);
+void ChrRWin(long right,long top,long left,long bottom,long color);
+void WinRCadre(long x1,long y1,long x2,long y2,long type);
 
-void PrintTo(int x,int y,char *string,...);
-char InputTo(int x,int y,char *string, int length);
+void PrintTo(long x,long y,char *string,...);
+long InputTo(long x,long y,char *string, long length);
 
-void AffRChr(int x,int y,char c);
-void AffRCol(int x,int y,char c);
+void AffRChr(long x,long y,long c);
+void AffRCol(long x,long y,long c);
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
@@ -246,7 +259,7 @@ int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
 
 
 //--- Retourne 0 si tout va bene ---------------------------------------
-int VerifyDisk(char c);  // 1='A'
+int VerifyDisk(long c);  // 1='A'
 int __far Error_handler(unsigned deverr,unsigned errcode,
                                                   unsigned far *devhdr);
 
@@ -255,11 +268,11 @@ int __far Error_handler(unsigned deverr,unsigned errcode,
 \*--------------------------------------------------------------------*/
 
 void interrupt modem_isr(void);
-short com_carrier(void);
-short com_ch_ready(void);
-unsigned char com_read_ch(void);
-void com_send_ch(unsigned char ch);
-short com_open(short port,long speed,short bit,BYTE parity,BYTE stop);
+long com_carrier(void);
+char com_ch_ready(void);
+long com_read_ch(void);
+void com_send_ch(long ch);
+char com_open(long port,long speed,long bit,BYTE parity,BYTE stop);
 void com_close(void);
 
 /*--------------------------------------------------------------------*\

@@ -23,8 +23,16 @@
 
 extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
 
+void AffUpperPath(FENETRE *Fen,int y);
+
+
+/*--------------------------------------------------------------------*\
+|- Fonction cach‚e IDF                                                -|
+\*--------------------------------------------------------------------*/
 
 void ClearSpace(char *name);    //--- efface les espaces inutiles ------
+
+
 
 int NameIDF(char *name)
 {
@@ -199,6 +207,48 @@ ColLin(x+27,Fen->y2+2,4,col);
 ColLin(x+34,Fen->y2+2,4,col);
 }
 
+
+/*--------------------------------------------------------------------*\
+|- Affiche la ligne de commande en haut de la fenetre                 -|
+\*--------------------------------------------------------------------*/
+void AffUpperPath(FENETRE *Fen,int y)
+{
+int x;
+char buffer[40];
+
+if (Fen->FenTyp!=0) return;
+
+if (strlen(Fen->path)>36)
+    {
+    memcpy(buffer,Fen->path,3);
+    memcpy(buffer+3,"...",3);
+    memcpy(buffer+6,Fen->path+strlen(Fen->path)-30,30);
+    buffer[36]=0;
+    }
+    else
+    {
+    strcpy(buffer,Fen->path);
+    }
+
+x=Fen->x+1+(36-strlen(buffer))/2;
+
+if (y==Fen->y)
+    {
+    if (Fen->actif==1)
+        ColLin(x,y,strlen(buffer)+2,13*16+2);
+        else
+        ColLin(x,y,strlen(buffer)+2,7*16+6);
+    PrintAt(x,y," %s ",buffer);
+    }
+    else
+    {
+    ChrLin(Fen->x+2,y,x-Fen->x-2,32);
+    PrintAt(x,y," %s ",buffer);
+    ChrLin(x+strlen(buffer)+2,y,Fen->x+36-x-strlen(buffer),32);
+    }
+
+
+}
 
 void FenNor(FENETRE *Fen)
 {
@@ -399,6 +449,11 @@ if (dispall)
        ColLin(x1,y1,38,7*16+6);
        }
 
+if ( (dispall) & (KKCfg->dispath) )
+    {
+    AffUpperPath(Fen,Fen->y);
+    }
+
 Fen->oldscur=Fen->scur;
 Fen->oldpcur=Fen->pcur;
 
@@ -559,6 +614,8 @@ void InfoSelect(FENETRE *Fen)
 {
 char temp[20];
 
+if (Fen->FenTyp!=0) return;
+
 if (Fen->nbrsel==0)
     {
     if (Fen->nbrfic==1)
@@ -599,12 +656,19 @@ else
 
 void ShiftMenu(void)
 {
-char chaine[37];
+// char chaine[37];
 
 if (DFen->y3==0) return;
+
+AffUpperPath(DFen,DFen->y3);
+AffUpperPath(DFen->Fen2,DFen->y3);
+
+
+/*
 memcpy(chaine,DFen->path,37);
 chaine[36]=0;
 PrintAt(DFen->x3,DFen->y3,"%-36s",chaine);
+*/
 }
 
 
@@ -624,10 +688,12 @@ PrintAt(DFen->x3,DFen->y3,"%-36s",buffer);
 void MenuBar(char c)
 {
 static char bar[4][60]=
- {" Help  ----  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
+ {" Help  Menu  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
   " ---- Attrib View  Edit  Host Rename ----  ----   Row  ---- ",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
   " Drv1  Drv2  FDiz FileID ----  Hist Search Type  Line  Disp "}; //ALT
+char Tbar[60];
+int x;
 
 static signed char d=-1;
 
@@ -649,6 +715,7 @@ if (DFen->FenTyp==0)                                  // Fenetre Normale
 switch(c) {
     case 0:
         InfoSelect(DFen);
+        InfoSelect(DFen->Fen2);
         break;
     case 1:
         ShiftMenu();
@@ -661,11 +728,27 @@ switch(c) {
         d=-1;
         break;
     default:
-        c=0;
+        c=4;
         break;
     }
 
-Bar(bar[c]);
+if (c!=4)
+    {
+    memcpy(Tbar,bar[c],60);
+
+    if (c==2)
+        {
+        x=(DFen->order)&15;
+        if (x==0)
+            Tbar[41]=0x0F;
+            else
+            Tbar[11+6*x]=0x0F;
+
+        if ((DFen->order&16)==16)
+            Tbar[47]=0x0F;
+        }
+    Bar(Tbar);
+    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -1523,7 +1606,7 @@ if (l!=Fen->Fen2->F[i]->size)
         }
     fclose(fic);
 
-    AccessFile(k);
+    AccessFile(k);          // Acces au fichier -----------------------
     DFen=OldFen;
     }
 

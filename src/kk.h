@@ -1,5 +1,5 @@
-#define VERSION "0.6"
-#define RBTitle "Ketchup Killers Commander V0.6"
+#define VERSION "0.7"
+#define RBTitle "Ketchup Killers Commander V0.7"
 
 #define CALLING __cdecl
 
@@ -11,6 +11,17 @@
 #define BYTE unsigned char
 #define WORD unsigned short
 #define ULONG unsigned long
+
+#define ushort unsigned short
+#define ulong unsigned long
+#define uchar unsigned char
+
+struct kkfichier
+     {
+     char *menu;                                              // kkc.mnu
+     };
+
+extern struct kkfichier *KKFics;
 
 struct PourMask
      {
@@ -44,13 +55,13 @@ struct file
 
 typedef struct _fenetre
      {
-     short x,y;                    // position haut droite de la fenˆtre
-     short xl,yl;                                // taille de la fenˆtre
-     short x2,y2;                                   // position calculee
-     short xl2,yl2;                                   // taille calculee
-     short x3,y3;                            // position de l'infoselect
+     long x,y;                     // position haut droite de la fenˆtre
+     long xl,yl;                                 // taille de la fenˆtre
+     long x2,y2;                                    // position calculee
+     long xl2,yl2;                                    // taille calculee
+     long x3,y3;                             // position de l'infoselect
 
-     short IDFSpeed;     // Nombre de clock avant de lire la description
+     long IDFSpeed;      // Nombre de clock avant de lire la description
      long nbrfic;
      long taillefic;
      long nbrsel;
@@ -58,11 +69,11 @@ typedef struct _fenetre
      char actif;
      struct file **F;
 
-     short nopcur;                 // Fichier a copier si c'est noprompt
-     short pcur;                              // positon dans le tableau
+     long nopcur;                  // Fichier a copier si c'est noprompt
+     long pcur;                               // positon dans le tableau
      short scur;                         // positon du curseur … l'‚cran
-     short oldscur;                              // dernier scur affiche
-     short oldpcur;                              // dernier pcur affiche
+     long oldscur;                               // dernier scur affiche
+     long oldpcur;                               // dernier pcur affiche
      char path[256];               // path complete (disk et repertoire)
                   // La lettre du disque ne peut prendre que 1 caractere
                            //                  et doit etre en majuscule
@@ -80,10 +91,10 @@ typedef struct _fenetre
 
      // Affichage
      short order;                               // 1: normal, 2: inverse
-     short sorting;      // 1: Name, 2: ext, 3: date, 4: size, 0: unsort
+     short sorting;       // 1: Name, 2: ext, 3: date, 4: size, 0: unsort
 
      // Systeme
-     short system;     // 0: DOS, 1: RAR, 2: ARJ, 3: ZIP, 4: LHA, 5: KKD
+     char system;      // 0: DOS, 1: RAR, 2: ARJ, 3: ZIP, 4: LHA, 5: KKD
 
      char VolName[255];                                 // Nom du volume
      char nfen;                                  // Numero de la fenetre
@@ -101,7 +112,7 @@ struct kkconfig
     //-----------
 
 
-     short fentype;    // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
+     char fentype;     // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
 
      char pntrep;              // vaut 1 si on affiche le repertoire "."
      char hidfil;            // vaut 1 si on affiche les fichiers caches
@@ -143,6 +154,8 @@ struct kkconfig
      char esttime;                 // estime le temps pendant la copie ?
 
      char confexit;      // vaut 1: si on doit confirmer avant de sortir
+
+     char dispath;              // Affiche la path en haut de la fenˆtre
 
     //--- Variable pour le viewer --------------------------------------
 

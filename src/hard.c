@@ -43,9 +43,9 @@ struct fichier *Fics;
 
 static char _MouseOK=0;
 
-static int _MPosX,_MPosY;
-static int _PasX,_PasY,_TmpClik;
-static int _xm,_ym,_zm,_zmok;
+static signed long _MPosX,_MPosY;
+static signed long _PasX,_PasY,_TmpClik;
+static signed long _xm,_ym,_zm,_zmok;
 static int _dclik,_mclock;
 static char _charm;
 
@@ -56,27 +56,30 @@ char _IntBuffer[256];              // Buffer interne multi usage -------
 
 char _RB_screen[256*128*2];
 
-void (*AffChr)(char x,char y,char c);
-void (*AffCol)(char x,char y,char c);
-int (*Wait)(int x,int y,char c);
-int (*KbHit)(void);
-void (*GotoXY)(char x,char y);
-void (*WhereXY)(char *x,char *y);
+
+void (*AffChr)(long x,long y,long c);
+void (*AffCol)(long x,long y,long c);
+long (*Wait)(long x,long y,long c);
+int  (*KbHit)(void);
+void (*GotoXY)(long x,long y);
+void (*WhereXY)(long *x,long *y);
+void (*Window)(long left,long top,long right,long bottom,long color);
 void (*Clr)(void);
-void (*Window)(int left,int top,int right,int bottom,short color);
+
 
 /*--------------------------------------------------------------------*\
 |- Fonction interne                                                   -|
 \*--------------------------------------------------------------------*/
 void MakeFont(char *font,char *adr);
-
+void Beep(void);
 void Font8x(int height);
+void InitSeg(void);
 
 /*--------------------------------------------------------------------*\
 |-  Fonction interne d'affichage                                      -|
 \*--------------------------------------------------------------------*/
 void Norm_Clr(void);
-void Norm_Window(int left,int top,int right,int bottom,short color);
+void Norm_Window(long left,long top,long right,long bottom,long color);
 
 void Norm_Clr(void)
 {
@@ -91,7 +94,7 @@ for(j=0;j<Cfg->TailleY;j++)
       AffChr(i,j,32);
 }
 
-void Norm_Window(int left,int top,int right,int bottom,short color)
+void Norm_Window(long left,long top,long right,long bottom,long color)
 {
 int i,j;
 
@@ -116,38 +119,43 @@ for(j=top;j<=bottom;j++)
 /*--------------------------------------------------------------------*\
 |-            Affiche des caractŠres directement … l'‚cran            -|
 \*--------------------------------------------------------------------*/
-void Cache_AffChr(char x,char y,char c);
-void Cache_AffCol(char x,char y,char c);
+void Cache_AffChr(long x,long y,long c);
+void Cache_AffCol(long x,long y,long c);
+long Cache_Wait(long x,long y,long c);
+void Cache_GotoXY(long x,long y);
+void Cache_WhereXY(long *x,long *y);
 
 char *scrseg[50];
 
-void Cache_AffChr(char x,char y,char c)
+void Cache_AffChr(long x,long y,long c)
 {
-if (*(_RB_screen+(y*256+x))!=c)
+if (*(_RB_screen+(y*256+x))!=(char)c)
     {
-    *(scrseg[y]+(x<<1))=c;
-    *(_RB_screen+(y*256+x))=c;
+    *(scrseg[y]+(x<<1))=(char)c;
+    *(_RB_screen+(y*256+x))=(char)c;
     }
 }
 
-void Cache_AffCol(char x,char y,char c)
+void Cache_AffCol(long x,long y,long c)
 {
-if (*(_RB_screen+(y*256+x)+256*128)!=c)
+if (*(_RB_screen+(y*256+x)+256*128)!=(char)c)
     {
-    *(scrseg[y]+(x<<1)+1)=c;
-    *(_RB_screen+(y*256+x)+256*128)=c;
+    *(scrseg[y]+(x<<1)+1)=(char)c;
+    *(_RB_screen+(y*256+x)+256*128)=(char)c;
     }
 }
 
-int Cache_Wait(int x,int y,char c)
+long Cache_Wait(long x,long y,long c)
 {
-char a;
-int b;
+int a,b;
 clock_t Cl;
 
 int xm=0,ym=0,zm=0;
 
 char *pt;
+
+if (c!=0)
+    Beep();
 
 pt=(char*)0x41A;
 
@@ -181,19 +189,19 @@ if ((b==0) & (zm==0))
 return b;
 }
 
-void Cache_GotoXY(char x,char y)
+void Cache_GotoXY(long x,long y)
 {
 union REGS regs;
 
-regs.h.dl=x;
-regs.h.dh=y;
+regs.h.dl=(char)x;
+regs.h.dh=(char)y;
 regs.h.bh=0;
 regs.h.ah=2;
 
 int386(0x10,&regs,&regs);
 }
 
-void Cache_WhereXY(char *x,char *y)
+void Cache_WhereXY(long *x,long *y)
 {
 union REGS regs;
 
@@ -211,12 +219,12 @@ int386(0x10,&regs,&regs);
 /*--------------------------------------------------------------------*\
 |-                       Affichage par code Ansi                      -|
 \*--------------------------------------------------------------------*/
-void Ansi_AffChr(char x,char y,char c);
-void Ansi_AffCol(char x,char y,char c);
-void Ansi_GenCol(char x,char y);
-void Ansi_GenChr(char x,char y,char c);
+void Ansi_AffChr(long x,long y,long c);
+void Ansi_AffCol(long x,long y,long c);
+void Ansi_GenCol(long x,long y);
+void Ansi_GenChr(long x,long y,long c);
 void Ansi_Clr(void);
-void Ansi_Window(int left,int top,int right,int bottom,short color);
+void Ansi_Window(long left,long top,long right,long bottom,long color);
 
 int _Ansi_col1,_Ansi_col2;               // Couleur que l'on doit mettre
 int _Ansi_tcol;                 // Couleur que l'on a demand‚ par affcol
@@ -225,26 +233,26 @@ int _Ansi_x=0,_Ansi_y=0;                          // precedente position
 char _Ansi_cnv[]={0,5,0,2,3,7,6,4,3,1,6,1,2,0,0,0};
 
 
-void Ansi_AffCol(char x,char y,char c)
+void Ansi_AffCol(long x,long y,long c)
 {
-if (*(_RB_screen+(y*256+x)+256*128)!=c)
+if (*(_RB_screen+(y*256+x)+256*128)!=(char)c)
     {
-    *(_RB_screen+(y*256+x)+256*128)=c;
+    *(_RB_screen+(y*256+x)+256*128)=(char)c;
 
     Ansi_GenCol(x,y);
     Ansi_GenChr(x,y,GetChr(x,y));
     }
 }
 
-void Ansi_AffChr(char x,char y,char c)
+void Ansi_AffChr(long x,long y,long c)
 {
 Ansi_GenCol(x,y);
 
-if (*(_RB_screen+(y*256+x))!=c)
+if (*(_RB_screen+(y*256+x))!=(char)c)
         Ansi_GenChr(x,y,c);
 }
 
-void Ansi_GenCol(char x,char y)
+void Ansi_GenCol(long x,long y)
 {
 if (*(_RB_screen+(y*256+x)+256*128)!=_Ansi_tcol)
     {
@@ -257,11 +265,11 @@ if (*(_RB_screen+(y*256+x)+256*128)!=_Ansi_tcol)
     }
 }
 
-void Ansi_GenChr(char x,char y,char c)
+void Ansi_GenChr(long x,long y,long c)
 {
 if (y<Cfg->TailleY-2)
     {
-    *(_RB_screen+(y*256+x))=c;
+    *(_RB_screen+(y*256+x))=(char)c;
 
     switch(c)
         {
@@ -285,7 +293,7 @@ if (y<Cfg->TailleY-2)
     }
 }
 
-void Ansi_GotoXY(char x,char y)
+void Ansi_GotoXY(long x,long y)
 {
 cprintf("\x1b[%d;%dH",y+1,x+1);
 _Ansi_x=x;
@@ -300,7 +308,7 @@ memset(_RB_screen,32,256*128);
 cprintf("\x1b[0m\n\n\x1b[2J");
 }
 
-void Ansi_Window(int left,int top,int right,int bottom,short color)
+void Ansi_Window(long left,long top,long right,long bottom,long color)
 {
 int i,j;
 
@@ -314,7 +322,7 @@ _yw2=bottom;
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
         {
-        *(_RB_screen+(j*256+i)+256*128)=color;
+        *(_RB_screen+(j*256+i)+256*128)=(char)color;
         *(_RB_screen+(j*256+i))=0;             // Pour le remettre apres
         }
 
@@ -328,13 +336,14 @@ for(j=top;j<=bottom;j++)
 /*--------------------------------------------------------------------*\
 |-                       Affichage par COM  Ansi                      -|
 \*--------------------------------------------------------------------*/
-void Com_AffChr(char x,char y,char c);
-void Com_AffCol(char x,char y,char c);
-void Com_GenCol(char x,char y);
-void Com_GenChr(char x,char y,char c);
+void Com_AffChr(long x,long y,long c);
+void Com_AffCol(long x,long y,long c);
+void Com_GenCol(long x,long y);
+void Com_GenChr(long x,long y,long c);
+void Com_GotoXY(long x,long y);
 int Com_KbHit(void);
 void Com_Clr(void);
-void Com_Window(int left,int top,int right,int bottom,short color);
+void Com_Window(long left,long top,long right,long bottom,long color);
 
 int _Com_col1,_Com_col2;                 // Couleur que l'on doit mettre
 int _Com_tcol;                  // Couleur que l'on a demand‚ par affcol
@@ -344,15 +353,15 @@ char _Com_cnv[]={0,5,0,2,3,7,6,4,3,1,6,1,2,0,0,0};
 
 long modem_buffer_count;
 
-void Com_AffCol(char x,char y,char c)
+void Com_AffCol(long x,long y,long c)
 {
 if (y>=Cfg->TailleY-1) return;
 
-if (*(_RB_screen+(y*256+x)+256*128)!=c)
+if (*(_RB_screen+(y*256+x)+256*128)!=(char)c)
     {
-    *(_RB_screen+(y*256+x)+256*128)=c;
+    *(_RB_screen+(y*256+x)+256*128)=(char)c;
 
-    *(scrseg[y]+(x<<1)+1)=c;            // --------- Echo console ------
+    *(scrseg[y]+(x<<1)+1)=(char)c;      // --------- Echo console ------
 
     Com_GenCol(x,y);
     Com_GenChr(x,y,GetChr(x,y));
@@ -360,21 +369,21 @@ if (*(_RB_screen+(y*256+x)+256*128)!=c)
 
 }
 
-void Com_AffChr(char x,char y,char c)
+void Com_AffChr(long x,long y,long c)
 {
 if (y>=Cfg->TailleY-1) return;
 
-if (*(_RB_screen+(y*256+x))!=c)
+if (*(_RB_screen+(y*256+x))!=(char)c)
     {
     Com_GenCol(x,y);
 
-    *(scrseg[y]+(x<<1))=c;              // --------- Echo console ------
+    *(scrseg[y]+(x<<1))=(char)c;        // --------- Echo console ------
 
     Com_GenChr(x,y,c);
     }
 }
 
-void Com_GenCol(char x,char y)
+void Com_GenCol(long x,long y)
 {
 int n;
 
@@ -391,9 +400,9 @@ if (*(_RB_screen+(y*256+x)+256*128)!=_Com_tcol)
     }
 }
 
-void Com_GenChr(char x,char y,char c)
+void Com_GenChr(long x,long y,long c)
 {
-*(_RB_screen+(y*256+x))=c;
+*(_RB_screen+(y*256+x))=(char)c;
 
 switch(c)
     {
@@ -415,7 +424,7 @@ if ( (x!=_Com_x) | (y!=_Com_y) )
 com_send_ch(c);
 }
 
-int Com_Wait(int x,int y,char c)
+long Com_Wait(long x,long y,long c)
 {
 char buf[32];
 char n;
@@ -424,18 +433,24 @@ char cont;
 cont=1;
 n=0;
 
+if (c!=0)
+    Beep();
+
+if ((x!=0) | (y!=0))
+    GotoXY(x,y);
+
 while(cont==1)
     {
     while (1)
         {
         if (com_ch_ready())
             {
-            buf[n]=com_read_ch();
+            buf[n]=(char)com_read_ch();
             break;
             }
         if (kbhit())
             {
-            buf[n]=getch();
+            buf[n]=(char)getch();
             break;
             }
         }
@@ -469,7 +484,7 @@ if (n==3)
 return buf[0];
 }
 
-void Com_GotoXY(char x,char y)
+void Com_GotoXY(long x,long y)
 {
 int n;
 
@@ -501,7 +516,7 @@ for (n=0;n<strlen(_IntBuffer);n++)
     com_send_ch(_IntBuffer[n]);
 }
 
-void Com_Window(int left,int top,int right,int bottom,short color)
+void Com_Window(long left,long top,long right,long bottom,long color)
 {
 int i,j;
 
@@ -514,10 +529,10 @@ _yw2=bottom;
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
         {
-        *(_RB_screen+(j*256+i)+256*128)=color;
+        *(_RB_screen+(j*256+i)+256*128)=(char)color;
         *(_RB_screen+(j*256+i))=0;             // Pour le remettre apres
 
-        *(scrseg[j]+(i<<1)+1)=color;    // --------- Echo console --
+        *(scrseg[j]+(i<<1)+1)=(char)color;    // ------- Echo console --
         }
 
 for(j=top;j<=bottom;j++)
@@ -541,26 +556,26 @@ for(j=top;j<=bottom;j++)
 
 char *modem_buffer;
 
-short modem_pause;
-short modem_base;
-short modem_port;
-short modem_buffer_head;
-short modem_buffer_tail;
-short modem_overflow;
-short modem_irq;
-short modem_open=0;
-short modem_xon_xoff=0;
-short modem_rts_cts;
+long modem_pause;
+long modem_base;
+long modem_port;
+long modem_buffer_head;
+long modem_buffer_tail;
+long modem_overflow;
+long modem_irq;
+long modem_open=0;
+long modem_xon_xoff=0;
+long modem_rts_cts;
 
-char old_modem_imr;
-char old_modem_ier;
+long old_modem_imr;
+long old_modem_ier;
 
 void (_interrupt *old_modem_isr)(void);
 
 /*--------------------------------------------------------------------*/
 void interrupt modem_isr(void)
 {
-unsigned char c;
+int c;
 
 INT_ON();
 
@@ -578,7 +593,7 @@ if (modem_buffer_count<1024)
     else
         {
         modem_pause=0;
-        modem_buffer[modem_buffer_head++]=c;
+        modem_buffer[modem_buffer_head++]=(char)c;
         if (modem_buffer_head>=MAX_BUFFER)
             modem_buffer_head=0;
         modem_buffer_count++;
@@ -594,9 +609,9 @@ INT_OFF();
 outp(0x20,0x20);
 }
 
-short com_carrier(void)
+long com_carrier(void)
 {
-short x;
+long x;
 
 if (!modem_open) return(0);
 if ((inp(modem_base+6) & 0x80)==128) return(1);
@@ -608,7 +623,7 @@ for (x=0; x<500; x++)
 return(0);
 }
 
-short com_ch_ready(void)
+char com_ch_ready(void)
 {
 if (!modem_open) return(0);
 if (modem_buffer_count!=0) return(1);
@@ -620,9 +635,9 @@ return(0);
 |- the port with com_ch_ready(); first so that if they DID send a 0x0 -|
 |-     that you will know it's a true 0, not a no character return!   -|
 \*--------------------------------------------------------------------*/
-unsigned char com_read_ch(void)
+long com_read_ch(void)
 {
-unsigned char ch;
+long ch;
 
 if (!modem_open) return(0);
 
@@ -637,7 +652,7 @@ if (++modem_buffer_tail>=MAX_BUFFER)
 return(ch);
 }
 
-void com_send_ch(unsigned char ch)
+void com_send_ch(long ch)
 {
 if (!modem_open) return;
 
@@ -653,17 +668,17 @@ if (modem_xon_xoff)
     {
     while((modem_pause) && (com_carrier())) ;
     }
-outp(modem_base,ch);
+outp(modem_base,(char)ch);
 }
 
 
-short com_open(short comport,long speed,short bit,BYTE parity,BYTE stop)
+char com_open(long comport,long speed,long bit,BYTE parity,BYTE stop)
 {
-short x,  newb=0;
+long x,  newb=0;
 char l, m;
-short d;
+long d;
 
-modem_buffer=GetMem(MAX_BUFFER);
+modem_buffer=(char*)GetMem(MAX_BUFFER);
 
 INT_OFF();
 
@@ -727,7 +742,7 @@ x=inp(modem_base+3);                                // Read In Old Stats
 
 if ((x & 0x80)!=0x80) outp(modem_base+3,x+0x80);          // Set DLab On
 
-d=(short)(115200/speed);
+d=(long)(115200/speed);
 l=d & 0xFF;
 m=(d >> 8) & 0xFF;
 
@@ -838,7 +853,7 @@ regs.h.cl=y;
 int386(0x10,&regs,&regs);
 }
 
-void ColLin(int left,int top,int length,char color)
+void ColLin(long left,long top,long length,long color)
 {
 int i;
 
@@ -846,7 +861,7 @@ for (i=left;i<left+length;i++)
       AffCol(i,top,color);
 }
 
-void ChrLin(int left,int top,int length,char color)
+void ChrLin(long left,long top,long length,long color)
 {
 int i;
 
@@ -854,35 +869,35 @@ for (i=left;i<left+length;i++)
       AffChr(i,top,color);
 }
 
-void ChrCol(int left,int top,int length,char color)
+void ChrCol(long left,long top,long length,long color)
 {
-int i;
+long i;
 
 for (i=top;i<top+length;i++)
       AffChr(left,i,color);
 }
 
-void ColCol(int left,int top,int length,char color)
+void ColCol(long left,long top,long length,long color)
 {
-int i;
+long i;
 
 for (i=top;i<top+length;i++)
       AffCol(left,i,color);
 }
 
 
-void ColWin(int left,int top,int right,int bottom,short color)
+void ColWin(long left,long top,long right,long bottom,long color)
 {
-int i,j;
+long i,j;
 
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
         AffCol(i,j,color);
 }
 
-void ChrWin(int left,int top,int right,int bottom,short car)
+void ChrWin(long left,long top,long right,long bottom,long car)
 {
-int i,j;
+long i,j;
 
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
@@ -892,7 +907,7 @@ for(j=top;j<=bottom;j++)
 
 void ScrollUp(void)
 {
-int x,y;
+long x,y;
 for (y=0;y<Cfg->TailleY-1;y++)
     for (x=0;x<Cfg->TailleX;x++)
         {
@@ -902,12 +917,12 @@ for (y=0;y<Cfg->TailleY-1;y++)
 }
 
 
-void MoveText(int x1,int y1,int x2,int y2,int x3,int y3)
+void MoveText(long x1,long y1,long x2,long y2,long x3,long y3)
 {
-int x,y;
+long x,y;
 char *_MEcran;
 
-_MEcran=GetMem(Cfg->TailleX*Cfg->TailleY*2);
+_MEcran=(char*)GetMem(Cfg->TailleX*Cfg->TailleY*2);
 
 for (x=0;x<Cfg->TailleX;x++)
     for (y=0;y<Cfg->TailleY;y++)
@@ -931,18 +946,18 @@ LibMem(_MEcran);
 \*--------------------------------------------------------------------*/
 
 char *_Ecran[10];                        //--- Copie de l'ecran --------
-char _EcranX[10],_EcranY[10];            //--- Position du curseur -----
+long _EcranX[10],_EcranY[10];            //--- Position du curseur -----
 char _EcranD[10],_EcranF[10];            //--- Definition du curseur ---
-char _EcranXW[10],_EcranYW[10];          //--- Coordonnes absolues -----
-char _EcranXW2[10],_EcranYW2[10];        //--- Coordonnes absolues -----
-signed short _WhichEcran=0;              //--- Nbr d'‚cran en memoire --
+long _EcranXW[10],_EcranYW[10];          //--- Coordonnes absolues -----
+long _EcranXW2[10],_EcranYW2[10];        //--- Coordonnes absolues -----
+signed long _WhichEcran=0;              //--- Nbr d'‚cran en memoire --
 
 void SaveScreen(void)
 {
 int x,y,n;
 
 if (_Ecran[_WhichEcran]==NULL)
-    _Ecran[_WhichEcran]=GetMem((Cfg->TailleY)*(Cfg->TailleX)*2);
+    _Ecran[_WhichEcran]=(char*)GetMem((Cfg->TailleY)*(Cfg->TailleX)*2);
 
 
 n=0;
@@ -1022,62 +1037,62 @@ _Ecran[_WhichEcran]=NULL;
 /*--------------------------------------------------------------------*\
 |- Fonction relative                                                  -|
 \*--------------------------------------------------------------------*/
-void WinRCadre(int x1,int y1,int x2,int y2,int type)
+void WinRCadre(long x1,long y1,long x2,long y2,long type)
 {
 WinCadre(x1+_xw,y1+_yw,x2+_xw,y2+_yw,type);
 }
 
-void AffRChr(int x,int y,char c)
+void AffRChr(long x,long y,long c)
 {
 AffChr(x+_xw,y+_yw,c);
 }
 
-void AffRCol(int x,int y,char c)
+void AffRCol(long x,long y,long c)
 {
 AffCol(x+_xw,y+_yw,c);
 }
 
-char GetRChr(int x,int y)
+long GetRChr(long x,long y)
 {
 return GetChr(x+_xw,y+_yw);
 }
 
-char GetRCol(int x,int y)
+long GetRCol(long x,long y)
 {
 return GetCol(x+_xw,y+_yw);
 }
 
-void ColRLin(int left,int top,int length,short color)
+void ColRLin(long left,long top,long length,long color)
 {
 ColLin(left+_xw,top+_yw,length,color);
 }
 
-void ChrRLin(int left,int top,int length,short color)
+void ChrRLin(long left,long top,long length,long color)
 {
 ChrLin(left+_xw,top+_yw,length,color);
 }
 
-void ChrRCol(int left,int top,int length,short color)
+void ChrRCol(long left,long top,long length,long color)
 {
 ChrCol(left+_xw,top+_yw,length,color);
 }
 
-void ColRCol(int left,int top,int length,short color)
+void ColRCol(long left,long top,long length,long color)
 {
 ColCol(left+_xw,top+_yw,length,color);
 }
 
-void ColRWin(int right,int top,int left,int bottom,short color)
+void ColRWin(long right,long top,long left,long bottom,long color)
 {
 ColWin(right+_xw,top+_yw,left+_xw,bottom+_yw,color);
 }
 
-void ChrRWin(int right,int top,int left,int bottom,short color)
+void ChrRWin(long right,long top,long left,long bottom,long color)
 {
 ChrWin(right+_xw,top+_yw,left+_xw,bottom+_yw,color);
 }
 
-char InputTo(int colonne,int ligne,char *chaine, int longueur)
+long InputTo(long colonne,long ligne,char *chaine, long longueur)
 {
 return InputAt(colonne+_xw,ligne+_yw,chaine,longueur);
 }
@@ -1085,12 +1100,12 @@ return InputAt(colonne+_xw,ligne+_yw,chaine,longueur);
 /*--------------------------------------------------------------------*\
 |-  Fonction d'impression du texte relatif                            -|
 \*--------------------------------------------------------------------*/
-void PrintTo(int x,int y,char *string,...)
+void PrintTo(long x,long y,char *string,...)
 {
 va_list arglist;
 
 char *suite;
-short xa,ya;
+long xa,ya;
 
 suite=_IntBuffer;
 
@@ -1124,7 +1139,7 @@ while (*suite!=0)
 /*--------------------------------------------------------------------*\
 |-  Fonction d'impression du texte absolu                             -|
 \*--------------------------------------------------------------------*/
-void PrintAt(int x,int y,char *string,...)
+void PrintAt(long x,long y,char *string,...)
 {
 va_list arglist;
 
@@ -1155,10 +1170,9 @@ while (*suite!=0)
 |-             3 SHIFT-TAB                                            -|
 \*--------------------------------------------------------------------*/
 
-char InputAt(int colonne,int ligne,char *chaine, int longueur)
+char InputAt(long colonne,long ligne,char *chaine, long longueur)
 {
-unsigned int car;
-unsigned char c2;
+long car,c2;
 char chaine2[255], old[255];
 char couleur;
 int n, i=0, fin;
@@ -1369,7 +1383,7 @@ switch (car&255)
                     else
                     if (i==fin)
                         fin++;
-                    *(chaine+i)=car;
+                    *(chaine+i)=(char)car;
                     AffChr(colonne+i,ligne,car);
                     i++;
                     }                        // fin du if i==fin || !ins
@@ -1379,7 +1393,7 @@ switch (car&255)
                     *(chaine+fin)=0;
                     strcpy(chaine2,chaine+i);
                     strcpy(chaine+i+1,chaine2);
-                    *(chaine+i)=car;
+                    *(chaine+i)=(char)car;
                     PrintAt(colonne+i,ligne,chaine+i);
                     fin++;
                     i++;
@@ -1650,7 +1664,7 @@ if (fic==NULL) return;
 Cfg->UseFont=1;                                 // utilise les fonts 8x?
 Cfg->Tfont=168;                            // Barre Verticale | with 8x?
 
-pol=GetMem(256*height);
+pol=(char*)GetMem(256*height);
 
 fread(pol,256*height,1,fic);
 
@@ -1661,14 +1675,14 @@ for (n=0;n<256;n++)
 
 if (Cfg->TailleX==80)                         // 9 bits normal -> 8 bits
     {
-    unsigned char x;
+    int x;
     union REGS R;
 
     R.w.bx=(8==8) ? 0x0001 : 0x0800;
 
     x=inp(0x3CC) & (255-12);
 
-    outp(0x3C2,x);
+    outp(0x3C2,(char)x);
     // disable();
     outpw( 0x3C4, 0x0100);
     outpw( 0x3C4, 0x01+ (R.h.bl<<8) );
@@ -1722,7 +1736,7 @@ int386(0x10,&R,&R);
 void Mode30(void)
 {
 union REGS R;
-short t;
+long t;
 
 R.w.ax=3;
 int386(0x10,&R,&R);
@@ -1752,14 +1766,14 @@ void Mode90(void);
 
 void Mode90(void)
 {
-unsigned char x;
+int x;
 
 outpw(0x3C4,0x100);                                 // Synchronous reset
 outpw(0x3C4,0x101);                                     // 8 pixels/char
 
 x=inp(0x3CC);
 x=(x&0xF3)|4;                          // mets les bits 2-3 … 01 = 28MhZ
-outp(0x3C2,x);
+outp(0x3C2,(char)x);
 
 x=inp(0x3DA);
 outp(0x3C0,0x13);                                  // Horizontal panning
@@ -1773,7 +1787,7 @@ outp(0x3D4,0x11);                                    // Register protect
 
 x=inp(0x3D5);
 x=x&0X7F;
-outp(0x3D5,x);                                       // Turn off protect
+outp(0x3D5,(char)x);                                 // Turn off protect
 
 outpw(0x3D4,0x6B00);                                 // Horizontal Total
 outpw(0x3D4,0x5901);                             // Horizontal Displayed
@@ -1797,7 +1811,7 @@ void TXTMode(void)
 {
 char *TX=(char*)0x44A;
 char *TY=(char*)0x484;
-char lig;
+long lig;
 
 Clr();
 
@@ -1850,8 +1864,8 @@ int386(0x10,&regs,&regs);
 
 for (n=0;n<16;n++)
     {
-    regs.h.bh=n;
-    regs.h.bl=n;
+    regs.h.bh=(char)n;
+    regs.h.bl=(char)n;
     regs.w.ax=0x1000;
     int386(0x10,&regs,&regs);
     }
@@ -2109,7 +2123,7 @@ return r;
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F,int first)
 {
 char fin;                                              // si =0 continue
-char direct;                                         // direction du tab
+long direct;                                         // direction du tab
 int i,i2,j;
 int *adr;
 static char chaine[80];
@@ -2364,7 +2378,7 @@ for(n=0;n<=strlen(msg);n++)
     {
     if ((msg[n]==0) | (msg[n]=='\n'))
         {
-        Mesg[nbr]=GetMem(n-d+1);
+        Mesg[nbr]=(char*)GetMem(n-d+1);
         memcpy(Mesg[nbr],msg+d,n-d);
         Mesg[nbr][n-d]=0;
         if (n-d>lng) lng=n-d;
@@ -2379,11 +2393,11 @@ T[0].y=nbr+3;
 T[1].y=nbr+3;
 F.y2=nbr+15;
 
-lng=max(lng,strlen(title))+3;
+lng=MAX(lng,strlen(title))+3;
 if (lng<31) lng=31;
 
 
-length=lng-3;
+length=(char)(lng-3);
 width=nbr;
 
 F.x2=lng+1;
@@ -2420,7 +2434,7 @@ return ok;
 \*--------------------------------------------------------------------*/
 int Gradue(int x,int y,int length,int from,int to,int total)
 {
-short j1,j2;
+long j1,j2;
 int j3;
 
 if (total==0) return 0;
@@ -2616,7 +2630,7 @@ if (erreur[2])
 IOerr=0;
 do
 {
-car=getch();
+car=(char)getch();
 
 if ( (car=='I') | (car=='i') & (erreur[0]) ) IOerr=1;
 if ( (car=='R') | (car=='r') & (erreur[1]) ) IOerr=2;
@@ -2640,7 +2654,7 @@ return _HARDERR_FAIL;
 /*--------------------------------------------------------------------*\
 |-  Retourne 0 si tout va bene                                        -|
 \*--------------------------------------------------------------------*/
-int VerifyDisk(char c)  // 1='A'
+int VerifyDisk(long c)  // 1='A'
 {
 unsigned nbrdrive,cdrv,n;
 struct diskfree_t d;
@@ -2719,7 +2733,7 @@ while(1)
         nr=0;
         cprintf("\x1b[6n\r      \r");      // ask for ansi device report
         while ((0 !=kbhit()) && (nr<30))//read whatever input is present
-            buf[nr++] = getch();
+            buf[nr++] = (char)getch();
 
         buf[nr]=0;                              // zero terminate string
         if (strncmp(buf,"\x1b[",2)!=0) //check precense of device report
@@ -2916,11 +2930,17 @@ for (n=0;n<nbr;n++)
 
     do
         {
-        let[n]=toupper(bar[n].titre[i]);
+        do
+            {
+            let[n]=toupper(bar[n].titre[i]);
+            i++;
+            }
+        while ((let[n]<=32) & (let[n]!=0));
+
         fin=1;
         if (let[n]!=0)
             for (m=0;m<n;m++)
-                if (let[m]==let[n]) fin=0,i++;
+                if (let[m]==let[n]) fin=0;
         }
     while(fin==0);
     }
@@ -3082,9 +3102,9 @@ void Hlp2Chaine(long pos,char *chaine);
 \*--------------------------------------------------------------------*/
 
 static long NdxMainTopic[16];
-static short NbrMain;
+static long NbrMain;
 static long NdxSubTopic[16][512];
-static short NbrSub[16];
+static long NbrSub[16];
 
 static long lng;
 char *hlp;
@@ -3116,7 +3136,7 @@ FILE *fic;
 
 long n;
 
-short i,j;
+long i,j;
 
 NbrMain=0;
 
@@ -3130,7 +3150,7 @@ for(i=0;i<16;i++)
 
 fic=fopen(Fics->help,"rb");
 lng=filelength(fileno(fic));
-hlp=GetMem(lng);
+hlp=(char*)GetMem(lng);
 fread(hlp,1,lng,fic);
 fclose(fic);
 
@@ -3180,7 +3200,7 @@ long n;
 
 fic=fopen(Fics->help,"rb");
 lng=filelength(fileno(fic));
-hlp=GetMem(lng);
+hlp=(char*)GetMem(lng);
 fread(hlp,1,lng,fic);
 fclose(fic);
 
@@ -3207,7 +3227,7 @@ LibMem(hlp);
 \*--------------------------------------------------------------------*/
 void MainTopic(void)
 {
-short x1,y1,x2,y2,max,n,pos;
+long x1,y1,x2,y2,max,n,pos;
 
 char chaine[256];
 char car,car2;
@@ -3322,7 +3342,7 @@ void SubTopic(long z)
 char chaine[256];
 char car,car2;
 int c,x1,x2,y1,y2,max;
-short n,dernier,pos,prem;
+long n,dernier,pos,prem;
 
 Hlp2Chaine(NdxMainTopic[z],chaine);
 max=strlen(chaine);
@@ -3455,13 +3475,13 @@ long n;
 
 int nbrkey;
 
-short x,y;
+long x,y;
 
 char type;                   //--- 1: Centre & highlighted -------------
                              //--- 2: Highlighted ----------------------
                              //--- 3: Marqueur pour topic aide ---------
 
-short x1;
+long x1;
 
 char chaine[256];
 
@@ -3692,29 +3712,29 @@ if ( (path[strlen(path)-1]!='\\') &
         _IntBuffer[strlen(path)]=DEFSLASH,
         _IntBuffer[strlen(path)+1]=0;
 
-Fics->LastDir=GetMem(256);
+Fics->LastDir=(char*)GetMem(256);
 getcwd(Fics->LastDir,256);
 
-Fics->path=GetMem(256);
+Fics->path=(char*)GetMem(256);
 strcpy(Fics->path,_IntBuffer);
 
-Fics->trash=GetMem(256);
+Fics->trash=(char*)GetMem(256);
 strcpy(Fics->trash,_IntBuffer);
 strcat(Fics->trash,"trash");                         // repertoire trash
 
-Fics->FicIdfFile=GetMem(256);
+Fics->FicIdfFile=(char*)GetMem(256);
 strcpy(Fics->FicIdfFile,Fics->trash);
 strcat(Fics->FicIdfFile,"\\idfext.rb");
 
-Fics->CfgFile=GetMem(256);
+Fics->CfgFile=(char*)GetMem(256);
 strcpy(Fics->CfgFile,Fics->trash);
 strcat(Fics->CfgFile,"\\kkrb.cfg");
 
-Fics->temp=GetMem(256);
+Fics->temp=(char*)GetMem(256);
 strcpy(Fics->temp,Fics->trash);
 strcat(Fics->temp,"\\kktemp.tmp");
 
-Fics->log=GetMem(256);
+Fics->log=(char*)GetMem(256);
 strcpy(Fics->log,Fics->trash);
 strcat(Fics->log,"\\logfile");                          // logfile trash
 }

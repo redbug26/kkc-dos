@@ -19,6 +19,107 @@
 |-      renvoient 1 en cas d'erreur                                   -|
 \*--------------------------------------------------------------------*/
 
+void StartWinArc(void);
+int InterWinArc(int debut,int nbr,int n);
+void CloseWinArc(void);
+
+int xarc,debarc;
+FILE *fic;
+int LngCopy;
+
+void StartWinArc(void)
+{
+int x,y;
+
+SaveScreen();
+
+xarc=(Cfg->TailleX-30)/2;
+
+Window(xarc,6,xarc+31,11,10*16+1);
+WinCadre(xarc-1,5,xarc+32,12,0);
+
+WinCadre(xarc+1,6,xarc+30,8,1);
+
+PrintAt(xarc+8,5,"Reading Archive");
+
+x=xarc+11;
+y=10;
+
+PrintAt(x,y,"    STOP    ");
+AffChr(x,y,16);
+AffChr(x+11,y,17);
+
+AffChr(x+12,y,220);
+ChrLin(x+1,y+1,12,223);
+
+ColLin(x,y,12,2*16+5);                                       // Couleur
+
+debarc=0;
+
+fic=fopen(DFen->VolName,"rb");
+
+LngCopy=filelength(fileno(fic));
+
+DFen->pcur=0;
+DFen->scur=0;
+
+DFen->taillefic=0;
+DFen->nbrfic=2;
+
+DFen->taillesel=0;
+DFen->nbrsel=0;
+
+DFen->F[0]=GetMem(sizeof(struct file));
+DFen->F[0]->name=GetMem(3);
+strcpy(DFen->F[0]->name,"..");
+
+DFen->F[0]->size=0;
+DFen->F[0]->time=0;
+DFen->F[0]->date=33;
+DFen->F[0]->attrib=0x10;
+DFen->F[0]->select=0;
+
+DFen->nbrfic=1;
+
+if (KKCfg->pntrep==1)
+    {
+    DFen->F[1]=GetMem(sizeof(struct file));
+    DFen->F[1]->name=GetMem(2);
+    strcpy(DFen->F[1]->name,".");
+
+    DFen->F[1]->size=0;
+    DFen->F[1]->time=0;
+    DFen->F[1]->date=33;
+    DFen->F[1]->attrib=0x10;
+    DFen->F[1]->select=0;
+
+    DFen->nbrfic=2;
+    }
+}
+
+int InterWinArc(int debut,int nbr,int n)
+{
+if (n!=0) LngCopy=n;
+
+PrintAt(xarc+4,9,"%3d files found   %3d %%",nbr,(debut*100)/LngCopy);
+
+debarc=LongGradue(xarc+2,7,28,debarc,debut,LngCopy);
+
+if (KbHit())
+    {
+    if (Wait(0,0,0)==13) return 1;
+    }
+return 0;
+}
+
+
+void CloseWinArc(void)
+{
+fclose(fic);
+
+LoadScreen();
+}
+
 
 
 
@@ -68,53 +169,15 @@ char Nomarch[256];
 char Dest[256];
 ULONG pos;
 char fin;
-FILE *fic;
+
 
 int n,m;
 
 struct file **Fic;
 
-
-DFen->pcur=0;
-DFen->scur=0;
-
-DFen->taillefic=0;
-DFen->nbrfic=2;
-
-DFen->taillesel=0;
-DFen->nbrsel=0;
-
 Fic=DFen->F;
 
-Fic[0]=GetMem(sizeof(struct file));
-Fic[0]->name=GetMem(3);
-strcpy(Fic[0]->name,"..");
-
-Fic[0]->size=0;
-Fic[0]->time=0;
-Fic[0]->date=33;
-Fic[0]->attrib=0x10;
-Fic[0]->select=0;
-
-DFen->nbrfic=1;
-
-if (KKCfg->pntrep==1)
-    {
-    Fic[1]=GetMem(sizeof(struct file));
-    Fic[1]->name=GetMem(2);
-    strcpy(Fic[1]->name,".");
-
-    Fic[1]->size=0;
-    Fic[1]->time=0;
-    Fic[1]->date=33;
-    Fic[1]->attrib=0x10;
-    Fic[1]->select=0;
-
-    DFen->nbrfic=2;
-    }
-
-
-fic=fopen(DFen->VolName,"rb");
+StartWinArc();
 
 /*--------------------------------------------------------------------*\
 |- --- Okay -----------------------------------------------------------|
@@ -130,7 +193,8 @@ short lng;
 
 fseek(fic,pos,SEEK_SET);
 
-if (fread(&Header,sizeof(struct ARJHeader),1,fic)!=1)
+if ( (InterWinArc(pos,DFen->nbrfic,0)==1) |
+     (fread(&Header,sizeof(struct ARJHeader),1,fic)!=1) )
     {
     fin=1;
     break;
@@ -247,7 +311,7 @@ if (Header.FType!=2)
     pos=ftell(fic)+4+2;                     // Passe le CRC et les Zeros
 }
 
-fclose(fic);
+CloseWinArc();
 
 if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0)
                                                   & (DFen->nbrfic==1)) )
@@ -301,49 +365,12 @@ char Dest[256];
 struct RARHeader Lt;
 ULONG pos;
 char fin;
-FILE *fic;
 
 struct file **Fic;
 
-DFen->pcur=0;
-DFen->scur=0;
-
-DFen->taillefic=0;
-DFen->nbrfic=2;
-
-DFen->taillesel=0;
-DFen->nbrsel=0;
-
 Fic=DFen->F;
 
-Fic[0]=GetMem(sizeof(struct file));
-Fic[0]->name=GetMem(3);
-strcpy(Fic[0]->name,"..");
-
-Fic[0]->size=0;
-Fic[0]->time=0;
-Fic[0]->date=33;
-Fic[0]->attrib=0x10;
-Fic[0]->select=0;
-
-DFen->nbrfic=1;
-
-if (KKCfg->pntrep==1)
-    {
-    Fic[1]=GetMem(sizeof(struct file));
-    Fic[1]->name=GetMem(2);
-    strcpy(Fic[1]->name,".");
-
-    Fic[1]->size=0;
-    Fic[1]->time=0;
-    Fic[1]->date=33;
-    Fic[1]->attrib=0x10;
-    Fic[1]->select=0;
-
-    DFen->nbrfic=2;
-    }
-
-fic=fopen(DFen->VolName,"rb");
+StartWinArc();
 
 
 /*--------------------------------------------------------------------*\
@@ -357,11 +384,13 @@ while(!fin)
 {
 fseek(fic,pos,SEEK_SET);
 
-if ( (fread(&Lt,32,1,fic)!=1) |
-    (Lt.TeteType<0x72) | (Lt.TeteType>0x75) | (Lt.TeteSize<7) )
+
+if ( (InterWinArc(pos,DFen->nbrfic,0)==1) |
+     (fread(&Lt,32,1,fic)!=1) |
+     (Lt.TeteType<0x72) |
+     (Lt.TeteType>0x75) |
+     (Lt.TeteSize<7) )
         {
-        fclose(fic);
-        fic=NULL;
 		fin=1;
 		break;
 		}
@@ -417,6 +446,8 @@ pos=pos+Lt.TeteSize;
 if (Lt.Flags & 0x8000) pos+=Lt.PackSize;        //--- LONG_BLOCK -------
 }
 
+CloseWinArc();
+
 if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
                                                     (DFen->nbrfic==1)) )
     {
@@ -466,52 +497,14 @@ char Nomarch[256];
 char Dest[256];
 ULONG pos;
 char fin;
-FILE *fic;
 
 int n,m;
 
 struct file **Fic;
 
-
-DFen->pcur=0;
-DFen->scur=0;
-
-DFen->taillefic=0;
-DFen->nbrfic=2;
-
-DFen->taillesel=0;
-DFen->nbrsel=0;
-
 Fic=DFen->F;
 
-Fic[0]=GetMem(sizeof(struct file));
-Fic[0]->name=GetMem(3);
-strcpy(Fic[0]->name,"..");
-
-Fic[0]->size=0;
-Fic[0]->time=0;
-Fic[0]->date=33;
-Fic[0]->attrib=0x10;
-Fic[0]->select=0;
-
-DFen->nbrfic=1;
-
-if (KKCfg->pntrep==1)
-    {
-    Fic[1]=GetMem(sizeof(struct file));
-    Fic[1]->name=GetMem(2);
-    strcpy(Fic[1]->name,".");
-
-    Fic[1]->size=0;
-    Fic[1]->time=0;
-    Fic[1]->date=33;
-    Fic[1]->attrib=0x10;
-    Fic[1]->select=0;
-
-    DFen->nbrfic=2;
-    }
-
-fic=fopen(DFen->VolName,"rb");
+StartWinArc();
 
 /*--------------------------------------------------------------------*\
 |-  Okay.                                                             -|
@@ -524,7 +517,8 @@ while(fin==0)
 {
 fseek(fic,pos,SEEK_SET);
 
-if (fread(&Header,sizeof(struct ZIPHeader),1,fic)!=1)
+if ( (InterWinArc(pos,DFen->nbrfic,0)==1) |
+     (fread(&Header,sizeof(struct ZIPHeader),1,fic)!=1) )
     {
     fin=1;
     break;
@@ -631,7 +625,7 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
 pos=ftell(fic)+Header.PackSize+Header.ExtraField;
 }
 
-fclose(fic);
+CloseWinArc();
 
 if ( (fin==2) | ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) |
                               ((KKCfg->pntrep==0) & (DFen->nbrfic==1)) )
@@ -680,52 +674,14 @@ char Nomarch[256];
 char Dest[256];
 ULONG pos;
 char fin;
-FILE *fic;
 
 int n,m;
 
 struct file **Fic;
 
-
-DFen->pcur=0;
-DFen->scur=0;
-
-DFen->taillefic=0;
-DFen->nbrfic=2;
-
-DFen->taillesel=0;
-DFen->nbrsel=0;
-
 Fic=DFen->F;
 
-Fic[0]=GetMem(sizeof(struct file));
-Fic[0]->name=GetMem(3);
-strcpy(Fic[0]->name,"..");
-
-Fic[0]->size=0;
-Fic[0]->time=0;
-Fic[0]->date=33;
-Fic[0]->attrib=0x10;
-Fic[0]->select=0;
-
-DFen->nbrfic=1;
-
-if (KKCfg->pntrep==1)
-    {
-    Fic[1]=GetMem(sizeof(struct file));
-    Fic[1]->name=GetMem(2);
-    strcpy(Fic[1]->name,".");
-
-    Fic[1]->size=0;
-    Fic[1]->time=0;
-    Fic[1]->date=33;
-    Fic[1]->attrib=0x10;
-    Fic[1]->select=0;
-
-    DFen->nbrfic=2;
-    }
-
-fic=fopen(DFen->VolName,"rb");
+StartWinArc();
 
 /*--------------------------------------------------------------------*\
 |-  Okay.                                                             -|
@@ -738,7 +694,8 @@ while(!fin)
 {
 fseek(fic,pos,SEEK_SET);
 
-if (fread(&Header,sizeof(struct LHAHeader),1,fic)!=1)
+if ( (InterWinArc(pos,DFen->nbrfic,0)==1) |
+     (fread(&Header,sizeof(struct LHAHeader),1,fic)!=1) )
     {
     fin=1;
     break;
@@ -830,7 +787,7 @@ if (!Maskcmp(Nomarch,nom))
 pos+=Header.HSize+Header.PackSize+2;     //--- CRC ? -------------------
 }
 
-fclose(fic);
+CloseWinArc();
 
 if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
                                                     (DFen->nbrfic==1)) )
@@ -868,7 +825,6 @@ static char name[256];
 
 char Nomarch[256];
 char fin;
-FILE *fic;
 
 int n,i,j;
 
@@ -876,38 +832,13 @@ unsigned char tai;                                    // taille des noms
 
 struct file **Fic;
 
-DFen->pcur=0;
-DFen->scur=0;
-
-DFen->taillefic=0;
-DFen->nbrfic=2;
-
-DFen->taillesel=0;
-DFen->nbrsel=0;
-
 Fic=DFen->F;
 
-DFen->nbrfic=0;
-
-if (KKCfg->pntrep==1)
-    {
-    Fic[0]=GetMem(sizeof(struct file));
-    Fic[0]->name=GetMem(2);
-    strcpy(Fic[0]->name,".");
-
-    Fic[0]->size=0;
-    Fic[0]->time=0;
-    Fic[0]->date=33;
-    Fic[0]->attrib=0x10;
-    Fic[0]->select=0;
-
-    Fic[0]->desc=0;
-
-    DFen->nbrfic=1;
-    }
+StartWinArc();
 
 if (strlen(DFen->path)==strlen(DFen->VolName))
     {
+/*
     Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
     Fic[DFen->nbrfic]->name=GetMem(2);
     strcpy(Fic[DFen->nbrfic]->name,"..");
@@ -921,6 +852,7 @@ if (strlen(DFen->path)==strlen(DFen->VolName))
     Fic[DFen->nbrfic]->desc=0;
 
     (DFen->nbrfic)++;
+*/
     strcpy(nom,"");
     }
     else
@@ -929,7 +861,7 @@ if (strlen(DFen->path)==strlen(DFen->VolName))
     strcat(nom,"\\");
     }
 
-fic=fopen(DFen->VolName,"rb");
+
 
 fseek(fic,3,SEEK_SET);                                   // Passe la cle
 
@@ -1006,33 +938,36 @@ if (fin==0)
         {
         fread(&tai,1,1,fic);
         fread(Nomarch,tai,1,fic);
-        Nomarch[tai]=0;
-
         fread(&KKD_desc,sizeof(struct kkdesc),1,fic);
 
-        Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
-        Fic[DFen->nbrfic]->name=GetMem(tai+1);
+        if (Nomarch[0]!='.')
+            {
+            Nomarch[tai]=0;
 
-        strcpy(Fic[DFen->nbrfic]->name,Nomarch);
-        Fic[DFen->nbrfic]->name[tai]=0;
+            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+            Fic[DFen->nbrfic]->name=GetMem(tai+1);
 
-        Fic[DFen->nbrfic]->size=KKD_desc.size;
+            strcpy(Fic[DFen->nbrfic]->name,Nomarch);
+            Fic[DFen->nbrfic]->name[tai]=0;
 
-        DFen->taillefic+=Fic[DFen->nbrfic]->size;
+            Fic[DFen->nbrfic]->size=KKD_desc.size;
 
-        Fic[DFen->nbrfic]->time=KKD_desc.time;
-        Fic[DFen->nbrfic]->date=KKD_desc.date;
+            DFen->taillefic+=Fic[DFen->nbrfic]->size;
 
-        Fic[DFen->nbrfic]->attrib=KKD_desc.attrib;
+            Fic[DFen->nbrfic]->time=KKD_desc.time;
+            Fic[DFen->nbrfic]->date=KKD_desc.date;
 
-        Fic[DFen->nbrfic]->select=0;
+            Fic[DFen->nbrfic]->attrib=KKD_desc.attrib;
 
-        if (KKD_desc.desc==0)
-            Fic[DFen->nbrfic]->desc=0;
-            else
-            Fic[DFen->nbrfic]->desc=1;
+            Fic[DFen->nbrfic]->select=0;
 
-        DFen->nbrfic++;
+            if (KKD_desc.desc==0)
+                Fic[DFen->nbrfic]->desc=0;
+                else
+                Fic[DFen->nbrfic]->desc=1;
+
+            DFen->nbrfic++;
+            }
 
         fseek(fic,KKD_desc.next,SEEK_SET);
         }
@@ -1044,7 +979,7 @@ if (fin==0)
     Path2Abs(DFen->path,"..");
     }
 
-fclose(fic);
+CloseWinArc();
 
 return fin;
 }
@@ -1059,51 +994,14 @@ char key[13];
 
 ULONG pos;
 char fin;
-FILE *fic;
 
 int n,nbr,lng,deb;
 
 struct file **Fic;
 
-DFen->pcur=0;
-DFen->scur=0;
-
-DFen->taillefic=0;
-DFen->nbrfic=2;
-
-DFen->taillesel=0;
-DFen->nbrsel=0;
-
 Fic=DFen->F;
 
-Fic[0]=GetMem(sizeof(struct file));
-Fic[0]->name=GetMem(3);
-strcpy(Fic[0]->name,"..");
-
-Fic[0]->size=0;
-Fic[0]->time=0;
-Fic[0]->date=33;
-Fic[0]->attrib=0x10;
-Fic[0]->select=0;
-
-DFen->nbrfic=1;
-
-if (KKCfg->pntrep==1)
-    {
-    Fic[1]=GetMem(sizeof(struct file));
-    Fic[1]->name=GetMem(2);
-    strcpy(Fic[1]->name,".");
-
-    Fic[1]->size=0;
-    Fic[1]->time=0;
-    Fic[1]->date=33;
-    Fic[1]->attrib=0x10;
-    Fic[1]->select=0;
-
-    DFen->nbrfic=2;
-    }
-
-fic=fopen(DFen->VolName,"rb");
+StartWinArc();
 
 /*--------------------------------------------------------------------*\
 |-  Okay.                                                             -|
@@ -1118,6 +1016,8 @@ fread(&nbr,1,4,fic);
 
 for(n=0;n<nbr;n++)
     {
+    if (InterWinArc(n,DFen->nbrfic,nbr)==1) break;
+
     fread(key,1,12,fic);
     fread(&deb,1,4,fic);
     fread(&lng,1,4,fic);
@@ -1143,7 +1043,7 @@ for(n=0;n<nbr;n++)
     DFen->nbrfic++;
     }
 
-fclose(fic);
+CloseWinArc();
 
 if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
                                                     (DFen->nbrfic==1)) )

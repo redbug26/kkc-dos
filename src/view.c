@@ -2086,12 +2086,16 @@ switch(car)  {
             if (!stricmp(titre,"/DD")) aff=1;
 
             if (!stricmp(titre,"TR")) aff=1;
+            if (!strnicmp(titre,"TD",2)) aff=1;
 
             if (!stricmp(titre,"I"))  aff=0;              // Chasse fixe
             if (!stricmp(titre,"/I")) aff=0;
 
             if (!stricmp(titre,"PRE")) pre++;
             if (!stricmp(titre,"/PRE")) pre--;
+
+            if (!stricmp(titre,"MENU")) pre++;
+            if (!stricmp(titre,"/MENU")) pre--;
 
             if (!stricmp(titre,"HR"))
                 {
@@ -2182,6 +2186,10 @@ if (code!=0)    // code &...;
 
             if (!strnicmp(titre,"AMP",3)) psuiv=1,car='&';
 
+            if (!strnicmp(titre,"#146",4)) psuiv=1,car=39;  /* ' */
+            if (!strnicmp(titre,"#171",4)) psuiv=1,car=34;  /* << */
+            if (!strnicmp(titre,"#187",4)) psuiv=1,car=34;  /* >> */
+
             if (!strnicmp(titre,"LT",2)) psuiv=1,car='<';
             if (!strnicmp(titre,"GT",2)) psuiv=1,car='>';
 
@@ -2218,24 +2226,27 @@ for (k=0;k<lentit;k++)
     car=chaine[k];
 
     if ( (debut==0) & (code==0) )
-    switch(car)  {
-        case 0:
-            break;
-        case 10:
-            if (pre==0)
-                car=13;
-                else
+        {
+        switch(car)
+            {
+            case 0:
+                break;
+            case 10:
+                if (pre==0)
+                    car=13;
+                    else
+                    aff=1,car=0;
+                break;
+            case 13:
+                car=0;
+                break;
+            case 1:
                 aff=1,car=0;
-            break;
-        case 13:
-            car=0;
-            break;
-        case 1:
-            aff=1,car=0;
-            break;
-        default:
-            car=CnvASCII(KKCfg->cnvtable,car);
-            break;
+                break;
+            default:
+                car=CnvASCII(KKCfg->cnvtable,car);
+                break;
+            }
         }
 
     if (nbrcol<0)
@@ -2243,19 +2254,25 @@ for (k=0;k<lentit;k++)
 
     col=tabcol[nbrcol];
 
-    if ( (bold<0) | (ital<0) | (unde<0) ) bold=0,ital=0,unde=0;
+    if ( (bold<0) | (ital<0) | (unde<0) )
+        bold=0,ital=0,unde=0;
 
-    if (bold!=0) col=(col&240)+11;
-    if (ital!=0) col=(col&240)+12;
-    if (unde!=0) col=(col&240)+13;
+    if (bold!=0)
+        col=(col&240)+11;
 
+    if (ital!=0)
+        col=(col&240)+12;
 
+    if (unde!=0)
+        col=(col&240)+13;
 
     if (car!=0)
         {
-        if ( (pre==0) & (car==13) & (smot==0) ) car=0;
-        if ( (pre==0) & (car==13) ) car=32;
+        if ( (pre==0) & (car==13) & (smot==0) )
+            car=0;
 
+        if ( (pre==0) & (car==13) )
+            car=32;
 
         if (car!=0)
             {
@@ -2318,8 +2335,11 @@ for (k=0;k<lentit;k++)
         }
     aff=0;
 
-    if (yp>3998) break;
-    }
+    if (yp>3998)
+        break;
+
+    } //--- fin du for (k=0;k<lentit;k++) ------------------------------
+
 
 lentit=0;
 
@@ -2339,8 +2359,6 @@ if (ye>yp-yl+y) ye=yp-yl+y;
 if (ye<0) ye=0;
 
 aff=0;
-
-
 
 for (i=y;i<yl;i++)
     for(j=x;j<=xl;j++)
@@ -3008,14 +3026,17 @@ int386(0x17,&regs,&regs);
 return regs.h.ah;
 }
 
-// Retourne 1 si tout va bien
+/*--------------------------------------------------------------------*\
+|-  Retourne 1 si tout va bien                                        -|
+\*--------------------------------------------------------------------*/
 
 char PRN_print(short lpt,char a)
 {
 union REGS regs;
 char code,cont;
+char result=1;
 
-PrintAt(0,0,"Printing...");
+// PrintAt(0,0,"Printing...");
 
 do
     {
@@ -3029,15 +3050,30 @@ do
 
     cont=0;
 
-    if ( ((code&128)==128) & ((code&16)==16) ) cont=1;
-    if ((code&1)==1)   WinError("Time-Out");
-    if ((code&8)==8)   WinError("I/O Error");
-    if ((code&32)==32) WinError("No more paper");
-    if ((code&64)==64) PrintAt(0,0,"ACK Error"),cont=0;
+    if ( ((code&128)==128) & ((code&16)==16) )
+        cont=1;
+
+    if ((code&1)==1)
+        if (WinMesg("Time-Out","Do you want to continue ?",1)==1)
+            result=0,cont=0;
+            else
+            cont=1;
+    if ( ((code&8)==8) & (result==1) )
+        if (WinMesg("I/O Error","Do you want to continue ?",1)==1)
+            result=0,cont=0;
+            else
+            cont=1;
+    if ( ((code&32)==32) & (result==1) )
+        if (WinMesg("No more paper","Do you want to continue ?",1)==1)
+            result=0,cont=0;
+            else
+            cont=1;
+    if ((code&64)==64)
+        PrintAt(0,0,"ACK Error"),cont=0;
     }
 while(cont);
 
-return 1;
+return result;
 }
 
 
@@ -3050,6 +3086,7 @@ FILE *fic;
 short lpt;
 char a;
 int m;
+int ok;
 
 static char x1=22,x2=22,x3=22;
 static int y1=4,y2=7,y3=1;
@@ -3080,6 +3117,10 @@ struct Tmt T[] = {
 
 struct TmtWin F = {-1,4,55,16, "Print file"};
 
+char StrInit[]={27,51,0,27,91,0};
+
+ok=1;        // Tout va bien
+
 sw=0;
 l1=1;
 pp=8;
@@ -3090,7 +3131,6 @@ if (m==27)  //--- escape -----------------------------------------------
     return;
     else
     if (T[m].type==3) return;  //--- cancel ----------------------------
-
 
 fic=fopen(fichier,"rb");
 if (fic==NULL)
@@ -3103,17 +3143,15 @@ lpt=sw;
 
 if (l1==1)
     {
-    PRN_print(lpt,27);
-    PRN_print(lpt,51);
-    PRN_print(lpt,lf);
+    StrInit[2]=lf;
+    StrInit[5]=pp-5;
 
-    PRN_print(lpt,27);
-    PRN_print(lpt,91);
-    PRN_print(lpt,pp-5);
+    for(m=0;m<6;m++)
+        if ((ok=PRN_print(lpt,StrInit[m]))==0) break;
     }
 
 
-if (n==1)   //--- Fichier TEXTE ----------------------------------------
+if ( (n==1) & (ok==1) )  //--- Fichier TEXTE ---------------------------
     {
     do
         {
@@ -3123,6 +3161,8 @@ if (n==1)   //--- Fichier TEXTE ----------------------------------------
     while(1);
     }
 
-WinMesg("Print","The file is printed",0);
+if (ok==1)
+    WinMesg("Print","The file is printed",0);
+
 }
 

@@ -460,3 +460,35 @@ if ((n=strlen(chaine2))<10)
 return chaine;
 }
 
+
+/*--------------------------------------------------------------------*\
+|- Avancement de graduation                                           -|
+|- Renvoit le prochain                                                -|
+\*--------------------------------------------------------------------*/
+int LongGradue(int x,int y,int length,int from,int to,int total)
+{
+short j1;
+int j3;
+
+if (total==0) return 0;
+
+if ( (to>1024) & (total>1024) )
+    {
+    j3=(to/1024);
+    j3=(j3*length)/(total/1024);
+    }
+    else
+    j3=(to*length)/total;
+
+if (j3>=(length)) j3=length;
+
+j1=from;
+
+for (;j1<j3;j1++)
+    AffChr(j1+x,y,0xB2);
+
+if (to==0)
+    ChrLin(x,y,length,32);
+
+return j1;
+}

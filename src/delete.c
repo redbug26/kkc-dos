@@ -99,7 +99,7 @@ return i;
 int FenDelete(char *dest)
 {
 static char CadreLength=70;
-static int Dir[256];
+static char Dir[256];
 
 struct Tmt T[6] = {
       {5,5,5,"   Delete    ",NULL},                            // Delete
@@ -125,7 +125,7 @@ return n;
 int DelErr(char *dest)
 {
 static char CadreLength=70;
-static int Dir[256];
+static char Dir[256];
 
 struct Tmt T[5] = {
       {15,5,2,NULL,NULL},                                      // Delete

@@ -16,7 +16,21 @@
 #include "util.h"
 
 
+/*--------------------------------------------------------------------*\
+|- Fonction cach‚e IDF                                                -|
+\*--------------------------------------------------------------------*/
+
+void ClearSpace(char *name);    //--- efface les espaces inutiles ------
+
+/*--------------------------------------------------------------------*\
+|- Buffer global                                                      -|
+\*--------------------------------------------------------------------*/
+
 static char buffer[256];
+
+/*--------------------------------------------------------------------*\
+|- Fonction                                                           -|
+\*--------------------------------------------------------------------*/
 
 int WinAttrib(void)
 {
@@ -316,4 +330,152 @@ while (kbhit()) Wait(0,0,0);
 }
 
 
+/*--------------------------------------------------------------------*\
+|- Gestion du menu F2                                                 -|
+\*--------------------------------------------------------------------*/
+
+// Result:    1 --> fin
+
+int MenuGroup(char *groupe)
+{
+static char filename[256];
+FILE *outfic;
+FILE *fic;
+char ligne[256],*buf;
+char ok;
+int nbr;
+static struct barmenu bar[20];
+int retour,x,y,n;
+
+fic=fopen(KKFics->menu,"rt");
+if (fic==NULL) return 1;
+
+//--- Recherche le menu "groupe" ---------------------------------------
+
+ok=0;
+while(fgets(ligne,256,fic)!=NULL)
+    {
+    ClearSpace(ligne);
+    if (!strnicmp(ligne,groupe,strlen(groupe)))
+        {
+        ok=1;
+        break;
+        }
+    }
+if (ok==0)
+    {
+    fclose(fic);
+    return 1;
+    }
+
+nbr=0;
+do
+    {
+    bar[nbr].fct=ftell(fic);
+
+    if (fgets(ligne,256,fic)==NULL) break;
+
+    ClearSpace(ligne);
+    if (ligne[0]=='[')
+        break;
+
+    buf=strchr(ligne,'=');
+    if (buf!=NULL)
+        {
+        if (strchr(ligne,'[')!=NULL)
+            strcpy(bar[nbr].titre," ");
+            else
+            strcpy(bar[nbr].titre,"");
+
+        *buf=0;
+        if (strlen(ligne)>20) ligne[20]=0;
+        strcat(bar[nbr].titre,ligne);
+        nbr++;
+        if (nbr==20) break;
+        }
+    }
+while(1);
+
+if (nbr==0)
+    {
+    fclose(fic);
+    return 1;
+    }
+
+x=4;
+y=4;
+n=0;
+
+do
+    {
+    retour=PannelMenu(bar,nbr,&n,&x,&y);
+    }
+while ((retour==1) | (retour==-1));
+
+if (retour==2)
+    {
+    fseek(fic,bar[n].fct,SEEK_SET);
+    fgets(ligne,256,fic);
+    ClearSpace(ligne);
+    buf=strchr(ligne,'[');
+
+    if (buf!=NULL)
+        {
+        strcpy(groupe,buf);
+        groupe[strlen(groupe)-1]=0;
+        fclose(fic);
+        return 0;
+        }
+
+    strcpy(filename,Fics->trash);
+    Path2Abs(filename,"z.bat");
+
+    outfic=fopen(filename,"wt");
+    fprintf(outfic,
+          "@REM *-------------------------------------------------*\n");
+    fprintf(outfic,
+          "@REM * Batch file created by Ketchup Killers Commander *\n");
+    fprintf(outfic,
+          "@REM * for the menu                                    *\n");
+    fprintf(outfic,
+          "@REM *-------------------------------------------------*\n");
+
+    buf=strchr(ligne,'=');
+    fprintf(outfic,"@%s\n",buf+1);
+
+    while(fgets(ligne,256,fic)!=NULL)
+        {
+        ClearSpace(ligne);
+        if ( (ligne[0]=='[') | (strchr(ligne,'=')!=NULL) )
+            break;
+
+        fprintf(outfic,"@%s\n",ligne);
+        }
+
+    fclose(outfic);
+    fclose(fic);
+
+    CommandLine("#%s",filename);
+    return 1;
+    }
+
+
+fclose(fic);
+return 1;
+}
+
+void Menu(void)
+{
+char res[256];
+int r;
+
+strcpy(res,"[Main]");
+
+do
+    {
+    r=MenuGroup(res);
+    }
+while(r==0);
+
+}
 

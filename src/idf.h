@@ -1,8 +1,8 @@
-#define ULONG unsigned long
-#define BYTE unsigned char
-#define WORD unsigned short
+#define ulong  unsigned long
+#define uchar  unsigned char
+#define ushort unsigned short
 
-#define nbrkey 150
+#define nbrkey 161
         // number of format + 6
 
 /*--------------------------------------------------------------------*\
@@ -40,17 +40,17 @@ typedef struct __idfinfo
    char info[80];                             // Name of O.S. (if os!=0)
    char Tinfo[80];
    char composer[80];           // Name of the composer (for the module)
-   ULONG taille;                            // Size of the file (if !=0)
+   ulong taille;                            // Size of the file (if !=0)
    char ext[4];                           // The extension of the format
    char os;                                    // 1: DOS, 2:WIN, 3:WIN32
    int Btype;                       // 1: module, 2: sample, 3: archive,
                                       // 4: bitmap, 5: anim  , 6: other.
 /* Internal variable */
    char *buffer;                                       // buffer for E/S
-   ULONG posbuf;                     // position in buffer (from posfic)
-   WORD sizebuf;                                       // size of buffer
+   ulong posbuf;                     // position in buffer (from posfic)
+   ushort sizebuf;                                     // size of buffer
    FILE *fic;
-   ULONG posfic;
+   ulong posfic;
 } RB_IDF;
 
 

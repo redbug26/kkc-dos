@@ -402,6 +402,9 @@ if (err==0)
     else
     memcpy(p,old,256);
 
+if (KKCfg->dispath) // C'est laid mais il faut r‚actualiser les fenˆtres
+    DFen->init=1;
+
 }
 
 
@@ -880,7 +883,10 @@ if (!strnicmp(chaine,"#INIT",5))
     return 1;
     }
 
-// if (!strnicmp(chaine,"#P4",3))   P4(),  return 1;
+if (!strnicmp(chaine,"#P4",3))
+    {
+    P4();  return 1;
+    }
 
 if (!strnicmp(chaine,"#MEM",4))
     {
@@ -933,6 +939,8 @@ if (n!=27)
             CommandLine("#%s >%s",Dir,Fics->temp);
     }
 }
+
+
 
 
 /*--------------------------------------------------------------------*\

@@ -22,6 +22,8 @@ memcpy(KKCfg->Nmenu,&Nm,8*sizeof(short));
 
 KKCfg->confexit=1;
 
+KKCfg->dispath=0;
+
 strcpy(Mask[0]->title,"C Style");
 strcpy(Mask[0]->chaine,      "asm break case cdecl char const continue "
                          "default do double else enum extern far float "
@@ -71,7 +73,6 @@ Mask[15]->Ignore_Case=1;
 Mask[15]->Other_Col=1;
 
 strcpy(KKCfg->extens,"RAR ARJ ZIP LHA DIZ EXE COM BAT BTM");
-
 
 
 KKCfg->fentype=4;

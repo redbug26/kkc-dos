@@ -3,3 +3,4 @@
 \*--------------------------------------------------------------------*/
 int WinAttrib(void);
 void ServerMode(void);
+void Menu(void);

@@ -18,11 +18,12 @@
 
 #include "kk.h"
 
+int xcop;
+
 /*--------------------------------------------------------------------*\
 |- prototype                                                          -|
 \*--------------------------------------------------------------------*/
-
-int LongGradue(int x,int y,int length,int from,int to,int total);
+void DispCopyMess(char *inpath,char *outpath);
 
 int recopy(char *inpath,char *outpath,struct file *F);
 int Copytree(char *inpath,char *outpath);
@@ -39,7 +40,6 @@ void CopieKkd(FENETRE *F1,FENETRE *F2);
 
 int RemoveM(char *inpath,char *outpath,struct file *F);
 int Movetree(char *inpath,char *outpath);
-int Truemove(char *inpath,char *outpath);
 
 int FenCopie(FENETRE *F1,FENETRE *F2);
 int FenMove(FENETRE *F1,FENETRE *F2);
@@ -54,6 +54,7 @@ int CountRepSize(FENETRE *F1,FENETRE *FTrash,int *nbr,int *size);
 \*--------------------------------------------------------------------*/
 
 static int Nbrfic,Sizefic,Nbrcur,Sizecur;
+// ,Tpio;
 static int Clock_Dep;
 static int FicEcrase;
 static char Dir[256];
@@ -63,6 +64,15 @@ static long SizeMaxRecord;
 static char noselect;              // prend le celui qui est highlighted
 extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
 
+
+/*--------------------------------------------------------------------*\
+|- Affiche le nom des fichiers … copier                               -|
+\*--------------------------------------------------------------------*/
+void DispCopyMess(char *inpath,char *outpath)
+{
+PrintAt(xcop+2,5,"From%59s",inpath);
+PrintAt(xcop+2,6,"To  %59s",outpath);
+}
 
 /*--------------------------------------------------------------------*\
 |- Convertit un masque en ce qui faut ;)                              -|
@@ -149,7 +159,7 @@ return i;
 void ProtFile(char *path)
 {
 static char CadreLength=70;
-static int Dir[256];
+static char Dir[256];
 
 struct Tmt T[5] = {
       {15,5,2,NULL,NULL}, // Copy All
@@ -214,12 +224,13 @@ return 0;
 
 /*--------------------------------------------------------------------*\
 |-  Fichier existe d‚j…: Renvoie 0 si il faut l'ecraser               -|
+|-                     sinon retourne 1                               -|
 \*--------------------------------------------------------------------*/
 
 int FileExist(char *path)
 {
 static char CadreLength=70;
-static int Dir[256];
+static char Dir[256];
 
 struct Tmt T[7] = {
       {5,5,5, "     Yes     ",NULL}, // Copy
@@ -262,21 +273,30 @@ char fin;
 long TailleEnreg,TailleRest,Taille;
 int j3,j4;
 char *buffer;
+//int bpt;          // Byte per tick
 
 if (Nbrfic!=0)
     {
-    j4=LongGradue(10,15,60,0,Sizecur,Sizefic);
-    PrintAt(52,14,"(%4d of %4d)",Nbrcur+1,Nbrfic);
+/*    int n;
+    PrintAt(0,0,"%d",Tpio);
+    n=(clock()-Clock_Dep-((Tpio*Nbrcur)/1024));
+    if (n!=0)
+        bpt=Sizecur/n;
+*/
+
+    j4=LongGradue(xcop+3,15,60,0,Sizecur,Sizefic);
+    PrintAt(xcop+45,14,"(%4d of %4d)",Nbrcur+1,Nbrfic);
     }
 
 Taille=size;
 TailleEnreg=SizeMaxRecord;
 
+
 buffer=GetMem(TailleEnreg);
 
 TailleRest=0;
 
-j3=LongGradue(10,10,60,0,TailleRest,size);
+j3=LongGradue(xcop+3,10,60,0,TailleRest,size);
 
 fin=0;
 
@@ -303,30 +323,40 @@ while ((fin==0) & (Taille>0))
     Taille-=TailleEnreg;
     TailleRest+=TailleEnreg;
     
-    PrintAt(12,9,"Copying %9d of %9d",TailleRest,size);
+    PrintAt(xcop+5,9,"Copying %9d of %9d",TailleRest,size);
 
-    j3=LongGradue(10,10,60,j3,TailleRest,size);
+    j3=LongGradue(xcop+3,10,60,j3,TailleRest,size);
 
     if (Nbrfic!=0)
         {
-        PrintAt(12,14,"Copying %9d of %9d",Sizecur+TailleRest,Sizefic);
-        j4=LongGradue(10,15,60,j4,Sizecur+TailleRest,Sizefic);
+        PrintAt(xcop+5,14,"Copying %9d of %9d",Sizecur+TailleRest,Sizefic);
+                         // Nbrcur+1  Nbrfic
+        j4=LongGradue(xcop+3,15,60,j4,Sizecur+TailleRest,Sizefic);
 
         if (KKCfg->esttime==1)
             {
-            int n1,n2;
+            int n,n1,n2;
 
             if (TailleRest>2048)
                 {
+/*                n2=(clock()-Clock_Dep-((Tpio*Nbrcur)/1024))*
+                                                         (Sizefic/2048);
+*/
                 n2=(clock()-Clock_Dep)*(Sizefic/2048);
-                n2=n2/((Sizecur+TailleRest)/2048);
-                n1=n2+Clock_Dep-clock();
 
-                n1=n1/CLOCKS_PER_SEC;
-                n2=n2/CLOCKS_PER_SEC;
+                n=((Sizecur+TailleRest)/2048);
+                if (n!=0)
+                    {
+                    n2=n2/n;
+                    n1=n2+Clock_Dep-clock();
 
-                PrintAt(20,12,
+                    n1=n1/CLOCKS_PER_SEC;
+                    n2=n2/CLOCKS_PER_SEC;
+
+                    if ( (n1>=0) & (n2>=0) )
+                        PrintAt(xcop+13,12,
                         "Remaining: %6d sec. Expected: %6d sec.",n1,n2);
+                    }
                 }
             }
         }
@@ -338,7 +368,19 @@ while ((fin==0) & (Taille>0))
         }
     }
 
-LongGradue(10,10,60,j3,size,size);
+/*
+if (Nbrfic!=0)
+    {
+    int n;
+    n=(bpt*(Nbrcur+1));
+    if (n!=0)
+        Tpio=(1024*bpt*(clock()-Clock_Dep)-(Sizecur+size))/n;
+
+    PrintAt(0,0,"%d",Tpio);
+    }
+*/
+
+LongGradue(xcop+3,10,60,j3,size,size);
 
 free(buffer);
 
@@ -361,16 +403,18 @@ char ok;
 
 ok=1;
 
+PrintAt(0,1,"%40s%40s",inpath,outpath);
+
 MaskCnv(outpath);
 
 if (!WildCmp(inpath,outpath))
     {
+    PrintAt(0,0,"%40s%40s",inpath,outpath);
     WinError("Source & Destination are the same");
     ok=0;
     }
 
-PrintAt(9,5,"From %59s",inpath);
-PrintAt(9,6,"To   %59s",outpath);
+DispCopyMess(inpath,outpath);
 
 if (ok==1)
     {
@@ -411,7 +455,10 @@ if (ok==1)
         fclose(outhand);
         if (((KKCfg->noprompt)&1)==0)
             if (FileExist(outpath)==1)
+                {
+                fclose(inhand);
                 ok=0;
+                }
         }
     }
 
@@ -961,7 +1008,7 @@ if (dirp!=NULL)
             {
             if (Renome(inpath,outpath)!=0)
                 {
-                i=Truemove(inpath,outpath);
+                i=truecopy(inpath,outpath);
                 if (i==1)
                     remove(inpath);
                 }
@@ -987,8 +1034,7 @@ int i;
 
 MaskCnv(outpath);
 
-PrintAt(9,5,"From %59s",inpath);
-PrintAt(9,6,"To   %59s",outpath);
+DispCopyMess(inpath,outpath);
 
 i=rename(inpath,outpath);
 
@@ -1012,7 +1058,7 @@ if ((F->attrib & _A_SUBDIR)==_A_SUBDIR)
     {
     if (Renome(inpath,outpath)!=0)
         {
-        i=Truemove(inpath,outpath);
+        i=truecopy(inpath,outpath);
         if (i==1)
             remove(inpath);
         }
@@ -1034,7 +1080,7 @@ return i;
 void ProtFileM(char *path)
 {
 static char CadreLength=70;
-static int Dir[256];
+static char Dir[256];
 
 struct Tmt T[5] = {
       {15,5,2,NULL,NULL}, // Move All
@@ -1068,7 +1114,7 @@ switch(WinTraite(T,5,&F,0))
 int FileExistM(char *path)
 {
 static char CadreLength=70;
-static int Dir[256];
+static char Dir[256];
 
 struct Tmt T[7] = {
       {5,5,5, "     Yes     ",NULL},                             // Move
@@ -1104,143 +1150,6 @@ switch(WinTraite(T,7,&F,0))
     }
 return 0;
 }
-
-
-/*--------------------------------------------------------------------*\
-|- Vrai move de FICHIER                                               -|
-\*--------------------------------------------------------------------*/
-int Truemove(char *inpath,char *outpath)
-{
-long size;
-long Taille,TailleEnreg;
-
-FILE *inhand,*outhand;
-
-char *buffer;
-
-char ok;
-
-int j3;
-long TailleRest;
-
-ok=1;
-
-MaskCnv(outpath);
-
-PrintAt(9,5,"From %59s",inpath);
-PrintAt(9,6,"To   %59s",outpath);
-
-inhand=fopen(inpath,"rb");
-if (inhand==NULL)
-    ok=0;
-    else
-    {
-    struct diskfree_t d;
-    long tfree;
-
-    size=filelength(fileno(inhand));
-
-    _dos_getdiskfree(toupper(outpath[0])-'A'+1,&d);
-
-    tfree=(d.avail_clusters)*(d.sectors_per_cluster);
-    tfree=tfree*(d.bytes_per_sector);
-
-    Taille=32*1024;
-
-    if (tfree<size)
-        {
-        fclose(inhand);
-        if (WinError("No more place on drive")==1)
-            FicEcrase=2;
-        ok=0;
-        }
-    }
-
-
-
-if (ok==1)
-    {
-    outhand=fopen(outpath,"rb");
-    if (outhand!=NULL)
-        {
-        fclose(outhand);
-        if (FileExistM(outpath)==1)
-            ok=0;
-        }
-    }
-
-IOver=1;
-IOerr=0;
-
-if (ok==1)
-    {
-    outhand=fopen(outpath,"wb");
-    if ( (outhand==NULL) | (IOerr!=0) )
-        {
-        ProtFileM(outpath);
-        fclose(inhand);
-        ok=0;
-        }
-    IOver=0;
-    }
-
-if (ok==1)
-    {
-    if (Taille>size)
-        TailleEnreg=size;
-        else
-        TailleEnreg=Taille;
-
-    Taille=size;
-
-    buffer=GetMem(TailleEnreg);
-
-    TailleRest=0;
-
-    j3=LongGradue(10,12,60,0,TailleRest,size);
-
-    while (Taille>0)
-        {
-        IOerr=0;
-        TailleEnreg=fread(buffer,1,TailleEnreg,inhand);
-        if (IOerr==3) { ok=1; break; }
-        IOerr=0;
-        fwrite(buffer,1,TailleEnreg,outhand);
-        if (IOerr==3) { ok=1; break; }
-        Taille-=TailleEnreg;
-        TailleRest+=TailleEnreg;
-        PrintAt(12,9,"Moving %9d of %9d",TailleRest,size);
-
-        j3=LongGradue(10,12,60,j3,TailleRest,size);
-        }
-
-    LongGradue(10,12,60,j3,size,size);
-
-    free(buffer);
-
-    fclose(inhand);
-    fclose(outhand);
-    }
-
-if (ok==1)      // Mise a l'heure
-    {
-    unsigned short d,t;
-    int handle;
-
-    _dos_open(inpath,O_RDONLY,&handle);
-    _dos_getftime(handle,&d,&t);
-    _dos_close(handle);
-
-    _dos_open(outpath,O_RDONLY,&handle);
-    _dos_setftime(handle,d,t);
-    _dos_close(handle);
-    }
-
-
-return ok;
-}
-
-
 
 
 /*--------------------------------------------------------------------*\
@@ -1288,13 +1197,13 @@ switch(FTrash->system)
 
 SaveScreen();
 
-WinCadre(7,4,73,15,0);
-ColWin(8,5,72,14,10*16+1);
-ChrWin(8,5,72,14,32);
+xcop=(Cfg->TailleX-66)/2;
 
-WinCadre(9,8,71,10,1);
-WinCadre(9,11,71,13,2);
+WinCadre(xcop,4,xcop+65,12,0);
+Window(xcop+1,5,xcop+64,11,10*16+1);
 
+PrintAt(xcop+2,7,"Current");
+WinCadre(xcop+2,8,xcop+63,11,2);
 
 j1=0;
 j2=0;
@@ -1345,6 +1254,7 @@ noselect=(F1->nbrsel==0);
 
 FicEcrase=0;
 
+// Tpio=0;
 Nbrcur=0;
 Sizecur=0;
 if (CountRepSize(F1,FTrash,&Nbrfic,&Sizefic)==-1) return;
@@ -1401,24 +1311,26 @@ switch(FTrash->system)
 
 SaveScreen();
 
+xcop=(Cfg->TailleX-66)/2;
+
 if (Nbrfic!=0)
     {
-    WinCadre(7,4,73,17,0);
-    Window(8,5,72,16,10*16+1);
+    WinCadre(xcop,4,xcop+65,17,0);
+    Window(xcop+1,5,xcop+64,16,10*16+1);
 
-    PrintAt(9,7,"Current");
-    WinCadre(9,8,71,11,2);
+    PrintAt(xcop+2,7,"Current");
+    WinCadre(xcop+2,8,xcop+63,11,2);
 
-    PrintAt(9,12,"Total");
-    WinCadre(9,13,71,16,2);
+    PrintAt(xcop+2,12,"Total");
+    WinCadre(xcop+2,13,xcop+63,16,2);
     }
     else
     {
-    WinCadre(7,4,73,12,0);
-    Window(8,5,72,11,10*16+1);
+    WinCadre(xcop,4,xcop+65,12,0);
+    Window(xcop+1,5,xcop+64,11,10*16+1);
 
-    PrintAt(9,7,"Current");
-    WinCadre(9,8,71,11,2);
+    PrintAt(xcop+2,7,"Current");
+    WinCadre(xcop+2,8,xcop+63,11,2);
     }
 
 j1=0;
@@ -1473,37 +1385,7 @@ if (((KKCfg->noprompt)&1)==0)
     }
 }
 
-/*--------------------------------------------------------------------*\
-|- Avancement de graduation                                           -|
-|- Renvoit le prochain                                                -|
-\*--------------------------------------------------------------------*/
-int LongGradue(int x,int y,int length,int from,int to,int total)
-{
-short j1;
-int j3;
 
-if (total==0) return 0;
-
-if ( (to>1024) & (total>1024) )
-    {
-    j3=(to/1024);
-    j3=(j3*length)/(total/1024);
-    }
-    else
-    j3=(to*length)/total;
-
-if (j3>=(length)) j3=length+1;
-
-j1=from;
-
-for (;j1<j3;j1++)
-    AffChr(j1+x,y,0xB2);
-
-if (to==0)
-    ChrLin(x,y,length+1,32);
-
-return j1;
-}
 
 /*--------------------------------------------------------------------*\
 |- Calcul de la taille d'un repertoire                                -|
@@ -1515,7 +1397,7 @@ struct file *ff;
 char error;
 char **TabRec;
 int NbrRec;
-int m;
+int x,m;
 char nom2[256];
 
 char moi[256],nom[256];
@@ -1526,12 +1408,14 @@ int ok=1;
 
 SaveScreen();
 
-Window(25,6,56,10,10*16+1);
-WinCadre(24,5,57,11,0);
+x=(Cfg->TailleX-30)/2;
 
-PrintAt(35,6,"Please Wait");
-PrintAt(29,7,"Computing size of files");
-PrintAt(26,8,"(Continue by pressing any key)");
+Window(x,6,x+31,10,10*16+1);
+WinCadre(x-1,5,x+32,11,0);
+
+PrintAt(x+10,6,"Please Wait");
+PrintAt(x+4,7,"Computing size of files");
+PrintAt(x+1,8,"(Continue by pressing any key)");
 
 *size=0;
 *nbr=0;
@@ -1584,7 +1468,7 @@ if (SelectFile(F1,i))
                     {
                     (*nbr)++;
                     (*size)+=ff->size;
-                    PrintAt(25,10,"%11s bytes in %5d files",
+                    PrintAt(x,10,"%11s bytes in %5d files",
                                            Long2Str(*size,bufton),*nbr);
                     }
                 }
@@ -1629,7 +1513,7 @@ if (SelectFile(F1,i))
         {
         (*nbr)++;
         (*size)+=F1->F[i]->size;
-        PrintAt(25,10,"%11s bytes in %5d files",
+        PrintAt(x,10,"%11s bytes in %5d files",
                                            Long2Str(*size,bufton),*nbr);
         }
     } //--- END IF SELECT ----------------------------------------------
@@ -1666,24 +1550,26 @@ struct file *F;
 
 SaveScreen();
 
+xcop=(Cfg->TailleX-66)/2;
+
 if (Nbrfic!=0)
     {
-    WinCadre(7,4,73,17,0);
-    Window(8,5,72,16,10*16+1);
+    WinCadre(xcop,4,xcop+65,17,0);
+    Window(xcop+1,5,xcop+64,16,10*16+1);
 
-    PrintAt(9,7,"Current");
-    WinCadre(9,8,71,11,2);
+    PrintAt(xcop+2,7,"Current");
+    WinCadre(xcop+2,8,xcop+63,11,2);
 
-    PrintAt(9,12,"Total");
-    WinCadre(9,13,71,16,2);
+    PrintAt(xcop+2,12,"Total");
+    WinCadre(xcop+2,13,xcop+63,16,2);
     }
     else
     {
-    WinCadre(7,4,73,12,0);
-    Window(8,5,72,11,10*16+1);
+    WinCadre(xcop,4,xcop+65,12,0);
+    Window(xcop+1,5,xcop+64,11,10*16+1);
 
-    PrintAt(9,7,"Current");
-    WinCadre(9,8,71,11,2);
+    PrintAt(xcop+2,7,"Current");
+    WinCadre(xcop+2,8,xcop+63,11,2);
     }
 
 j1=0;
@@ -1777,25 +1663,28 @@ struct file *F;
 
 SaveScreen();
 
+xcop=(Cfg->TailleX-66)/2;
+
 if (Nbrfic!=0)
     {
-    WinCadre(7,4,73,17,0);
-    Window(8,5,72,16,10*16+1);
+    WinCadre(xcop,4,xcop+65,17,0);
+    Window(xcop+1,5,xcop+64,16,10*16+1);
 
-    PrintAt(9,7,"Current");
-    WinCadre(9,8,71,11,2);
+    PrintAt(xcop+2,7,"Current");
+    WinCadre(xcop+2,8,xcop+63,11,2);
 
-    PrintAt(9,12,"Total");
-    WinCadre(9,13,71,16,2);
+    PrintAt(xcop+2,12,"Total");
+    WinCadre(xcop+2,13,xcop+63,16,2);
     }
     else
     {
-    WinCadre(7,4,73,12,0);
-    Window(8,5,72,11,10*16+1);
+    WinCadre(xcop,4,xcop+65,12,0);
+    Window(xcop+1,5,xcop+64,11,10*16+1);
 
-    PrintAt(9,7,"Current");
-    WinCadre(9,8,71,11,2);
+    PrintAt(xcop+2,7,"Current");
+    WinCadre(xcop+2,8,xcop+63,11,2);
     }
+
 
 j1=0;
 j2=0;
@@ -1866,7 +1755,7 @@ if (strlen(F2->path)==strlen(F2->VolName))
     strcat(nom,"\\");
     }
 
-PrintAt(9,6,"To   %59s",F2->VolName);
+PrintAt(xcop+2,6,"To   %59s",F2->VolName);
 
 fic=fopen(F2->VolName,"r+b");
 
@@ -1967,7 +1856,7 @@ if (fin==0)
             strcpy(buffer,F1->path);
             Path2Abs(buffer,F1->F[F1pos]->name);
 
-            PrintAt(9,5,"From %59s",buffer);
+            PrintAt(xcop+2,5,"From %59s",buffer);
             infic=fopen(buffer,"rb");
 
             SizeMaxRecord=32*1024;
@@ -2085,7 +1974,7 @@ if (strlen(F1->path)==strlen(F1->VolName))
     strcat(nom,"\\");
     }
 
-PrintAt(9,5,"From %59s",F1->VolName);
+PrintAt(xcop+2,5,"From %59s",F1->VolName);
 
 fic=fopen(F1->VolName,"rb");
 
@@ -2179,7 +2068,7 @@ if (fin==0)
 
             outfic=fopen(buffer,"wb");
 
-            PrintAt(9,6,"To   %59s",buffer);
+            PrintAt(xcop+2,6,"To   %59s",buffer);
 
             SizeMaxRecord=32*1024;
 

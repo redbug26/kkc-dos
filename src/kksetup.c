@@ -1107,7 +1107,6 @@ if (mkdir(chaine)==0)
     DispMessage("Creation of the trash directory '%s': OK",chaine);
     DispMessage("");
     }
-    
     else
     {
     char path[256];
@@ -1816,6 +1815,8 @@ get_private_profile_string(section,"serial_parity","N",buffer,16,
                                                               filename);
 KKCfg->autoreload=get_private_profile_int(section,"autoreload",
                                             KKCfg->autoreload,filename);
+KKCfg->dispath=get_private_profile_int(section,"dispupperpath",
+                                               KKCfg->dispath,filename);
 KKCfg->verifhist=get_private_profile_int(section,"verifhist",
                                              KKCfg->verifhist,filename);
 KKCfg->palafter=get_private_profile_int(section,"palafter",
@@ -2001,6 +2002,8 @@ write_private_profile_int(section,"serial_speed",Cfg->comspeed,
                                                               filename);
 write_private_profile_int(section,"serial_databit",Cfg->combit,
                                                               filename);
+write_private_profile_int(section,"dispupperpath",
+                                               KKCfg->dispath,filename);
 sprintf(buffer,"%c",Cfg->comparity);
 write_private_profile_string(section,"serial_parity",buffer,filename);
 write_private_profile_int(section,"serial_stopbit",Cfg->comstop,
@@ -2327,11 +2330,12 @@ strcpy(bar[0].titre,"Player");
 strcpy(bar[1].titre,"Information");
 strcpy(bar[2].titre,"Disk");
 strcpy(bar[3].titre,"Help");
-
+/*
 strcpy(bar[0].help,"Various");
 strcpy(bar[1].help,"File");
 strcpy(bar[2].help,"Disk");
 strcpy(bar[3].help,"Options");
+*/
 
 if (retour==0)                             // Navigation sur bar de menu
     v=1;
