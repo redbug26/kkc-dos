@@ -111,6 +111,8 @@ switch(car)
         return 'o';
     case '”':
         return 'o';
+    case 153:
+        return 'O';
 
 
     case '…':
@@ -334,7 +336,8 @@ TPath2Abs(p,Ficname+m);
 void TPath2Abs(char *p,char *Ficname)
 {
 int n;
-static char old[256];     // Path avant changement
+static char old[256];     //--- Path avant changement ------------------
+signed int deuxpoint;
 
 memcpy(old,p,256);
 
@@ -350,14 +353,25 @@ if ( (!strncmp(Ficname,"..",2)) & (p[0]!=0) ) {
     return;
     }
 
-if (Ficname[0]!='.') {
-    if  ( (Ficname[1]==':') & (Ficname[2]==DEFSLASH) )  {
-        strcpy(p,Ficname);
-        if (p[strlen(p)-1]==':') strcat(p,"\\");
-        return;
+if (Ficname[0]!='.')
+    {
+    deuxpoint=-1;
+
+    for(n=0;n<strlen(Ficname);n++)
+        if (Ficname[n]==':') deuxpoint=n;
+
+    if (deuxpoint!=-1)
+        {
+        if (Ficname[deuxpoint+1]==DEFSLASH)
+            {
+            strcpy(p,Ficname);
+            if (p[strlen(p)-1]==':') strcat(p,"\\");
+            return;
+            }
         }
 
-    if (Ficname[0]==DEFSLASH)  {
+    if (Ficname[0]==DEFSLASH)
+        {
         strcpy(p+2,Ficname);
         if (p[strlen(p)-1]==':') strcat(p,"\\");
         return;
@@ -365,7 +379,7 @@ if (Ficname[0]!='.') {
 
     if (p[strlen(p)-1]!=DEFSLASH) strcat(p,"\\");
     strcat(p,Ficname);
-   }
+    }
 
 if (p[strlen(p)-1]==':') strcat(p,"\\");
 }

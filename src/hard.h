@@ -2,6 +2,8 @@
 |-  Header of hard-function                                           -|
 \*--------------------------------------------------------------------*/
 
+#define SELCHAR 0x0F
+
 #define BYTE unsigned char
 #define WORD unsigned short
 #define ULONG unsigned long
@@ -44,6 +46,7 @@ struct config
      char Tfont;             // Character used for the vertical line
      char reinit;                    //
      char UseFont;             // Result after calling font fonction
+     char mousemode;                    // 0: normal, 1: emulate key-44-
      char crc;                                              // CRC: 0x69
      };
 
@@ -79,6 +82,12 @@ extern "C"
 #endif
 
 /*--------------------------------------------------------------------*\
+|- Gestion interne des touches                                        -|
+\*--------------------------------------------------------------------*/
+void PutKey(int key);
+int GetKey(void);
+
+/*--------------------------------------------------------------------*\
 |- Display function                                                   -|
 \*--------------------------------------------------------------------*/
 void TXTMode(void);
@@ -86,6 +95,8 @@ void LoadPal(char *);
 void SavePal(char *);
 void InitFont(void);
 void InitFontFile(char*);
+
+
 
 /*--------------------------------------------------------------------*\
 |- Function:     int InitScreen(int a)                                -|
@@ -297,7 +308,8 @@ void ClearEvents(void);
 void NewEvents(int (*fct)(struct barmenu *),char *titre,int key);
 
 
-void Bar(char *);                               // Affichage de la barre
+void Bar(char *);                            // Display the bar function
+int GetMouseFctBar(int status);    // Return Fx key for the bar function
 
 //--- Retourne 0 si tout va bene ---------------------------------------
 
@@ -312,6 +324,17 @@ void Bar(char *);                               // Affichage de la barre
 \*--------------------------------------------------------------------*/
 int VerifyDisk(long c);                                   //--- 1='A'
 
+/*--------------------------------------------------------------------*\
+|- Gestion des fontes                                                 -|
+\*--------------------------------------------------------------------*/
+void Font2Buf(char*);
+void Buf2Font(char*);
+
+/*--------------------------------------------------------------------*\
+|- Gestion de la palette                                              -|
+\*--------------------------------------------------------------------*/
+void Pal2Buf(char*);
+void Buf2Pal(char*);
 
 /*--------------------------------------------------------------------*\
 |-        Serial port function                                        -|
@@ -347,6 +370,7 @@ void Debug(char *string,...);
 |-  Header for help-functions                                         -|
 \*--------------------------------------------------------------------*/
 
+
 /*--------------------------------------------------------------------*\
 |- Function:     void Help(void)                                      -|
 |-                                                                    -|
@@ -377,4 +401,6 @@ void HelpTopic(char *);
 |- Personnal Function                                                 -|
 \*--------------------------------------------------------------------*/
 void LoadErrorHandler(void);   //--- Load the internal error handler ---
+
+
 

@@ -19,7 +19,6 @@ void FenFileID(FENETRE *Fen);
 void ViewFileID(FENETRE *Fen);
 int SearchInfo(FENETRE *Fen);
 void DispInfo(FENETRE *Fen);
-void WinInfo(FENETRE **Fenetre);
 void FenInfo(FENETRE *Fen);
 
 

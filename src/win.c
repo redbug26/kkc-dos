@@ -161,6 +161,8 @@ void Makediz(RB_IDF *Info,char *Buf)
 {
 struct dosdate_t Date;
 char ligne[256];
+char affmsg=0;
+int m;
 
 _dos_getdate(&Date);
 
@@ -183,7 +185,10 @@ if (*Info->fullname!=0)
 
 if (*Info->format!=0)
     {
-    sprintf(ligne," Type : %27s \r\n",Info->format); //34
+    if (strlen(Info->format)<=26)
+        sprintf(ligne," Type : %27s \r\n",Info->format); //34
+    else
+        sprintf(ligne," T.:%31s \r\n",Info->format); //34
     strcat(Buf,ligne);
     }
 
@@ -204,9 +209,12 @@ if (*Info->composer!=0)
     strcat(Buf,ligne);
     }
 
-if (*Info->message[0]!=0)
+for (m=0;m<9;m++)
+    if (*Info->message[m]!=0)
+        affmsg=1;
+
+if (affmsg)
     {
-    short m;
     sprintf(ligne,"컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴\r\n");
     strcat(Buf,ligne);
     for (m=0;m<9;m++)
@@ -248,13 +256,16 @@ static signed char d=-1;
 
 if ((Cfg->TailleX!=80) & ( (DFen->FenTyp!=2) | (DFen->Fen2->FenTyp!=2)))
     {
-    time_t clock;
-    static char buffer[10];
+    if ((DFen->init!=1) & (DFen->Fen2->init!=1))
+        {
+        time_t clock;
+        static char buffer[10];
 
-    clock=time(NULL);
-    strftime(buffer,9,"%H:%M:%S",localtime(&clock));
+        clock=time(NULL);
+        strftime(buffer,9,"%H:%M:%S",localtime(&clock));
 
-    PrintAt(41,Fenetre[0]->yl-1,"%-8s",buffer);
+        PrintAt(41,Fenetre[0]->yl-1,"%-8s",buffer);
+        }
     }
 
 if (d==c) return;
@@ -289,12 +300,12 @@ if ((c!=4) & (KKCfg->isbar))
         {
         x=(DFen->order)&15;
         if (x==0)
-            Tbar[41]=0x0F;
+            Tbar[41]=SELCHAR;
             else
-            Tbar[11+6*x]=0x0F;
+            Tbar[11+6*x]=SELCHAR;
 
         if ((DFen->order&16)==16)
-            Tbar[47]=0x0F;
+            Tbar[47]=SELCHAR;
         }
     Bar(Tbar);
     }
@@ -388,7 +399,7 @@ WinTraite(T,5,&F,0);
 void Setup(void)
 {
 static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14,l15,l16,l17;
-static int l18,l19;
+static int l18,l19,l20;
 
 static char x1=32,x2=32,x3=32;
 static int y1=9,y2=3,y3=16;
@@ -410,7 +421,7 @@ struct Tmt T[] = {
       {5,12,8,"Insert move down",&l13},
       {5,13,8,"Select directories",&l14},
       {5,14,8,"Estimated copying time",&l15},
-      {5,15,8,"Auto adjust viewer size",&l16},
+      {5,15,8,"Display lift",&l16},
       {5,16,8,"Save position in viewer",&l18},
       {5,17,8,"Load startup directory",&l17},
 
@@ -425,7 +436,8 @@ struct Tmt T[] = {
       {40, 8,5," Serial Port ",&l1},         // la gestion du port serie
       {55, 8,5," Mask Setup  ",&l2},           // la gestion des masques
       {40,10,5," File Setup  ",&l3},           // la gestion des masques
-      {55,10,5," Ext. Setup  ",&l4}         // la gestion des extensions
+      {55,10,5," Ext. Setup  ",&l4},        // la gestion des extensions
+      {40,12,5," Screen Cfg ",&l20}                // la gestion ecran
       };
 
 struct TmtWin F = {-1,3,74,22,"Setup"};
@@ -447,14 +459,14 @@ l12=KKCfg->dispcolor;
 l13=KKCfg->insdown;
 l14=KKCfg->seldir;
 l15=KKCfg->esttime;
-l16=KKCfg->V.ajustview;
+l16=KKCfg->lift;
 l17=KKCfg->currentdir;
 l18=KKCfg->V.saveviewpos;
 l19=KKCfg->addselect;
 
 do
 {
-n=WinTraite(T,28,&F,0);
+n=WinTraite(T,29,&F,0);
 
 if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -465,6 +477,7 @@ if (T[n].type==5)
     if (T[n].entier==&l2)  MasqueSetup();
     if (T[n].entier==&l3)  FileSetup();
     if (T[n].entier==&l4)  ExtSetup();
+    if (T[n].entier==&l20)  GestionFct(66);
     }
 }
 while(T[n].type==5);
@@ -485,7 +498,7 @@ KKCfg->dispcolor=l12;
 KKCfg->insdown=l13;
 KKCfg->seldir=l14;
 KKCfg->esttime=l15;
-KKCfg->V.ajustview=l16;
+KKCfg->lift=l16;
 KKCfg->currentdir=l17;
 KKCfg->V.saveviewpos=l18;
 KKCfg->addselect=l19;
@@ -965,6 +978,7 @@ for (i=0;i<Fen2->nbrfic;i++)
             sprintf(F->info,"%cInternal File",0);
             else
             {
+            IOerr=1;    //--- Ignore les erreurs suivantes -------------
             strcpy(Info.path,Fen2->path);
             Path2Abs(Info.path,F->name);
 
@@ -976,6 +990,7 @@ for (i=0;i<Fen2->nbrfic;i++)
             sprintf(F->info+1,"%-80s",Buffer);
 
             F->info[0]=Info.Btype;
+            IOerr=0;    //--- Intercepte les erreurs -------------------
             }
         }
     if (KbHit()) break;
@@ -1424,6 +1439,40 @@ if (dispall)
        ColLin(x1,y1,38,Cfg->col[0]);
        }
 
+if (KKCfg->lift)
+    {
+    char r0,r1;
+    int n,y;
+
+    switch((KKCfg->fentype)+(Cfg->font)*10)
+        {
+        case 14:
+            r0=145;
+            r1=0xAE;
+            break;
+        default:
+            r0=176;
+            r1=177;
+            break;
+        }
+
+    y=Fen->yl-Fen->y2;
+
+    if (y!=0)
+        {
+        y=y*Fen->pcur;
+        y=y/Fen->nbrfic;
+        y+=Fen->y2;
+
+        for(n=Fen->y2;n<y;n++)
+            AffChr(Fen->xl,n,r0);
+        AffChr(Fen->xl,y,r1);
+        for(n=y+1;n<Fen->yl;n++)
+            AffChr(Fen->xl,n,r0);
+        }
+    }
+
+
 if ( (dispall) & (KKCfg->dispath) )
     {
     AffUpperPath(Fen,Fen->y);
@@ -1442,6 +1491,7 @@ RB_IDF Info;
 FENETRE *Fen2;
 struct file *F;
 int x,y,i;
+int hsize;
 
 Fen2=Fen->Fen2;
 F=Fen2->F[Fen2->pcur];
@@ -1503,10 +1553,25 @@ Buf=(char*)GetMem(4000);
 
 Makediz(&Info,Buf);
 
-Window(Fen->x+1,Fen->y+1,Fen->xl-1,Fen->y+4,Cfg->col[16]);
+hsize=0;
+i=0;
+while (Buf[i]!=0)
+    {
+    if (Buf[i]==13)
+        hsize++;
+    i++;
+    }
+// Centre le diz
+
+hsize=(Fen->yl-Fen->y-hsize-3)/2;
+
+if (hsize>1)
+    Window(Fen->x+1,Fen->y+1,Fen->xl-1,Fen->y+hsize,Cfg->col[16]);
+    else
+    hsize=0;
 
 x=Fen->x+2;
-y=Fen->y+6;
+y=Fen->y+hsize+2;
 
 i=0;
 while (Buf[i]!=0)
@@ -1517,14 +1582,19 @@ while (Buf[i]!=0)
         case 13: y++; break;
         default: AffChr(x,y,Buf[i]); x++; break;
         }
+    if (y==Fen->yl-1) break;
     i++;
     }
 
-Cadre(Fen->x+1,Fen->y+5,Fen->xl-1,y,2
-                                            ,Cfg->col[37],Cfg->col[38]);
-ColWin(Fen->x+2,Fen->y+6,Fen->xl-2,y-1,Cfg->col[39]);
+Cadre(Fen->x+1,Fen->y+hsize+1,Fen->xl-1,y,2,Cfg->col[37],Cfg->col[38]);
+ColWin(Fen->x+2,Fen->y+hsize+2,Fen->xl-2,y-1,Cfg->col[39]); // Int. info
 
-Window(Fen->x+1,y+1,Fen->xl-1,Fen->yl-1,Cfg->col[39]);
+Window(Fen->x+1,Fen->y+1,Fen->xl-1,Fen->y+hsize,Cfg->col[16]);
+Window(Fen->x+1,y+1,Fen->xl-1,Fen->yl-1,Cfg->col[16]);
+
+//ChrWin(Fen->x+2,Fen->y+6,Fen->xl-2,y-1,'1');
+//ChrWin(Fen->x+1,y+1,Fen->xl-1,Fen->yl-1,'2');
+
 
 LibMem(Buf);
 

@@ -2,6 +2,8 @@
 |-  Header of gestion-function                                        -|
 \*--------------------------------------------------------------------*/
 
+void MakeDir(char *Ficname);
+
 
 void RemoveHistDir(int a0,int a1);
 void VerifHistDir(void);

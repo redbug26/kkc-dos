@@ -23,6 +23,7 @@ extern struct key K[nbrkey];
 
 short NumExt[nbrkey];
 
+char Defname[256];
 char KKRname[256];
 char Filename[256];
 char Meneur[256];
@@ -163,9 +164,11 @@ for (n=strlen(KKRname);n>0;n--)  {
         break;
         }
     }
+strcpy(Defname,KKRname);
+
 strcat(KKRname,".kkr");
 
-strcpy(Filename,"*.*");
+strcpy(Filename,Defname);
 
 
 ColWin(0,0,79,(Cfg->TailleY-2),10*16+1);
@@ -781,6 +784,7 @@ return strcmp(a1->ext,b1->ext);		// ou format ?
 
 void IdfListe(void)
 {
+char ext[256];
 int car,y;
 
 int n;
@@ -853,7 +857,10 @@ for (n=prem;n<nbrkey;n++)
             ColLin(74,y,5, 1*16+3);
             }
 
-        PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,K[n].format,
+        strcpy(ext,K[n].ext);
+        ext[3]=0;
+
+        PrintAt(1,y," %3s %-32s from %29s %4s ",ext,K[n].format,
                                K[n].pro,NumExt[n]==1 ? " OK " : "    ");
 
         if (((K[n].other)&1)==1) info++;

@@ -32,6 +32,10 @@ int KKDlitfic(void);            //--- system 5 -------------------------
 
 int DFPlitfic(void);            //--- system 6 -------------------------
 
+int Hostlitfic(void);           //--- system 7 -------------------------
+
+int RAWlitfic(void);            //--- system 8 -------------------------
+
 void MakeKKD(FENETRE *Fen,char *ficname);
 
 

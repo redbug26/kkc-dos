@@ -202,109 +202,6 @@ if ( (p[strlen(p)-1]==DEFSLASH) & (p[strlen(p)-2]!=':') )
 
 err=0;
 
-do
-{
-if (DFen->system!=0)
-    if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
-        DFen->system=0;
-
-if (DFen->system==0)
-    {
-    static char tnom[256],nom2[256];
-    static char buf[256];
-    int i;
-
-    if (chdir(DFen->path)!=0)
-        {
-        strcpy(nom2,DFen->path);
-        strcpy(tnom,"");
-        do
-            {
-//            strcpy(nom2,DFen->path);  // Marjorie (pq j'avais mis ca ?)
-
-            n=0;
-            for (i=0;i<strlen(DFen->path)-1;i++)
-                if (DFen->path[i]==DEFSLASH) n=i;
-
-            if (n==0) break;
-
-            strcpy(tnom,DFen->path+n+1);
-            DFen->path[n]=0;
-
-            strcpy(buf,DFen->path);
-            if (buf[strlen(buf)-1]==':')
-                strcat(buf,"\\");
-
-            if (chdir(buf)==0) break;
-            }
-        while(1);
-
-        if (n==0)
-            {
-            if (IOver==0)
-                WinError("Drive Not Ready");
-            memcpy(DFen->path,"C:\\",4);
-            }
-            else
-            {
-            strcpy(buf,DFen->path);
-            Path2Abs(buf,tnom);
-
-            switch (n=NameIDF(buf))
-                {
-                case 30:    // ARJ
-                case 34:    // RAR
-                case 35:    // ZIP
-                case 32:    // LHA
-                case 102:   // KKD
-                case 139:   // DFP
-                    break;
-                default:
-                    n=0;
-                }
-
-            if (n!=0)
-                {
-                strcpy(DFen->VolName,buf);
-
-                strcpy(DFen->path,DFen->VolName);
-
-                switch (n)
-                    {
-                    case 34:    // RAR
-                        DFen->system=1;
-                        break;
-                    case 30:    // ARJ
-                        DFen->system=2;
-                        break;
-                    case 35:    // ZIP
-                        DFen->system=3;
-                        break;
-                    case 32:    // LHA
-                        DFen->system=4;
-                        break;
-                    case 139:   // DFP
-                        DFen->system=6;
-                        break;
-                    case 102:   // KKD
-                        DFen->KKDdrive=0;
-                        DFen->system=5;
-                        break;
-                    }
-
-                if (strlen(nom2)!=strlen(DFen->VolName))
-                    Path2Abs(DFen->path,nom2+strlen(DFen->VolName)+1);
-                }
-                else
-                {
-                if (IOver==0)
-                    WinMesg("Invalid Path",nom2,0);
-//                strcpy(DFen->path,GetLastHistDir());
-                }
-            }
-        }
-    }
-
 /*--------------------------------------------------------------------*\
 |- Libere la m‚moire utilis‚e par les fichiers                        -|
 \*--------------------------------------------------------------------*/
@@ -318,10 +215,8 @@ for(n=0;n<DFen->nbrfic;n++)
     DFen->nbrfic=0;
     }
 
-/*--------------------------------------------------------------------*\
-|- Lecture d'un repertoire                                            -|
-\*--------------------------------------------------------------------*/
-
+do
+{
 switch(DFen->system)
     {
     case 0:
@@ -350,6 +245,12 @@ switch(DFen->system)
     case 6:
         err=DFPlitfic();
         break;
+    case 7:
+        err=Hostlitfic();
+        break;
+    case 8:
+        err=RAWlitfic();
+        break;
     default:
         sprintf(nom,"ChangeDir on system: %d",DFen->system);
         YouMad(nom);
@@ -360,7 +261,7 @@ while(err==1);
 
 if (KKCfg->addselect)
     {
-     DFen->F[DFen->nbrfic]=(file*)GetMem(sizeof(struct file));
+     DFen->F[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
      DFen->F[DFen->nbrfic]->name=(char*)GetMem(4);
      strcpy(DFen->F[DFen->nbrfic]->name,"*92");
@@ -928,20 +829,20 @@ if (!stricmp(chaine,"CD -"))
 if (!strnicmp(chaine,"CD ",3))
     {
     ChangeDir(chaine+3);
-    DFen->ChangeLine=1;                                      // Affichage Path
+    DFen->ChangeLine=1;                                // Affichage Path
     return 1;
     }
 if ( (!strnicmp(chaine,"CD..",4)) | (!strnicmp(chaine,"CD\\",3)) |
                                            (!strnicmp(chaine,"CD/",3)) )
     {
     ChangeDir(chaine+2);
-    DFen->ChangeLine=1;                                      // Affichage Path
+    DFen->ChangeLine=1;                                // Affichage Path
     return 1;
     }
 if (!strnicmp(chaine,"MD ",3))
     {
     MakeDir(chaine+3);
-    DFen->ChangeLine=1;                                      // Affichage Path
+    DFen->ChangeLine=1;                                // Affichage Path
     return 1;
     }
 
@@ -1104,7 +1005,7 @@ if (suite[0]=='#')
     else
     {
     pos=px;                                     // position dans command
-    chaine=CLstr;                                      // commande externe
+    chaine=CLstr;                                    // commande externe
     affich=1;                                                // afficher
     FctType=2;
     n=0;                               // commencer … la premiere lettre
@@ -1164,58 +1065,32 @@ if ( (traite==1) & (affich==1) )
 
 if (FctType==1) traite=1;
 
+
 if ( (chaine[1]==':') & (chaine[0]!=0) & (chaine[2]==0) & (traite==1) )
     {
-    unsigned nbrdrive;
-    char error;
-    struct diskfree_t d;
+    char path[MAXPATH];
+    char drive;
 
-    error=0;
-
-    IOver=1;
-    IOerr=0;
-
-    _dos_setdrive(toupper(chaine[0])-'A'+1,&nbrdrive);
-    getcwd(DFen->path,256);
-    if (chdir(DFen->path)!=0)
-        DFen->path[3]=0;
-
-    getcwd(DFen->path,255);
-
-    DFen->system=0;
-
-    _dos_getdrive(&nbrdrive);
-
-    if (nbrdrive!=(toupper(chaine[0])-'A'+1) )
-        error=1;
-    if (_dos_getdiskfree(nbrdrive,&d)!=0)
-        error=1;
-    if (IOerr!=0)
-        error=1;
-
-    IOver=0;
-
-    if (error==0)
+    drive=toupper(chaine[0]);
+    if ((drive>='A') & (drive<='Z'))
         {
-        getcwd(DFen->path,255);
+        drive-='A';
 
-        DFen->system=0;
+        if (DriveReady(drive))
+            {
+            DrivePath(drive,path);
+            if (path[strlen(path)-1]==':')
+                strcat(path,"\\");
 
-        DFen->FenTyp=0;
+            ChangeDir(path);
+            DFen->ChangeLine=1;                        // Affichage Path
+            }
+            else
+            WinError("Invalid Drive");
 
         traite=1;
+        goto Ligne_Traite;
         }
-        else
-        {
-        _dos_setdrive(toupper(DFen->path[0])-'A'+1,&nbrdrive);
-        WinError("Invalid Drive");
-        }
-
-
-    Run("cd .");
-    traite=1;
-
-    goto Ligne_Traite;
     }
 
 if (traite==1)

@@ -178,6 +178,12 @@ int n,m;
 
 struct file **Fic;
 
+if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
+    {
+    DFen->system=0;
+    return 1;
+    }
+
 Fic=DFen->F;
 
 StartWinArc();
@@ -371,6 +377,12 @@ char fin;
 
 struct file **Fic;
 
+if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
+    {
+    DFen->system=0;
+    return 1;
+    }
+
 Fic=DFen->F;
 
 StartWinArc();
@@ -556,6 +568,12 @@ int n,m;
 
 struct file **Fic;
 
+if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
+    {
+    DFen->system=0;
+    return 1;
+    }
+
 Fic=DFen->F;
 
 StartWinArc();
@@ -733,6 +751,12 @@ int n,m;
 
 struct file **Fic;
 
+if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
+    {
+    DFen->system=0;
+    return 1;
+    }
+
 Fic=DFen->F;
 
 StartWinArc();
@@ -886,6 +910,12 @@ unsigned char tai;                                    // taille des noms
 
 struct file **Fic;
 
+if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
+    {
+    DFen->system=0;
+    return 1;
+    }
+
 Fic=DFen->F;
 
 StartWinArc();
@@ -1037,6 +1067,12 @@ int n,nbr,lng,deb;
 
 struct file **Fic;
 
+if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
+    {
+    DFen->system=0;
+    return 1;
+    }
+
 Fic=DFen->F;
 
 StartWinArc();
@@ -1095,6 +1131,229 @@ return 0;
 }
 
 
+
+
+/*--------------------------------------------------------------------*\
+|-                           FICHIER .RAW                             -|
+\*--------------------------------------------------------------------*/
+
+int RAWlitfic(void)
+{
+short sizesec;
+
+char oldnoprompt;
+
+char nom[256],*buf;
+
+char path[256],*p;
+
+short sf;
+char key[32];
+long sec;
+
+ULONG pos;
+char fin;
+
+int n;
+
+
+
+struct file **Fic;
+
+if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
+    {
+    DFen->system=0;
+    return 1;
+    }
+
+strcpy(path,DFen->path+strlen(DFen->VolName));
+
+Fic=DFen->F;
+
+oldnoprompt=KKCfg->noprompt;
+KKCfg->noprompt=1;
+
+StartWinArc();
+
+fseek(fic,0x0B,SEEK_SET);
+fread(&sizesec,1,2,fic);
+
+/*--------------------------------------------------------------------*\
+|-  Okay.                                                             -|
+\*--------------------------------------------------------------------*/
+pos=0;
+fin=0;
+
+fseek(fic,0x16,SEEK_SET);
+fread(&sf,1,2,fic);
+
+sec=((sf*2)+1)*sizesec;
+
+if (path[0]!=0)
+    strcpy(path,path+1);
+
+while(path[0]!=0)
+    {
+    n=0;
+    while ((path[n]!=0) & (path[n]!='\\') & (path[n]!='/') )
+        n++;
+
+    if (path[n]==0)
+        p=path+n;
+        else
+        {
+        path[n]=0;
+        p=path+n+1;
+        }
+
+    //--- On cherche repertoire par repertoire -------------------------
+
+    do
+        {
+        fseek(fic,sec,SEEK_SET);
+        fread(key,32,1,fic);
+
+        if (key[0]==0)
+            {
+            strcpy(DFen->path,DFen->VolName);
+            Path2Abs(DFen->path,"..");
+            CloseWinArc();
+            KKCfg->noprompt=oldnoprompt;
+            return 1;
+            }
+
+        memcpy(nom,key,8);
+        nom[8]=32;
+        buf=strchr(nom,' ');
+        buf[0]='.';
+        memcpy(buf+1,key+8,3);
+        buf[4]=32;
+        buf=strchr(nom,' ');
+        buf[0]=0;
+
+        if (nom[strlen(nom)-1]=='.')
+            nom[strlen(nom)-1]=0;
+
+        sec+=32;
+        }
+    while(stricmp(nom,path)!=0);
+
+    memcpy((short*)(&sf),key+0x1A,2);
+    sec=sf-2;
+
+    fseek(fic,0x0D,SEEK_SET);
+    sf=fgetc(fic);
+    sec=sec*sf;
+
+    fseek(fic,0x16,SEEK_SET);
+    fread(&sf,2,1,fic);
+    sec=sec+sf*2;
+
+    fseek(fic,0x11,SEEK_SET);
+    fread(&sf,2,1,fic);
+    sec=sec+sf/16;
+
+    sec=(sec+1)*sizesec;
+
+    strcpy(path,p);
+    }
+
+while(1)
+    {
+//    if (InterWinArc(DFen->nbrfic,DFen->nbrfic,nbr)==1) break;
+
+    fseek(fic,sec,SEEK_SET);
+    fread(key,32,1,fic);
+
+    if (key[0]==0)
+        break;
+
+    if ((key[0]!=0xE5) & (key[11]==0x0F))
+        {
+        int nbr;
+
+        nbr=key[0]&0x3F;
+
+        sec+=32;
+
+        nom[nbr*13]=0;
+
+        for(n=nbr-1;n>=0;n--)
+            {
+            nom[n*13+ 0]=key[0x01];
+            nom[n*13+ 1]=key[0x03];
+            nom[n*13+ 2]=key[0x05];
+            nom[n*13+ 3]=key[0x07];
+            nom[n*13+ 4]=key[0x09];
+            nom[n*13+ 5]=key[0x0E];
+            nom[n*13+ 6]=key[0x10];
+            nom[n*13+ 7]=key[0x12];
+            nom[n*13+ 8]=key[0x14];
+            nom[n*13+ 9]=key[0x16];
+            nom[n*13+10]=key[0x18];
+            nom[n*13+11]=key[0x1C];
+            nom[n*13+12]=key[0x1E];
+
+            fseek(fic,sec,SEEK_SET);
+            fread(key,32,1,fic);
+
+            sec+=32;
+            }
+        }
+        else
+        {
+        memcpy(nom,key,8);
+        nom[8]=32;
+        buf=strchr(nom,' ');
+        buf[0]='.';
+        memcpy(buf+1,key+8,3);
+        buf[4]=32;
+        buf=strchr(nom,' ');
+        buf[0]=0;
+
+        sec+=32;
+        }
+
+    if (nom[strlen(nom)-1]=='.')
+        nom[strlen(nom)-1]=0;
+
+    if ((nom[0]!='.') & (nom[0]!=0xE5) & ((key[11]&0x8)!=0x8) )
+        {
+        Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+        Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(nom)+1);
+        memcpy(Fic[DFen->nbrfic]->name,nom,strlen(nom)+1);
+
+        memcpy((int*)(&(Fic[DFen->nbrfic]->size)),key+28,4);
+
+        DFen->taillefic+=Fic[DFen->nbrfic]->size;
+
+        memcpy((short*)(&(Fic[DFen->nbrfic]->time)),key+22,2);
+        memcpy((short*)(&(Fic[DFen->nbrfic]->date)),key+24,2);
+
+        Fic[DFen->nbrfic]->attrib=key[11];
+
+        Fic[DFen->nbrfic]->select=0;
+
+        DFen->nbrfic++;
+        }
+    }
+
+CloseWinArc();
+KKCfg->noprompt=oldnoprompt;
+
+if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
+                                                    (DFen->nbrfic==1)) )
+    {
+    strcpy(DFen->path,DFen->VolName);
+    Path2Abs(DFen->path,"..");
+    return 1;
+    }
+
+return 0;
+}
+
+
 /*--------------------------------------------------------------------*\
 |-  Dos-function                                                      -|
 \*--------------------------------------------------------------------*/
@@ -1106,14 +1365,117 @@ return 0;
 
 int DOSlitfic(void)
 {
+int n;
 DIR *dirp;
 struct dirent *ff;
 
 struct file **Fic;
 char rech[256];
 
+static char tnom[256],nom2[256];
+static char buf[256];
+int i;
+
 if (chdir(DFen->path)!=0)
+    {
+    if (DFen->path[0]=='*')
+        {
+        DFen->system=7;
+        return 1;
+        }
+
+    strcpy(nom2,DFen->path);
+    strcpy(tnom,"");
+    do
+        {
+//          strcpy(nom2,DFen->path);  // Marjorie (pq j'avais mis ca ?)
+
+        n=0;
+        for (i=0;i<strlen(DFen->path)-1;i++)
+            if (DFen->path[i]==DEFSLASH) n=i;
+
+        if (n==0) break;
+
+        strcpy(tnom,DFen->path+n+1);
+        DFen->path[n]=0;
+
+        strcpy(buf,DFen->path);
+        if (buf[strlen(buf)-1]==':')
+            strcat(buf,"\\");
+
+        if (chdir(buf)==0) break;
+        }
+    while(1);
+
+    if (n==0)
+        {
+        if (IOver==0)
+            WinError("Drive Not Ready");
+        memcpy(DFen->path,"C:\\",4);
+        }
+        else
+        {
+        strcpy(buf,DFen->path);
+        Path2Abs(buf,tnom);
+
+        switch (n=NameIDF(buf))
+            {
+            case 30:    // ARJ
+            case 34:    // RAR
+            case 35:    // ZIP
+            case 32:    // LHA
+            case 102:   // KKD
+            case 139:   // DFP
+            case 155:   // RAW
+                break;
+            default:
+                n=0;
+            }
+
+        if (n!=0)
+            {
+            strcpy(DFen->VolName,buf);
+
+            strcpy(DFen->path,DFen->VolName);
+
+            switch (n)
+                {
+                case 34:    // RAR
+                    DFen->system=1;
+                    break;
+                case 30:    // ARJ
+                    DFen->system=2;
+                    break;
+                case 35:    // ZIP
+                    DFen->system=3;
+                    break;
+                case 32:    // LHA
+                    DFen->system=4;
+                    break;
+                case 139:   // DFP
+                    DFen->system=6;
+                    break;
+                case 155:   // RAW
+                    DFen->system=8;
+                    break;
+                case 102:   // KKD
+                    DFen->KKDdrive=0;
+                    DFen->system=5;
+                    break;
+                }
+
+            if (strlen(nom2)!=strlen(DFen->VolName))
+                Path2Abs(DFen->path,nom2+strlen(DFen->VolName)+1);
+            }
+            else
+            {
+            if (IOver==0)
+                WinMesg("Invalid Path",nom2,0);
+//                strcpy(DFen->path,GetLastHistDir());
+            }
+        }
     return 1;
+    }
 
 Fic=DFen->F;
 
@@ -1221,6 +1583,113 @@ switch(toupper(DFen->path[0])-'A')
 
 return 0;
 }
+
+
+
+
+
+
+
+int Hostlitfic(void)
+{
+FILE *infic;
+
+char attr,lng;
+int Time,Date,Size;
+
+struct file **Fic;
+
+char nom[256];
+
+KKCfg->scrrest=0;
+
+if (DFen->path[0]!='*')
+    {
+    DFen->system=0;
+    return 1;
+    }
+
+if (DFen->path[2]!='+')
+    {
+    DFen->path[2]='+';
+    CommandLine("#%s %s %s","remdir",DFen->path+3,KKFics->temp);
+    }
+DFen->path[2]='-';
+
+Fic=DFen->F;
+
+DFen->nbrfic=0;
+DFen->pcur=0;
+DFen->scur=0;
+
+DFen->taillefic=0;
+DFen->nbrsel=0;
+
+DFen->taillesel=0;
+
+infic=fopen(KKFics->temp,"rb");
+if (infic==NULL)
+    {
+    DFen->system=0;
+    strcpy(DFen->path,DFen->VolName);
+    return 1;
+    }
+
+while(fread(&lng,1,1,infic)==1)
+    {
+    if (lng==0) break;
+
+    fread(nom,lng,1,infic);
+    fread(&attr,1,1,infic);
+    fread(&Time,4,1,infic);
+    fread(&Date,4,1,infic);
+    fread(&Size,4,1,infic);
+
+    if ( ((KKCfg->pntrep==1) |  (strcmp(nom,".")!=0)) &
+         ((KKCfg->hidfil==1) | ((attr&_A_HIDDEN)!=_A_HIDDEN)) &
+         ((attr&_A_VOLID)!=_A_VOLID)
+         )
+        {
+        Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+        Fic[DFen->nbrfic]->name=(char*)GetMem(lng+1);
+        nom[lng]=0;
+        strcpy(Fic[DFen->nbrfic]->name,nom);
+        Fic[DFen->nbrfic]->attrib=attr;
+        Fic[DFen->nbrfic]->time=Time;
+        Fic[DFen->nbrfic]->date=Date;
+        Fic[DFen->nbrfic]->size=Size;
+
+        DFen->taillefic+=Fic[DFen->nbrfic]->size;
+
+        Fic[DFen->nbrfic]->select=0;
+
+        DFen->nbrfic++;
+        }
+    }
+fclose(infic);
+
+
+
+if (DFen->nbrfic==0)
+    {
+    Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+    Fic[DFen->nbrfic]->name=(char*)GetMem(4);             // Pour Reload
+    strcpy(Fic[DFen->nbrfic]->name,"*27");
+    Fic[DFen->nbrfic]->time=0;
+    Fic[DFen->nbrfic]->date=0;
+    Fic[DFen->nbrfic]->attrib=_A_SUBDIR;
+    Fic[DFen->nbrfic]->select=0;
+    Fic[DFen->nbrfic]->size=0;
+    DFen->nbrfic++;
+    }
+
+
+DFen->ChangeLine=1;
+return 0;
+}
+
+
 
 
 

@@ -21,6 +21,10 @@
 
 int xcop;
 
+int OldNbrSel;   //--- Nombre de fichier selectionn‚ au d‚part ----------
+
+#define TEMPNAME "~(~~__)_"
+
 /*--------------------------------------------------------------------*\
 |- prototype                                                          -|
 \*--------------------------------------------------------------------*/
@@ -42,7 +46,9 @@ void CopieKkd(FENETRE *F1,FENETRE *F2);
 int RemoveM(char *inpath,char *outpath,struct file *F);
 int Movetree(char *inpath,char *outpath);
 
+int FenCopie2(FENETRE *F1,FENETRE *F2);
 int FenCopie(FENETRE *F1,FENETRE *F2);
+int FenCopieArc(FENETRE *F1,FENETRE *F2);
 int FenMove(FENETRE *F1,FENETRE *F2);
 
 int UserInt(void);      //--- Interruption par l'utilisateur -----------
@@ -50,7 +56,7 @@ int UserInt(void);      //--- Interruption par l'utilisateur -----------
 int CountRepSize(FENETRE *F1,FENETRE *FTrash,int *nbr,int *size);
                     //--- Renvoit -1 si le nombre de fichier est nul ---
 
-void EraseSpace(char *buffer);
+void UpdateName(char *buffer);
 
 int SelectFile(FENETRE *F1,int i);
 int Renome(char *inpath,char *outpath);
@@ -59,19 +65,22 @@ int KKDrecopy(FENETRE *F1,int F1pos,FENETRE *F2);
 int KKD2File(FENETRE *F1,int F1pos,FENETRE *F2);
 int File2KKD(FENETRE *F1,int F1pos,FENETRE *F2);
 
+void ChgFromHeader(char *in,char *out,int chgext,int chgname);
+
+char InternalRename(char *from,char *to);
+
 /*--------------------------------------------------------------------*\
 |- internal variable                                                  -|
 \*--------------------------------------------------------------------*/
 
+
 static int Nbrfic,Sizefic,Nbrcur,Sizecur;
-// ,Tpio;
 static int Clock_Dep;
 static int FicEcrase;
 static char Dir[256];
 static char temp[256];
 static char bufton[32];
 static long SizeMaxRecord;
-static char noselect;              // prend le celui qui est highlighted
 extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
 
 static int chgattr=0;
@@ -79,11 +88,14 @@ static int chgext=0;
 static int chgname=0;
 
 
-void EraseSpace(char *str)
+void UpdateName(char *str)
 {
 char buf[256];
 char c;
 int i,j;
+
+if (KKCfg->_Win95==1)
+    return;
 
 i=0;
 j=0;
@@ -101,6 +113,19 @@ while(str[i]!=0)
     }
 buf[j]=0;
 strcpy(str,buf);
+}
+
+
+char InternalRename(char *from,char *to)
+{
+char result;
+
+if (KKCfg->_Win95==1)
+    result=Win95Rename(from,to);
+    else
+    result=rename(from,to);
+
+return result;
 }
 
 
@@ -136,6 +161,8 @@ struct dirent *ff;
 
 char error;
 
+
+
 Path2Abs(inpath,"*.*");     Path2Abs(outpath,"*.*");
 dirp=opendir(inpath);
 Path2Abs(inpath,"..");      Path2Abs(outpath,"..");
@@ -144,6 +171,7 @@ mkdir(outpath);
 
 if (KKCfg->_Win95==1)
     UpdateLongName(inpath,outpath);
+
 
 if (dirp!=NULL)
     while(1)
@@ -426,6 +454,171 @@ free(buffer);
 return fin;
 }
 
+void ChgFromHeader(char *in,char *out,int chgext,int chgname)
+{
+RB_IDF Info;
+static char buffer[256],buf2[256];
+char *ext;
+
+strcpy(Info.path,in);  //--- Path en shortname -------------------------
+
+if ((chgext) | (chgname))
+    Traitefic(&Info);
+
+if (KKCfg->_Win95==1)
+    {
+    Short2LongFile(in,buffer);
+    FileinPath(buffer,buf2);
+    Path2Abs(out,"..");
+    Path2Abs(out,buf2);
+    }
+
+if ((chgname) & (*(Info.fullname)!=0))
+    {
+    FileinPath(out,buffer);
+    Path2Abs(out,"..");
+
+    strcpy(buffer,Info.fullname);
+    UpdateName(buffer);
+
+    Path2Abs(out,buffer);
+    }
+
+if ((chgext) | (chgname))
+    {
+    FileinPath(out,buffer);
+    Path2Abs(out,"..");
+
+    ext=strchr(buffer,'.');
+    if (ext!=NULL)
+        strcpy(ext+1,Info.ext);
+        else
+        {
+        strcat(buffer,".");
+        strcat(buffer,Info.ext);
+        }
+
+    Path2Abs(out,buffer);
+    }
+}
+
+
+/*--------------------------------------------------------------------*\
+|-                          Fonction RENAME                           -|
+\*--------------------------------------------------------------------*/
+void WinRename2(FENETRE *F1)
+{
+static char From[256],Temp[256],FromPath[256];
+static char OutPath[2][256];
+static int DirLength=70;
+
+static char Length=55;
+static int High=1;
+
+struct Tmt T[] = {
+      { 2,2,1, OutPath[0], &DirLength},
+      { 2,4,5, "  Rename    ",NULL},
+      {59,4,5, "    Rename  ",NULL},
+      { 2,6,1, OutPath[1], &DirLength},
+
+      { 2,8,3,NULL,NULL},
+
+      {16,7,9,&Length,&High},
+      {17,8,0,"From",NULL},
+      {22,8,0,FromPath,NULL}
+      };
+
+struct TmtWin F = {-1,10,74,20,"Rename"};
+
+int n;
+
+#define LGS 50
+
+if (strlen(F1->path)>LGS)
+    {
+    memcpy(FromPath,F1->path,3);
+    memcpy(FromPath+3,"...",3);
+    memcpy(FromPath+6,F1->path+strlen(F1->path)-(LGS-6),LGS-6);
+    FromPath[LGS]=0;
+    }
+else
+    strcpy(FromPath,F1->path);
+
+strcpy(From,F1->path);
+Path2Abs(From,F1->F[DFen->pcur]->name);
+
+strcpy(Temp,From);
+ChgFromHeader(From,Temp,1,0);
+FileinPath(Temp,OutPath[0]);
+
+strcpy(Temp,From);
+ChgFromHeader(From,Temp,1,1);
+FileinPath(Temp,OutPath[1]);
+
+n=WinTraite(T,8,&F,0);
+
+if (n!=-1)
+    {
+    Temp[0]=0;
+    switch(n)
+        {
+        case 1:
+            strcpy(Temp,F1->path);
+            Path2Abs(Temp,OutPath[0]);
+            break;
+        case 2:
+            strcpy(Temp,F1->path);
+            Path2Abs(Temp,OutPath[1]);
+            break;
+        }
+    if (Temp[0]!=0)
+        {
+        if (InternalRename(From,Temp)!=0)
+            WinError("Couldn't rename file");
+        }
+    }
+}
+
+/*--------------------------------------------------------------------*\
+|-                          Fonction RENAME                           -|
+\*--------------------------------------------------------------------*/
+void WinRename(FENETRE *F1)
+{
+static char Dir[70];
+static char Name[256],Temp[256];
+static int DirLength=70;
+static char CadreLength=70;
+
+struct Tmt T[5] = {
+      { 2,3,1, Dir, &DirLength},
+      {15,5,2,NULL,NULL},
+      {45,5,3,NULL,NULL},
+      { 5,2,0,"Rename file to",NULL},
+      { 1,1,4,&CadreLength,NULL}
+      };
+
+struct TmtWin F = {-1,10,74,17,"Rename"};
+
+int n;
+
+strcpy(Dir,F1->path);
+Path2Abs(Dir,F1->F[DFen->pcur]->name);
+
+strcpy(Name,F1->path);
+Path2Abs(Name,F1->F[DFen->pcur]->name);
+
+n=WinTraite(T,5,&F,0);
+
+strcpy(Temp,F1->path);
+Path2Abs(Temp,Dir);
+
+
+if (n!=-1)
+    if (T[n].type!=3)
+        if (rename(Name,Temp)!=0)
+            WinError("Couldn't rename file");
+}
+
 
 
 /*--------------------------------------------------------------------*\
@@ -435,6 +628,7 @@ int truecopy(char *inpath,char *outpath)
 {
 char fin=0;
 long size;
+static char temppath[256];
 
 FILE *inhand,*outhand;
 
@@ -442,51 +636,13 @@ char ok;
 
 ok=1;
 
-// PrintAt(0,1,"%40s%40s",inpath,outpath);
+strcpy(temppath,outpath);
+Path2Abs(temppath,"..");
+Path2Abs(temppath,TEMPNAME);
+
+ChgFromHeader(inpath,outpath,chgext,chgname);
 
 MaskCnv(outpath);
-
-if ((chgext) | (chgname))
-    {
-    RB_IDF Info;
-    static char buffer[255];
-    char *ext;
-
-    strcpy(Info.path,inpath);
-
-    Traitefic(&Info);
-
-    if ((chgname) & (*(Info.fullname)!=0))
-        {
-        FileinPath(outpath,buffer);
-        Path2Abs(outpath,"..");
-
-        strcpy(buffer,Info.fullname);
-        EraseSpace(buffer);
-
-        Path2Abs(outpath,buffer);
-        }
-
-    if ((chgext) | (chgname))
-        {
-        FileinPath(outpath,buffer);
-        Path2Abs(outpath,"..");
-
-        ext=strchr(buffer,'.');
-        if (ext!=NULL)
-            strcpy(ext+1,Info.ext);
-            else
-            {
-            strcat(buffer,".");
-            strcat(buffer,Info.ext);
-            }
-
-        Path2Abs(outpath,buffer);
-        }
-
-
-    }
-
 
 if (!WildCmp(inpath,outpath))
     {
@@ -525,15 +681,15 @@ if (ok==1)
 
 if (ok==1)
     {
-    outhand=fopen(outpath,"rb");
-    if (outhand!=NULL)
+    if (IsFileExist(outpath))
         {
-        fclose(outhand);
         if (((KKCfg->noprompt)&1)==0)
             if (FileExist(outpath)==1)
-                {
-                fclose(inhand);
                 ok=0;
+            else
+                {
+                _dos_setfileattr(outpath,0);
+                remove(outpath);
                 }
         }
     }
@@ -543,7 +699,7 @@ IOerr=0;
 
 if (ok==1)
     {
-    outhand=fopen(outpath,"wb");
+    outhand=fopen(temppath,"wb");
     if ( (outhand==NULL) | (IOerr!=0) )
         {
         ProtFile(outpath);
@@ -570,7 +726,7 @@ if ( (ok==1) & (fin==0) )      //--- Mise a l'heure --------------------
     _dos_getftime(handle,&d,&t);
     _dos_close(handle);
 
-    _dos_open(outpath,O_RDONLY,&handle);
+    _dos_open(temppath,O_RDONLY,&handle);
     _dos_setftime(handle,d,t);
     _dos_close(handle);
 
@@ -579,12 +735,14 @@ if ( (ok==1) & (fin==0) )      //--- Mise a l'heure --------------------
         unsigned attrib;
 
         _dos_getfileattr(inpath,&attrib);
-        _dos_setfileattr(outpath,attrib);
+        _dos_setfileattr(temppath,attrib);
         }
 
-
-    if (KKCfg->_Win95==1)
-        UpdateLongName(inpath,outpath);
+    if (InternalRename(temppath,outpath)!=0)
+        {
+        WinError("Couldn't create file");
+        remove(temppath);   // Efface le fichier temporaire si il y lieu
+        }
     }
 
 if (Nbrfic!=0)
@@ -595,7 +753,7 @@ if (Nbrfic!=0)
 
 if (fin==1)
     {
-    remove(outpath);
+    remove(temppath);
     ok=0;
     }
 
@@ -674,13 +832,13 @@ if (n!=-1)  // pas escape
         }
 */
 
-    strcpy(temp,"*.*");
+    strcpy(temp,"*.*");    //--- Masque de conversion ------------------
 
     if (T[n].type!=3) // Pas cancel
         {
         if (!strcmp(Dir,F1->path)) return 1;
 
-        if (FTrash->system==0)  // Pour pouvoir copie dans les archives
+        if (FTrash->system==0)  // Pour pouvoir copie dans les archives-
             {
             if (chdir(Dir)!=0)
                 {
@@ -703,7 +861,73 @@ if (n!=-1)  // pas escape
         }
     }
 
-return 0;       // Erreur
+return 0;       //--- Erreur -------------------------------------------
+}
+
+int FenCopie2(FENETRE *F1,FENETRE *FTrash)
+{
+static int DirLength=70;
+static char CadreLength=70;
+static int n;
+static char buffer[80];
+
+struct Tmt T[] = {
+      { 2,3,1,Dir,&DirLength},
+      {15,5,2,NULL,NULL},           // le OK
+      {45,5,3,NULL,NULL},           // le CANCEL
+      { 5,2,0,buffer,NULL},
+      { 1,1,4,&CadreLength,NULL}
+      };
+
+struct TmtWin F = {-1,10,74,17,"External Copy" };
+
+if (Nbrfic!=0)
+    {
+    if (Nbrfic==1)
+        sprintf(buffer,"Copy one file (%11s bytes) to",
+                                              Long2Str(Sizefic,bufton));
+        else
+        sprintf(buffer,"Copy %d files (%11s bytes) to",Nbrfic,
+                                              Long2Str(Sizefic,bufton));
+    }
+    else
+    {
+    strcpy(buffer,"Copy files to");
+    }
+
+memcpy(Dir,FTrash->path,255);
+
+n=0;
+if (((KKCfg->noprompt)&1)==0)
+    n=WinTraite(T,5,&F,0);
+
+Path2Abs(Dir,".");
+
+strcpy(temp,F1->path);
+Path2Abs(temp,Dir);
+strcpy(Dir,temp);
+
+if (n!=-1)  //--- pas escape -------------------------------------------
+    {
+    if (T[n].type!=3) // Pas cancel
+        {
+        if (!strcmp(Dir,F1->path)) return 1;
+
+        if (FTrash->system==0)  // Pour pouvoir copie dans les archives
+            if (chdir(Dir)!=0)
+                {
+                WinError("Unknown path");
+                return 0;
+                }
+
+        DFen=FTrash;
+        CommandLine("#cd %s",Dir);
+
+        return 1; //--- OK ---------------------------------------------
+        }
+    }
+
+return 0;       //--- Erreur -------------------------------------------
 }
 
 /*--------------------------------------------------------------------*\
@@ -1239,7 +1463,7 @@ struct file *F;
 
 if (F1->FenTyp!=0) return;
 
-noselect=(F1->nbrsel==0);
+OldNbrSel=F1->nbrsel;
 
 strcpy(FTrash->path,path);
 
@@ -1306,6 +1530,81 @@ for (i=0;i<F1->nbrfic;i++)
 LoadScreen();
 }
 
+int FenCopieArc(FENETRE *F1,FENETRE *FTrash)
+{
+char *ext,name[256];
+int m;
+
+static int DirLength=70;
+static char CadreLength=70;
+static char buffer[80];
+
+struct Tmt T[] = {
+      { 2,3,1,Dir,&DirLength},
+      {15,5,2,NULL,NULL},           // le OK
+      {45,5,3,NULL,NULL},           // le CANCEL
+      { 5,2,0,buffer,NULL},
+      { 1,1,4,&CadreLength,NULL}
+      };
+
+struct TmtWin F = {-1,10,74,17,"Extract files" };
+
+DFen=F1;
+
+for(m=0;m<F1->nbrfic;m++)
+    if (SelectFile(F1,m))
+        {
+        strcpy(name,F1->F[m]->name);
+        CommandLine("#CD %s",name);
+        }
+
+sprintf(buffer,"Extract files of '%s' to",name);
+
+for(m=0;m<F1->nbrfic;m++)
+    FicSelect(F1,m,1);                            //--- Select ---------
+
+memcpy(Dir,FTrash->path,255);
+
+ext=strchr(name,'.');
+if (ext!=NULL)
+    {
+    ext[0]=0;
+    Path2Abs(Dir,name);
+    }
+
+
+m=0;
+if (((KKCfg->noprompt)&1)==0)
+    m=WinTraite(T,5,&F,2);
+
+Path2Abs(Dir,".");
+
+strcpy(temp,F1->path);
+Path2Abs(temp,Dir);
+strcpy(Dir,temp);
+
+if (m!=-1)  //--- pas escape -------------------------------------------
+    {
+    if (T[m].type!=3) // Pas cancel
+        {
+        if (!strcmp(Dir,F1->path)) return 1;
+
+        DFen=FTrash;
+        MakeDir(Dir);
+        CommandLine("#cd %s",Dir);
+
+        return 1; //--- OK ---------------------------------------------
+        }
+    }
+
+DFen=F1;
+CommandLine("#CD ..");
+
+return 0;       //--- Erreur -------------------------------------------
+}
+
+
+
 /*--------------------------------------------------------------------*\
 |- Fonction de COPY principale                                        -|
 \*--------------------------------------------------------------------*/
@@ -1316,13 +1615,14 @@ int j1,j2;                          // postion du compteur (read,write)
 char inpath[128],outpath[128];
 struct file *F;
 
+int dialogue;
+
 if (F1->FenTyp!=0) return;
 
-noselect=(F1->nbrsel==0);
+OldNbrSel=F1->nbrsel;
 
 FicEcrase=0;
 
-// Tpio=0;
 Nbrcur=0;
 Sizecur=0;
 if (CountRepSize(F1,FTrash,&Nbrfic,&Sizefic)==-1) return;
@@ -1331,9 +1631,53 @@ Clock_Dep=clock();
 DFen=FTrash;
 CommandLine("#cd %s",path);
 
-if (FenCopie(F1,FTrash)==0) return;
+dialogue=0;
 
-// if (!strcmp(F1->path,FTrash->path))  return;
+if ((F1->system==0) & (F1->nbrsel<=1))
+    {
+    static char buf[256];
+    int m;
+
+    DFen=F1;
+
+    strcpy(buf,F1->path);
+    for(m=0;m<F1->nbrfic;m++)
+        if (SelectFile(F1,m))
+            Path2Abs(buf,F1->F[m]->name);
+
+    switch (i=NameIDF(buf))
+        {
+        case 30:                                                      // ARJ
+        case 34:                                                      // RAR
+        case 35:                                                      // ZIP
+        case 32:                                                      // LHA
+        case 102:                                                     // KKD
+        case 139:                                                     // DFP
+            dialogue=1;
+            break;
+        }
+    }
+
+if (F1->system!=0)
+    dialogue=2;
+
+switch(dialogue)
+    {
+    case 0:
+        if (FenCopie(F1,FTrash)==0)
+            return;
+        break;
+    case 1:
+        if (FenCopieArc(F1,FTrash)==0)
+            if (FenCopie(F1,FTrash)==0)
+            return;
+        break;
+    case 2:
+        if (FenCopie2(F1,FTrash)==0)
+            return;
+        break;
+    }
+
 
 switch(F1->system)
     {
@@ -1373,7 +1717,6 @@ switch(FTrash->system)
         YouMad("Copie");
         return;
     }
-
 
 SaveScreen();
 
@@ -1434,7 +1777,7 @@ if (F1->F[i]->name[0]=='*') return 0;
 
 if (((KKCfg->noprompt)&1)==0)
     {
-    if ( (F1->F[i]->select==1) | ((noselect) & (F1->pcur==i)) )
+    if ( (F1->F[i]->select==1) | ((OldNbrSel==0) & (F1->pcur==i)) )
         return 1;
         else
         return 0;

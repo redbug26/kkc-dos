@@ -20,3 +20,18 @@ int DriveExist(char drive);
 void DriveSet(char *path);
 
 void GetVolume(char disk,char *volume);
+
+void InfoLongFile(FENETRE *Fen,char *chaine);
+void Short2LongFile(char *from,char *to);
+void UpdateLongName(char *from,char *to);
+char Verif95(void);
+
+void EjectCD(FENETRE *Fen);
+void EjectDrive(char lect);
+void SetWindowsTitle(void);
+
+char Win95Rename(char *from,char *to);
+
+void ClipBoardInfo(void);
+
+char IsFileExist(char *name);

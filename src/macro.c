@@ -9,6 +9,16 @@ static char cbuf[256];
 static char *buf[256];
 static unsigned short lngbuf[256];
 
+void RunAutoMacro(void)
+{
+char fichier[256];
+
+strcpy(fichier,KKFics->trash);
+Path2Abs(fichier,"autorun.kkp");
+
+RunMacro(fichier);
+}
+
 
 void RunMacro(char *filename)
 {
@@ -154,6 +164,8 @@ switch(fct)
             case 41: Cfg->combit=cbuf[prog[pos+1]];               break;
             case 42: Cfg->comparity=cbuf[prog[pos+1]];            break;
             case 43: Cfg->comstop=cbuf[prog[pos+1]];              break;
+            case 44: Cfg->mousemode=cbuf[prog[pos+1]];            break;
+            case 45: KKCfg->lift=cbuf[prog[pos+1]];               break;
             }
         pos+=3;
         break;

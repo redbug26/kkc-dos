@@ -1,7 +1,6 @@
 /*--------------------------------------------------------------------*\
 |- KKSETUP: Main configuration program                                -|
 \*--------------------------------------------------------------------*/
-
 #include <stdarg.h>
 #include <dos.h>
 #include <direct.h>
@@ -53,7 +52,13 @@ short NbrFunct;
 \*--------------------------------------------------------------------*/
 void MenuCreat(char *titbuf,char *buf,char *path)
 {
+}
 
+/*--------------------------------------------------------------------*\
+|- Fake CommandLine pour rbdos                                        -|
+\*--------------------------------------------------------------------*/
+void CommandLine(char *string,...)
+{
 }
 
 
@@ -88,15 +93,7 @@ int DColor(int col);
 
 void AffColScreen(int a);
 
-/*--------------------------------------------------------------------*\
-|- Pour Statistique;                                                  -|
-\*--------------------------------------------------------------------*/
-int St_App;
-int St_Dir;
 
-char GVerif=0;  // Verification globale: 0, on interroge
-                //                       1, toujours oui
-                //                       2, toujours non
 
 struct player {
     char *Filename;
@@ -115,8 +112,9 @@ char dir[MAXDIR][128];      // 50 directory diff‚rents de 128 caracteres
 short nbr;              // nombre d'application lu dans les fichiers KKR
 short nbrdir;
 
-long OldCol;                                // Ancienne couleur du texte
 long OldY,OldX,PosX,PosY;
+char OldPal[48];
+char OldFont[256*16];
 
 char *Screen_Adr=(char*)0xB8000;
 char *Screen_Buffer;
@@ -480,7 +478,7 @@ Bar(" Help  Info  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
 info=0;
 
-qsort((void*)K,nbrkey,sizeof(struct key),sort_function);
+
 
 y=3;
 
@@ -578,7 +576,7 @@ switch(HI(car))
     case 0x3B:
         HelpTopic("idflist");
         break;
-    case 0x3C:
+    case 0x3C: //--- F2 ------------------------------------------------
         FicIdfMan(curr,NULL);
         break;
     }
@@ -961,7 +959,6 @@ if (erreur==1)
 \*--------------------------------------------------------------------*/
 void main(short argc,char **argv)
 {
-
 char buffer[256],chaine[256];
 short n;
 int i;
@@ -997,6 +994,16 @@ WhereXY(&PosX,&PosY);
 
 for (n=0;n<9000;n++)
     Screen_Buffer[n]=Screen_Adr[n];
+
+Pal2Buf(OldPal);
+Font2Buf(OldFont);
+
+
+/*--------------------------------------------------------------------*\
+|- initialisation des clefs                                           -|
+\*--------------------------------------------------------------------*/
+qsort((void*)K,nbrkey,sizeof(struct key),sort_function);
+
 
 /*--------------------------------------------------------------------*\
 |-  Gestion des erreurs                                               -|
@@ -1093,6 +1100,8 @@ if (LoadCfg()==-1)
 
 Cfg->reinit=0;
 InitMode();
+
+InitMouse();
 
 Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
@@ -1232,16 +1241,239 @@ Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;
 
 TXTMode();
-
 GotoXY(0,PosY);
 
 for (n=0;n<9000;n++)
     Screen_Adr[n]=Screen_Buffer[n];
 
+Buf2Font(OldFont);
+Buf2Pal(OldPal);
+
+
 if (todo==0)
     cputs(RBTitle2);
 }
 
+
+
+/*--------------------------------------------------------------------*\
+|- Recherche d'application                                            -|
+\*--------------------------------------------------------------------*/
+
+int St_App;
+int St_Dir;
+char KeyPres[nbrkey];
+int KeyPosX[nbrkey],KeyPosY[nbrkey];
+
+char GVerif=0;  // Verification globale: 0, on interroge
+                //                       1, toujours oui
+                //                       2, toujours non
+
+//--- todo=1 -> affichage seulement ------------------------------------
+
+int ExtAdd(int n)
+{
+do
+{
+n++;
+if (n>=nbrkey) n=0;
+}
+while(K[n].numero<0);
+return n;
+}
+
+int ExtSub(int n)
+{
+n--;
+if (n==0) n=nbrkey-1;
+return n;
+}
+
+
+
+/*--------------------------------------------------------------------*\
+|- charge et initialise iardesc                                       -|
+\*--------------------------------------------------------------------*/
+void LoadKeyPres(void)
+{
+FILE *fic;
+char sn;
+short ext;
+
+//--- Mise … z‚ro des clefs --------------------------------------------
+memset(KeyPres,0,nbrkey);
+
+fic=fopen(KKFics->FicIdfFile,"rb");
+if (fic!=NULL)
+    {
+    fseek(fic,8+1,SEEK_SET);
+
+    while ( (sn=fgetc(fic))!=3)
+        {
+        fseek(fic,32+38+38,SEEK_CUR);
+        if (fread(&ext,2,1,fic)==0) //--- Fin de fichier impromptue ----
+            break;
+        fseek(fic,2+1+1+1,SEEK_CUR);
+        KeyPres[ext]++;
+        }
+
+   fclose(fic);
+   }
+}
+
+
+void TabExt(char todo)
+{
+int car,x,y,n,j;
+int mx;
+char ext[32];
+
+if (todo==0)
+    {
+    SaveScreen();
+    Window(0,0,Cfg->TailleX-1,Cfg->TailleY-2,Cfg->col[16]);
+    PrintAt(1,1,"Quick Extension Table");
+    }
+
+y=3;
+mx=0;
+
+for(n=0;n<nbrkey;n++)
+    {
+    int j;
+
+    if ( (K[n].ext[0]=='*') | (x>Cfg->TailleX-8) )
+        x=2,y++;
+
+    if (x>mx) mx=x;
+
+    if (K[n].ext[0]!='*')
+        {
+        j=K[n].numero;
+    
+        KeyPosX[j]=x+4;
+        KeyPosY[j]=y;
+
+        x+=7;
+        }
+    }
+
+x=(Cfg->TailleX-(mx+6))/2-1;
+
+if (todo==0)
+    Cadre(1+x,3,mx+6+x,y+1,2,Cfg->col[55],Cfg->col[56]);
+
+Window(2+x,4,mx+5+x,y,Cfg->col[28]);
+
+for(n=0;n<nbrkey;n++)
+    {
+    if (K[n].numero>=0)
+        {
+        j=K[n].numero;
+
+        KeyPosX[j]+=x;
+
+        strcpy(ext,K[n].ext);
+        ext[3]=0;
+
+        PrintAt(KeyPosX[j]-4,KeyPosY[j],"%3s:%2d",ext,KeyPres[j]);
+
+        if (KeyPres[j]==0)
+            ColLin(KeyPosX[j],KeyPosY[j],2,Cfg->col[28]);
+            else
+            ColLin(KeyPosX[j],KeyPosY[j],2,Cfg->col[29]);
+        }
+    }
+
+
+
+Window(1,y+2,Cfg->TailleX-2,Cfg->TailleY-3,Cfg->col[16]);
+
+
+if (todo!=0) return;
+
+n=1;
+
+Bar(" ----  Info  ----  ----  ----  ----  ----  ----  ----  ---- ");
+
+do
+{
+j=K[n].numero;
+
+ColLin(KeyPosX[j]-4,KeyPosY[j],3,Cfg->col[30]);
+car=Wait(0,0);
+ColLin(KeyPosX[j]-4,KeyPosY[j],3,Cfg->col[28]);
+
+if (car==0)
+    {
+    int i,px,py;
+
+    px=MousePosX();
+    py=MousePosY();
+
+    for(i=0;i<nbrkey;i++)
+        {
+        if (K[i].numero>=0)
+            {
+            if ( (px>=KeyPosX[K[i].numero]-4) &
+                 (px<=KeyPosX[K[i].numero]+1) &
+                 (py==KeyPosY[K[i].numero]) )
+                 {
+                 n=i;
+                 }
+            }
+        }
+
+    GetMouseFctBar(0);      //--- Allume -------------------------------
+
+    car=GetMouseFctBar(2);  //--- Eteint -------------------------------
+    
+    }
+
+
+switch(car)
+    {
+    case 9:
+        n=ExtAdd(n);
+        break;
+
+    case 0x3C00:        //--- F2 ---------------------------------------
+        FicIdfMan(n,NULL);   //--- n:numero de l'ext -------------------
+        break;
+
+    case 0x5000:        //--- DOWN -------------------------------------
+        x=KeyPosX[K[n].numero];
+        do
+            n=ExtAdd(n);
+        while(KeyPosX[K[n].numero]!=x);
+        break;
+
+    case 0x4800:        //--- UP ---------------------------------------
+        x=KeyPosX[K[n].numero];
+        do
+            n=ExtSub(n);
+        while(KeyPosX[K[n].numero]!=x);
+        break;
+
+    case 0x4D00:       //--- RIGHT -------------------------------------
+        y=KeyPosY[K[n].numero];
+        do
+            n=ExtAdd(n);
+        while(KeyPosY[K[n].numero]!=y);
+        break;
+
+    case 0x4B00:       //--- LEFT --------------------------------------
+        y=KeyPosY[K[n].numero];
+        do
+            n=ExtSub(n);
+        while(KeyPosY[K[n].numero]!=y);
+        break;
+    }
+}
+while(car!=27);
+
+LoadScreen();
+}
 
 void ApplSearch(void)
 {
@@ -1252,13 +1484,16 @@ FILE *fic;
 
 char sn;
 
-/*--------------------------------------------------------------------*\
-|- Initialise les variables globales                                  -|
-\*--------------------------------------------------------------------*/
+//--- Mise … z‚ro des clefs --------------------------------------------
+memset(KeyPres,0,nbrkey);
 
 GVerif=0;
 St_App=0;
 St_Dir=0;
+
+
+
+//----------------------------------------------------------------------
 
 SaveScreen();
 PutCur(32,0);
@@ -1281,6 +1516,16 @@ for (n=0;n<26;n++)
         if (DriveReady(n)==1)
             KKR_Search(ch);
     }
+
+//--- pr‚paration de l'‚cran -------------------------------------------
+
+Window(2,2,Cfg->TailleX-2,4,Cfg->col[16]);
+
+PrintAt(2,3,"Scanning directory for %d records",nbr+1);
+
+TabExt(1);
+
+//----------------------------------------------------------------------
 
 nbrdir=0;
 
@@ -1346,10 +1591,7 @@ if (nbr>0)
         fclose(fic);
         }
 
-    PrintAt((Cfg->TailleX-22)/2,(Cfg->TailleY-3),"Press a key to continue");
-    ColLin(1,(Cfg->TailleY-3),(Cfg->TailleX-2),Cfg->col[17]);
-
-    Wait(0,0);
+    TabExt(0);
 
     LoadScreen();
 
@@ -1376,6 +1618,8 @@ char Meneur[255],SMeneur;
 char Filename[255],SFilename;
 int Checksum;
 short format;
+int n;
+char pres;
 
 
 char Code;
@@ -1398,15 +1642,18 @@ if (!strncmp(Key,"KKRB",4))
             Titre[STitre]=0;
             fread(Titre,STitre,1,Fic);
 
-            PrintAt(3,posy,"Loading information about %s",Titre);
-            posy++;
+            PrintAt(2,2,"Loading information about %-*s",Cfg->TailleX-30,
+                                                                 Titre);
+/*            posy++;
 
             if (posy>(Cfg->TailleY-3))
                 {
                 MoveText(1,4,78,(Cfg->TailleY-3),1,3);
                 posy--;
                 ChrLin(1,(Cfg->TailleY-3),78,32);
-                }
+                }*/
+
+            posy=6;
             break;
         case 2:                                      // Code Programmeur
             fread(&SMeneur,1,1,Fic);
@@ -1423,26 +1670,39 @@ if (!strncmp(Key,"KKRB",4))
             break;
         case 5:                                                // Format
             fread(&format,2,1,Fic);
-            app[nbr]=GetMem(sizeof(struct player));
 
-            app[nbr]->Filename=GetMem(SFilename+1);
-            strcpy(app[nbr]->Filename,Filename);
+            pres=0;
+            for(n=0;n<nbr;n++)
+                if (format==app[n]->ext)
+                    if ( (!stricmp(Filename,app[n]->Filename)) &
+                     (!stricmp(Titre,app[n]->Titre)) &
+                     (Checksum==app[n]->Checksum) ) pres=1;
 
-            app[nbr]->Meneur=GetMem(SMeneur+1);
-            strcpy(app[nbr]->Meneur,Meneur);
+            if (!pres)
+                {
+                PrintAt(2,3,"%4d records read",nbr+1);
 
-            app[nbr]->Titre=GetMem(STitre+1);
-            strcpy(app[nbr]->Titre,Titre);
+                app[nbr]=GetMem(sizeof(struct player));
 
-            app[nbr]->Checksum=Checksum;
-            app[nbr]->ext=format;
-            app[nbr]->pres=0;
+                app[nbr]->Filename=GetMem(SFilename+1);
+                strcpy(app[nbr]->Filename,Filename);
 
-            app[nbr]->type=KKType;
+                app[nbr]->Meneur=GetMem(SMeneur+1);
+                strcpy(app[nbr]->Meneur,Meneur);
 
-            app[nbr]->os=KKos;
+                app[nbr]->Titre=GetMem(STitre+1);
+                strcpy(app[nbr]->Titre,Titre);
 
-            nbr++;
+                app[nbr]->Checksum=Checksum;
+                app[nbr]->ext=format;
+                app[nbr]->pres=0;
+
+                app[nbr]->type=KKType;
+
+                app[nbr]->os=KKos;
+
+                nbr++;
+                }
             break;
         case 6:                                        // Fin de fichier
             fin=1;
@@ -1496,7 +1756,7 @@ do
 {
 strcpy(nom,TabRec[NbrRec-1]);
 
-PrintAt(1,2,"%-78s",nom);
+DispDir(nom);
 
 strcpy(moi,nom);
 Path2Abs(moi,"*.KKR");
@@ -1512,7 +1772,7 @@ do
         Fic=fopen(moi,"rb");
         if (Fic==NULL)
             {
-            PrintAt(0,0,"KKR_Read (1)");
+            PrintAt(0,0,"KKR_search (1)");
             exit(1);
             }
         ok=KKR_Read(Fic);
@@ -1521,13 +1781,16 @@ do
     }
 while (_dos_findnext(&fic)==0);
 
+
+
+
 free(TabRec[NbrRec-1]);
 NbrRec--;
 
 strcpy(moi,nom);
 Path2Abs(moi,"*.*");
 
-if (_dos_findfirst(moi,_A_SUBDIR,&fic)==0)
+if (_dos_findfirst(moi,63,&fic)==0)
 do
     {
     if  ( (fic.name[0]!='.') & (((fic.attrib)&_A_SUBDIR) == _A_SUBDIR) )
@@ -1549,9 +1812,11 @@ free(TabRec);
 }
 
 
-
-
-
+void DispDir(char *dir)
+{
+ColLin(0,Cfg->TailleY-1,Cfg->TailleX,Cfg->col[30]);
+PrintAt(0,Cfg->TailleY-1,"%-*s",Cfg->TailleX,dir);
+}
 
 void SSearch(char *nom2)
 {
@@ -1574,7 +1839,6 @@ int NbrRec;                          // Nombre d'element dans le tableau
 char *StrVerif,Verif;
 
 
-
 TabRec=GetMem(500*sizeof(char*));
 TabRec[0]=GetMem(strlen(nom2)+1);
 memcpy(TabRec[0],nom2,strlen(nom2)+1);
@@ -1584,12 +1848,11 @@ do
 {
 o=nbrdir+1;
 
-PrintAt(1,2,"%-78s",nom);
+DispDir(nom);
 St_Dir++;
 
 strcpy(nom,TabRec[NbrRec-1]);
-
-PrintAt(1,2,"%-78s",nom);
+DispDir(nom);
 
 if (_dos_findfirst(nom,63-_A_SUBDIR,&fic)==0)
 do
@@ -1655,21 +1918,18 @@ do
                         }
 
                     if (Verif==1)
-                        {
-                        app[n]->pres=o;
-                                // l'appl. n est presente dans le dir. o
                         bill=1;
-                        }
                     }
 
-                if ( (KKcrc==app[n]->Checksum) & (KKcrc!=0) )
-                    {
-                    app[n]->pres=o;
+                if ((KKcrc==app[n]->Checksum) & (KKcrc!=0))
                     bill=1;
-                    }
 
-                if (bill==1)
+                if (bill==1) //- l'appl. n est presente dans le dir. o -
                     {
+                    if (app[n]->pres==0)
+                        {
+                    app[n]->pres=o; 
+
                     strcpy(moi,nom);
                     moi[strlen(moi)-3]=0;
                     ok=1;
@@ -1683,6 +1943,11 @@ do
                                 strcpy(KKCfg->editeur,moi);
                                 Path2Abs(KKCfg->editeur,app[n]->Filename);
                                 }
+
+                    KeyPres[app[n]->ext]++;
+                    PrintAt(KeyPosX[app[n]->ext],KeyPosY[app[n]->ext],"%2d",KeyPres[app[n]->ext]);
+                    ColLin(KeyPosX[app[n]->ext],KeyPosY[app[n]->ext],2,Cfg->col[29]);
+                        }
                     }
                 }
             }
@@ -1690,23 +1955,19 @@ do
 
     if (ok==1)
         {
+        char buf[256];
+
         St_App++;
 
         nbrdir=o;
         strcpy(dir[o-1],moi);
 
         if (app[wok]->Checksum==0)
-            PrintAt(3,posy,"? Found %s in %s",app[wok]->Titre,dir[o-1]);
+            sprintf(buf,"? Found %s in %s",app[wok]->Titre,dir[o-1]);
             else
-            PrintAt(3,posy,"Found %s in %s",app[wok]->Titre,dir[o-1]);
-        posy++;
+            sprintf(buf,"Found %s in %s",app[wok]->Titre,dir[o-1]);
 
-        if (posy>(Cfg->TailleY-3))
-                {
-                MoveText(1,4,78,(Cfg->TailleY-3),1,3);
-                posy--;
-                ChrLin(1,(Cfg->TailleY-3),78,32);
-                }
+        PrintAt(2,2,"%-*s",Cfg->TailleX-4,buf);
         }
    }
 while (_dos_findnext(&fic)==0);
@@ -1714,7 +1975,7 @@ while (_dos_findnext(&fic)==0);
 free(TabRec[NbrRec-1]);
 NbrRec--;
 
-if (_dos_findfirst(nom,_A_SUBDIR,&fic)==0)
+if (_dos_findfirst(nom,63,&fic)==0)
 do
 	{
     if ( (fic.name[0]!='.') & (((fic.attrib) & _A_SUBDIR)==_A_SUBDIR) )
@@ -2226,7 +2487,8 @@ switch (poscur)
     break;
  case 1:
     bar[0].Titre="Show all format "; bar[0].fct=3; bar[0].Help=NULL;
-    nbmenu=1;
+    bar[1].Titre="Quick format    "; bar[1].fct=14; bar[1].Help=NULL;
+    nbmenu=2;
     break;
  case 2:
     bar[0].Titre="Config. Default "; bar[0].fct=10; bar[0].Help=NULL;
@@ -2292,6 +2554,7 @@ return fin;
 |-11: Configuration de l'editeur                                      -|
 |-12: Setup couleur                                                   -|
 |-13: Setup Palette                                                   -|
+|-14: Quick Tab                                                       -|
 \*--------------------------------------------------------------------*/
 
 void GestionFct(int i)
@@ -2347,6 +2610,10 @@ switch(i)
         break;
     case 13:
         ChangePalette();
+        break;
+    case 14:
+        LoadKeyPres();
+        TabExt(0);
         break;
     }
 }

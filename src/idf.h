@@ -2,7 +2,7 @@
 #define uchar  unsigned char
 #define ushort unsigned short
 
-#define nbrkey 179
+#define nbrkey 187
         // number of format + 6
 
 /*--------------------------------------------------------------------*\
@@ -45,10 +45,11 @@ struct key
 
 typedef struct __idfinfo
    {
+   char path[256];                        //--- The path of the file ---
+   char *inbuf;   //--- Buffer sur lequel on travaille si path[0]==0 ---
+   int buflen;    //--- Longueur de ce buffer --------------------------
+
    int numero;                                   // ID KEY of the format
-
-   char path[256];                               // The path of the file
-
    char filename[80];                                // Name of the file
    char fullname[80];                               // Title of the file
    char message[10][80];                              // Various message
@@ -57,7 +58,7 @@ typedef struct __idfinfo
    char Tinfo[80];
    char composer[80];           // Name of the composer (for the module)
    ulong taille;                            // Size of the file (if !=0)
-   char ext[4];                           // The extension of the format
+   char ext[32];                          // The extension of the format
    char os;                                    // 1: DOS, 2:WIN, 3:WIN32
    int Btype;                       // 1: module, 2: sample, 3: archive,
                                       // 4: bitmap, 5: anim  , 6: other.
@@ -67,7 +68,7 @@ typedef struct __idfinfo
    ushort sizebuf;                                     // size of buffer
    FILE *fic;
    ulong posfic;
-   ulong sizemax;                             // taille r‚elle du buffer
+   ulong sizemax;                            // taille r‚elle du fichier
 } RB_IDF;
 
 

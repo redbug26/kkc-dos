@@ -41,6 +41,9 @@ static struct iarapp
     char dir[128];
     int pos;
     } app[50];
+static int nbrappl;
+static struct barmenu bar[50];
+static int max;
 
 static char chaine[132];
 
@@ -93,6 +96,9 @@ int IarF5Fct(struct barmenu *bar)
 {
 FILE *fic;
 
+if (stricmp(bar->Help,"FicIdf"))
+    return 0;
+
 (app[(bar->fct)-1].type)|=4;
 
 fic=fopen(KKFics->FicIdfFile,"r+b");
@@ -110,6 +116,9 @@ int IarF2Fct(struct barmenu *bar)
 int n;
 char ok;
 
+if (stricmp(bar->Help,"FicIdf"))
+    return 0;
+
 ok=1;
 strcpy(Filename,app[(bar->fct)-1].Filename);
 for(n=0;n<strlen(Filename);n++)
@@ -124,6 +133,15 @@ return 0;
 
 int IarF0Fct(struct barmenu *bar)
 {
+if (stricmp(bar->Help,"FicIdf"))
+    {
+    ColLin(0,0,Cfg->TailleX,Cfg->col[7]);
+    PrintAt(0,0,"%-*s",Cfg->TailleX,bar->Titre);
+    return 0;
+    }
+
+ColLin( 0,0,40,Cfg->col[7]);
+ColLin(40,0,(Cfg->TailleX)-40,Cfg->col[11]);
 PrintAt(0,0,"%-40sby %-*s",bar->Titre,
                               Cfg->TailleX-43,app[(bar->fct)-1].Meneur);
 return 0;
@@ -132,6 +150,9 @@ return 0;
 int GesF2Fct(struct barmenu *bar)
 {
 FILE *fic;
+
+if (stricmp(bar->Help,"FicIdf"))
+    return 0;
 
 (app[(bar->fct)-1].type)^=4;
 
@@ -147,6 +168,9 @@ int GesF3Fct(struct barmenu *bar)
 {
 FILE *fic;
 
+if (stricmp(bar->Help,"FicIdf"))
+    return 0;
+
 (app[(bar->fct)-1].type)^=8;
 
 fic=fopen(KKFics->FicIdfFile,"r+b");
@@ -159,7 +183,19 @@ return 0;
 
 int GesF0Fct(struct barmenu *bar)
 {
+char buffer[256];
+
 int n=0;
+
+if (stricmp(bar->Help,"FicIdf"))
+    {
+    ColLin(0,0,Cfg->TailleX,Cfg->col[7]);
+    PrintAt(0,0,"%-*s",Cfg->TailleX,bar->Titre);
+    return 0;
+    }
+
+ColLin( 0,0,40,Cfg->col[7]);
+ColLin(40,0,(Cfg->TailleX)-40,Cfg->col[11]);
 
 while(K[n].numero!=app[(bar->fct)-1].ext)
     n++;
@@ -171,20 +207,97 @@ Window(1,1,(Cfg->TailleX)-2,4,Cfg->col[28]);
 PrintAt(1,1,"Title: %-38s",app[(bar->fct)-1].Titre);
 PrintAt(1,2,"Coder: %-38s",app[(bar->fct)-1].Meneur);
 PrintAt(1,3,"Filename: %-32s",app[(bar->fct)-1].Filename);
+PrintAt(50,3,"%-3s",(((app[(bar->fct)-1].type)&8)==8) ? "Off" : "On" );
 
 if (((app[(bar->fct)-1].type)&4)==4)
-    PrintAt(50,1,"(Default for .%s)",K[n].ext);
+    PrintAt(50,1,"Default for .%s",K[n].ext);
 
-if (((app[(bar->fct)-1].type)&8)==8)
-    PrintAt(1,4,"Off");
-    else
-    PrintAt(1,4,"On");
+strcpy(buffer,app[(bar->fct)-1].dir);
+buffer[72]=0;
+
+PrintAt(1,4,"Path: %s",buffer);
 
 if (((app[(bar->fct)-1].os)&1)==1)
-    PrintAt(50,3,"(Windows only)");
+    PrintAt(50,2,"Windows only");
 
 
 return 0;
+}
+
+void AddOther(char *fichier)
+{
+char ficext[256];
+char buffer[256],*ext;
+char exten[256];
+FILE *fic;
+char *Filename,*Titre;
+int n,m;
+
+
+FileinPath(fichier,buffer);
+ext=strchr(buffer,'.');
+if (ext==NULL) return;
+
+ext++;
+
+strcpy(ficext,KKFics->trash);
+Path2Abs(ficext,"kkc.ext");
+
+fic=fopen(ficext,"rt");
+if (fic==NULL) return;
+
+while(fgets(ficext,256,fic)!=NULL)
+{
+m=0;
+for(n=0;n<strlen(ficext);n++)
+    {
+    if ((ficext[n]!=32) & (ficext[n]!=':'))
+        {
+        exten[m]=ficext[n];
+        m++;
+        }
+        else
+        if (m!=0)
+            break;
+    }
+exten[m]=0;
+
+if (!stricmp(exten,ext))
+    {
+    ficext[strlen(ficext)-1]=0;
+
+    Filename=strchr(ficext,':')+1;
+    while ((Filename[0]!=0)&(Filename[0]==32)) Filename++;
+
+    if (strlen(Filename)>0)
+        {
+        Titre=ficext;
+
+        app[nbrappl].Filename=(char*)GetMem(strlen(Filename)+1);
+        strcpy(app[nbrappl].Filename,Filename);
+
+        app[nbrappl].Meneur=(char*)GetMem(2);
+        strcpy(app[nbrappl].Meneur,"?");
+
+        app[nbrappl].Titre=(char*)GetMem(strlen(Titre)+1);
+        strcpy(app[nbrappl].Titre,Titre);
+
+        bar[nbrappl].Titre=(char*)GetMem(strlen(Filename)+2);
+        sprintf(bar[nbrappl].Titre," %s",Filename);
+
+        if (strlen(bar[nbrappl].Titre)>max)
+            max=strlen(bar[nbrappl].Titre);
+
+        bar[nbrappl].fct=nbrappl+1;
+        bar[nbrappl].Help="Link";
+
+        nbrappl++;
+        }
+    }
+if (nbrappl==50) break;
+}
+
+fclose(fic);
 }
 
 
@@ -211,10 +324,12 @@ char type;
 
 int j,i,n;
 MENU menu;
-static struct barmenu bar[50];
+
 int res=2;
 
-int nbrappl,nbrdir;
+int nbrdir;
+
+max=40; //--- Longueur maximum dans cadre ------------------------------
 
 fic=fopen(KKFics->FicIdfFile,"rb");
 
@@ -293,6 +408,8 @@ while(type!=3);
 
 fclose(fic);
 
+AddOther(name);
+
 if (nbrappl==0)
     {
 	PUTSERR("No player for this file !");
@@ -335,7 +452,7 @@ if ( ((nbrappl!=1) | (kefaire==3)) & (res!=0) )
             break;
         }
 
-    menu.x=(Cfg->TailleX-40)/2;
+    menu.x=(Cfg->TailleX-max)/2;
 
     menu.cur=0;
 
@@ -410,7 +527,7 @@ int PlayerIdf(char *name,int numero)
 char version;
 char type;
 
-int nbrappl,nbrdir;
+int nbrdir;
 
 char fin=0;
 
@@ -615,7 +732,7 @@ struct barmenu *bar;
 static char buffer[256],buf2[256];
 char key[8],version;
 int i,j,n;
-int nbrappl,nbrdir;
+int nbrdir;
 char fin,type;
 
 fin=0;

@@ -19,6 +19,8 @@ typedef struct _viewer
 
     long AnsiSpeed;
 
+    char Traduc[32];
+
     struct PourMask **Mask;
     } KKVIEW;
 
@@ -31,6 +33,13 @@ void View(KKVIEW *V,char *file,int type);
 //   3: Hexa viewer
 //   4: Text viewer
 //   5: Raw  viewer
+
+void GetListFile(char *fichier);
+
+void GetPreprocString(char *car,int lng);
+char GetPreprocValue(char car);
+
+void ChgViewPreproc(void);
 
 
 struct PourMask

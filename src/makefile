@@ -11,11 +11,13 @@
 #DEBUG = 1
 
 CA = wasm
-CC = wpp386
+CC = wcc386
+# wpp386
 CL = *wlink
 CB = wlib
 
 SYSTEM = pmodew
+#pmodew
 #os2v2_pm
 # win95
 #dos4g
@@ -65,6 +67,7 @@ CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1 -zm
 # option el : eliminate no referenced segment
 
 AOPTS =
+
 LOPTS = option stack=60000 option c option el
 LAOPTS =
 
@@ -81,10 +84,10 @@ all : kk.exe kkmain.exe kksetup.exe kkdesc.exe kkkkrgr.exe kkfont.exe &
 
 kkmain.exe  : kkmain.obj     idf.lib  hard.lib    win.obj   gestion.obj &
                 view.obj  driver.obj ficidf.obj copie.obj    delete.obj &
-              search.obj   kkfct.obj  util.obj reddies.obj longname.obj &
-               rbdos.obj   macro.obj
+              search.obj   kkfct.obj  util.obj reddies.obj    rbdos.obj &
+               macro.obj
              $(CL) system $(SYSTEM) $(LOPTS)  &
-                   option modname = 'Ketchup Killers Commander 0.84' &
+                   option modname = 'Ketchup Killers Commander 0.91' &
                    name $@ file {$<}
 
 kksetup.exe : kksetup.obj hard.lib idf.lib reddies.obj ficidf.obj &
@@ -108,6 +111,9 @@ kk.exe      : kk.obj
 
 readme.exe  : readme.obj
              $(CL) $(LAOPTS) name $@ file {$<}
+
+view.dll : view.obj hard.lib idf.lib reddies.obj
+             $(CL) system $(SYSTEM) dll $(LOPTS) name $@ file {$<}
 
 .asm.obj:
          $(CA) $* $(AOPTS)

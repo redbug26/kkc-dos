@@ -1,7 +1,6 @@
 /*--------------------------------------------------------------------*\
 |-                      Identification of file                        -|
 \*--------------------------------------------------------------------*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -10,6 +9,10 @@
 #include <fcntl.h>
 
 #include "idf.h"
+
+static char *FORMPIC=" Picture is    %5d * %4d / %2dBps";
+static char *FORMSMP=" Sampling rate: %16d Hz";
+static char *FORMBIT=" Smp.Rate: %5dHz Bitrate: %3dkbps";
 
 struct key K[nbrkey]=   {
 {  NULL,
@@ -293,20 +296,14 @@ struct key K[nbrkey]=   {
         "SPL",
         "n-Factor",
         25,0*2+1,2},
-{  "\xD0\xCf\x11\xE0\xA1\xB1\x1A\xE1",
-        8,
-        0,
-        "Microsoft File Format",
-        "MS",
-        "Microsoft Corp.",
-        61,0*2+0,6},
+
 {  "PMCC",
         4,
         0,
         "Windows Group File",
         "GRP",
         "Microsoft Corp.",
-        58,0*2+1,6},
+        58,0,6},
 {  "\xFF\x57\x50\x43",
         4,
         0,
@@ -791,8 +788,8 @@ struct key K[nbrkey]=   {
     "EdLib module",   //--- Edlib Non Compresse ------------------------
     "EDL",
     "Jens Christian Huus",132,0*2+0,1},  // Jean Christian Huus / Vibrants
-{  "AST 0001",
-    8,
+{  "AST 000",
+    7,
     1,
     "All Sound Tracker Module",
     "AST",
@@ -830,7 +827,7 @@ struct key K[nbrkey]=   {
     23,
     0x20a,
     "Macintosh PICT",
-    "PIC",
+    "PCT",
     "?",125,0*2+0,4},
 {  "LZANIM",
     6,
@@ -965,10 +962,14 @@ struct key K[nbrkey]=   {
     "NES ROM",
     "NES",
     "Nintendo",154,0*2+0,6},
-{  "\x81\x20\x08\x83\x40\x08\x85\x60"
-   "\x08\x87\x80\x08",
-    12,
-    0x2c0,
+/*
+{  "\x08\x83@\x08\x85`\x08\x87\x80\x08", 
+    10,
+    0x2c2,
+*/
+{  "\x01\x00\x02", 
+    3,
+    0xe,
     "Atari Disk DUMP",
     "ST",
     "ATARI",155,0*2+0,6},
@@ -1037,14 +1038,14 @@ struct key K[nbrkey]=   {
 {  "\xFF""FONT   ",
     5,
     0,
-    "Code Page Information (Standard Font)",
+    "Code Page Info(Standard Font)",
     "CPI",
     "",
     166,0,6},
 {  "\x7F""DRFONT ",
     5,
     0,
-    "Code Page Information (Enhanced Font)",
+    "Code Page Info(Enhanced Font)",
     "CPI",    //--- Utilis‚ par DR-DOS et Novell DOS -------------------
     "",
     167,0,6},
@@ -1081,17 +1082,80 @@ struct key K[nbrkey]=   {
     0,
     "Fractal Imager",
     "FIF",
-    "PROPRIO",172,0*2+1,4},
+    "",172,0*2+1,4},
 {  "MCRB",
     4,
     0,
-    "Ketchup Killers Commander Macro",
+    "Ketchup Killers C. Macro",
     "KKP",
     "RedBug",
     173,0*2+1,6},
+{  "\xCA\xFE\xBA\xBE\x00\x03\x00\x2D",
+    8,
+    0x0,
+    "Applet Java",
+    "CLASS",
+    "Sun Microsystem",181,0*2+0,6},
 
 
-// Dernier employe: 173 //marjo
+
+// Dernier employe: 181 //marjo
+
+
+/*--------------------------------------------------------------------*\
+|- Gestion produit microsoft                                          -|
+\*--------------------------------------------------------------------*/
+
+{  NULL,
+   0,
+   0,
+   "Microsoft Publisher Document",
+   "PUB",
+   "Microsoft Corp.",
+   175,1*2+0,6},
+{  NULL,
+   0,
+   0,
+   "Microsoft Excel Document",
+   "XLS",
+   "Microsoft Corp.",
+   176,1*2+0,6},
+{  NULL,
+   0,
+   0,
+   "Microsoft Word Document",
+   "DOC",
+   "Microsoft Corp.",
+   177,1*2+0,6},
+{  NULL,
+   0,
+   0,
+   "Microsoft WinWorks Document",
+   "WPS",
+   "Microsoft Corp.",
+   178,1*2+0,6},
+{  NULL,
+   0,
+   0,
+   "Microsoft WinWorks Database",
+   "WDB",
+   "Microsoft Corp.",
+   179,1*2+0,6},
+{  NULL,
+   0,
+   0,
+   "Microsoft Powerpoint",
+   "PPT",
+   "Microsoft Corp.",
+   180,1*2+0,6},
+
+{  "\xD0\xCf\x11\xE0\xA1\xB1\x1A\xE1",
+   8,
+   0,
+   "Microsoft File Format",
+   "MS",
+   "Microsoft Corp.",
+   61,0*2+0,6},
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -1178,11 +1242,19 @@ struct key K[nbrkey]=   {
     "ZIP",
     "PKWARE Inc.",
     35,0*2+0,3},
+
+{  NULL,
+    0,
+    0,
+    "C Like Source File",
+    "C",
+    "K&R",
+    174,1*4+1*2+0,6},
 {  NULL,
     0,
     0,
     "HTML File",
-    "HTM",
+    "HTML",
     "",
     104,1*4+1*2+0,6},
 {  NULL,
@@ -1248,6 +1320,7 @@ void SplitName(char *filename,char *name,char *ext);
 void Size2Chr(int Size,char *Taille);
                               // transforme la taille indiqu‚e en chaine
 
+char IsTxt(RB_IDF *Info); //--Renvoit le pourcentage texte (>50=texte)--
 short Infotxt(RB_IDF *Info);   //--- Test pour voir si c'est du texte --
 short InfoSauce(RB_IDF *Info);
 short Infomtm(RB_IDF *Info);
@@ -1330,6 +1403,14 @@ short Infodbf3(RB_IDF *Info);
 short Infoihp(RB_IDF *Info);
 short Infosmd(RB_IDF *Info);
 short Infobin(RB_IDF *Info);
+short Infoc(RB_IDF *Info);
+
+short Infopub(RB_IDF *Info);
+short Infoxls(RB_IDF *Info);
+short Infodoc(RB_IDF *Info);
+short Infowps(RB_IDF *Info);
+short Infowdb(RB_IDF *Info);
+short Infoppt(RB_IDF *Info);
 
 
 void ClearSpace(char *name);    //--- efface les espaces inutiles ------
@@ -1346,7 +1427,6 @@ ulong  InvLong(ulong entier);          // Inverse un ulong HILO <-> LOHI
 ushort InvWord(ushort entier);        // Inverse un ushort HILO <-> LOHI
 
 
-char buffer[32768];
 
 char tampon[1024];                   // Tampon pour faire n'importe quoi
 
@@ -1367,7 +1447,10 @@ char *a;
 char *b;
 ulong result;
 
-if (position>(Info->posbuf+Info->sizebuf+4))
+if (position>=(Info->sizemax-Info->posfic))
+    return 0;
+
+if ((position>(Info->posbuf+Info->sizebuf+4)) & (Info->fic!=NULL))
     {
     pos=ftell(Info->fic);
     fseek(Info->fic,position,SEEK_SET);
@@ -1406,8 +1489,11 @@ char *b;
 ushort result;
 int pos;
 
+if (position>=(Info->sizemax-Info->posfic))
+    return 0;
 
-if (position>(Info->posbuf+Info->sizebuf+2))
+
+if ((position>(Info->posbuf+Info->sizebuf+2)) & (Info->fic!=NULL))
     {
     pos=ftell(Info->fic);
     fseek(Info->fic,position,SEEK_SET);
@@ -1443,7 +1529,10 @@ void ReadStr(RB_IDF *Info,ulong position,char *str,short taille)
 {
 int pos;
 
-if (position>(Info->posbuf+Info->sizebuf+taille))
+if ((position+taille)>(Info->sizemax-Info->posfic))
+    return;
+
+if ((position>(Info->posbuf+Info->sizebuf+taille)) & (Info->fic!=NULL))
     {
     pos=ftell(Info->fic);
     fseek(Info->fic,position,SEEK_SET);
@@ -1466,7 +1555,7 @@ char ReadChar(RB_IDF *Info,ulong position)
 int pos;
 char a;
 
-if (position>(Info->posbuf+Info->sizebuf+1))
+if ((position>(Info->posbuf+Info->sizebuf+1)) & (Info->fic!=NULL))
     {
     pos=ftell(Info->fic);
     fseek(Info->fic,position,SEEK_SET);
@@ -1597,9 +1686,7 @@ return Ficname;
 void Traitefic(RB_IDF *Info)
 {
 int n;
-FILE *fic;
 int err;
-char path[256];
 
 int trv=-1;       //--- vaut -1 tant que l'on a rien trouv‚ ------------
 
@@ -1607,43 +1694,58 @@ Info->numero=-1;
 
 n=0;    //--- recherche dans tous les formats --------------------------
 
-strcpy(path,Info->path);
-memset(Info,0,sizeof(RB_IDF));
-strcpy(Info->path,path);
+memset(((char*)Info)+264,0,sizeof(RB_IDF)-264);
 
-GetFile(Info->path,Info->filename);
-
-fic=fopen(Info->path,"rb");
-if (fic==NULL)
+if (Info->path[0]!=0)
     {
-    strcpy(Info->format,"Invalid Filename");
-    strcpy(Info->fullname,"Unknow");
-    return;
+    GetFile(Info->path,Info->filename);
+
+    Info->fic=fopen(Info->path,"rb");
+    if (Info->fic==NULL)
+        {
+        strcpy(Info->format,"Invalid Filename");
+        strcpy(Info->fullname,"Unknow");
+        return;
+        }
+
+    Info->posfic=0L;
+
+    Info->buffer=(char*)malloc(32768);
+    memset(Info->buffer,0,32768U);
+
+    Info->sizebuf=fread(Info->buffer,1,32768,Info->fic);
+    if (Info->sizebuf==0)
+        {
+        strcpy(Info->format,"Null File");
+        strcpy(Info->fullname,"Unknow");
+
+        return;
+        }
+
+    fseek(Info->fic,0,SEEK_END);
+    Info->sizemax=ftell(Info->fic);        // --- taille du fichier ----
+    fseek(Info->fic,0,SEEK_SET);
+
+    Info->posbuf=Info->posfic;
+    }
+    else
+    {
+    Info->fic=NULL;
+    Info->posfic=0;
+    Info->posbuf=0;
+
+    Info->buffer=Info->inbuf;
+    Info->sizemax=Info->buflen;
+
+    Info->sizebuf=Info->buflen;
+
     }
 
-Info->fic=fic;
-Info->posfic=0L;
-
-memset(buffer,0,32768U);
-
-Info->sizemax=fread(buffer,1,32768,fic);
-if (Info->sizemax==0)
-    {
-    strcpy(Info->format,"Null File");
-    strcpy(Info->fullname,"Unknow");
-
-    return;
-    }
-
-
-Info->buffer=buffer;    //--- buffer pour E/S --------------------------
-Info->posbuf=Info->posfic;
-Info->sizebuf=32768U;
 
 for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
     {
     if ( (((K[n].other)&2)==0) & ((K[n].buf)!=NULL) )
-        if (!memcmp(buffer+K[n].pos,K[n].buf,K[n].len)) trv=n;
+        if (!memcmp(Info->buffer+K[n].pos,K[n].buf,K[n].len)) trv=n;
 
     if ( (((K[n].other)&2)==2) | ((((K[n].other)&1)==1) & (trv!=-1)) )
         {
@@ -1690,7 +1792,6 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case  7: err=Infof2r(Info); break;
             case 12: err=Infomdl(Info); break;
             case 25: err=Infospl(Info); break;
-            case 58: err=Infogrp(Info); break;
             case 43: err=Infotga(Info); break;
             case 52: err=Infompg(Info); break;
             case 31: err=Infodlz(Info); break;
@@ -1700,6 +1801,7 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case 68: err=Infoams(Info); break;
             case 76: err=Infot64(Info); break;
             case 91: err=Infotxt(Info); break;
+            case 174:err=Infoc(Info); break;
             case 104:err=Infohtm(Info); break;
             case 106:err=Infoamf(Info); break;
             case 107:err=Infogb(Info); break;
@@ -1729,6 +1831,12 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case 163:err=Infonsf(Info); break;
             case 164:err=Infohlp2(Info);break;
             case 173:err=Infokkp(Info); break;
+            case 175:err=Infopub(Info); break;
+            case 176:err=Infoxls(Info); break;
+            case 177:err=Infodoc(Info); break;
+            case 178:err=Infowps(Info); break;
+            case 179:err=Infowdb(Info); break;
+            case 180:err=Infoppt(Info); break;
             default:     //--- Ca serait une erreur de ma part alors ---
                 sprintf(Info->format,"Pingouin %d",K[n].numero);
                 trv=1;
@@ -1773,7 +1881,11 @@ ClearSpace(Info->fullname);
 Info->posfic+=Info->taille;
 Info->numero=n;
 
-fclose(fic);
+if (Info->fic!=NULL)
+    {
+    fclose(Info->fic);
+    free(Info->buffer);
+    }
 }
 
 
@@ -1812,34 +1924,6 @@ j--;
 while (buf[j]==32) buf[j]=0,j--;
 
 strcpy(name,buf);
-}
-
-
-short InfoSauce(RB_IDF *Info)
-{
-char buffer[6];
-int c,pos;
-
-//--- Teste si on a sauce ----------------------------------------------
-
-c=ftell(Info->fic);
-fseek(Info->fic,0,SEEK_END);
-pos=ftell(Info->fic)-128;
-fseek(Info->fic,c,SEEK_SET);
-
-ReadStr(Info,pos,buffer,5);
-if (!strcmp(buffer,"SAUCE"))
-    {
-    ReadStr(Info,pos+7,Info->fullname,35);
-    ReadStr(Info,pos+42,Info->composer,20);
-    strcpy(Info->Tinfo,"Group");
-    ReadStr(Info,pos+62,Info->info,20);
-
-//  if (ReadChar(Info,pos+104)!=0) --> Commentaire avant, on s'en fout !
-    return 0;
-    }
-
-return 1;
 }
 
 
@@ -1989,13 +2073,13 @@ char chunk[5];
 int lng,pos;
 short info;
 short mess;
-
+int tpos;
 
 
 sprintf(Info->Tinfo, "Tracks");
 sprintf(Info->info,"%3d",ReadInt(Info,10,2));
 
-fseek(Info->fic,Info->posfic,SEEK_SET);
+tpos=Info->posfic;
 
 
 mess=-1;
@@ -2004,39 +2088,55 @@ pos=0;
 lng=0;
 
 while(1)
+    {
+    tpos=pos+lng;
+
+    if (tpos>Info->sizemax) break;
+    ReadStr(Info,tpos,chunk,4);
+    tpos+=4;
+
+    if (!((!strncmp(chunk,"MThd",4)) | (!strncmp(chunk,"MTrk",4))))
+                                                              break;
+
+    if (tpos>Info->sizemax) break;
+    lng=ReadLng(Info,tpos,2);
+    tpos+=4;
+    pos=tpos;
+
+    if (tpos>Info->sizemax) break;
+    info=ReadInt(Info,tpos,2);
+    tpos+=2;
+
+    if (info==0xFF)
         {
-        fseek(Info->fic,pos+lng,SEEK_SET);
-        if (fread(chunk,4,1,Info->fic)!=4) break;
-        if (!((!strncmp(chunk,"MThd",4)) | (!strncmp(chunk,"MTrk",4))))
-                                                                  break;
+        char chaine[40];
+        char strlng;
 
-        fread(&lng,4,1,Info->fic);
-        pos=ftell(Info->fic);
-        lng=InvLong(lng);
+        if (tpos>Info->sizemax) break;
+        strlng=ReadChar(Info,tpos);
+        tpos++;
+        if ((strlng<1) | (strlng>7))
+             continue;  //--- C'est pas une information texte ----------
 
-        fread(&info,2,1,Info->fic);
-        info=InvWord(info);
-        if      (info==0xFF)
-                {
-                char chaine[40];
-                char strlng;
+        if (tpos>Info->sizemax) break;
+        strlng=ReadChar(Info,tpos);
+        tpos++;
 
-                fread(&strlng,1,1,Info->fic);    //--- lit le type -----
-                if (strlng!=3) continue;
+        if (tpos>Info->sizemax) break;
 
-                fread(&strlng,1,1,Info->fic);
-                if (strlng>34) continue;
-                fread(chaine,strlng,1,Info->fic);
-                chaine[(int)strlng]=0;
+        if (strlng>34)
+            ReadStr(Info,tpos,chaine,34);
+            else
+            ReadStr(Info,tpos,chaine,strlng);
 
-                if (mess==-1)
-                        sprintf(Info->fullname,"%s",chaine);
+        tpos+=strlng;
 
-//              sprintf(Info->message[mess]," %s",chaine);
-                mess++;
-//              if (mess==10) mess=9;
-                }
+        if (mess==-1)
+            sprintf(Info->fullname,"%s",chaine);
+
+        mess++;
         }
+    }
 
 Info->taille=(pos+lng)-Info->posfic;
 
@@ -2200,6 +2300,9 @@ signed char car;
 short Lp,Hp;
 char map,fond;
 int PG,BP;
+char fin=0;
+
+int pos;
 
 char buf[7];
 
@@ -2210,12 +2313,17 @@ if (buf[5]!='a') return 1;
 
 sprintf(Info->format,"Compuserve GIF8%ca",buf[4]);
 
-fseek(Info->fic,Info->posfic+6,SEEK_SET);
+pos=Info->posfic+6;
 
-fread(&Lp,2,1,Info->fic);
-fread(&Hp,2,1,Info->fic);
+Lp=ReadInt(Info,pos,1);
+pos+=2;
 
-fread(&map,1,1,Info->fic);
+Hp=ReadInt(Info,pos,1);
+pos+=2;
+
+map=ReadChar(Info,pos);
+pos++;
+
 PG=(map&128)>>7;
 BP=(map&7)+1;
 
@@ -2223,23 +2331,22 @@ if (Lp>9999) Lp=9999;
 if (Hp>9999) Hp=9999;
 if (BP>99) BP=99;
 
-
-sprintf(Info->message[0]," Picture is     %4d * %4d / %2dBps",Lp,Hp,BP);
-
+sprintf(Info->message[0],FORMPIC,Lp,Hp,BP);
 
 
-fread(&fond,1,1,Info->fic);
-fread(&car,1,1,Info->fic);
+fond=ReadChar(Info,pos);
+pos++;
+
+car=ReadChar(Info,pos);
+pos++;
 
 if (PG==1)
-        fseek(Info->fic,(1<<BP)*3,SEEK_CUR);  // palette
-
-// while((car=fgetc(fic))!=';')
+    pos+=(1<<BP)*3; //--- palette --------------------------------------
 
 do {
-fread(&car,1,1,Info->fic);
+car=ReadChar(Info,pos);
+pos++;
 
-// PrshortPos(10,0,"'%c':",car);
 switch(car)
     {
     case '!':   //--- Information --------------------------------------
@@ -2248,36 +2355,39 @@ switch(car)
         uchar lng;
         short mess;
 
-        fread(&car,1,1,Info->fic);  //--- code information -------------
+        car=ReadChar(Info,pos);
+        pos++;  //--- code information ---------------------------------
 
         mess=1;
 
         do
             {
-            fread(&lng,1,1,Info->fic);
+            lng=ReadChar(Info,pos);
+            pos++;
 
-            if ( (car==-1) & (lng==11) ) //--- application names -------
+            if ((mess<10) & (car==-1) & (lng<40))  //--- Texte ---------
                 {
-                char appl[11];
+                char appl[64];
 
-                fread(appl,11,1,Info->fic);   //--- comment ------------
-                appl[8]=0;
-
-                ClearSpace(appl);
+                ReadStr(Info,pos,appl,lng);
+                pos+=lng;   //--- comment ------------------------------
 
                 for(n=0;n<strlen(appl);n++)
                     if (appl[n]<32)
                         break;
 
-                if (appl[n]==0)
+                if ((appl[n]==0) & (lng<=34) & (strlen(appl)>1) )
                     {
-                    sprintf(Info->message[mess],
-                                       "  Application name: %15s",appl);
+                    if ((lng==11) & (mess==1))
+                        sprintf(Info->message[mess],
+                                    " Application name: %16s",appl);
+                        else
+                        sprintf(Info->message[mess], " %-34s",appl);
                     mess++;
                     }
                 }
             else
-            fseek(Info->fic,lng,SEEK_CUR);       // passe information
+                pos+=lng;      //--- passe information -----------------
             }
         while(lng!=0);
         car=0;
@@ -2289,37 +2399,56 @@ switch(car)
         int PL,BP;
         unsigned char Code_size,t;
 
-        fread(&DX,2,1,Info->fic);
-        fread(&DY,2,1,Info->fic);
-        fread(&TX,2,1,Info->fic);
-        fread(&TY,2,1,Info->fic);
+        DX=ReadInt(Info,pos,1);
+        pos+=2;
+        DY=ReadInt(Info,pos,1);
+        pos+=2;
+        TX=ReadInt(Info,pos,1);
+        pos+=2;
+        TY=ReadInt(Info,pos,1);
+        pos+=2;
 
-        fread(&map,1,1,Info->fic);
+        map=ReadChar(Info,pos);
+        pos++;
 
         PL=(map&128)>>7;
         BP=(map&7)+1;
 
         if (PL==1)      //--- tester -----------------------------------
-            fseek(Info->fic,(1<<BP)*3,SEEK_CUR);              // palette
+            pos+=(1<<BP)*3;       //--- palette ------------------------
 
-        fread(&Code_size,1,1,Info->fic);
+        Code_size=ReadChar(Info,pos);
+        pos++;
 
         do
             {
-            fread(&t,1,1,Info->fic);
-            fseek(Info->fic,t,SEEK_CUR);                      // palette
+            t=ReadChar(Info,pos);
+            pos++;
+            pos+=t;
+            if (pos>Info->sizemax) fin=1;  //--- palette ---------------
             }
-        while (t!=0);
+        while ((t!=0) & (!fin));
 
         }break;
     }  //--- fin du case -----------------------------------------------
 }      //--- fin du while (buf) ----------------------------------------
-while(car!=';');
+while ((car!=';') & (!fin));
 
-Info->taille=(ftell(Info->fic)-Info->posfic);
+if (fin)
+    {
+    int n;
+    strcpy(Info->message[0],"Corrupted file");
+    for(n=1;n<10;n++)
+        *(Info->message[n])=0;
+    }
+    else
+    {
+    Info->taille=(pos-Info->posfic);
+    }
 
 return 0;
 }
+
 
 short Infopcx(RB_IDF *Info)
 {
@@ -2331,7 +2460,7 @@ Hp=ReadInt(Info,10,1)+1;
 
 BP=ReadChar(Info,3);
 
-sprintf(Info->message[0]," Picture is    %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,BP);
 
 return 0;
 }
@@ -2353,7 +2482,7 @@ sprintf(Info->message[1]," Original picture is    %4d * %4d",Lp,Hp);
 return 0;
 }
 
-short Infobmp(RB_IDF *Info)      // Windows BMP
+short Infobmp(RB_IDF *Info)      //--- Windows BMP ---------------------
 {
 long Lp,Hp;
 int bps;
@@ -2366,7 +2495,7 @@ Lp=ReadLng(Info,18,1);
 Hp=ReadLng(Info,22,1);
 bps=ReadInt(Info,28,1);
                      
-sprintf(Info->message[0]," Picture is     %4d * %4d / %2dBps",Lp,Hp,bps);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,bps);
 
 return 0;
 }
@@ -2381,7 +2510,7 @@ Lp=ReadLng(Info,6,1);
 Hp=ReadLng(Info,10,1);
 
 if ((Lp<=4096) & (Hp<=4096))
-    sprintf(Info->message[0]," Picture is     %4d * %4d / 24Bps",Lp,Hp);
+    sprintf(Info->message[0],FORMPIC,Lp,Hp,24);
 
 return 0;
 }
@@ -2399,7 +2528,7 @@ Lp=ReadInt(Info,18,1);
 Hp=ReadInt(Info,20,1);
 bps=ReadInt(Info,24,1);
                      
-sprintf(Info->message[0]," Picture is     %4d * %4d / %2dBps",Lp,Hp,bps);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,bps);
 
 return 0;
 }
@@ -2419,7 +2548,7 @@ info=ReadInt(Info,2,2);
 
 deb=((info&0xF000)/4096)*16;
 freq=tfreq[(info&0x0C00)>>10];
-sprintf(Info->message[0]," Smp.Rate: %5dHz Bitrate: %3dkbps",freq,deb);
+sprintf(Info->message[0],FORMBIT,freq,deb);
 
 return 0;
 }
@@ -2439,7 +2568,7 @@ info=ReadInt(Info,2,2);
 
 deb=(((info&0xF000)/4096)-1)*16;
 freq=tfreq[(info&0x0C00)>>10];
-sprintf(Info->message[0]," Smp.Rate: %5dHz Bitrate: %3dkbps",freq,deb);
+sprintf(Info->message[0],FORMBIT,freq,deb);
 
 return 0;
 }
@@ -2451,7 +2580,7 @@ short Lp,Hp;
 Lp=ReadInt(Info,6,1);
 Hp=ReadInt(Info,8,1);
 
-sprintf(Info->message[0]," Picture is      %4d * %4d / 8Bps",Lp,Hp);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,8);
 
 return 0;
 }
@@ -2475,7 +2604,7 @@ if ( (Lp!=16) & (Lp!=32) & (Lp!=64) ) return 1;
 if ( (Hp!=16) & (Hp!=32) & (Hp!=64) ) return 1;
 if (bps==0) return 1;
                      
-sprintf(Info->message[0]," Picture is      %4d * %4d / %dBps",Lp,Hp,bps);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,bps);
 
 return 0;
 }
@@ -2496,8 +2625,7 @@ if ((Bp==0) | (Bp==-24))    Bp=24;
         ok=1;
 
 if (ok==0)
-    sprintf(Info->message[0],
-                         " Picture is    %4d * %4d / %2d Bps",Lp,Hp,Bp);
+    sprintf(Info->message[0],FORMPIC,Lp,Hp,Bp);
     else
     sprintf(Info->message[0],
                           " Picture is %4d * %4d  (%3d col.)",Lp,Hp,Bp);
@@ -2512,7 +2640,7 @@ ushort Lp,Hp;
 Lp=ReadInt(Info,6,2);  //--- Motorola mode -----------------------------
 Hp=ReadInt(Info,8,2);
 
-sprintf(Info->message[0]," Picture is    %4d * %4d / 24 Bps",Lp,Hp);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,24);
 
 return 0;
 }
@@ -2530,8 +2658,9 @@ short chnl,inst,patt;
 ulong pos;
 char chunk[5];
 char cont;
+int tpos;
 
-fseek(Info->fic,Info->posfic+8,SEEK_SET);
+tpos=Info->posfic+8;
 
 patt=0;
 inst=0;
@@ -2539,7 +2668,10 @@ chnl=8;
 
 do
 {
-if (fread(chunk,4,1,Info->fic)!=4) break;
+if (tpos>Info->sizemax) break;
+ReadStr(Info,tpos,chunk,4);
+tpos+=4;
+
 
 cont=0;
 
@@ -2554,32 +2686,27 @@ if (!memcmp(chunk,"CMOD",4)) cont=8;
 
 if (cont==0)
     {
-    fseek(Info->fic,-4,SEEK_CUR);
+    tpos-=4;
     break;
     }
 
-fread(&pos,4,1,Info->fic);
-pos=InvLong(pos);
+if (tpos>Info->sizemax) break;
+pos=ReadLng(Info,tpos,2);
+tpos+=4;
 
 if (cont==1) inst++;
 
 if (cont==5)
-    {
-    fread(&patt,2,1,Info->fic);
-    patt=InvWord(patt);
-    fseek(Info->fic,-2,SEEK_CUR);
-    }
+    patt=ReadInt(Info,tpos,2);
 
-fseek(Info->fic,pos,SEEK_CUR);
+tpos+=pos;
 }
 while(1);
-
 
 sprintf(Info->info, "%3d /%3d /%3d",inst,patt,chnl);
 strcpy(Info->Tinfo,"Inst/Patt/Chnl");
 
-Info->taille=(ftell(Info->fic)-Info->posfic);
-
+Info->taille=(tpos-Info->posfic);
 
 return 0;
 }
@@ -2593,7 +2720,7 @@ dataSize=ReadLng(Info,8,2);
 dataFormat=ReadLng(Info,12,2);
 samplingRate=ReadLng(Info,16,2);
 
-sprintf(Info->message[0], " Sampling rate: %16d Hz",samplingRate);
+sprintf(Info->message[0],FORMSMP,samplingRate);
 if (dataFormat==1)
     sprintf(Info->message[1]," Format:       8-bit mu-law samples");
 
@@ -2611,6 +2738,7 @@ ushort samplingRate;
 char chunk[5];
 char fullname[255];
 char buf[5];
+int tpos;
 
 ReadStr(Info,0,buf,4);
 if (memcmp(buf,"FORM",4))
@@ -2629,30 +2757,37 @@ if (memcmp(buf,"8SVX",4))
 
 Info->taille=ReadLng(Info,4,2)+8;
 
-fseek(Info->fic,Info->posfic+12,SEEK_SET);
+
+tpos=Info->posfic+12;
 
 do
 {
-if (fread(chunk,4,1,Info->fic)!=4) break;
+if (tpos>Info->sizemax) break;
+ReadStr(Info,tpos,chunk,4);
+tpos+=4;
 
 if (!memcmp(chunk,"NAME",4))
     {
-    fread(&pos,4,1,Info->fic);
-    pos=InvLong(pos);
+    if (tpos>Info->sizemax) break;
+    pos=ReadLng(Info,tpos,2);
+    tpos+=4;
     if (pos<256L)
         {
-        fread(fullname,(short)pos,1,Info->fic);
-        ClearSpace(fullname);
-        if (strlen(fullname)<40) strcpy(Info->fullname,fullname);
+        ReadStr(Info,tpos,fullname,pos);
+        tpos+=pos;
+
+        if (strlen(fullname)<40)
+            strcpy(Info->fullname,fullname);
         }
     continue;
     }
 if (!memcmp(chunk,"VHDR",4))
     {
-    fseek(Info->fic,16,SEEK_CUR);
-    fread(&samplingRate,2,1,Info->fic);
-    samplingRate=InvWord(samplingRate);
-    sprintf(Info->message[0], "  Sampling rate: %15d Hz",samplingRate);
+    tpos+=16;
+    if (tpos>Info->sizemax) break;
+    samplingRate=ReadInt(Info,tpos,2);
+    tpos+=2;
+    sprintf(Info->message[0],FORMSMP,samplingRate);
     break;
     }
 
@@ -2671,6 +2806,7 @@ char fullname[255];
 short Lp,Hp;
 uchar BP;
 char buf[5],buf2[5];
+int tpos;
 
 ReadStr(Info,0,buf,4);
 if (memcmp(buf,"FORM",4))   return 1;
@@ -2683,20 +2819,23 @@ if ( (memcmp(buf,"ILBM",4))
 
 Info->taille=ReadLng(Info,4,2)+8;
 
-fseek(Info->fic,Info->posfic+12,SEEK_SET);
+tpos=Info->posfic+12;
 
 do
 {
-if (fread(chunk,4,1,Info->fic)!=1) break;
+if (tpos>Info->sizemax) break;
+ReadStr(Info,tpos,chunk,4);
+tpos+=4;
 
 if (!memcmp(chunk,"NAME",4))
     {
-    fread(&pos,4,1,Info->fic);
-    pos=InvLong(pos);
+    if (tpos>Info->sizemax) break;
+    pos=ReadLng(Info,tpos,2);
+    tpos+=4;
     if (pos<256L)
         {
-        fread(fullname,(short)pos,1,Info->fic);
-        ClearSpace(fullname);
+        ReadStr(Info,tpos,fullname,pos);
+        tpos+=pos;
         if (strlen(fullname)<40) strcpy(Info->fullname,fullname);
         }
     continue;
@@ -2704,20 +2843,20 @@ if (!memcmp(chunk,"NAME",4))
 
 if (!memcmp(chunk,"BMHD",4))
     {
-    fseek(Info->fic,4,SEEK_CUR);
-    fread(&Lp,2,1,Info->fic);
-    Lp=InvWord(Lp);
-    fread(&Hp,2,1,Info->fic);
-    Hp=InvWord(Hp);
-    fseek(Info->fic,4,SEEK_CUR);
-    fread(&BP,1,1,Info->fic);
+    tpos+=4;
+    Lp=ReadInt(Info,tpos,2);
+    tpos+=2;
+    Hp=ReadInt(Info,tpos,2);
+    tpos+=2;
+    tpos+=4;
+    BP=ReadChar(Info,tpos);
+    tpos++;
 
     if (Lp>9999) Lp=9999;
     if (Hp>9999) Hp=9999;
     if (BP>99) BP=99;
 
-    sprintf(Info->message[0],
-                         " Picture is     %4d * %4d / %2dBps",Lp,Hp,BP);
+    sprintf(Info->message[0],FORMPIC,Lp,Hp,BP);
     break;
     }
 
@@ -2793,28 +2932,31 @@ short type;
 int size,pos;
 uchar Csize[40];
 short mess;
+int tpos;
 
 
-
-
-fseek(Info->fic,Info->posfic+0x1A,SEEK_SET);
+tpos=Info->posfic+0x1A;
 
 mess=0;
 
 while(1)
         {
-        if (fread(&type,1,1,Info->fic)!=1) break;
+        if (tpos>Info->sizemax) break;
+        type=ReadChar(Info,tpos);
+        tpos++;
         if (type==0) break;
 
-        fread(Csize,3,1,Info->fic);
+        ReadStr(Info,tpos,Csize,3);
+        tpos+=3;
         size=((int)Csize[0])+((int)Csize[1])*256+((int)Csize[2])*65536;
-        pos=ftell(Info->fic);
+        pos=tpos;
 
         if ( (type==1) & (mess<9) )
                 {
-                fread(Csize,2,1,Info->fic);
-                sprintf(Info->message[mess],
-                   "  Sampling rate: %15ld Hz",1000000L/(256-Csize[0]));
+                ReadStr(Info,tpos,Csize,2);
+                tpos+=2;
+                sprintf(Info->message[mess],FORMSMP
+                                              ,1000000L/(256-Csize[0]));
                 if (Csize[1]==0) sprintf(Info->message[mess+1],
                                  "  Format:            8-bits samples");
                 if (Csize[1]==1) sprintf(Info->message[mess+1],
@@ -2830,35 +2972,31 @@ while(1)
                 {
                 if ( (size<=30) & ((Info->fullname[0])==0) ) //msg ASCII
                         {
-                        fread(Csize,(unsigned short)size,1,Info->fic);
-                        Csize[(unsigned short)size]=0;
+                        ReadStr(Info,tpos,Csize,size);
+                        tpos+=size;
                         strcpy(Info->fullname,(char*)Csize);
                         }
                         else
                 if ( (size<=34) & (mess<10) )                //msg ASCII
                         {
-                        fread(Csize,(unsigned short)size,1,Info->fic);
-                        Csize[(unsigned short)size]=0;
+                        ReadStr(Info,tpos,Csize,size);
+                        tpos+=size;
                         sprintf(Info->message[mess],"  %s",Csize);
                         mess++;
                         }
 
                 }
 
-        fseek(Info->fic,pos+size,SEEK_SET);
-
+        tpos=pos+size;
         }
 
-Info->taille=ftell(Info->fic)-Info->posfic;
+Info->taille=pos-Info->posfic;
 
 return 0;
 }
 
 short Infopsm(RB_IDF *Info)
 {
-
-
-
 Info->taille=ReadLng(Info,4,1)+12;
 
 return 0;
@@ -2870,6 +3008,7 @@ unsigned short modulo,file,header,overlay,ip,cs;
 long pe;
 char htc[]={0xBA,0,0,0x2E,0x89,0x16,0,0,0xB4,0x30,0xCD,0x21}; //---  C++
 char hqc[]={0xB4,0x30,0xcd,0x21,0X3C,0x02,0x73,0x05,0x33,0xC0}; //--- QC
+char hqb[]={0xA1,0x02,0x00,0x2E,0xA3,0x36};            //--- Quick basic
 char htp[]={0x9A,0x00,0x00};   // header TP
 char hai[]={0x0E,0x07,0xB9,0x14,0x00,0xBE,0x00,0x01}; //------------ AIN
 char pkl[]={0xB8,0,0,0xBA,0,0,0x05,0,0,0x3B,0x06,0x02,0x00}; //-- PKLITE
@@ -2878,11 +3017,17 @@ char exe[]={0x8B,0xE8,0x8C,0xC0,0x05,0x10,0,0x0E,0x1F,0xA3,0x04,0};
 char lze[]={0x06,0x0E,0x1F,0x8B,0x0E,0x0C,0x00,0X8B,0xF1,0x4E}; // LZEXE
 
 char dsh[]={0x06,0xE8,0x00,0x00,0x5E}; //------------------------- LZEXE
+char gws[]={0xE9,0x9A,0x14,0xCE,0xA7,0x01,0x00,0x05,0x00}; //------- GWS
 char rdb[]="RBID";  // header Redbug File information
 
 char buf2[33];
 
+char buf3[3];
+
 char *buf;
+
+
+//
 
 buf=Info->buffer;
 
@@ -2903,6 +3048,8 @@ if ( (cs==0xFFF0) & (ip==0x100) )
         pe=ip+(header*16)+(cs*16);
 
 ReadStr(Info,Info->posfic+(int)pe,buf2,32);
+
+
 
 sprintf(Info->message[3]," Header is %18ld bytes",((int)header)*16);
 
@@ -2930,8 +3077,7 @@ if (!memcmp(buf+0x20,"RNC",3))
 if (!memcmp(buf+0x20,"AIN2",4))
         sprintf(Info->message[1]," Compressed with          AIN V2.23");
 
-
-
+//
 
 if (!memcmp(buf+0x55,"PMODE",5))
         {
@@ -2968,9 +3114,26 @@ if ( (buf2[0]==htc[0]) & (!memcmp(buf2+3,htc+3,3))
         sprintf(Info->message[0]," Compiled with          TURBO C/C++");
 if (!memcmp(buf2,hqc,9))
         sprintf(Info->message[0]," Compiled with              QUICK C");
+if (!memcmp(buf2+3,hqb,6))
+        sprintf(Info->message[0]," Compiled with          QUICK BASIC");
 
+if (!memcmp(buf2,gws,9))
+    {
+    char temp[32];
+    ReadStr(Info,Info->posfic+(int)pe+29,temp,32);
+    sprintf(Info->message[0]," Created by%24s",temp);
+    }
 
-if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"NE",2))
+/*
+sprintf(Info->message[0],"%02X %02X %02X %02X %02X %02X %02X %02X %02X",
+    buf2[0],buf2[1],buf2[2],buf2[3],buf2[4],buf2[5],buf2[6],buf2[7],buf2[8]);
+*/
+
+memset(buf3,0,3);
+
+ReadStr(Info,Info->posfic+(*(ushort*)(buf+0x3C)),buf3,2);
+
+if (!memcmp(buf3,"NE",2))
     {
     unsigned char os,lv,hv,n;
     ulong pos;
@@ -3016,8 +3179,7 @@ if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"NE",2))
     }
 
 
-
-if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"LE",2))
+if (!memcmp(buf3,"LE",2))
     {
     unsigned char os;
     ulong pos;
@@ -3035,37 +3197,37 @@ if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"LE",2))
     strcpy(Info->fullname,buf2);
     }
 
-if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"PE",2))
+if (!memcmp(buf3,"PE",2))
     {
     sprintf(Info->info,"WIN32");
     }
 
-if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"LX",2))
+if (!memcmp(buf3,"LX",2))
     {
     sprintf(Info->info,"OS/2");
     }
 
-if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"W3",2))
+if (!memcmp(buf3,"W3",2))
     {
     sprintf(Info->info,"WIN386 file");
     }
 
-if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"DL",2))
+if (!memcmp(buf3,"DL",2))
     {
     sprintf(Info->info,"HP 100LX/200LX");
     }
 
-if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"MP",2))
+if (!memcmp(buf3,"MP",2))
     {
     sprintf(Info->info,"old PharLap .EXP");
     }
 
-if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"P2",2))
+if (!memcmp(buf3,"P2",2))
     {
     sprintf(Info->info,"PharLap 286 .EXP");
     }
 
-if (!memcmp(buf+(*(ushort*)(buf+0x3C)),"P3",2))
+if (!memcmp(buf3,"P3",2))
     {
     sprintf(Info->info,"PharLap 386 .EXP");
     }
@@ -3330,30 +3492,37 @@ short Infomdl(RB_IDF *Info)
 {
 char chunk[2];
 ulong taille;
+int tpos;
 
 taille=Info->posfic+5;
 
 while(1)
     {
-    fseek(Info->fic,taille,SEEK_SET);
+    tpos=taille;
 
-    if (fread(chunk,2,1,Info->fic)!=1) break;
-    if (fread(&taille,4,1,Info->fic)!=1) break;
 
-    taille+=ftell(Info->fic);
+    if (tpos>Info->sizemax) break;
+    ReadStr(Info,tpos,chunk,2);
+    tpos+=2;
+
+    if (tpos>Info->sizemax) break;
+    taille=ReadLng(Info,tpos,1);
+    tpos+=4;
+
+    taille+=tpos;
 
     if (!memcmp(chunk,"IN",2))
         {
         char nom[33];
 
-        fread(nom,32,1,Info->fic);
-        nom[32]=0;
-        ClearSpace(nom);
+        ReadStr(Info,tpos,nom,32);
+        tpos+=32;
+
         nom[30]=0;
         memcpy(Info->fullname,nom,31);
 
-        fread(Info->composer,20,1,Info->fic);
-        ClearSpace(Info->composer);
+        ReadStr(Info,tpos,Info->composer,20);
+        tpos+=20;
         continue;
         }
     if (!memcmp(chunk,"PN",2)) continue;
@@ -3368,11 +3537,11 @@ while(1)
     if (!memcmp(chunk,"PE",2)) continue;
     if (!memcmp(chunk,"FE",2)) continue;
 
-    fseek(Info->fic,-6,SEEK_CUR);
+    tpos-=6;
     break;
     }
 
-Info->taille=ftell(Info->fic)-Info->posfic;
+Info->taille=tpos-Info->posfic;
 
 return 0;
 }
@@ -3381,31 +3550,35 @@ short Infospl(RB_IDF *Info)
 {
 ReadStr(Info,0x05,Info->fullname,22);
 
-sprintf(Info->message[0], " Sampling rate: %16d Hz",ReadInt(Info,45,1));
+sprintf(Info->message[0],FORMSMP,ReadInt(Info,45,1));
 return 0;
 }
 
-
+/*
 short Infogrp(RB_IDF *Info)
 {
 char name[10];
 char key2[]={0x00,0x80,0xFF,0xFF,0x0A,0x00};
 char key[]="PMCC";
+int tpos;
 
 Info->taille=ReadInt(Info,6,1);
 
-fseek(Info->fic,Info->taille+Info->posfic,SEEK_SET);
+tpos=Info->taille+Info->posfic;
+
 if (fread(name,6,1,Info->fic)==6)
-  if (!memcmp(name,key2,6))
-     if (fread(name,10,1,Info->fic)==10)
-        if (!memcmp(name,key,4))
-           Info->taille+=(16+((*(ushort*)(name+6))+1)*(*(ushort*)(name+8)));
-
-
+    {
+    if (!memcmp(name,key2,6))
+        if (fread(name,10,1,Info->fic)==10)
+            {
+            if (!memcmp(name,key,4))
+                Info->taille+=(16+((*(ushort*)(name+6))+1)*(*(ushort*)(name+8)));
+            }
 
 
 return 0;
 }
+*/
 
 
 short Infotga(RB_IDF *Info)
@@ -3434,7 +3607,7 @@ Lp=ReadLng(Info,12,1);
 Hp=ReadLng(Info,14,1);
 bps=ReadChar(Info,16);
                      
-sprintf(Info->message[0]," Picture is     %4d * %4d / %2dBps",Lp,Hp,bps);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,bps);
 
 return 0;
 }
@@ -3519,7 +3692,7 @@ if (Hp>9999) Hp=9999;
 if (BP>99) BP=99;
 if (BP==0) BP=8;
 
-sprintf(Info->message[0]," Picture is     %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,BP);
 sprintf(Info->message[1], "                     %7d frames",frame);
 
 // Info->taille=ReadLng(Info,0,1);
@@ -3541,7 +3714,7 @@ if (BP>99) BP=99;
 if (BP==0) BP=8;
 
 
-sprintf(Info->message[0]," Picture is     %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,BP);
 sprintf(Info->message[1], "                      %7d frame",frame);
 
 Info->taille=ReadLng(Info,0,1);
@@ -3562,7 +3735,7 @@ if (Lp>9999) Lp=9999;
 if (Hp>9999) Hp=9999;
 if (BP>99) BP=99;
 
-sprintf(Info->message[0],"  Picture is    %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0],FORMPIC,Lp,Hp,BP);
 sprintf(Info->message[1], "                      %7d frame",frame);
 
 Info->taille=ReadLng(Info,0,1);
@@ -3664,90 +3837,47 @@ Info->taille=ReadLng(Info,0x58,1);
 return 0;
 }
 
+
+/*--------------------------------------------------------------------*\
+|- gestion des fichiers textes                                        -|
+\*--------------------------------------------------------------------*/
+short Infoc(RB_IDF *Info)
+{
+char pasok=1;
+
+if (IsTxt(Info)<50) return 1;
+
+*Info->ext=0;
+
+ReadStr(Info,0,tampon,80);
+if (!strncmp(tampon,"/*",2)) pasok=0;
+if (!strncmp(tampon,"//",2)) pasok=0;
+if (!strncmp(tampon,"#define ",8)) pasok=0;
+if (!strncmp(tampon,"#include",8)) pasok=0;
+if (!strncmp(tampon,"#ifdef",6)) pasok=0;
+if (!strncmp(tampon,"#ifndef",7)) pasok=0;
+if (!strncmp(tampon,"void ",5)) pasok=0;
+if (!strncmp(tampon,"int ",4)) pasok=0;
+
+return pasok;
+}
+
+
 short Infotxt(RB_IDF *Info)
 {
 unsigned short pos;
 unsigned char a;
+int i,val;
 
-/*--------------------------------------------------------------------*\
-|-  Recherche de la valeur texte par statistique                      -|
-\*--------------------------------------------------------------------*/
-
-unsigned short tab[256];
-short ord[256];
-short i,j,n;
-char col[]=" etanoris-hdlc";
-int val=0;
-unsigned char c;
-unsigned short nm;
-
-nm=0;
-
-for (n=0;n<256;n++)
-    {
-    tab[n]=0;
-    ord[n]=n;
-    }
-
-for (pos=0;pos<Info->sizemax;pos++)
-    {
-    c=ReadChar(Info,pos);
-    if ((c>='A') & (c<='Z')) c=c+'a'-'A';
-    tab[c]++;
-    }
-
-for(i=32;i<126;i++)
-    nm+=tab[i];
-nm+=tab[10]+tab[13];
-
-for (i=0;i<256;i++)
-    for(j=i;j<256;j++)
-        if (tab[ord[i]]<tab[ord[j]])
-            {
-            n=ord[i];
-            ord[i]=ord[j];
-            ord[j]=n;
-            }
-
-for (i=0;i<15;i++)
-    {
-    for (n=0;n<15;n++)
-        if (ord[i]==col[n])
-            {
-            val+=100+((50*abs(i-n))/15);
-            break;
-            }
-    }
-
-// sprintf(Info->message[1]," %d,%d/%d",val,nm,Info->sizemax);
-
-val=((val/15)*nm)/Info->sizemax;
-if (val<50)
-    {
-    for (pos=0;pos<Info->sizebuf;pos++)
-        {
-        a=(unsigned char)(Info->buffer[pos]);
-        if ((a<32) &
-            (a!=10) & (a!=13) &          //--- passage de ligne --------
-            (a!=12) &                    //--- passage de page ---------
-            (a!=17) &
-            (a!=16) &
-            (a!=9) &                     //--- tabulation --------------
-            (a!=0) &                     //--- erreur buffer -----------
-            (a!=2) &                     //--- la petite tˆte ----------
-            (a!=3) &                     //--- le petit coeur ----------
-            (a!=26))
-            {                            //--- fin de fichier ----------
-            // cprintf("%d",Info->buffer[pos]);
-            return 1;
-            }
-        }
-    }
+val=IsTxt(Info);
+if (val<50) return 1;
 
 sprintf(Info->message[0]," English probability:         %3d %%",val);
 
 SplitName(Info->filename,NULL,Info->ext);
 
+
+//--- Recherche du nom -------------------------------------------------
 
 pos=0;
 
@@ -3795,6 +3925,89 @@ if (pos>999) Info->fullname[0]=0;
 return 0;
 }
 
+
+char IsTxt(RB_IDF *Info)
+{
+unsigned short pos;
+unsigned char a;
+
+/*--------------------------------------------------------------------*\
+|-  Recherche de la valeur texte par statistique                      -|
+\*--------------------------------------------------------------------*/
+
+unsigned short tab[256];
+short ord[256];
+short i,j,n;
+char col[]=" etanoris-hdlc";
+int val=0;
+unsigned char c;
+unsigned short nm;
+
+nm=0;
+
+for (n=0;n<256;n++)
+    {
+    tab[n]=0;
+    ord[n]=n;
+    }
+
+for (pos=0;pos<Info->sizebuf;pos++)
+    {
+    c=ReadChar(Info,pos);
+    if ((c>='A') & (c<='Z')) c=c+'a'-'A';
+    tab[c]++;
+    }
+
+for(i=32;i<126;i++)
+    nm+=tab[i];
+nm+=tab[10]+tab[13];
+
+for (i=0;i<256;i++)
+    for(j=i;j<256;j++)
+        if (tab[ord[i]]<tab[ord[j]])
+            {
+            n=ord[i];
+            ord[i]=ord[j];
+            ord[j]=n;
+            }
+
+for (i=0;i<15;i++)
+    {
+    for (n=0;n<15;n++)
+        if (ord[i]==col[n])
+            {
+            val+=100+((50*abs(i-n))/15);
+            break;
+            }
+    }
+
+val=((val/15)*nm)/Info->sizebuf;
+if (val<50)
+    {
+    for (pos=0;pos<Info->sizebuf;pos++)
+        {
+        a=(unsigned char)(Info->buffer[pos]);
+        if ((a<32) &
+            (a!=10) & (a!=13) &          //--- passage de ligne --------
+            (a!=12) &                    //--- passage de page ---------
+            (a!=17) &
+            (a!=16) &
+            (a!=9) &                     //--- tabulation --------------
+            (a!=0) &                     //--- erreur buffer -----------
+            (a!=2) &                     //--- la petite tˆte ----------
+            (a!=3) &                     //--- le petit coeur ----------
+            (a!=26))
+            {                            //--- fin de fichier ----------
+            // cprintf("%d",Info->buffer[pos]);
+            return 0;
+            }
+        }
+    val=50;
+    }
+
+return val;
+}
+
 short Infohtm(RB_IDF *Info)
 {
 unsigned long n,d;
@@ -3802,6 +4015,8 @@ char *buf;
 char titre[64];
 
 buf=Info->buffer;
+
+Info->fullname[0]=0;
 
 d=0;
 for(n=0;n<32768;n++)
@@ -3834,5 +4049,95 @@ for(n=0;n<32768;n++)
 return 1;
 }
 
+
+/*--------------------------------------------------------------------*\
+|- produit microsoft                                                  -|
+\*--------------------------------------------------------------------*/
+
+short Infoms(RB_IDF *Info)
+{
+char key[]="\xD0\xCf\x11\xE0\xA1\xB1\x1A\xE1";
+char key2[8];
+
+ReadStr(Info,0,key2,8);
+return (memcmp(key,key2,8)!=0);
+}
+
+
+short Infopub(RB_IDF *Info)
+{
+long pos;
+if (Infoms(Info)) return 1;
+pos=(ReadLng(Info,0x30,1)+1)*0x200;
+return (ReadInt(Info,pos+0x50,1)!=0x1201);
+}
+
+short Infoxls(RB_IDF *Info)
+{
+long pos;
+if (Infoms(Info)) return 1;
+pos=(ReadLng(Info,0x30,1)+1)*0x200;
+return (ReadInt(Info,pos+0x50,1)!=0x0810);
+}
+
+short Infodoc(RB_IDF *Info)
+{
+long pos;
+if (Infoms(Info)) return 1;
+pos=(ReadLng(Info,0x30,1)+1)*0x200;
+return (ReadInt(Info,pos+0x50,1)!=0x0900);
+}
+
+short Infowps(RB_IDF *Info)
+{
+long pos;
+if (Infoms(Info)) return 1;
+pos=(ReadLng(Info,0x30,1)+1)*0x200;
+return (ReadInt(Info,pos+0x50,1)!=0xDBC2);
+}
+
+short Infowdb(RB_IDF *Info)
+{
+long pos;
+if (Infoms(Info)) return 1;
+pos=(ReadLng(Info,0x30,1)+1)*0x200;
+return (ReadInt(Info,pos+0x50,1)!=0xDBC3);
+}
+
+short Infoppt(RB_IDF *Info)
+{
+long pos;
+if (Infoms(Info)) return 1;
+pos=(ReadLng(Info,0x30,1)+1)*0x200;
+return (ReadInt(Info,pos+0x50,1)!=0x4851);
+}
+
+
+/*--------------------------------------------------------------------*\
+|- extended-information sauce                                         -|
+\*--------------------------------------------------------------------*/
+short InfoSauce(RB_IDF *Info)
+{
+char buffer[6];
+int pos;
+
+//--- Teste si on a sauce ----------------------------------------------
+
+pos=Info->sizemax-128;
+
+ReadStr(Info,pos,buffer,5);
+if (!strcmp(buffer,"SAUCE"))
+    {
+    ReadStr(Info,pos+7,Info->fullname,35);
+    ReadStr(Info,pos+42,Info->composer,20);
+    strcpy(Info->Tinfo,"Group");
+    ReadStr(Info,pos+62,Info->info,20);
+
+//  if (ReadChar(Info,pos+104)!=0) --> Commentaire avant, on s'en fout !
+    return 0;
+    }
+
+return 1;
+}
 
 

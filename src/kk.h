@@ -1,9 +1,11 @@
-#define VERSION "0.9"
-#define RBTitle "Ketchup Killers Commander V0.9"
+#define VERSION "0.91"
+#define RBTitle "Ketchup Killers Commander V0.91"
 
 #define CALLING __cdecl
 
 #define TOTFIC 2000
+
+#define MAXPATH 256
 
 #define GAUCHE 0x4B
 #define DROITE 0x4D
@@ -176,6 +178,8 @@ struct kkconfig
      char addselect; //=1 on rajoute une ligne select dans le pannel-39
      long mtrash;                      // taille maximum de la trash-40
 
+     char lift; //--- Ascensceur ------------------------------------45
+
     //--- Variable pour le viewer --------------------------------------
 
      KKVIEW V;
@@ -186,10 +190,8 @@ struct kkconfig
      char cmdline; //---------------------------------------------------
      long strash;                               // Actual Size of trash-
 
-
      char scrrest;
 
-     
      long FenAct;                         // Quelle fenˆtre est active ?
      char _4dos;                                // equal 1 if 4DOS found
      char _Win95;                                    // Support nom long
@@ -240,7 +242,6 @@ extern int IOerr;
 #include "reddies.h"
 #include "driver.h"
 #include "win.h"
-#include "longname.h"
 #include "rbdos.h"
 
 #ifdef DEBUG
@@ -266,4 +267,4 @@ void Console(void);
 |- prototype de macro.c                                               -|
 \*--------------------------------------------------------------------*/
 void RunMacro(char*);
-
+void RunAutoMacro(void);

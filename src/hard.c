@@ -67,8 +67,11 @@ static char _charm;
 static int _xw,_yw;                // position up left in window -------
 static int _xw2,_yw2;              // position bottom right in window --
 
-char _IntBuffer[256];              // Buffer interne multi usage -------
-char _IntBuffe2[256];              // Buffer interne multi usage -------
+static char _IntBuffer[256];           // Buffer interne multi usage ---
+static char _IntBuffe2[256];           // Buffer interne multi usage ---
+
+static int _KeyBuf[32];                // Buffer pour les touches ------
+static int _NbrKey=0;                  // Nbr de touches dans KeyBuf ---
 
 char _RB_screen[256*128*2];
 
@@ -91,10 +94,10 @@ void (*Clr)(void);
 #endif
 
 
+
 /*--------------------------------------------------------------------*\
 |- Fonction interne                                                   -|
 \*--------------------------------------------------------------------*/
-void MakeFont(char *font,char *adr);
 void Beep(void);
 void Font8xFile(int height,char *path);
 void InitSeg(void);
@@ -107,6 +110,7 @@ int __far Error_handler(unsigned, unsigned, unsigned far *);
 \*--------------------------------------------------------------------*/
 void Norm_Clr(void);
 void Norm_Window(long left,long top,long right,long bottom,long color);
+int Norm_KbHit(void);
 
 void Norm_Clr(void)
 {
@@ -141,7 +145,12 @@ for(y=top;y<=bottom;y++)
         AffChr(x,y,32);
 }
 
-
+int Norm_KbHit(void)
+{
+if (_NbrKey==0)
+    return kbhit();
+return 1;
+}
 
 /*--------------------------------------------------------------------*\
 |-            Affiche des caractŠres directement … l'‚cran            -|
@@ -154,11 +163,12 @@ void Cache_WhereXY(long *x,long *y);
 
 char *scrseg[50];
 
+
 void Cache_AffChr(long x,long y,long c)
 {
 if (*(_RB_screen+((y<<8)+x))!=(char)c)
     {
-    *(scrseg[y]+(x<<1))=(char)c;
+    *(scrseg[y]+(x<<1))=(short)c;
     *(_RB_screen+((y<<8)+x))=(char)c;
     }
 }
@@ -172,6 +182,7 @@ if (*(_RB_screen+((y<<8)+x)+256*128)!=(char)c)
     }
 }
 
+
 long Cache_Wait(long x,long y)
 {
 int a,b;
@@ -182,6 +193,9 @@ int xm=0,ym=0,zm=0;
 if ((x!=0) | (y!=0))
     GotoXY(x,y);
 
+if (_NbrKey!=0)
+    return GetKey();
+
 Cl=clock();
 
 a=0;
@@ -190,7 +204,6 @@ b=0;
 while ( (!kbhit()) & (b==0) & (zm==0) )
     {
     GetPosMouse(&xm,&ym,&zm);
-    
 
     if ( ((clock()-Cl)>Cfg->SaveSpeed*CLOCKS_PER_SEC)
         & (Cfg->SaveSpeed!=0) )
@@ -202,6 +215,10 @@ if (zm!=0) _zmok=0;
 if ((b==0) & (zm==0))
     {
     a=getch();
+
+    if (a=='ü')
+        SnapShot();
+
     if (a==0)
         return getch()*256+a;
 
@@ -351,6 +368,25 @@ for(j=top;j<=bottom;j++)
 for(j=top;j<=bottom;j++)
     for (i=left;i<=right;i++)
         AffChr(i,j,32);
+}
+
+void PutKey(int key)
+{
+if (_NbrKey!=32)
+    {
+    _KeyBuf[_NbrKey]=key;
+    _NbrKey++;
+    }
+}
+
+int GetKey(void)
+{
+if (_NbrKey!=0)
+    {
+    _NbrKey--;
+    return _KeyBuf[_NbrKey];
+    }
+return -1;
 }
 
 
@@ -1507,15 +1543,20 @@ return retour;
 \*--------------------------------------------------------------------*/
 void ScreenSaver(void)
 {
+char r,g,b;
+
+GetPal(0,&r,&g,&b);
+SetPal(0,0,0,0);
 inp(0x3DA);
 inp(0x3BA);
 outp(0x3C0,0);
 
-while(!kbhit());
+while(!KbHit());
 
 inp(0x3DA);
 inp(0x3BA);
 outp(0x3C0,0x20);
+SetPal(0,r,g,b);
 }
 
 /*--------------------------------------------------------------------*\
@@ -1713,12 +1754,26 @@ ChrLin(x1,y1,xl,car);
 }
 
 /*--------------------------------------------------------------------*\
-|- Make the font                                                      -|
+|- Gestion des fontes                                                 -|
 \*--------------------------------------------------------------------*/
 
-void MakeFont(char *font,char *adr)
+void Buf2Font(char *buffer)
 {
-int n;
+int i,j;
+char *scr=(char*)0xA0000;
+
+int height;
+
+switch(Cfg->TailleY)
+    {
+    case 50:
+        height=8;
+        break;
+    case 25:
+    case 30:
+        height=16;
+        break;
+    }
 
 outpw( 0x3C4, 0x402);
 outpw( 0x3C4, 0x704);
@@ -1727,8 +1782,9 @@ outpw( 0x3CE, 0x204);
 outpw( 0x3CE, 5);
 outpw( 0x3CE, 6);
 
-for (n=0;n<16;n++)
-    adr[n]=font[n];
+for (i=0;i<256;i++)
+    for (j=0;j<16;j++)
+        scr[i*32+j]=buffer[i*height+j];
 
 outpw( 0x3C4, 0x302);
 outpw( 0x3C4, 0x304);
@@ -1738,13 +1794,70 @@ outpw( 0x3CE, 0x1005);
 outpw( 0x3CE, 0xE06);
 }
 
+void Font2Buf(char *buffer)
+{
+int i,j;
+char *scr=(char*)0xA0000;
+
+int height;
+
+switch(Cfg->TailleY)
+    {
+    case 50:
+        height=8;
+        break;
+    case 25:
+    case 30:
+        height=16;
+        break;
+    }
+
+outpw( 0x3C4, 0x402);
+outpw( 0x3C4, 0x704);
+outpw( 0x3CE, 0x204);
+
+outpw( 0x3CE, 5);
+outpw( 0x3CE, 6);
+
+for (i=0;i<256;i++)
+    for (j=0;j<16;j++)
+        buffer[i*height+j]=scr[i*32+j];
+
+outpw( 0x3C4, 0x302);
+outpw( 0x3C4, 0x304);
+
+outpw( 0x3CE, 4);
+outpw( 0x3CE, 0x1005);
+outpw( 0x3CE, 0xE06);
+}
+
+/*--------------------------------------------------------------------*\
+|- Gestion de la palette                                              -|
+\*--------------------------------------------------------------------*/
+void Buf2Pal(char *pal)
+{
+int n;
+for(n=0;n<16;n++)
+    SetPal(n,pal[n*3],pal[n*3+1],pal[n*3+2]);
+}
+
+void Pal2Buf(char *pal)
+{
+int n;
+for(n=0;n<16;n++)
+    GetPal(n,&(pal[n*3]),&(pal[n*3+1]),&(pal[n*3+2]));
+}
+
+
+/*--------------------------------------------------------------------*\
+|- Make the font                                                      -|
+\*--------------------------------------------------------------------*/
+
 
 void Font8xFile(int height,char *path)
 {
 FILE *fic;
 char *pol;
-char *buf=(char*)0xA0000;
-int n;
 
 Cfg->Tfont=179;                            // Barre Verticale | with 8x?
 
@@ -1766,8 +1879,7 @@ fread(pol,256*height,1,fic);
 
 fclose(fic);
 
-for (n=0;n<256;n++)
-    MakeFont(pol+n*height,buf+n*32);
+Buf2Font(pol);
 
 if (Cfg->TailleX==80)                         // 9 bits normal -> 8 bits
     {
@@ -1789,7 +1901,6 @@ if (Cfg->TailleX==80)                         // 9 bits normal -> 8 bits
     R.h.bl=0x13;
     int386(0x10,&R,&R);
     }
-
 
 LibMem(pol);
 }
@@ -1957,21 +2068,13 @@ InitSeg();
 }
 
 
-void SavePal(char *pal)
-{
-int n;
-
-for(n=0;n<16;n++)
-    GetPal(n,&(pal[n*3]),&(pal[n*3+1]),&(pal[n*3+2]));
-}
 
 void LoadPal(char *pal)
 {
 union REGS regs;
 int n;
 
-for(n=0;n<16;n++)
-    SetPal(n,Cfg->palette[n*3],Cfg->palette[n*3+1],Cfg->palette[n*3+2]);
+Buf2Pal(Cfg->palette);
 
 regs.w.ax=0x1003;                   // Donne la palette n … la couleur n
 regs.w.bx=0;
@@ -2180,7 +2283,7 @@ while (r==0)
         py=MousePosY();
         pz=MouseButton();
 
-        if ( ((pz&4)==4) & (px==x+1) & (py==y) )
+        if ( ((pz&1)==1) & (px==x+1) & (py==y) )
             car=32;
             else
             r=8;
@@ -2249,7 +2352,7 @@ while (r==0)
         py=MousePosY();
         pz=MouseButton();
 
-        if ( ((pz&4)==4) & (px==x+1) & (py==y) )
+        if ( ((pz&1)==1) & (px==x+1) & (py==y) )
             car=32;
             else
             r=8;
@@ -2291,7 +2394,7 @@ return r;
 }
 
 /*--------------------------------------------------------------------*\
-|-   Retourne 27 si escape                                            -|
+|-   Retourne -1 si escape                                            -|
 |-   Retourne numero de la liste sinon                                -|
 \*--------------------------------------------------------------------*/
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F,int first)
@@ -2796,6 +2899,8 @@ Cfg->comspeed=19200;
 Cfg->combit=8;
 Cfg->comparity='N';
 Cfg->comstop=1;
+
+Cfg->mousemode=0;
 }
 
 
@@ -2825,12 +2930,12 @@ switch(IOerr)
         return _HARDERR_FAIL;
     }
 
-t=(Cfg->TailleX-80)/2;
-
 IOerr=1;
 
 if (IOver==1)
     return _HARDERR_FAIL;
+
+t=(Cfg->TailleX-80)/2;
 
 SaveScreen();
 
@@ -2991,7 +3096,7 @@ InitSeg();
 AffChr=Cache_AffChr;
 AffCol=Cache_AffCol;
 Wait=Cache_Wait;
-KbHit=kbhit;
+KbHit=Norm_KbHit;
 GotoXY=Cache_GotoXY;
 WhereXY=Cache_WhereXY;
 
@@ -3361,43 +3466,76 @@ Bar(bbar);
 if (fonction[0]!=NULL)
     fonction[0](&(bar[c]));
 
-car=Wait(0,0);
+car=0;
+
+while ((!KbHit()) & (car==0))
+    {
+    int xm,ym,zm,zm2;
+
+    GetPosMouse(&xm,&ym,&zm);
+
+    if (zm!=0)
+        {
+        do
+            GetRPosMouse(&xm,&ym,&zm2);
+        while (zm2!=0);
+
+        if ((zm&2)==2)
+            car=27;
+
+        if ((ym<0) & (((menu->attr)&8)==0))
+            car=27;                 // en esperant que la barre est en 0
+
+        if ((zm&1)==1)
+            {
+            int xm2,ym2;
+
+            xm2=xm+xp;
+            ym2=ym+yp;
+
+            if (ym2==Cfg->TailleY-1)  //- Fx key -----------------------
+                {
+                int n;
+                if (Cfg->TailleX==90)
+                    {
+                    n=xm2/9;
+                    ColLin(n*9+2,Cfg->TailleY-1,6,Cfg->col[6]);
+                    car=((0x3B+(xm2/9))*256);
+                    }
+                    else
+                    {
+                    n=xm2/8;
+                    ColLin(n*8+2,Cfg->TailleY-1,6,Cfg->col[6]);
+                    car=((0x3B+(xm2/8))*256);
+                    }
+                }
+                else
+            if (xm<0)
+                car=0x4B00;
+                else
+            if (xm>(max-1))
+                car=0x4D00;
+                else
+            if ( (ym>=0) & (ym<nbr) )
+                {
+                if (bar[ym].fct!=0)
+                    {
+                    if (c==ym)
+                        car=13;
+                        else
+                        {
+                        car=1;
+                        c=ym;
+                        }
+                    }
+                }
+
+            }
+        }
+    }
 
 if (car==0)
-    {
-    int xm,ym,button;
-
-    ym=MouseRPosY();
-    xm=MouseRPosX();
-
-    button=MouseButton();
-
-    if ((button&4)==4)
-        car=13;
-
-    if ((button&2)==2)
-        car=27; 
-
-    if ((ym<0) & (((menu->attr)&8)==0))
-        car=27;                     // en esperant que la barre est en 0
-
-    if ((button&1)==1)
-        {
-        if ( (ym>=0) & (ym<nbr) )
-            {
-            if (bar[ym].fct!=0)
-                c=ym;
-            }
-
-        if (xm<0)
-            car=0x4B00;
-
-        if (xm>(max-1))
-            car=0x4D00;
-        }
-
-    ReleaseButton();
-    }
+    car=Wait(0,0);
 
 do
     {
@@ -4367,6 +4505,9 @@ if (_MouseOK==0)
 R.w.ax=0x000B;
 int386(0x33,&R,&R);
 
+if (Cfg->mousemode==0)
+{
+
 t=R.w.cx;
 _MPosX+=t;
 t=R.w.dx;
@@ -4428,14 +4569,72 @@ if ((_zm&1)==1)
         }
     }
 
-
 if (_zm==0) _zmok=1;                    // On debloque si touche relache
 
 if (_zmok==0) _zm=0;         // Touche est relache si pas encore relache
 
+    if ((_zm&3)==3)
+        {
+        _NbrKey=0;
+        Cfg->mousemode=1;
+        _zm=0;
+        _zmok=0;
+
+        *(scrseg[_ym]+(_xm<<1)+1)=GetCol(_xm,_ym);
+        }
 
 (*button)=_zm;
+}
+else
+    {
+    signed short xp,yp;
 
+    (*x)=0;
+    (*y)=0;
+    (*button)=0;
+
+    xp=(signed short)(R.w.cx);
+    yp=(signed short)(R.w.dx);
+
+    if ((xp>0) & (yp==0))
+        PutKey(0x4D00);
+    if ((xp<0) & (yp==0))
+        PutKey(0x4B00);
+
+    if ((yp>0) & (xp==0))
+        PutKey(0x5000);
+    if ((yp<0) & (xp==0))
+        PutKey(0x4800);
+
+
+    R.w.ax=0x0005; //--- Etat des boutons ------------------------------
+    int386(0x33,&R,&R);
+
+    _zm=R.w.ax;
+
+    if (_zm==0)
+         _zmok=1;                //--- On debloque si touche relache ---
+
+    if (_zmok==0) _zm=0;     // Touche est relache si pas encore relache
+
+    if (_zm!=0)
+        _zmok=0;
+
+    if ((_zm&3)==3)
+        {
+        _NbrKey=0;
+        Cfg->mousemode=0;
+        _zm=0;
+        _zmok=0;
+        }
+
+    if ((_zm&1)==1)
+        PutKey(13);
+    if ((_zm&2)==2)
+        PutKey(27);
+
+    _zm=0;
+    }
 }
 
 void InitFont(void)
@@ -4460,6 +4659,8 @@ switch (Cfg->TailleY)
 /*--------------------------------------------------------------------*\
 |- Affichage de la barre en dessous de l'ecran                        -|
 \*--------------------------------------------------------------------*/
+
+static char statusbar;
 
 void Bar(char *bar)
 {
@@ -4489,6 +4690,57 @@ for (i=0;i<10;i++)
     }
 }
 
+int GetMouseFctBar(int status)
+{
+int xm,ym,zm;
+int n0,n1;
+char col0,col1;
+
+GetPosMouse(&xm,&ym,&zm);
+
+n0=-1;
+n1=-1;
+
+col0=((Cfg->col[6])/16)+(Cfg->col[6]&15)*16;
+col1=Cfg->col[6];
+
+switch(status)
+    {
+    case 0:
+        statusbar =(Cfg->TailleX==90) ? xm/9 : xm/8;
+        n0=statusbar;
+        break;
+    case 1:
+        n0 =(Cfg->TailleX==90) ? xm/9 : xm/8;
+
+        if ((n0!=statusbar) | (ym!=Cfg->TailleY-1))
+            {
+            n0=-1;
+            n1=statusbar;
+            }
+
+        break;
+    case 2:
+        n1=statusbar;
+        statusbar =(Cfg->TailleX==90) ? xm/9 : xm/8;
+        break;
+    }
+
+if ((n0!=-1) & (ym==Cfg->TailleY-1))
+    ColLin(n0*((Cfg->TailleX==90) ? 9 : 8)+2,Cfg->TailleY-1,6,col0);
+
+if (n1!=-1)
+    ColLin(n1*((Cfg->TailleX==90) ? 9 : 8)+2,Cfg->TailleY-1,6,col1);
+
+if ((n1==statusbar) & (ym==Cfg->TailleY-1))
+    return ((0x3B+(xm/((Cfg->TailleX==90) ? 9 : 8)))*256);
+    else
+    return 0;
+}
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
 void GetFreeMem(char *buffer);
 #pragma aux GetFreeMem = \
     "mov ax,0500h" \
@@ -4504,6 +4756,67 @@ GetFreeMem((char*)tail);                           // inconsistent ?
 
 return tail[0];
 }
+
+void SnapShot(void)
+{
+char head1[]={0x6d,0x68,0x77,0x61,0x6e,0x68,0x0,0x04};
+char head2[]={1,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0};
+char palette[768];
+char font[256*16];
+FILE *fic;
+short x,y,x1,y1,z;
+char car,col;
+int expos[]={128,64,32,16,8,4,2,1};
+
+int n;
+
+switch(Cfg->TailleY)
+    {
+    case 50:
+        z=8;
+        break;
+    case 25:
+    case 30:
+        z=16;
+        break;
+    }
+
+x1=(Cfg->TailleX)*8;
+y1=(Cfg->TailleY)*z;
+
+x=(x1&255)*256+x1/256;
+y=(y1&255)*256+y1/256;
+
+fic=fopen("snap.raw","wb");
+
+fwrite(head1,1,8,fic);
+fwrite(&x,1,2,fic);
+fwrite(&y,1,2,fic);
+fwrite(head2,1,20,fic);
+
+memset(palette,0,768);
+Pal2Buf(palette);
+for(n=0;n<768;n++)
+    palette[n]*=4;
+
+fwrite(palette,1,768,fic);
+
+Font2Buf(font);
+
+for(y=0;y<Cfg->TailleY;y++)
+for(y1=0;y1<z;y1++)
+    for(x=0;x<Cfg->TailleX;x++)
+    for(x1=0;x1<8;x1++)
+        {
+        car=GetChr(x,y);
+        col=GetCol(x,y);
+        fputc(((font[car*z+y1])&expos[x1])!=expos[x1] ? col/16 : col&15,fic);
+        }
+
+fclose(fic);
+}
+
+
 
 #ifdef DEBUG
 void Debug(char *string,...)

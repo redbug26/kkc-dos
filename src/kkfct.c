@@ -22,6 +22,7 @@ KKCfg->isidf=1;
 KKCfg->sizewin=0;
 
 KKCfg->addselect=0;
+KKCfg->lift=1;
 
 KKCfg->KeyAfterShell=0;
 
@@ -42,6 +43,9 @@ KKCfg->confexit=1;
 
 KKCfg->dispath=0;
 KKCfg->pathdown=0;
+
+KKCfg->V.Traduc[0]=10;
+KKCfg->V.Traduc[1]=0;
 
 strcpy(KKCfg->V.Mask[0]->title,"C Style");
 strcpy(KKCfg->V.Mask[0]->chaine,
@@ -95,7 +99,7 @@ strcpy(KKCfg->V.Mask[15]->chaine,
 KKCfg->V.Mask[15]->Ignore_Case=1;
 KKCfg->V.Mask[15]->Other_Col=1;
 
-strcpy(KKCfg->extens,"RAR ARJ ZIP LHA DIZ EXE COM BAT BTM");
+strcpy(KKCfg->extens,"RAR ARJ ZIP LHA DIZ EXE COM BAT BTM KKP");
 
 
 KKCfg->fentype=4;
@@ -123,7 +127,7 @@ KKCfg->seldir=1;
 
 KKCfg->hidfil=1;
 
-KKCfg->enterkkd=1;
+KKCfg->enterkkd=0;
 
 KKCfg->palafter=1;
 
@@ -137,7 +141,7 @@ KKCfg->ssaver[0]=0;
 KKCfg->Esc2Close=0;
 
 strcpy(KKCfg->ExtTxt,
-                 "ASM BAS C CPP DIZ DOC H HLP HTM INI LOG NFO PAS TXT");
+                 "ASM BAS C CPP DIZ DOC H HLP HTM INI LOG NFO PAS TXT CKK");
 KKCfg->Enable_Txt=1;
 strcpy(KKCfg->ExtBmp,
          "FIF BMP GIF ICO JPG LBM PCX PIC PKM PNG RAW TGA TIF WMF WPG");
@@ -146,7 +150,7 @@ strcpy(KKCfg->ExtSnd,"IT IFF MID MOD MTM S3M VOC WAV XM RTM MXM");
 KKCfg->Enable_Snd=1;
 strcpy(KKCfg->ExtArc,"ARJ LHA RAR ZIP KKD DFP");
 KKCfg->Enable_Arc=1;
-strcpy(KKCfg->ExtExe,"BAT BTM COM EXE PRG");
+strcpy(KKCfg->ExtExe,"BAT BTM COM EXE PRG KKP");
 KKCfg->Enable_Exe=1;
 strcpy(KKCfg->ExtUsr,"XYZ");
 KKCfg->Enable_Usr=1;
@@ -202,11 +206,13 @@ strcpy(Edit,KKCfg->editeur);
 strcpy(View,KKCfg->vieweur);
 strcpy(SSaver,KKCfg->ssaver);
 
+n=0;
+
 do
 {
 fin=1;
 
-n=WinTraite(T,10,&F,0);
+n=WinTraite(T,10,&F,n);
 
 if (n==-1) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel

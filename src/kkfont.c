@@ -28,6 +28,36 @@ int Seekfile(int x,int y,char *name);
 
 char savefont[16];
 
+char OldFont[4096];
+
+void SaveFont(char *buffer)
+{
+int i,j;
+char *scr=(char*)0xA0000;
+
+int height;
+
+height=16;
+
+outpw( 0x3C4, 0x402);
+outpw( 0x3C4, 0x704);
+outpw( 0x3CE, 0x204);
+
+outpw( 0x3CE, 5);
+outpw( 0x3CE, 6);
+
+for (i=0;i<256;i++)
+    for (j=0;j<16;j++)
+        buffer[i*height+j]=scr[i*32+j];
+
+outpw( 0x3C4, 0x302);
+outpw( 0x3C4, 0x304);
+
+outpw( 0x3CE, 4);
+outpw( 0x3CE, 0x1005);
+outpw( 0x3CE, 0xE06);
+}
+
 char DelByte(char b,char p)
 {
 char a[8];
@@ -220,6 +250,11 @@ pj=0;
 
 WinCadre(75,3,77,5,1);
 
+AffChr(75, 8,145);
+AffChr(75, 9,145);
+AffChr(75,10,0xAE);
+AffChr(75,11,145);
+AffChr(75,12,145);
 
 WinCadre(1,1,10,2+tx,2);
 
@@ -252,6 +287,8 @@ AffCol(pi+2,pj+2,2*16+4);
 AffCol(40+(cur&15),2+(cur/16),7*16+10);
 car=Wait(0,0);
 AffCol(40+(cur&15),2+(cur/16),10*16+7);
+
+
 
 
 switch(HI(car))
@@ -323,6 +360,12 @@ switch(HI(car))
 
 switch(car)
     {
+    case 'D':
+    case 'd':
+        for(n=0;n<tx;n++)
+            font[cur*tx+n]=OldFont[cur*tx+n];
+        break;
+
     case 0x19: //--- Ctrl-y --------------------------------------------
 
 
@@ -353,6 +396,8 @@ int OldX,OldY;                         // To save the size of the screen
 int n;
 
 char *path;
+
+SaveFont(OldFont);
 
 /*--------------------------------------------------------------------*\
 |-  Initialisation de l'ecran                                         -|
