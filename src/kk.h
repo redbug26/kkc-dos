@@ -1,4 +1,4 @@
-#define VERSION "0.20"
+#define VERSION "0.21"
 
 #define ENTIER short
 
@@ -18,6 +18,7 @@ struct file {
     int size;
     unsigned short time;
     unsigned short date;
+    char *info;
 };
 
 

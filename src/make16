@@ -3,8 +3,9 @@
 CC = wcc
 CL = wlink
 
+
 # Maximum optimization for speed
-# CCOPTS = -w3 -dDEBUG -5r -fpi -oneatx -s -zdp -d__WC32__ -zu
+# CCOPTS = -w3 -dDEBUG -5r -fpi -oneatx -s -zdp -d__WC32__ -zu *****************
 # -zu fait       tout planter
 # -dDEBUG -d3    pour debugging
 # -mf            pour Model FLAT

@@ -2,7 +2,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <malloc.h>
 #include <dos.h>
 #include <string.h>
 #include <direct.h>
@@ -145,9 +144,9 @@ n=find1st(Nomarch,Dest,nom);
 
 if ( (n==1) & (Header.FType!=2) )
     {
-    Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=malloc(strlen(Dest)+1);
+    Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
     memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
     Fic[DFen->nbrfic]->size=Header.UnpSize;
@@ -193,9 +192,9 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.FType!=2) )
 
         if (cont==1)
             {
-            Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-            Fic[DFen->nbrfic]->name=malloc(strlen(Dest)+1);
+            Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
             memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
             Fic[DFen->nbrfic]->size=0;
@@ -364,9 +363,9 @@ if (Lt.TeteType==0x74) {
     n=find1st(Nomarch,Dest,nom);
 
     if (n==1) {
-        Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+        Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-        Fic[DFen->nbrfic]->name=malloc(strlen(Dest)+1);
+        Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
         memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
         Fic[DFen->nbrfic]->size=Lt.UnpSize;      // >< Lt.PackSize
@@ -529,9 +528,9 @@ n=find1st(Nomarch,Dest,nom);
 
 if ( (n==1) & (Header.Signature==0x04034B50) )
     {
-    Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=malloc(strlen(Dest)+1);
+    Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
     memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
     Fic[DFen->nbrfic]->size=Header.UnpSize;
@@ -577,9 +576,9 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
 
         if (cont==1)
             {
-            Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-            Fic[DFen->nbrfic]->name=malloc(strlen(Dest)+1);
+            Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
             memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
             Fic[DFen->nbrfic]->size=0;
@@ -742,9 +741,9 @@ n=find1st(Nomarch,Dest,nom);
 
 if (n==1)
     {
-    Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=malloc(strlen(Dest)+1);
+    Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
     memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
     Fic[DFen->nbrfic]->size=Header.UnpSize;
@@ -790,9 +789,9 @@ if (!Maskcmp(Nomarch,nom))
 
         if (cont==1)
             {
-            Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-            Fic[DFen->nbrfic]->name=malloc(strlen(Dest)+1);
+            Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
             memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
             Fic[DFen->nbrfic]->size=0;
@@ -939,9 +938,9 @@ if (info==1)
     {
     read(handle,&tai,2);
 
-    Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=malloc(tai+1);
+    Fic[DFen->nbrfic]->name=GetMem(tai+1);
 
     read(handle,Fic[DFen->nbrfic]->name,tai);
     Fic[DFen->nbrfic]->name[tai]=0;
@@ -1036,14 +1035,18 @@ Repert=GetMem(5000*sizeof(void*));
 PosRepert=GetMem(5000*sizeof(long));
 
 
-TabRec=malloc(500*sizeof(char*));
-TabRec[0]=malloc(strlen(nom2)+1);
+TabRec=GetMem(500*sizeof(char*));
+TabRec[0]=GetMem(strlen(nom2)+1);
 memcpy(TabRec[0],nom2,strlen(nom2)+1);
 NbrRec=1;
 
 Nbdir=0;
 Nbfic=0;
 Posfic=0;
+
+
+SaveEcran();
+ColLin(0,0,80,1*16+4);
 
 
 do
@@ -1103,7 +1106,7 @@ while (error==0) {
             strcpy(moi,nom);
             Path2Abs(moi,ff.name);
 
-            TabRec[NbrRec]=malloc(strlen(moi)+1);
+            TabRec[NbrRec]=GetMem(strlen(moi)+1);
             memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
             NbrRec++;
             }
@@ -1123,8 +1126,7 @@ Posfic++;
 }
 while (NbrRec>0);
 
-
-
+ChargeEcran();
 
 fprintf(fic,"KKDR");
 

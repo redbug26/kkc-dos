@@ -1,5 +1,7 @@
 // Viewer
 
+#include <ctype.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
@@ -22,18 +24,23 @@
 
 #include "idf.h"
 
+
+void ChangeMask(void);
+char ReadChar(void);
 int HexaView(char *fichier);
-int TextView(char *fichier);
+int TxtView(char *fichier);
 int HtmlView(char *fichier,char *liaison);
+
+void Masque(short x1,short y1,short x2,short y2);
 
 int HexaView(char *fichier)
 {
 FILE *fic;
-int x,y,z,k,kl,ks;
+int x,y,ks;
 
 long cur1,cur2;
 
-long taille;
+long taille,z,k,kl;
 
 char *buffer;
 
@@ -54,7 +61,7 @@ taille=filelength(fileno(fic));
 
 if (taille==0) return -1;
 
-buffer=GetMem(32768);
+buffer=GetMem(65536);
 
 SaveEcran();
 PutCur(3,0);
@@ -81,7 +88,7 @@ PrintAt(3,1,"View File %s",fichier);
 
 fseek(fic,z,SEEK_SET);
 
-fread(buffer,32768,1,fic);
+fread(buffer,65536,1,fic);
 
 k=0;
 
@@ -94,14 +101,24 @@ if ((z+k+(((Cfg->TailleY)-6)*16) )>taille)
     else
     kl=k+(((Cfg->TailleY)-6)*16);
 
-if ( (kl>32768) & (kl<0) )
+while (k>32768)
     {
-    kl=kl-k;
-    z=z+k;
-    k=0;
+    kl-=32768;
+    k-=32768;
+    z+=32768;
 
     fseek(fic,z,SEEK_SET);
-    fread(buffer,32768,1,fic);
+    fread(buffer,65536,1,fic);
+    }
+
+while (k<0)
+    {
+    k+=32768;
+    kl+=32768;
+    z-=32768;
+
+    fseek(fic,z,SEEK_SET);
+    fread(buffer,65536,1,fic);
     }
 
 
@@ -129,7 +146,7 @@ for (y=0;y<Cfg->TailleY-6;y++)
 
     for (x=0;x<16;x++)
         {
-        if (k<kl)
+        if (z+k<taille)
             {
             PrintAt(x*3+11,y+4,"%02X",(unsigned char)(buffer[k]));
             AffChr(x+60,y+4,buffer[k]);
@@ -501,7 +518,7 @@ while (*b)
         else
         break;
 
-    if (tempo>=66)  // Mode 14400 baud
+    if (tempo>=Cfg->AnsiSpeed)
         {
         tempo=0;
         
@@ -741,20 +758,71 @@ fclose(fic);
 return (-1);
 }
 
+static FILE *fic;
+static long taille;
+static char view_buffer[32768];
+static long pos;        // position de depart
+static long posl;       // taille du buffer
+static long posn;       // octet courant
 
-int TextView(char *fichier)
+// Lit l'octet se trouvant en posn
+//---------------------------------
+char ReadChar(void)
 {
-FILE *fic;
+// PrintAt(0,0,"Position: %9d",posn);
 
-long n,taille;
+if (posn>taille)
+    {
+    posn=taille-1;
+    return 0;
+    }
 
-char *buffer;
+if (posn<0)
+    posn=0;
+
+if (posn-pos>=posl)
+    {
+    while (posn-pos>=posl) pos+=32768;
+
+    fseek(fic,pos,SEEK_SET);
+    fread(view_buffer,32768,1,fic);
+    }
+
+if (posn-pos<0)
+    {
+    while (posn-pos<0) pos-=32768;
+
+    fseek(fic,pos,SEEK_SET);
+    fread(view_buffer,32768,1,fic);
+    }
+
+return view_buffer[posn-pos];
+}
+
+int TxtView(char *fichier)
+{
+long xm,ym;
+char aff,wrap;
+
+long posd;
 
 int xl,yl;
 int x,y;
+int x2,y2;
 
 char car;
 
+char chaine[256];
+short lchaine;
+
+register int n;
+
+char affichage[81];
+
+int code;
+char fin;
+
+char pasfini;
 
 fic=fopen(fichier,"rb");
 
@@ -768,106 +836,434 @@ taille=filelength(fileno(fic));
 
 if (taille==0) return -1;
 
-if (taille>4000) return 0;
+fread(view_buffer,32768,1,fic);
 
-buffer=GetMem(32768);
+pos=0;
+posl=32768;
 
-fread(buffer,32768,1,fic);
-
-fclose(fic);
-
-x=0;
-y=0;
-xl=0;
-
-for (n=0;n<taille;n++)
-    switch(buffer[n])  {
-        case 13:
-            x=0;
-            y++;
-            break;
-        case 10:
-            break;
-        default:
-            x++;
-            if (x>xl) xl=x;
-            break;
-        }
-
-if (x==0)
-    yl=y-1;
-    else
-    yl=y;
-xl--;
-
-if ( (xl>=78) | (yl>=(Cfg->TailleY-2)) )
-    {
-    free(buffer);
-    return 0;
-    }
+posn=0;
 
 SaveEcran();
 PutCur(3,0);
 
-x=(80-xl)/2;
-y=(Cfg->TailleY-yl)/2;
+Bar(" Help  ----  ----  ----  ----  ---- Search ----  Mask  ---- ");
 
-WinCadre(x-1,y-1,x+xl+1,y+yl+1,3);
+wrap=0;
+aff=1;
 
-ChrWin(x,y,x+xl,y+yl,32);
-ColWin(x,y,x+xl,y+yl,10*16+1);
+//-------------------- Calcul de la taille maximum ------------------------//
+xm=0;
+ym=0;
 
-xl=x;
-yl=y;
+x=0;
 
-for (n=0;n<taille;n++)
+if (taille<32768)
     {
-    car=buffer[n];
+    for (n=0;n<taille;n++)
+        {
+        switch(view_buffer[n])
+            {
+            case 10:
+                x=0;
+                ym++;
+                break;
+            case 13:
+                break;
+            case 9:
+                lchaine=x/8;
+                lchaine=lchaine*8+8;
+                lchaine-=x;
+                x+=lchaine;
+                break;
+            default:
+                x++;
+                if (x>xm) xm=x;
+                break;
+            }
+        }
+    }
+    else
+    {
+    xm=80;
+    ym=50;
+    }
+ym++;
 
-    switch(car)  {
-        case 13:
-            car=0;
-            xl=x;
-            yl++;
+if (xm>=79)
+    xl=80;
+    else
+    xl=xm;            //--> Longueur
+
+if (ym>Cfg->TailleY-1)
+    yl=Cfg->TailleY-1;
+    else
+    yl=ym;
+
+x=(80-xl)/2;           // centre le texte
+y=(Cfg->TailleY-yl)/2; //
+
+if (x<0) x=0;
+if (y<0) y=0;
+
+if ( (x>0) & (y>0) & (x+xl<80) & (y+yl<Cfg->TailleY) )
+    WinCadre(x-1,y-1,x+xl,y+yl,3);
+    else
+    {
+    if ( (y+yl<Cfg->TailleY) & (y>0) )
+        {
+        ColLin(0,y-1,80,10*16+1);
+        WinLine(0,y-1,80,1);
+        WinLine(0,y+yl,80,1);
+        ColLin(0,y+yl,80,10*16+1);
+        }
+    if ( (x+xl<80) & (x>0) )
+        {
+        ColWin(x-1,0,x-1,Cfg->TailleY-2,10*16+1);
+        ChrWin(x-1,0,x-1,Cfg->TailleY-2,0xB3);
+        ChrWin(x+xl,0,x+xl,Cfg->TailleY-2,0xB3);
+        ColWin(x+xl,0,x+xl,Cfg->TailleY-2,10*16+1);
+        }
+    }
+
+
+ChrWin(x,y,x+xl-1,y+yl-1,32);
+ColWin(x,y,x+xl-1,y+yl-1,10*16+1);
+
+//-------------------------------------------------------------------------//
+
+affichage[xl]=0;
+
+
+
+do
+{
+
+pasfini=0;
+
+posd=posn;
+
+x2=x;
+y2=y;
+
+do
+    {
+    lchaine=1;
+
+    chaine[0]=ReadChar();
+
+
+    switch(chaine[0])  {
+        case 0:
+            chaine[0]=32;
             break;
         case 10:
-            car=0;
+            lchaine=xl-x2+x+1;
+            memset(chaine,32,lchaine);
+            aff=2;
             break;
-        case 'Š':   car=232; break;
-        case '‚':   car=233; break;
-        case 'ˆ':   car=234; break;
-        case '‰':   car=235; break;
+        case 9:
+            lchaine=(x2-x)/8;
+            lchaine=lchaine*8+8;
+            lchaine-=(x2-x);
+            memset(chaine,32,lchaine);
+            break;
+        case 13:
+            chaine[0]=0;
+            break;
+        case 'Š': chaine[0]=232; break;
+        case '‚': chaine[0]=233; break;
+        case 'ˆ': chaine[0]=234; break;
+        case '‰': chaine[0]=235; break;
 
-        case '…':   car=224; break;
-        case ' ':   car=225; break;
-        case 'ƒ':   car=226; break;
-        case '„':   car=227; break;
+        case '…': chaine[0]=224; break;
+        case ' ': chaine[0]=225; break;
+        case 'ƒ': chaine[0]=226; break;
+        case '„': chaine[0]=227; break;
+
+        case '‡': chaine[0]='c'; break;
 
         default:
             break;
         }
 
-    if (car!=0)
+    for(n=0;n<lchaine;n++)
         {
-        AffChr(xl,yl,car);
-        xl++;
+        car=chaine[n];
+
+        if (x2>=x+xl)
+            {
+            if (aff==2)
+                {
+                PrintAt(x,y2,"%s",affichage);
+                affichage[0]=0;
+                x2=x;
+                y2++;
+                if (y2>=y+yl) break;
+                lchaine=0;
+                car=0;
+                aff=1;
+                }
+                else
+                aff=0;
+            }
+
+        if ( (car!=0) & (aff!=0) )
+            {
+            affichage[x2-x]=car;
+            x2++;
+            }
+        }
+
+    if (aff==2) aff=1;
+
+    if (y2>=y+yl)
+        break;
+    posn++;
+    if (posn>=taille)
+        {
+        pasfini=1;
+        lchaine=xl-x2+x;
+        memset(affichage+x2-x,32,lchaine);
+        PrintAt(x,y2,"%s",affichage);
+        y2++;
+        break;
         }
     }
+while(1);
 
-Wait(0,0,0);
+while(y2<y+yl)
+    {
+    memset(affichage,32,xl);
+    PrintAt(x,y2,"%s",affichage);
+    affichage[0]=0;
+    y2++;
+    }
+
+
+Masque(x,y,x+xl-1,y+yl-1);
+
+code=Wait(0,0,0);
+
+posn=posd;
+fin=0;
+
+switch(LO(code))
+    {
+    case 0:
+       switch(HI(code))   {
+            case 0x3B:       // F1
+                Help();
+                break;
+            case 0x41:  // F7
+                SearchTxt();
+                break;
+            case 0x43:
+                ChangeMask();
+                ColWin(x,y,x+xl-1,y+yl-1,10*16+1);
+                break;
+            case 80:    // BAS
+                if (pasfini==1) break;
+                do
+                    {
+                    posn++;
+                    if (posn==taille)
+                        {
+                        posn=taille-2;
+                        break;
+                        }
+                    }
+                while(ReadChar()!=0x0A);
+                posn++;
+
+                break;
+            case 72:    // HAUT
+                if (posn==0) break;
+                posn--;
+                if (posn==0) break;
+                do
+                    {
+                    posn--;
+                    if (posn==0)
+                        break;
+                    }
+                while(ReadChar()!=0x0A);
+                if (posn!=0) posn++;
+
+                break;
+            case 0x51:    // PGDN
+                for (n=0;n<yl;n++)
+                {
+                if (pasfini==1) break;
+                do
+                    {
+                    posn++;
+                    if (posn==taille)
+                        {
+                        posn=taille-2;
+                        break;
+                        }
+                    }
+                while(ReadChar()!=0x0A);
+                posn++;
+                }
+                break;
+            case 0x49:    // PGUP
+                for (n=0;n<yl;n++)
+                {
+                if (posn==0) break;
+                posn--;
+                if (posn==0) break;
+                do
+                    {
+                    posn--;
+                    if (posn==0)
+                        break;
+                    }
+                while(ReadChar()!=0x0A);
+                if (posn!=0) posn++;
+                }
+                break;
+            case 0x4F:    // END
+                posn=taille;
+                for (n=0;n<yl;n++)
+                {
+                if (posn==0) break;
+                posn--;
+                if (posn==0) break;
+                do
+                    {
+                    posn--;
+                    if (posn==0)
+                        break;
+                    }
+                while(ReadChar()!=0x0A);
+                if (posn!=0) posn++;
+                }
+                break;
+            case 0x47: // HOME
+                posn=0;
+                break;
+            case 0x8D: // CTRL-UP
+                fin=1;
+                break;
+            }
+        break;
+    case 27:
+        fin=1;
+        break;
+    }
+
+}
+while(!fin);
+
 
 ChargeEcran();
 
-free(buffer);
+
+fclose(fic);
+// free(view_buffer);
 
 return -1;
+}
+
+// Recherche une chaine
+void SearchTxt(void)
+{
+static char Dir[70];
+static int DirLength=70;
+static int CadreLength=71;
+
+struct Tmt T[5] = {
+      { 2,3,1,
+        Dir,
+        &DirLength},
+      {15,5,2,NULL,NULL},
+      {45,5,3,NULL,NULL},
+      { 5,2,0,"Change to which directory",NULL},
+      { 1,1,4,NULL,&CadreLength}
+      };
+
+struct TmtWin F = {
+    3,10,76,17,
+    "Search Text"};
+
+int n;
+int a;
+
+char c1,c2;
+
+a=posn;
+
+do
+    {
+    posn++;
+    if (posn==taille)
+        {
+        posn=taille-2;
+        break;
+        }
+    }
+    while(ReadChar()!=0x0A);
+
+posn++;
+
+n=WinTraite(T,5,&F);
+
+if ( (n!=0) & (n!=1) ) return;
+
+n=0;
+
+
+
+do
+{
+if (Dir[n]==0) break;
+
+c1=Dir[n];
+if ( (c1>='a') & (c1<='z') ) c1+='A'-'a';
+
+c2=ReadChar();;
+if ( (c2>='a') & (c2<='z') ) c2+='A'-'a';
+
+if (c1==c2)
+    n++;
+    else
+    {
+    if (n!=0)
+        {
+        posn-=(n-1);
+        n=0;
+        }
+    }
+
+posn++;
+}
+while (posn<taille);
+
+if (Dir[n]!=0)
+    {
+    posn=a;
+    WinError("Don't find text");
+    return;
+    }
+
+if (posn==0) return;
+posn--;
+if (posn==0) return;
+do
+    {
+    posn--;
+    if (posn==0) return;
+    }
+while(ReadChar()!=0x0A);
+if (posn!=0) posn++;
 }
 
 
 struct Href {
     char *link;
-    int x1,y1;
-    int x2,y2;
+    signed int x1,y1;
+    signed int x2,y2;
     struct Href *next;
     };
 
@@ -908,9 +1304,11 @@ short nbrcol;
 
 char car;
 
+char psuiv;     // vaut 1 si on passe le suivant
+
 int i,j,k;        // Compteur
 
-char bold,ital,unde;
+signed char bold,ital,unde;
 char pre;
 char nlist;      // nombre de liste
 char listn[16];  // position dans liste
@@ -1008,6 +1406,8 @@ nlist=0;
 
 lentit=0;
 
+psuiv=0;
+
 for (n=0;n<taille;n++)   {
 
 if (n>=lu) fread(buffer,32768,1,fic),lu+=32768;
@@ -1022,6 +1422,7 @@ switch(car)  {
         break;
 
     case '&':
+        memset(titre,0,128);
         code=1;
         car=0;
         break;
@@ -1035,6 +1436,13 @@ switch(car)  {
         lentit=k;
         break;
 
+    case ';':
+        if (psuiv==1)
+            {
+            psuiv=0;
+            car=0;
+            }
+
     default:
         break;
     }
@@ -1047,12 +1455,12 @@ switch(car)  {
             titre[debut-1]=0;
 
             if (!stricmp(titre,"TITLE"))  nbrcol++,tabcol[nbrcol]=3*16+14,aff=1;
-            if (!strnicmp(titre,"H1",2))  nbrcol++,tabcol[nbrcol]=3*16+13,aff=1;
-            if (!strnicmp(titre,"H2",2))  nbrcol++,tabcol[nbrcol]=4*16+13,aff=1;
-            if (!strnicmp(titre,"H3",2))  nbrcol++,tabcol[nbrcol]=5*16+13,aff=1;
-            if (!strnicmp(titre,"H4",2))  nbrcol++,tabcol[nbrcol]=3*16+1,aff=1;
-            if (!strnicmp(titre,"H5",2))  nbrcol++,tabcol[nbrcol]=4*16+1,aff=1;
-            if (!strnicmp(titre,"H6",2))  nbrcol++,tabcol[nbrcol]=5*16+1,aff=1;
+            if (!strnicmp(titre,"H1",2))  nbrcol++,tabcol[nbrcol]=3*16+13;
+            if (!strnicmp(titre,"H2",2))  nbrcol++,tabcol[nbrcol]=4*16+13;
+            if (!strnicmp(titre,"H3",2))  nbrcol++,tabcol[nbrcol]=5*16+13;
+            if (!strnicmp(titre,"H4",2))  nbrcol++,tabcol[nbrcol]=3*16+1;
+            if (!strnicmp(titre,"H5",2))  nbrcol++,tabcol[nbrcol]=4*16+1;
+            if (!strnicmp(titre,"H6",2))  nbrcol++,tabcol[nbrcol]=5*16+1;
 
             if (!stricmp(titre,"STRONG")) bold++;    // GRAS ON
             if (!stricmp(titre,"B"))      bold++;    // GRAS ON
@@ -1089,11 +1497,7 @@ switch(car)  {
                     ahref--;
                     suiv->next=(struct Href*)GetMem(sizeof(struct Href));
 
-                    if ( (suiv->x1==smot) & (suiv->y1==yp) )
-                        suiv->x2=smot;          // REFERENCE DE 1 DE LARGE
-                        else
-                        suiv->x2=smot-1;
-
+                    suiv->x2=smot;          // REFERENCE DE 1 DE LARGE
                     suiv->y2=yp;
 
                     suiv=suiv->next;
@@ -1140,9 +1544,9 @@ switch(car)  {
             if (!stricmp(titre,"BR"))  aff=1;        // C‚sure forc‚e
             if (!stricmp(titre,"P")) aff=1;         // fin de paragraphe
             if (!stricmp(titre,"OL"))  listt[nlist]=2,listn[nlist]=1,nlist++;
-            if (!stricmp(titre,"/OL")) listt[nlist]=0,listn[nlist]=0,nlist--;
+            if (!stricmp(titre,"/OL")) listt[nlist]=0,listn[nlist]=0,nlist--,aff=1;
             if (!stricmp(titre,"UL"))  listt[nlist]=1,listn[nlist]=1,nlist++;
-            if (!stricmp(titre,"/UL")) listt[nlist]=0,listn[nlist]=0,nlist--;
+            if (!stricmp(titre,"/UL")) listt[nlist]=0,listn[nlist]=0,nlist--,aff=1;
 
             if (!stricmp(titre,"DL")) aff=1;
             if (!stricmp(titre,"DT")) aff=1;
@@ -1182,47 +1586,71 @@ switch(car)  {
     }
 
 if (code!=0)
+    {
+    if (psuiv!=0)
+        {
+        psuiv--;
+        car=0;
+        }
+
     switch(car)  {
-    case 32:
-        titre[code-1]=0;
-        sprintf(chaine,"&%s ",titre);
-        memcpy(titre,chaine,255);
-        lentit=strlen(titre);
-        code=0;
-        break;
-    case ';':
-        car=0;
-        if (code<128)
-            {
+        case 0:
+            break;
+        case 32:
             titre[code-1]=0;
-            if (!stricmp(titre,"AMP")) car='&';
-            if (!stricmp(titre,"EGRAVE")) car=232;
-            if (!stricmp(titre,"EACUTE")) car=233;
-            if (!stricmp(titre,"ECIRC")) car=234;
+            sprintf(chaine,"&%s ",titre);
+            memcpy(titre,chaine,255);
+            lentit=strlen(titre);
+            code=0;
+            break;
+        case ';':
+            code=0;
+            car=0;
+            break;
+        default:
+            titre[code-1]=car;
 
-            if (!stricmp(titre,"AGRAVE")) car=224;
-            if (!stricmp(titre,"AACUTE")) car=225;
-            if (!stricmp(titre,"ACIRC")) car=226;
-            if (!stricmp(titre,"CCEDIL")) car=231;
-            if (!stricmp(titre,"NBSP")) car=32;
+            car=0;
+            lentit=0;
+            code++;
 
-            if (!stricmp(titre,"IUML")) car='i';        // En attendant
+            if (code>128) code=0;
 
-                
-            if (!stricmp(titre,"LT")) car='<';
-            if (!stricmp(titre,"GT")) car='>';
-            }
+            if (!strnicmp(titre,"EGRAVE",6)) psuiv=1,car='Š';
+            if (!strnicmp(titre,"EACUTE",6)) psuiv=1,car='‚';
 
-        code=0;
-        break;
-    case 0:
-        break;
-    default:
-        titre[code-1]=car;
-        lentit=0;
-        code++;
-        car=0;
-        break;
+            if (!strnicmp(titre,"AGRAVE",6)) psuiv=1,car='…';
+            if (!strnicmp(titre,"AACUTE",6)) psuiv=1,car=' ';
+
+            if (!strnicmp(titre,"IGRAVE",6)) psuiv=1,car='i';
+            if (!strnicmp(titre,"IACUTE",6)) psuiv=1,car='i';
+
+            if (!strnicmp(titre,"CCEDIL",6)) psuiv=1,car='‡';
+
+            if (!strnicmp(titre,"ECIRC",5)) psuiv=1,car='ˆ';
+            if (!strnicmp(titre,"ACIRC",5)) psuiv=1,car='ƒ';
+            if (!strnicmp(titre,"ICIRC",5)) psuiv=1,car='i';
+
+            if (!strnicmp(titre,"QUOT",4)) psuiv=1,car=34;
+
+            if (!strnicmp(titre,"NBSP",4)) psuiv=1,car=32;
+            if (!strnicmp(titre,"IUML",4)) psuiv=1,car='i';        // En attendant mieux
+            if (!strnicmp(titre,"COPY",4))
+                 {
+                 psuiv=1;
+                 lentit=3;
+                 strcpy(titre,"(C)");
+                 }
+
+            if (!strnicmp(titre,"AMP",3)) psuiv=1,car='&';
+
+            if (!strnicmp(titre,"LT",2)) psuiv=1,car='<';
+            if (!strnicmp(titre,"GT",2)) psuiv=1,car='>';
+
+            if (psuiv==1)
+                code=0;
+            break;
+        }
     }
 
 if (debut>=256)
@@ -1297,6 +1725,8 @@ for (k=0;k<lentit;k++)
 
     col=tabcol[nbrcol];
 
+    if ( (bold<0) | (ital<0) | (unde<0) ) bold=0,ital=0,unde=0;
+
     if (bold!=0) col=(col&240)+11;
     if (ital!=0) col=(col&240)+12;
     if (unde!=0) col=(col&240)+13;
@@ -1325,11 +1755,15 @@ for (k=0;k<lentit;k++)
 
         if (j<=0) j=smot-1;
 
+        
+
         for(i=0;i<j;i++)
            {
            ChrTxt[i+yp*xpage]=mot[i];
            ColTxt[i+yp*xpage]=motc[i];
            }
+
+        if (j==xpage) j--;      // Car on passe espace quand il y a espace
 
         for(i=j+1;i<smot;i++)   // +1 car on passe l'espace
             {
@@ -1374,6 +1808,8 @@ for (k=0;k<lentit;k++)
 
 lentit=0;
 
+if (yp>3998) break;
+
 }
 
 code=0;
@@ -1404,10 +1840,17 @@ if ( (suiv->next!=NULL) & (suiv!=NULL) )
     if ((iy>-y) & (iy<yl-y))
         while(1)
             {
-            AffCol(ix+y,iy+y,11*16+12);
-            if ( (ix==suiv->x2) & (iy==(suiv->y2-ye)) ) break;
+            if (ix<xpage)
+                AffCol(ix+x,iy+y,11*16+12);
+
+            if (iy>(suiv->y2-ye)) break;
+
             ix++;
-            if (ix==xpage) ix=0,iy++;
+            if (ix>=xpage) ix=0,iy++;
+
+            if ( (ix==suiv->x2) & (iy==(suiv->y2-ye)) ) break;
+
+            
             }
 
     PrintAt(0,yl+1,"%-80s",suiv->link);
@@ -1575,12 +2018,36 @@ if (code==13)
     return -1;
 }
 
+void Bar(char *bar)
+{
+int TY;
+int i,j,n;
+
+TY=Cfg->TailleY;
+
+n=0;
+for (i=0;i<10;i++)
+    {
+    PrintAt(n,TY-1,"F%d",(i+1)%10);
+    for(j=0;j<2;j++,n++) AffCol(n,TY-1,1*16+8);
+    for(j=0;j<6;j++,n++) {
+       AffCol(n,TY-1,1*16+2);
+       AffChr(n,TY-1,*(bar+i*6+j));
+       }
+    }
+}
+
+
 
 
 void View(struct fenetre *F)
 {
 char *fichier,*liaison;
-int i;
+short i;
+
+SaveEcran();
+
+Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
 fichier=GetMem(256);
 strcpy(fichier,F->path);
@@ -1597,8 +2064,8 @@ while(i!=-1)
         case 86: //Ansi
             i=AnsiView(fichier);
             break;
-        case 91: //View text
-            i=TextView(fichier);
+        case 91: //DIZ
+            i=TxtView(fichier);
             break;
         case 104: // HTML
             i=HtmlView(fichier,liaison);
@@ -1616,4 +2083,226 @@ while(i!=-1)
 
 free(liaison);
 free(fichier);
+
+ChargeEcran();
+}
+
+void Masque(short x1,short y1,short x2,short y2)
+{
+char *chaine;
+char chain2[80];
+short l,m1,m2;
+
+unsigned char c,c2;
+short x,y;
+short xt[80],yt[80];
+
+char trouve;
+
+struct PourMask *CMask;
+
+if (((Cfg->wmask)&128)==128) return;
+
+CMask=Mask[(Cfg->wmask)&15];
+
+chaine=CMask->chaine;
+
+x=x1;
+y=y1;
+
+l=0;
+
+while(y<=y2)
+    {
+    AffCol(x,y,10*16+9);
+    c=GetChr(x,y);
+
+    if ( ((c>='a') & (c<='z')) | ((c>='A') & (c<='Z')) | ((c>='0') & (c<='9')) | (c=='_') )
+        {
+        chain2[l]=c;
+        xt[l]=x;
+        yt[l]=y;
+        l++;
+        if (l==80) l=0;
+        }
+        else
+        {
+        if (l!=0)
+            {
+            trouve=0;
+            m1=0;
+            m2=0;
+
+            while(chaine[m2]!='@')
+                {
+                if (chaine[m2]==32)
+                    {
+                    if (m2-m1==l)
+                        {
+                        if (CMask->Ignore_Case==0)
+                            {
+                            if (!strncmp(chaine+m1,chain2,l))
+                                trouve=1;
+                            }
+                            else
+                            {
+                            if (!strnicmp(chaine+m1,chain2,l))
+                                trouve=1;
+                            }
+                        }
+                    m1=m2+1;
+                    }
+                m2++;
+                }
+
+            if (trouve==1)
+                c2=10*16+5;
+                else
+                c2=10*16+4;
+
+            while (l!=0)
+                {
+                l--;
+                AffCol(xt[l],yt[l],c2);
+                }
+            l=0;
+            }
+        }
+
+    if (((Cfg->wmask)&64)==64)
+        {
+        c=toupper(c);
+        switch(c)
+            {
+            case 'A':
+            case 'E':
+            case 'I':
+            case 'O':
+            case 'U':
+            case 'Y':
+                c+='a'-'A';
+                break;
+            }
+        AffChr(x,y,c);
+        }
+
+    x++;
+    if (x>x2) x=x1,y++;
+
+    }
+}
+
+
+
+void ChangeMask(void)
+{
+int i,n;
+char s[16];
+int x1,y1,x2,y2,max;
+int pos,prem;
+int dernier;
+int c;
+char car,car2;
+
+SaveEcran();
+
+n=0;
+max=0;
+pos=0;
+
+for(i=0;i<16;i++)
+    if (strlen(Mask[i]->title)>0)
+        {
+        if ( ((Cfg->wmask)&15) ==i) pos=n;
+        s[n]=i;
+        n++;
+        if (strlen(Mask[i]->title)>max) max=strlen(Mask[i]->title);
+        }
+
+x1=(82-max)/2;
+y1=((Cfg->TailleY)-2*n)/2;
+
+x2=x1+max+3;
+y2=y1+(n+1)*2;
+
+if (y1<0) y1=2;
+if (y2>Cfg->TailleY) y2=Cfg->TailleY-3;
+
+WinCadre(x1,y1,x2,y2,0);
+
+ColWin(x1+1,y1+1,x2-1,y2-1,10*16+1);
+ChrWin(x1+1,y1+1,x2-1,y2-1,32);
+
+PrintAt(x1+1,y1+1,"Select Mask:");
+ColWin(x1+1,y1+1,x2-1,y1+1,10*16+5);
+
+prem=0;
+
+ChrLin(0,(Cfg->TailleY)-1,80,32);
+ColLin(0,(Cfg->TailleY)-1,80,1*16+8);
+
+
+do
+    {
+    PrintAt( 1,(Cfg->TailleY)-1,"F8: Look %3s",(Cfg->wmask&64)==64 ? "ON" : "OFF");
+    PrintAt(17,(Cfg->TailleY)-1,"F9: Mask %3s",(Cfg->wmask&128)==128 ? "OFF" : "ON");
+    PrintAt(40,(Cfg->TailleY)-1,"%-40s",Mask[s[pos]]->title);
+
+    for (i=prem;i<n;i++)
+        {
+        if (pos==i)
+            ColLin(x1+2,y1+3+(i-prem)*2,max,1*16+5);
+            else
+            ColLin(x1+2,y1+3+(i-prem)*2,max,10*16+1);
+
+        PrintAt(x1+2,y1+3+(i-prem)*2,"%-*s",max,Mask[s[i]]->title);
+
+        if (y1+3+(i-prem+1)*2>=y2)
+            {
+            dernier=i;
+            break;
+            }
+        }
+
+    c=Wait(0,0,0);
+    car=LO(c);
+    car2=HI(c);
+
+    switch(car2)    {
+        case 0x47:
+            pos=0;
+            break;
+        case 0x4F:
+            pos=dernier;
+            break;
+        case 72:
+            pos--;
+            if (pos==-1) pos=0;
+            if (pos<prem) prem--;
+            break;
+        case 80:
+            pos++;
+            if (pos==n) pos--;
+            if (pos>dernier) prem++;
+            break;
+        case 0x42: // F8
+            Cfg->wmask^=64;
+            break;
+        case 0x43: // F9
+            Cfg->wmask^=128;
+            break;
+        }
+    switch(car) {
+        case 13:
+            Cfg->wmask=((Cfg->wmask)&240)|s[pos];
+            break;
+        }
+
+    }
+while ( (car!=27) & (car!=13) );
+
+
+
+
+ChargeEcran();
 }

@@ -18,10 +18,10 @@ CCOPTS = -w9 -5r -fpi -zdp -d__WC32__ -dDEBUG -d3 -mf
 #CCOPTS = -w5 -5r -fpi -zdp -d__WC32__ -mf
 
 
-all : kk_setup.exe
+all : kkdesc.exe
 
-kk_setup.exe : kk_setup.obj hard.obj idf.obj help.obj
-        $(CL) @kk_setup.wlk
+kkdesc.exe : kkdesc.obj idf.obj hard.obj help.obj
+        $(CL) @kkdesc.wlk
 
 .c.obj:
 		$(CC) $* $(CCOPTS)

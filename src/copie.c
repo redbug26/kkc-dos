@@ -281,11 +281,13 @@ if (ok==1)
 
     Gradue(10,12,60,j3,size,size);
 
+    free(buffer);
+
     fclose(inhand);
     fclose(outhand);
     }
 
-if (ok==1)
+if (ok==1)      // Mise a l'heure
     {
     unsigned short d,t;
     int hand1,hand2;
@@ -302,7 +304,7 @@ if (ok==1)
 
 
 
-free(buffer);
+
 
 return ok;
 }
@@ -348,6 +350,7 @@ FILE *fic;
 int i;
 struct file *F;
 char nom[256];
+char player[256];
 
 fic=fopen(Fics->temp,"wt");
 
@@ -377,7 +380,10 @@ fclose(fic);
 
 strcpy(nom,F2->path+strlen(F2->VolName));
 
-CommandLine("#RAR a -ep1 -std %s @%s %s",F2->VolName,Fics->temp,nom);
+if (PlayerIdf(player,30)==0)
+    {
+    CommandLine("#%s a -ep1 -std %s @%s %s",player,F2->VolName,Fics->temp,nom);
+    }
 }
 
 void RarCopie(struct fenetre *F1,struct fenetre *F2)
@@ -386,6 +392,7 @@ FILE *fic;
 int i;
 struct file *F;
 char nom[256];
+char player[256];
 
 char option;
 
@@ -424,7 +431,10 @@ for(i=0;i<F1->nbrfic;i++)
     }
 fclose(fic);
 
-CommandLine("#RAR %c -std %s @%s %s",option,F1->VolName,Fics->temp,F2->path);
+if (PlayerIdf(player,34)==0)
+    {
+    CommandLine("#%s %c -std %s @%s %s",player,option,F1->VolName,Fics->temp,F2->path);
+    }
 }
 
 void ZipCopie(struct fenetre *F1,struct fenetre *F2)
@@ -433,6 +443,7 @@ FILE *fic;
 int i;
 struct file *F;
 char nom[256];
+char player[256];
 
 char option;
 
@@ -473,7 +484,10 @@ fclose(fic);
 
 // Execution of uncompressor
 
-CommandLine("#PKUNZIP -%c %s @%s %s",option,F1->VolName,Fics->temp,F2->path);
+if (PlayerIdf(player,35)==0)
+    {
+    CommandLine("#%s -%c %s @%s %s",player,option,F1->VolName,Fics->temp,F2->path);
+    }
 }
 
 void ArjCopie(struct fenetre *F1,struct fenetre *F2)
@@ -482,6 +496,7 @@ FILE *fic;
 int i;
 struct file *F;
 char nom[256];
+char player[256];
 
 char option;
 
@@ -519,8 +534,10 @@ for(i=0;i<F1->nbrfic;i++)
         }
     }
 fclose(fic);
-
-CommandLine("#ARJ %c -P %s %s !%s",option,F1->VolName,F2->path,Fics->temp);
+if (PlayerIdf(player,30)==0)
+    {
+    CommandLine("#%s %c -P %s %s !%s",player,option,F1->VolName,F2->path,Fics->temp);
+    }
 }
 
 

@@ -430,7 +430,7 @@ strcpy(Fics->path,path);
 
 Fics->help=GetMem(256);
 strcpy(Fics->help,path);
-strcat(Fics->help,"\\kk_setup.hlp");
+strcat(Fics->help,"\\kksetup.hlp");
 
 Fics->LastDir=GetMem(256);
 strcpy(Fics->LastDir,path);
@@ -514,7 +514,7 @@ strcpy(chaine,"c:\\dos\\kk.bat");
 fic=fopen(chaine,"wt");
 
 fprintf(fic,"@%s\\kk.exe\n",path);
-fprintf(fic,"@REM This file was making by KK_SETUP\n");
+fprintf(fic,"@REM This file was making by KKSETUP\n");
 
 fclose(fic);
 
@@ -522,7 +522,7 @@ strcpy(chaine,"c:\\dos\\kk_desc.bat");
 fic=fopen(chaine,"wt");
 
 fprintf(fic,"@%s\\kk_desc.exe %%1 \n",path);
-fprintf(fic,"@REM This file was making by KK_SETUP\n");
+fprintf(fic,"@REM This file was making by KKSETUP\n");
 
 fclose(fic);
 
@@ -534,7 +534,7 @@ PrintAt(10, 5,"F1: Help");
 
 PrintAt(10, 9,"F2: Search Application");
 
-PrintAt(10,13,"F3: Load KK_SETUP.INI");
+PrintAt(10,13,"F3: Load KKSETUP.INI");
 
 PrintAt(10,17,"F4: List all the format");
 
@@ -565,7 +565,7 @@ switch(HI(car))
 } while ( (HI(car)!=0x44) & (LO(car)!=27) );
 
 PrintAt(10,35,"KK.BAT is now in PATH -> You could run KK from everywhere");
-PrintAt(10,37,"KK_DESC.BAT is now in path -> IDEM");
+PrintAt(10,37,"KKDESC.BAT is now in path -> IDEM");
 PrintAt(10,36,"%s is done",chaine);
 
 PrintAt(29,48,"Press a key to continue");
@@ -1119,7 +1119,7 @@ int valeur;
 
 char erreur;
 
-fic=fopen("kk_setup.ini","rt");
+fic=fopen("kksetup.ini","rt");
 if (fic==NULL) return;
 
 SaveEcran();
@@ -1164,6 +1164,12 @@ if (!stricmp(var,"ansispeed"))
 if (!stricmp(var,"ssaverspeed"))
     {
     Cfg->SaveSpeed=valeur;
+    erreur=0;
+    }
+
+if (!stricmp(var,"directpoint"))
+    {
+    Cfg->pntrep=valeur;
     erreur=0;
     }
 

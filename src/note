@@ -1,0 +1,13 @@
+
+ - restorer mode video a la sortie KK_SETUP.EXE
+ - Si le viewer externe est lance, a la sortie de KKC le
+   mode video n'est pas restore (probalement parce que
+   tu relis "l'ancien mode" quand on sort du viewer)
+ - voir "drivers.ssl" .. se promener avec des page-downs
+   jusqu'a ce qu'il crash... idem with END.
+ - utilite d'afficher les Volume-Ids ?
+ - \scitech\bin\cp.exe detecte en tant que Cubic Player :)
+ - touche CTRL-(fleche gauche)  = choisir ..
+   touche CTRL-(fleche droite)  = entrer dans le directory ou se trouve
+   le curseur
+

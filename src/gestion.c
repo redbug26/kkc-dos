@@ -285,6 +285,9 @@ FileinPath(DFen->path,nom);
 
 Path2Abs(DFen->path,Ficname);
 
+if ( (p[strlen(p)-1]=='\\') & (p[strlen(p)-2]!=':') )
+     p[strlen(p)-1]=0;
+
 if (DFen->system!=0)
     {
     if (strlen(DFen->VolName)>strlen(DFen->path))
@@ -511,13 +514,18 @@ char flag;            // direction flag pour plein de choses
 // ------------------------
 int Run(char *chaine)
 {
-// To Logfile
 /*
+FILE *fic;
 time_t t;
 t=time(NULL);
-fprintf(stderr,"%-50s @ %s",chaine,ctime(&t));
-*/
 
+if ( (chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) )
+    {
+    fic=fopen(Fics->log,"at");
+    fprintf(fic,"%-50s @ %s",chaine,ctime(&t));
+    fclose(fic);
+    }
+*/
 
 if (!strnicmp(chaine,"CD -",4)) {
    ChangeDir(GetLastHistDir());
@@ -706,6 +714,8 @@ if ( (chaine[1]==':') & (chaine[0]!=0) )
     error=0;
 
     _dos_setdrive(toupper(chaine[0])-'A'+1,&nbrdrive);
+
+    InstallDOS();
 
     _dos_getdrive(&nbrdrive);
 

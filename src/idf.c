@@ -46,7 +46,7 @@ struct key K[nbrkey]=	{
 		"RAW bitmap",
 		"RAW",
 		"",
-		73,0,0,4},
+        73,0,1,4},
 {  {0,0},
 		0,
 		0,
@@ -59,14 +59,14 @@ struct key K[nbrkey]=	{
 		0,
 		"Digital Music Module",
 		"DMF",
-		"",
+        "Delusion",
 		6,0,1,1},
 {  {"IMPM"},
 		4,
 		0,
 		"Impulse Tracker",
 		"IT",
-		"",
+        "Impulse",
 		10,0,1,1},
 {  {"MThd"},
 		4,
@@ -80,7 +80,7 @@ struct key K[nbrkey]=	{
 		0,
 		"Multitracker Module",
 		"MTM",
-		"",
+        "Renaissance",
 		15,0,1,1},
 {  {0,0},
 		4,
@@ -94,161 +94,161 @@ struct key K[nbrkey]=	{
 		0,
 		"Fast Tracker Module",
 		"XM",
-		"",
+        "Triton",
 		2,0,1,1},
 {  {"SCRM"},
 		4,
 		44,
 		"Scream Tracker 3 Module",
 		"S3M",
-		"",
+        "Future Crew",
 		3,0,1,1},
 {  {"MAS_UTrack"},
 		10,
 		0,
 		"Ultratracker module",
 		"UT",
-		"",
+        "Mysterious MAS",
 		19,0,1,1},
 {  {0x52,0x61,0x72,0x21,0x1A,0x07,0x00},
 		7,
 		0,
 		"RAR Archiver",
 		"RAR",
-		"",
+        "Eugene Roshal",
 		34,0,1,3},
 {  {"GIF8"},
 		4,
 		0,
 		"Compuserve GIF",
 		"GIF",
-		"",
+        "Compuserve",
 		37,0,1,4},
 {  {"BM"},
 		2,
 		0,
 		"Windows Bitmap",
 		"BMP",
-		"",
+        "Microsoft",
 		36,0,1,4},
 {  {"OKTASONG"},
 		8,
 		0,
 		"Oktalyser module",
 		"OKT",
-		"",
+        "Armin Sander",
 		16,0,1,1},
 {  {".snd"},
 		4,
 		0,
 		"Sun/NeXT audio file",
 		"AU",
-		"",
+        "Sun/NeXT",
 		21,0,1,2},
 {  {0,0},
 		0,
 		0,
 		"Amiga sampled voice",
 		"IFF",
-		"",
+        "Electronic Arts",
 		23,1,1,2},
 {  {0,0},
 		0,
 		0,
 		"Interleaved Bitmap",
 		"LBM",
-		"",
+        "Electronic Arts",
 		39,1,1,4},
 {  {0,0},
 		0,
 		0,
 		"ARJ Archiver",
 		"ARJ",
-		"",
+        "Robert K Jung",
 		30,1,0,3},
 {  {"-lh"},
 		3,
 		2,
 		"LHA Archiver",
 		"LHA",
-		"",
+        "H. Yoshizaki",
 		32,0,0,3},
 {  {"MMD"},
 		3,
 		0,
 		"OctaMED module",
 		"MED",
-		"",
+        "Teijo Kinnunen",
 		13,0,1,1},
 {  {"Creative Voice File"},
 		19,
 		0,
 		"Creative Voice File",
 		"VOC",
-		"",
+        "Creative Labs",
 		27,0,1,2},
 {  {"PSM "},
 		4,
 		0,
 		"Epic PSM/MOD",
 		"PSM",
-		"",
+        "Epic Megagames",
 		17,0,1,1},
 {  {"MZ"},
 		2,
 		0,
 		"Executable file",
 		"EXE",
-		"",
+        "M.Z. ;)",
 		57,0,1,6},
 {  {"Extended Instrument: "},
 		21,
 		0,
 		"Instrument Fast Tracker",
 		"XI",
-		"",
+        "Triton",
 		29,0,1,2},
 {  {"GF1PATCH"},
 		8,
 		0,
 		"Patch Gravis Ultrasound",
 		"PAT",
-		"",
+        "Gravis Ultrasound",
 		24,0,0,2},
 {  {"Turbo C Project File"},
 		20,
 		0,
 		"Turbo C Project File",
 		"PRJ",
-		"",
+        "Borland",
 		62,0,0,6},
 {  {"Turbo C Context File"},
 		20,
 		0,
 		"Turbo C Context File",
 		"DSK",
-		"",
+        "Borland",
 		55,0,0,6},
 {  {"TPU"},
 		3,
 		0,
 		"Turbo Pascal Unit",
 		"TPU",
-		"",
+        "Borland",
 		64,0,1,6},
 {  {"CTMF"},
 		4,
 		0,
 		"Creative Music File",
 		"CMF",
-		"",
+        "Creative Labs",
 		5,0,1,1},
 {  {0x3F,0x5F,0x03,0x00},
 		4,
 		0,
 		"Windows Help File",
 		"HLP",
-		"",
+        "Microsoft",
 		59,0,1,6},
 {  {"!Scream!"},
 		8,
@@ -276,42 +276,42 @@ struct key K[nbrkey]=	{
 		0,
 		"Far. Sample Data Unsigned",
 		"USM",
-		"",
+        "Dig. Infinity",
 		26,0,1,2},
 {  {"FPTþ"},
 		4,
 		0,
 		"Farandole Pattern",
 		"FPT",
-		"",
+        "Dig. Infinity",
 		9,0,1,1},
 {  {"F2RFAR"},
 		6,
 		0,
 		"Far. Linear Module V2.0",
 		"F2R",
-		"",
+        "Dig. Infinity",
 		7,0,1,1},
 {  {"DMDL"},
 		4,
 		0,
 		"Digitrakker Module",
 		"MDL",
-		"",
+        "n-Factor",
 		12,0,1,1},
 {  {"DSPL"},
 		4,
 		0,
 		"Digitrakker Sample",
 		"SPL",
-		"",
+        "n-Factor",
 		25,0,1,2},
 {  {0xD0,0xCf,0x11,0xE0,0xA1,0xB1,0x1A,0xE1},
 		8,
 		0,
 		"Microsoft File Format",
 		"MS",
-		"",
+        "Microsoft",
 		61,0,0,6},
 {  {0x00,0x01,0x00,0x00},
 		4,
@@ -325,21 +325,21 @@ struct key K[nbrkey]=	{
 		0,
 		"Windows Group File",
 		"GRP",
-		"",
+        "Microsoft",
 		58,0,1,6},
 {  {0xFF,0x57,0x50,0x43},
 		4,
 		0,
 		"WordPerfect Graphic",
 		"WPG",
-		"",
+        "WordPerfect",
 		46,0,0,4},
 {  {0x49,0x49,0x2A,0x00},
 		4,
 		0,
 		"Intel TIFF Picture",
 		"TIF",
-		"",
+        "Intel",
 		45,0,0,4},
 {  {0xFF,0xD8,0xFF,0xE0,0x00,0x10,0x4A,0x46,0x49,0x46,0x00},
 		11,
@@ -360,7 +360,7 @@ struct key K[nbrkey]=	{
 		0,
 		"Jmplayer module",
 		"JMS",
-		"",
+        "Ultra Force",
 		11,0,0,1},
 {  {0x00,0x00,0x01,0xB3,0x0A,0x00,0x78},
 		7,
@@ -374,14 +374,14 @@ struct key K[nbrkey]=	{
 		4,
 		"QuickTime Movie",
 		"MOV",
-		"",
+        "Apple",
 		51,0,0,5},
 {  {"THNL"},
 		4,
 		0,
 		"GWS Quick View",
 		"THN",
-		"",
+        "Alchemy MindWorks",
 		44,0,0,4},
 {  {"MV - CPCEMU"},
 		11,
@@ -395,28 +395,28 @@ struct key K[nbrkey]=	{
 		8,
 		"Windows Animated Cursor",
 		"ANI",
-		"",
+        "Microsoft",
 		47,0,0,5},
 {  {"WAVE"},
 		4,
 		8,
 		"Windows Wave",
 		"WAV",
-		"",
+        "Microsoft",
 		28,0,0,2},
 {  {"AVI LIST"},
 		8,
 		8,
 		"AVI Animation",
 		"AVI",
-		"",
+        "Microsoft",
 		48,0,0,5},
 {  {0x0A,0x05,0x01},
 		3,
 		0,
 		"ZSoft PCX 3.0",
 		"PCX",
-		"",
+        "ZSoft",
 		40,0,0,4},
 {  {"RIX3"},
 		4,
@@ -430,28 +430,28 @@ struct key K[nbrkey]=	{
 		8,
 		"AIFF Audio File",
 		"AIF",
-		"",
+        "Electronic Arts",
 		20,0,0,2},
 {  {0xFF,0xFF,0x53,0x45,0x4D},
 		5,
 		0,
 		"QEDIT Macro",
 		"MAC",
-		"",
+        "SemWare Corp.",
 		60,0,0,6},
 {  {"/IMPHOBIA Ressource File/"},
 		25,
 		0,
 		"IMPHOBIA Ressource File",
 		"DAT",
-		"",
+        "Darkness",
 		54,0,0,6},
 {  {"/IMPHOBIA Config/"},
 		17,
 		0,
 		"IMPHOBIA Config File",
 		"CFG",
-		"",
+        "Darkness",
 		53,0,0,6},
 {  {0xB4,0x4C,0xCD,0x21,0x9D,0x89,0x64,0x6C,0x7A},
 		9,
@@ -465,21 +465,21 @@ struct key K[nbrkey]=	{
 		0,
 		"FLI Animation",
 		"FLI",
-		"",
+        "Autodesk",
 		49,1,1,5},
 {  {0x12,0xAF},
 		2,
 		4,
 		"FLC Animation",
 		"FLC",
-		"",
+        "Autodesk",
 		50,0,1,5},
 {  {"ziRCONia"},
 		8,
 		0,
 		"Music Module Compressor",
 		"MMC",
-		"",
+        "Zirconia",
 		33,0,0,3},
 {  {"SWAGOLX.EXE"},
 		11,
@@ -538,7 +538,7 @@ struct key K[nbrkey]=	{
 		"",
 		71,0,0,3},
 {  {0x1F,0x8B,0x08,0x08},
-		4,
+        3,
 		0,
 		"GZIP compressed file",
 		"GZ",
@@ -700,13 +700,6 @@ struct key K[nbrkey]=	{
 		"P16",
 		"",100,0,0,1},
 
-{  {"PK"},
-		2,
-		0,
-		"ZIP Archiver",
-		"ZIP",
-		"",
-        35,0,0,3},
 {  {"KKRB"},                          // Clef
         4,                            // Longueur de la clef
         0,                            // Position de la clef dans le fichier
@@ -737,17 +730,59 @@ struct key K[nbrkey]=	{
         0,                            // vaut la clef doit ˆtre verifie par proc
         0,                            // vaut 1 si il existe un lien vers une proc
         5},                           // type de fichier (1: module, 4: image, 3:archive, 6:other, 2:sample, 5:anim)
-{  {0x1F,0x8B,0x08    }, // úúú
+{  {0x50,0x61,0x63,0x6B,0x65,0x64,0x20,0x46,0x69,0x6C,0x65,0x20    },
+    12,
+    0,
+    "NetWare Packed File",
+    "___",
+    "NetWare",105,0,0,3},
+{  {0x41,0x4D,0x46    }, // AMF 
     3,
     0,
-    "GZip archiver",
-    "GZ",
-    "?",105,0,0,3},
+    "DSMi Module",
+    "AMF",
+    "RealTech (?)",106,0,1,1},
+{  {0x00,0xC3,0x50,0x01,0xCE,0xED,0x66,0x66,
+    0xCC,0x0D,0x00,0x0B,0x03,0x73,0x00,0x83,
+    0x00,0x0C,0x00,0x0D,0x00,0x08,0x11,0x1F},
+    24,
+    0x100,
+    "GameBoy Cartridge",
+    "GB",
+    "Nintendo",107,0,1,6},
+{  {0x00,0x00,0x00,0x00,0x00,0x50,0x54,0x4D,// úúúúúPTM
+    0x46,0x00    }, // Fú 
+    10,
+    0x27,
+    "PTM Module",
+    "PTM",
+    "?",108,0,1,1},
+{  {"SAdT"},
+    4,
+    0,
+    "Surprise Adlib Tracker Module",
+    "SAT",
+    "Surprise!",109,0,0,1},
+{  {"PKM"},
+    3,
+    0,
+    "PKM Bitmap",
+    "PKM",
+    "Karl Maritaud",110,0,1,4},
+
 
 
 /*******************************************
  - structures … traiter en dernier ressort -
  *******************************************/
+
+{  {"PK"},
+        2,
+        0,
+        "ZIP Archiver",
+        "ZIP",
+        "PKWARE Inc.",
+        35,0,0,3},
 
 {  {0,0},                             // Clef
         0,                            // Longueur de la clef
@@ -758,7 +793,7 @@ struct key K[nbrkey]=	{
         104,                          // Numero du format (unique)
         1,                            // vaut la clef doit ˆtre verifie par proc
         0,                            // vaut 1 si il existe un lien vers une proc
-        6},                           // type de fichier (1: module, 4: image, 3:executable, 6:other, 2:sample, 5:anim)
+        6},                           // type de fichier (1: module, 4: image, 3:archive, 6:other, 2:sample, 5:anim)
 {  {0,0},
         2,
         0,
@@ -817,7 +852,12 @@ short Infoswg(struct info *Info);
 short Infoams(struct info *Info);
 short Infot64(struct info *Info);
 short Infop00(struct info *Info);
+short Infoamf(struct info *Info);
+short Infopkm(struct info *Info);
+short Infogb(struct info *Info);
+short Infoptm(struct info *Info);
 short Infohtm(struct info *Info);
+short Inforaw(struct info *Info);
 
 
 ULONG ReadLng(struct info *Info,ULONG position,char type);
@@ -1048,7 +1088,8 @@ strcpy(Info->ext,K[n].ext);
 if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) ) {
 		switch(K[n].numero) {
 				case  2: err=Infoxm (Info); break;
-				case 83: err=Infop00(Info); break;
+                case 83: err=Infop00(Info); break;
+                
 				case 19: err=Infout (Info); break;
 				case  3: err=Infos3m(Info); break;
 				case  6: err=Infodmf(Info); break;
@@ -1056,7 +1097,8 @@ if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) ) {
 				case 15: err=Infomtm(Info); break;
 				case 34: err=Inforar(Info); break;
 				case 37: err=Infogif(Info); break;
-				case 36: err=Infobmp(Info); break;
+                case 36: err=Infobmp(Info); break;
+                case 73: err=Inforaw(Info); break;
 				case 16: err=Infookt(Info); break;
 				case 21: err=Infoau (Info); break;
 				case 23: err=Infoiff(Info); break;
@@ -1091,6 +1133,10 @@ if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) ) {
 				case 76: err=Infot64(Info); break;
                 case 91: err=Infotxt(Info); break;
                 case 104:err=Infohtm(Info); break;
+                case 106:err=Infoamf(Info); break;
+                case 107:err=Infogb(Info); break;
+                case 108:err=Infoptm(Info); break;
+                case 110:err=Infopkm(Info); break;
 				default:
 						sprintf(Info->format,"Pingouin %d",K[n].numero);
 						trv=1;
@@ -1187,7 +1233,7 @@ short Infodmf(struct info *Info)
 {
 ReadStr(Info,13,Info->fullname,30);
 ReadStr(Info,43,Info->composer,20);
-ReadStr(Info,5,Info->format,8);
+// ReadStr(Info,5,Info->format,8); // Nom du tracker
 
 // pour le nombre de sample, il faut rechercher le chunk 'CMPI'.
 //		L'octet suivant est le nombre de sample (MAXSAMPLE)
@@ -1634,6 +1680,8 @@ Info->taille=(tell(Info->handle)-Info->posfic);
 return 0;
 }
 
+
+
 short Infobmp(struct info *Info)
 {
 char *buf;
@@ -1642,6 +1690,35 @@ buf=Info->buffer;
 
 
 memcpy(&(Info->taille),buf+2,4); /* Ordre des bytes pour le int: LO-LO-HI-HI */
+
+return 0;
+}
+
+short Infopkm(struct info *Info)
+{
+short Lp,Hp;
+
+
+// if (strncmp(buf,"GIF8",4)) return 1;
+
+Lp=ReadInt(Info,6,1);
+Hp=ReadInt(Info,8,1);
+
+sprintf(Info->message[0], "  Image is      %4d * %4d / 8Bps",Lp,Hp);
+
+return 0;
+}
+
+short Inforaw(struct info *Info)
+{
+WORD Lp,Hp,Bp;
+
+Bp=8;
+
+Lp=ReadInt(Info,8,2);
+Hp=ReadInt(Info,10,2);
+
+sprintf(Info->message[0], " Image is      %4d * %4d / %2dBps",Lp,Hp,Bp);
 
 return 0;
 }
@@ -2074,7 +2151,7 @@ if (!memcmp(buf+0x20,"AIN2",4))
 
 if (!memcmp(buf+0x55,"PMODE",5))    {
         sprintf(Info->message[2]," Using  ");
-		memcpy((Info->message[2])+9,buf+0x55,27);
+        memcpy((Info->message[2])+8,buf+0x55,27);
 		(Info->message[2])[36]=0;
 		}
 if (!memcmp(buf+0x25C,"DOS/4G",6))
@@ -2523,6 +2600,24 @@ ReadStr(Info,0x08,Info->fullname,18);
 return 0;
 }
 
+short Infoamf(struct info *Info)
+{
+ReadStr(Info,0x04,Info->fullname,32);
+return 0;
+}
+
+short Infogb(struct info *Info)
+{
+ReadStr(Info,0x134,Info->fullname,16);
+return 0;
+}
+
+short Infoptm(struct info *Info)
+{
+ReadStr(Info,0,Info->fullname,28);
+return 0;
+}
+
 short Infotxt(struct info *Info)
 {
 unsigned short pos,i;
@@ -2569,6 +2664,8 @@ for (pos=0;pos<Info->sizebuf;pos++) {
 				if ((a<32) &
 						(a!=10) & (a!=13) & // passage de ligne
 						(a!=12) &				// passage de page
+                        (a!=17) &
+                        (a!=16) &
 						(a!=9) &				// tabulation
 						(a!=0) &				// erreur buffer
                         (a!=2) &                // la petite tˆte

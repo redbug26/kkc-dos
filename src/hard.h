@@ -9,6 +9,8 @@ void NoFlash(void);
 void GetCur(char *x,char *y);
 void PutCur(char x,char y);
 
+int ScreenSaver(void);
+
 void ScrollUp(void);
 char GetChr(short x,short y);
 char GetCol(short x,short y);
@@ -31,7 +33,8 @@ int Wait(int x,int y,char c);
 void SaveEcran(void);
 void ChargeEcran(void);
 
-void Font(void);
+void Font8x8(void);
+void Font8x16(void);
 void *GetMem(int);
 
 void WinCadre(int x1,int y1,int x2,int y2,int type);
@@ -40,6 +43,30 @@ void WinLine(int x1,int y1,int xl,int type);
 void SetPal(char x,char r,char g,char b);
 
 int crc32file(char *name,unsigned long *crc);   // Compute CRC-32 of file
+
+int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F);
+int WinError(char*);
+
+struct TmtWin {
+     int x1,y1,x2,y2;
+     char *name;
+     };
+
+struct Tmt {
+     int x,y;       // position
+     char type;
+     char *str;
+     int *entier;
+     };
+
+/* Tmt:
+  Type: 0 --> Titre
+        1 --> String
+        2 --> OK OK OK
+        3 --> CANCEL
+        4 --> Cadre 4 de hauteur
+        5 --> Bouton personnalis‚
+*/
 
 
 struct config {
@@ -52,6 +79,10 @@ struct config {
      ENTIER TailleY;        // Nombre de caratctere verticalement
 
      char palette[48];      // The PALETTE
+
+     unsigned char wmask;            // C'est quel masque kon emploie ?
+
+     char pntrep;           // vaut 1 si on affiche le repertoire "."
 
     // Pas touche
     //-----------
@@ -74,18 +105,31 @@ struct config {
      };
 
 struct fichier {
+    char *LastDir;         // dernier directory
     char *FicIdfFile;      // idfext.rb
     char *CfgFile;         // kkrb.cfg
     char *view;            // view
     char *edit;            // edit
-    char *font;            // font.cfg
+    char *path;            // path
     char *help;            // kkc.hlp
     char *temp;            // temp.tmp
     char *trash;           // repertoire trash
+    char *log;             // logfile
     };
+
+struct PourMask
+    {
+    char Ignore_Case;   // 1 si on ignore la case
+    char Other_Col;     // 1 si on colorie les autres noms
+    char chaine[1024];       // chaine de comparaison EX: "asm break case @"
+    char title[40];        // nom de ce masque
+    };
+
+
 
 extern struct config *Cfg;
 extern struct fichier *Fics;
+extern struct PourMask **Mask;
 
 #define HI(qsd) (qsd/256)
 #define LO(qsd) (qsd%256)

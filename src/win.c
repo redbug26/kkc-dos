@@ -111,156 +111,6 @@ if (to==0)
 return j1;
 }
 
-// si p vaut 0 mets off
-// si p vaut 1 interroge
-// retourne -1 si SHIFT TAB, 1 si TAB
-int Puce(int x,int y,int lng,char p)
-{
-int r=0;
-
-int car;
-
-AffChr(x,y,16);
-AffChr(x+lng-1,y,17);
-
-AffChr(x+lng,y,220);
-ChrLin(x+1,y+1,lng,223);
-
-ColLin(x,y,lng,2*16+5);        // Couleur
-
-if (p==1)
-    while (r==0)  {
-        car=Wait(0,0,0);
-
-        switch(car%256)
-            {
-            case 13:
-                return 0;
-            case 27:
-                r=1;
-                break;
-            case 9:
-                r=2;
-                break;
-            case 0:
-                switch(car/256)
-                    {
-                    case 0x0F:
-                        r=3;
-                        break;
-                    case 0x4D:
-                        r=2;
-                        break;
-                    case 0x4B:
-                        r=3;
-                        break;
-                    }
-                break;
-            }
-        }
-
-
-AffChr(x,y,32);
-AffChr(x+lng-1,y,32);
-
-AffChr(x+lng,y,220);
-ChrLin(x+1,y+1,lng,223);
-
-ColLin(x,y,lng,2*16+3);        // Couleur
-
-return r;
-}
-
-
-// Retourne 27 si escape
-// Retourne numero de la liste sinon
-
-int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F)
-{
-char fin;       // si =0 continue
-char direct;    // direction du tab
-int i;
-
-SaveEcran();
-
-
-WinCadre(F->x1,F->y1,F->x2,F->y2,0);
-ColWin(F->x1+1,F->y1+1,F->x2-1,F->y2-1,10*16+1);
-ChrWin(F->x1+1,F->y1+1,F->x2-1,F->y2-1,32);
-
-PrintAt(F->x1+((F->x2-F->x1)-(strlen(F->name)))/2,F->y1,F->name);
-
-for(i=0;i<nbr;i++)
-switch(T[i].type) {
-    case 0:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
-        break;
-    case 1:
-        ColLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),1*16+5);
-        ChrLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),32);
-        break;
-    case 2:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"      OK     ");
-        Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
-        break;
-    case 3:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"    CANCEL   ");
-        Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
-        break;
-    case 4:
-        WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+3,1);
-        break;
-    case 5:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
-        Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
-        break;
-    case 6:
-        WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+2,2);
-        break;
-    }
-
-fin=0;
-direct=1;
-i=0;
-
-while (fin==0) {
-
-switch(T[i].type) {
-    case 0:
-    case 4:
-        break;
-    case 1:
-        direct=InputAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str,*(T[i].entier));
-        break;
-    case 2:
-        direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
-        break;
-    case 3:
-        direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
-        break;
-    case 5:
-        direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
-        break;
-    }
-
-if (direct==0) fin=1;   // ENTER
-if (direct==1) fin=2;   // ESC
-if (direct==2) i++;
-if (direct==3) i--;
-
-if (i==-1) i=nbr-1;
-if (i==nbr) i=0;
-
-}
-
-ChargeEcran();
-
-if (fin==1)
-    return i;
-
-return 27;  // ESCAPE
-}
-
 
 void ErrWin95(void)
 {
@@ -538,7 +388,7 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y++)
         }
 
 
-    PrintAt(x+x1,y+y1,chaine);
+    PrintAt(x+x1,y+y1,"%s",chaine);
     }
 
 Fen->paff=Fen->pcur;
@@ -654,7 +504,6 @@ while (Buf[i]!=0)  {
 WinCadre(Fen->x+1,Fen->y+5,Fen->x+Fen->xl-1,y,2);
 ColWin(Fen->x+2,Fen->y+6,Fen->x+Fen->xl-2,y-1,10*16+1);
 
-
 ChrWin(Fen->x+1,y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,' ');
 ColWin(Fen->x+1,y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,170);
 
@@ -662,6 +511,134 @@ free (Buf);
 
 Fen->init=0;
 }
+
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+
+void ClearInfo(struct fenetre *Fen)
+{
+int i;
+struct file *F;
+struct info Info;
+
+SaveEcran();
+
+WinCadre(19,9,61,11,0);
+ColWin(20,10,60,10,10*16+4);
+ChrWin(20,10,60,10,32);
+
+PrintAt(23,10,"Wait Please");
+
+for (i=0;i<Fen->Fen2->nbrfic;i++)
+    {
+    F=Fen->Fen2->F[i];
+
+    if (F->info==NULL)
+        F->info=GetMem(41);
+
+    if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
+        {
+        strcpy(F->info,"Directory");
+        }
+        else
+        {
+        strcpy(Info.path,Fen->Fen2->path);
+        if (Info.path[strlen(Info.path)-1]!='\\') strcat(Info.path,"\\");
+        strcat(Info.path,F->name);
+
+        Traitefic(F->name,&Info);
+        strcpy(F->info,Info.format);
+        }
+    }
+
+ChargeEcran();
+
+WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,2);
+
+ChrWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,' ');
+ColWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,7*16+6);
+}
+
+void FenInfo(struct fenetre *Fen)
+{
+int n;  // Compteur
+struct fenetre *Fen2;
+
+short i;
+
+char a;                 // Separator Character
+
+int x1,y1;
+int x=2,y=3;
+
+Fen2=Fen->Fen2;
+
+if (Fen->init==1)
+    ClearInfo(Fen);
+
+if (Fen2->scur>Fen2->pcur) Fen2->scur=Fen2->pcur;
+
+while (Fen2->pcur<0)
+    {
+    Fen2->scur++;
+    Fen2->pcur++;
+    }
+
+while (Fen2->pcur>=Fen2->nbrfic)
+    {
+    Fen2->pcur--;
+    Fen2->scur--;
+    }
+
+if (Fen2->scur<0)
+    Fen2->scur=0;
+
+if (Fen2->scur>Fen2->yl2-1)
+    Fen2->scur=Fen2->yl2-1;
+
+a=Cfg->Tfont[0];
+
+x1=Fen->x2;
+y1=Fen->y2;
+
+n=(Fen2->pcur)-(Fen2->scur);            // premier
+
+InfoSelect(Fen2);
+
+for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y++)
+    {
+// ------------------ Line Activity ------------------------------------
+    if (n==(Fen2->pcur))
+        {
+        if (Fen2->F[n]->select==0)
+            ColLin(x+x1,y+y1,38,1*16+6);
+            else
+            ColLin(x+x1,y+y1,38,1*16+5);
+        }
+        else
+        {
+        if (Fen2->F[n]->select==0)
+            ColLin(x+x1,y+y1,38,7*16+6);
+            else
+            ColLin(x+x1,y+y1,38,7*16+5);
+        }
+
+    if (Fen2->F[n]->info!=NULL)
+        {
+        PrintAt(x+x1,y+y1,"%-38s",Fen2->F[n]->info);
+        }
+    }
+
+Fen2->paff=Fen2->pcur;
+Fen2->saff=Fen2->scur;
+Fen->init=0;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+/******************************************************************************/
+
 
 /**********************************************
             Display about select
@@ -713,11 +690,11 @@ NoFlash();
 
 switch (Cfg->TailleY)  {
    case 50:
-        Font();
+        Font8x8();
         break;
    case 25:
-        Cfg->UseFont=0;
-        Cfg->Tfont[0]=179;
+   case 30:
+        Font8x16();
         break;
    }
 DFen->yl=(Cfg->TailleY)-4;
@@ -726,16 +703,6 @@ DFen->Fen2->yl=(Cfg->TailleY)-4;
 AfficheTout();
 
 LoadPal();
-
-   /*
-SetPal(0, 43, 37, 30);
-SetPal(1, 31, 22, 17);
-SetPal(2, 63, 63, 63);
-SetPal(3, 58, 58, 50);
-SetPal(4, 44, 00, 21);
-SetPal(5, 63, 63, 21);
-
-SetPal(7,  0,  0,  0); */
 
 }
 
@@ -869,52 +836,6 @@ Wait(0,0,0);
 ChargeEcran();
 }
 
-
-
-// 1 -> Cancel
-// 0 -> OK
-int WinError(char *erreur)
-{
-int x,l;
-static char Buffer[70];
-static int CadreLength=71;
-
-struct Tmt T[4] = {
-      {15,4,2,NULL,NULL},
-      {45,4,3,NULL,NULL},
-      { 1,1,6,NULL,&CadreLength},
-      { 2,2,0,Buffer,NULL}
-      };
-
-struct TmtWin F = {
-    3,10,76,16,
-    "Error"};
-
-l=strlen(erreur);
-
-x=(80-l)/2;     // 1-> 39, 2->39
-if (x>25) x=25;
-
-l=(40-x)*2;
-
-CadreLength=l+1;
-
-F.x1=x-2;
-F.x2=x+l+1;
-
-l=l+3;
-
-T[0].x=(l/4)-5;
-T[1].x=(3*l/4)-6;
-
-strcpy(Buffer,erreur);
-
-if (WinTraite(T,4,&F)==0)
-    return 0;
-    else
-    return 1;
-
-}
 
 void YouMad(char *s)
 {

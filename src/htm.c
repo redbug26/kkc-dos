@@ -1,13 +1,13 @@
-/**************************************************************************/
-/* HTM2TXT: Version 0.4                                                   */
-/* Conversion de fichier HTML (format "internet") vers fichiers textes    */
-/**************************************************************************/
-/* Am‚lioration … faire                                                   */
-/* - Reconnaitre EM, /EM, /FONT, H5, H6                                   */
-/* - Changer listes avec stack                                            */
-/* - Lorsqu'il y ALT dans une 'IMG', l'afficher                           */
-/* - 'H? ... ' ne marche pas                                              */
-/* - 'H?' ne doit pas r‚initialiser la position … Z‚ro                    */
+/0*****************************************************************************/
+/1 HTM2TXT: Version 0.4                                                   */
+/2 Conversion de fichier HTML (format "internet") vers fichiers textes    */
+/3**************************************************************************/
+/4 Am‚lioration … faire                                                   ***/
+/5 - Reconnaitre EM, /EM, /FONT, H5, H6                                   ****/
+/6 - Changer listes avec stack                                            *****/
+/7 - Lorsqu'il y ALT dans une 'IMG', l'afficher                           ******/
+/8 - 'H? ... ' ne marche pas                                              */
+/9 - 'H?' ne doit pas r‚initialiser la position … Z‚ro                    */
 /* - Beaucoup de commandes non fonctionnelle                              */
 /* - Aide en ligne                                                        */
 /* - Am‚lioration des menus                                               */
@@ -992,4 +992,4 @@ for (n=0;n<Bupos;n++)
 	memcpy(Bufis[n].prn,Bucou.prn,10);
 	}
 Bupos=0;
-}
+}

@@ -15,6 +15,9 @@ struct {
     char *Meneur;
     short ext;
     short NoDir;
+    char type;  // 0: Rien de particulier
+                // 1: Decompacteur
+                // 2: Compacteur
     char dir[128];
     } app[20];
 
@@ -97,7 +100,10 @@ for (j=0;j<nbr;j++)
     fread(a,n,1,fic);
 
     fread(&(app[nbrappl].ext),2,1,fic);    // Numero de format
+
     fread(&(app[nbrappl].NoDir),2,1,fic);   // Numero directory
+
+    fread(&(app[nbrappl].type),1,1,fic);   // Numero directory
 
     if (app[nbrappl].ext==numero)  nbrappl++;
 	}
@@ -173,12 +179,100 @@ if (nbrappl!=1) {
 	n=0;
 
 
-chaine[0]=di+'A';
+/* chaine[0]=di+'A';
 chaine[1]=':';
-chaine[2]=0;
-strcpy(chaine+2,app[n].dir);
+chaine[2]=0; */
+strcpy(chaine,app[n].dir);
 strcat(chaine,app[n].Filename);
 CommandLine("#%s %s",chaine,name);
+
+return 0;
+}
+
+
+// Code de retour:
+// 0: perfect
+// 1: error
+// 2: no player for this file
+
+
+int PlayerIdf(char *name,int numero)
+{
+int j,i,n;
+
+int nbrappl;
+
+a=numero;
+
+fic=fopen(Fics->FicIdfFile,"rb");
+
+
+if (fic==NULL) {
+	PUTSERR("IDFEXT.RB missing");
+	return 1;
+	}
+
+fread(key,1,8,fic);
+if (memcmp(key,"RedBLEXU",8)) {
+	PUTSERR("File IDFEXT.RB is bad");
+	return 1;
+	}
+di=fgetc(fic);
+
+fread(&nbr,1,2,fic);
+
+nbrappl=0;
+
+for (j=0;j<nbr;j++)
+	{
+    char n;
+    char *a;
+
+    fread(&n,1,1,fic);
+    app[nbrappl].Filename=malloc(n+1);
+    a=app[nbrappl].Filename;
+    a[n]=0;
+    fread(a,n,1,fic);
+
+    fread(&n,1,1,fic);
+    app[nbrappl].Titre=malloc(n+1);
+    a=app[nbrappl].Titre;
+    a[n]=0;
+    fread(a,n,1,fic);
+
+    fread(&n,1,1,fic);
+    app[nbrappl].Meneur=malloc(n+1);
+    a=app[nbrappl].Meneur;
+    a[n]=0;
+    fread(a,n,1,fic);
+
+    fread(&(app[nbrappl].ext),2,1,fic);    // Numero de format
+    fread(&(app[nbrappl].NoDir),2,1,fic);   // Numero directory
+
+    fread(&(app[nbrappl].type),1,1,fic);   // Numero directory
+
+    if (app[nbrappl].ext==numero)  nbrappl++;
+	}
+
+fread(&nbrdir,1,2,fic);
+
+for(n=0;n<nbrdir;n++)	{
+	fread(col,1,128,fic);
+	for (i=0;i<nbrappl;i++) {
+        if (n==app[i].NoDir-1)
+            strcpy(app[i].dir,col);
+		}
+	}
+
+fclose(fic);
+
+if (nbrappl==0) {
+	PUTSERR("No player for this file !");
+	return 2;
+	}
+
+strcpy(name,app[0].dir);
+strcat(name,app[0].Filename);
 
 return 0;
 }

@@ -20,10 +20,10 @@ CL = wlink
 # -oneatx        pour optimization
 
 # en phase de debugging
-#CCOPTS = -wx -5r -fpi -zdp -d__WC32__ -mf -d3 -zm -od
+CCOPTS = -wx -5r -fpi -zdp -d__WC32__ -mf -d3 -zm -od
 
 # en phase de release
-CCOPTS = -w5 -5r -fpi -zdp -d__WC32__ -mf -s
+#CCOPTS = -w5 -5r -fpi -zdp -d__WC32__ -mf -s
 
 
 ASM = tasm
@@ -31,7 +31,7 @@ ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
 
 all : kkmain.exe
 
-kkmain.exe : demo.obj idf.obj hard.obj win.obj gestion.obj dos.obj driver.obj ficidf.obj copie.obj delete.obj search.obj help.obj view.obj
+kkmain.exe : kkmain.obj idf.obj hard.obj win.obj gestion.obj dos.obj driver.obj ficidf.obj copie.obj delete.obj search.obj help.obj view.obj
                 $(CL) @kkmain.wlk
 
 .c.obj:

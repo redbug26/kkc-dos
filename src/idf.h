@@ -15,7 +15,7 @@ struct key      {
         char type;              // type de fichier
         };
 
-#define nbrkey 105
+#define nbrkey 110
 
 struct info
    {
@@ -25,7 +25,7 @@ struct info
    char fullname[80];		// le plus grand fullname est 40 (farandole)
    char message[10][80];	// 10 Messages de 80 caracters
    char format[80];
-   char info[80];			// contient le nom de l'OS si (os!=0)
+   char info[80];               // contient le nom de l'OS si (os!=0)
    char Tinfo[80];
    char composer[80];
    ULONG taille;

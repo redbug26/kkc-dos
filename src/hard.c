@@ -14,6 +14,7 @@
 
 struct config *Cfg;
 struct fichier *Fics;
+struct PourMask **Mask;
 
 char *scrseg=(char*)0xB8000;
 
@@ -249,7 +250,7 @@ while (*suite!=0)
 
 char InputAt(char colonne,char ligne,char *chaine, int longueur)
 {
-int caractere;
+unsigned int caractere;
 unsigned char c2;
 char chaine2[255],old[255];
 char couleur;
@@ -412,7 +413,7 @@ switch (caractere&255)
 
 	  default:
 		{	  /* v‚rifier si caractŠre correcte */
-		if ((caractere>31) && (caractere<255))
+        if ((caractere>31) && (caractere<=255))
 			{
 			if ((i==fin) || (!ins))
 				{
@@ -454,10 +455,30 @@ GotoXY(0,0);
 return retour;
 }  /* fin fonction lire_chaine */
 
+int ScreenSaver(void)
+{
+char a;
+int b;
+
+inp(0x3DA);
+inp(0x3BA);
+outp(0x3C0,0);
+
+a=getch();
+if (a==0) b=getch()*256+a; else b=a;
+
+inp(0x3DA);
+inp(0x3BA);
+outp(0x3C0,0x20);
+
+return b;
+}
+
 
 int Wait(int x,int y,char c)
 {
 char a;
+int b;
 clock_t Cl;
 
 if ((x!=0) | (y!=0))
@@ -466,32 +487,22 @@ if ((x!=0) | (y!=0))
 Cl=clock();
 
 a=0;
+b=0;
 
-while(!kbhit())
+while ( (!kbhit()) & (b==0) )
     {
-//    PrintAt(0,0,"%10d %10d %10d %10d",clock(),Cl,clock()-Cl,Cfg->SaveSpeed);
-    if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) & (a==0) )
-        {
-        inp(0x3DA);
-        inp(0x3BA);
-        outp(0x3C0,0);
-        a=1;
-        }
+    if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) )
+        b=ScreenSaver();
     }
 
-if (a==1)
+if (b==0)
     {
-    inp(0x3DA);
-    inp(0x3BA);
-    outp(0x3C0,0x20);
+    a=getch();
+    if (a==0)
+        return getch()*256+a;
+    return a;
     }
-
-
-a=getch();
-if (a==0)
-   return getch()*256+a;
-   else
-   return a;
+return b;
 }
 
 void Pause(int n)
@@ -712,7 +723,34 @@ if (Cfg->UseFont==0)
     }
 }
 
+
 void MakeFont(char *font,char *adr);
+
+void MakeFont(char *font,char *adr)
+{
+int n;
+
+outpw( 0x3C4, 0x402);
+outpw( 0x3C4, 0x704);
+outpw( 0x3CE, 0x204);
+
+outpw( 0x3CE, 5);
+outpw( 0x3CE, 6);
+
+for (n=0;n<16;n++)
+    adr[n]=font[n];
+
+outpw( 0x3C4, 0x302);
+outpw( 0x3C4, 0x304);
+
+outpw( 0x3CE, 4);
+outpw( 0x3CE, 0x1005);
+outpw( 0x3CE, 0xE06);
+
+}
+
+/*
+
 #pragma aux MakeFont = \
     "cli" \
     "mov dx,3C4h" \
@@ -743,8 +781,9 @@ void MakeFont(char *font,char *adr);
     "out dx,ax" \
     "sti" \
     parm [esi] [edi];
+*/
 
-void Font(void)
+void Font8x8(void)
 {
 FILE *fic;
 char *pol;
@@ -754,9 +793,18 @@ int n;
 union REGS R;
 unsigned char x;
 
+char chaine[256];
+
+
+
+Cfg->Tfont[0]=179;      // Barre Verticale | with 8x8
+
+strcpy(chaine,Fics->path);
+strcat(chaine,"\\font8x8.cfg");
+
 Cfg->UseFont=0;
 
-fic=fopen(Fics->font,"rb");
+fic=fopen(chaine,"rb");
 if (fic==NULL) return;
 
 Cfg->UseFont=1;         // utilise les fonts 8x8
@@ -790,10 +838,63 @@ outpw( 0x3C4, 0x0300);
 R.w.ax=0x1000;
 R.h.bl=0x13;
 int386(0x10,&R,&R);
-
-
-
 }
+
+void Font8x16(void)
+{
+FILE *fic;
+char *pol;
+char *buf=(char*)0xA0000;
+int n;
+
+union REGS R;
+unsigned char x;
+
+char chaine[256];
+
+Cfg->Tfont[0]=179;      // Barre Verticale | with 8x8
+
+strcpy(chaine,Fics->path);
+strcat(chaine,"\\font8x16.cfg");
+
+Cfg->UseFont=0;
+
+fic=fopen(chaine,"rb");
+if (fic==NULL) return;
+
+Cfg->UseFont=1;         // utilise les fonts 8x8
+Cfg->Tfont[0]=168;      // Barre Verticale | with 8x8
+
+pol=malloc(4096);
+
+fread(pol,4096,1,fic);
+
+fclose(fic);
+
+for (n=0;n<8;n++)
+    Cfg->Tfont[n+1]=128+n;
+for (n=0;n<8;n++)
+    Cfg->Tfont[n+9]=142+n;
+
+for (n=0;n<256;n++)  {
+    MakeFont(pol+n*16,buf+n*32);
+    }
+
+
+R.w.bx=(8==8) ? 0x0001 : 0x0800;
+x=inp(0x3CC) & (255-12);
+(void) outp(0x3C2,x);
+// disable();
+outpw( 0x3C4, 0x0100);
+outpw( 0x3C4, 0x01+ (R.h.bl<<8) );
+outpw( 0x3C4, 0x0300);
+// enable();
+
+R.w.ax=0x1000;
+R.h.bl=0x13;
+int386(0x10,&R,&R);
+}
+
 
 void Mode25(void);
 #pragma aux Mode25 = \
@@ -807,7 +908,48 @@ void Mode50(void);
     "mov bx,0" \
     "mov ax,1112h" \
     "int 10h";
-    
+
+void Mode30(void);
+#pragma aux Mode30 = \
+    "mov ax,3" \
+    "int 10h" \
+    "mov ax,1114h" \
+    "xor bl,bl" \
+    "int 10h" \
+    "mov dx,3cch" \
+    "in al,dx" \
+    "mov dl,0c2h" \
+    "or al,192" \
+    "out dx,al" \
+    "mov dx,3d4h" \
+    "mov al,11h" \
+    "out dx,al" \
+    "inc dx" \
+    "and al,112" \
+    "or al,12" \
+    "mov bl,al" \
+    "out dx,al" \
+    "dec dx" \
+    "mov ax,0B06h" \
+    "out dx,ax" \
+    "mov ax,3E07h" \
+    "out dx,ax" \
+    "mov ax,0EA10h" \
+    "out dx,ax" \
+    "mov ax,0DF12h" \
+    "out dx,ax" \
+    "mov ax,0E715h" \
+    "out dx,ax" \
+    "mov ax,0416h" \
+    "out dx,ax" \
+    "mov al,11h" \
+    "out dx,al" \
+    "inc dx" \
+    "mov al,bl" \
+    "out dx,al" \
+    "mov ebx,484h" \
+    "mov al,29" \
+    "mov [ebx],al";
 
 
 void TXTMode(char lig)
@@ -817,6 +959,9 @@ switch (lig)
     {
     case 25:
         Mode25();
+        break;
+    case 30:
+        Mode30();
         break;
     case 50:
         Mode50();
@@ -869,6 +1014,8 @@ if (buf==NULL) {
 //    ErrWin95();
     exit(1);
    }
+
+memset(buf,0,s);
 
 return buf;
 }
@@ -965,3 +1112,197 @@ oldcrc = oldcrc32 = ~oldcrc32;
 return 0;
 }
 
+// si p vaut 0 mets off
+// si p vaut 1 interroge
+// retourne -1 si SHIFT TAB, 1 si TAB
+int Puce(int x,int y,int lng,char p)
+{
+int r=0;
+
+int car;
+
+AffChr(x,y,16);
+AffChr(x+lng-1,y,17);
+
+AffChr(x+lng,y,220);
+ChrLin(x+1,y+1,lng,223);
+
+ColLin(x,y,lng,2*16+5);        // Couleur
+
+if (p==1)
+    while (r==0)  {
+        car=Wait(0,0,0);
+
+        switch(car%256)
+            {
+            case 13:
+                return 0;
+            case 27:
+                r=1;
+                break;
+            case 9:
+                r=2;
+                break;
+            case 0:
+                switch(car/256)
+                    {
+                    case 0x0F:
+                        r=3;
+                        break;
+                    case 0x4D:
+                        r=2;
+                        break;
+                    case 0x4B:
+                        r=3;
+                        break;
+                    }
+                break;
+            }
+        }
+
+
+AffChr(x,y,32);
+AffChr(x+lng-1,y,32);
+
+AffChr(x+lng,y,220);
+ChrLin(x+1,y+1,lng,223);
+
+ColLin(x,y,lng,2*16+3);        // Couleur
+
+return r;
+}
+
+
+// Retourne 27 si escape
+// Retourne numero de la liste sinon
+
+int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F)
+{
+char fin;       // si =0 continue
+char direct;    // direction du tab
+int i;
+
+SaveEcran();
+
+
+WinCadre(F->x1,F->y1,F->x2,F->y2,0);
+ColWin(F->x1+1,F->y1+1,F->x2-1,F->y2-1,10*16+1);
+ChrWin(F->x1+1,F->y1+1,F->x2-1,F->y2-1,32);
+
+PrintAt(F->x1+((F->x2-F->x1)-(strlen(F->name)))/2,F->y1,F->name);
+
+for(i=0;i<nbr;i++)
+switch(T[i].type) {
+    case 0:
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
+        break;
+    case 1:
+        ColLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),1*16+5);
+        ChrLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),32);
+        break;
+    case 2:
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"      OK     ");
+        Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
+        break;
+    case 3:
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"    CANCEL   ");
+        Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
+        break;
+    case 4:
+        WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+3,1);
+        break;
+    case 5:
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
+        Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
+        break;
+    case 6:
+        WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+2,2);
+        break;
+    }
+
+fin=0;
+direct=1;
+i=0;
+
+while (fin==0) {
+
+switch(T[i].type) {
+    case 0:
+    case 4:
+        break;
+    case 1:
+        direct=InputAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str,*(T[i].entier));
+        break;
+    case 2:
+        direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
+        break;
+    case 3:
+        direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
+        break;
+    case 5:
+        direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
+        break;
+    }
+
+if (direct==0) fin=1;   // ENTER
+if (direct==1) fin=2;   // ESC
+if (direct==2) i++;
+if (direct==3) i--;
+
+if (i==-1) i=nbr-1;
+if (i==nbr) i=0;
+
+}
+
+ChargeEcran();
+
+if (fin==1)
+    return i;
+
+return 27;  // ESCAPE
+}
+
+// 1 -> Cancel
+// 0 -> OK
+int WinError(char *erreur)
+{
+int x,l;
+static char Buffer[70];
+static int CadreLength=71;
+
+struct Tmt T[4] = {
+      {15,4,2,NULL,NULL},
+      {45,4,3,NULL,NULL},
+      { 1,1,6,NULL,&CadreLength},
+      { 2,2,0,Buffer,NULL}
+      };
+
+struct TmtWin F = {
+    3,10,76,16,
+    "Error"};
+
+l=strlen(erreur);
+
+x=(80-l)/2;     // 1-> 39, 2->39
+if (x>25) x=25;
+
+l=(40-x)*2;
+
+CadreLength=l+1;
+
+F.x1=x-2;
+F.x2=x+l+1;
+
+l=l+3;
+
+T[0].x=(l/4)-5;
+T[1].x=(3*l/4)-6;
+
+strcpy(Buffer,erreur);
+
+if (WinTraite(T,4,&F)==0)
+    return 0;
+    else
+    return 1;
+
+}
