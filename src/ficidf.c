@@ -1,3 +1,6 @@
+/*--------------------------------------------------------------------*\
+|- Association header - player                                        -|
+\*--------------------------------------------------------------------*/
 #include <dos.h>
 #include <process.h>
 #include <errno.h>
@@ -42,15 +45,18 @@ FILE *fic;
 char key[8];
 
 
-
-// Code de retour:
-// 0: perfect
-// 1: error
-// 2: no player for this file
-// 3: Arret ESCape
-
-// kefaire: 0 lancer application + fichier
-//          1 lancer application toute seule
+/*--------------------------------------------------------------------*\
+|-                                                                    -|
+|- Code de retour:                                                    -|
+|- 0: perfect                                                         -|
+|- 1: error                                                           -|
+|- 2: no player for this file                                         -|
+|- 3: Arret ESCape                                                    -|
+|-                                                                    -|
+|- kefaire: 0 lancer application + fichier                            -|
+|-          1 lancer application toute seule                          -|
+|-                                                                    -|
+\*--------------------------------------------------------------------*/
 
 int FicIdf(char *name,int numero,int kefaire)
 {
@@ -104,11 +110,11 @@ for (j=0;j<nbr;j++)
     a[n]=0;
     fread(a,n,1,fic);
 
-    fread(&(app[nbrappl].ext),2,1,fic);    // Numero de format
+    fread(&(app[nbrappl].ext),2,1,fic);              // Numero de format
 
-    fread(&(app[nbrappl].NoDir),2,1,fic);   // Numero directory
+    fread(&(app[nbrappl].NoDir),2,1,fic);            // Numero directory
 
-    fread(&(app[nbrappl].type),1,1,fic);   // Numero directory
+    fread(&(app[nbrappl].type),1,1,fic);             // Numero directory
 
     if (app[nbrappl].ext==numero)  nbrappl++;
 	}
@@ -182,16 +188,33 @@ if (nbrappl!=1)
         if (a==0)
             {
 			a=getch();
-			if (a==72)		pos--;
-			if (a==80)		pos++;
-			if (a==0x47)	pos=m;
-			if (a==0x4F)	pos=m+nbr-1;
-			if (a==0x51)	pos+=5;
-			if (a==0x49)	pos-=5;
-            if (a==0x86)    WinMesg("Info. on dir",app[pos-m].dir);    // F12
+            switch(a)
+                {
+                case 72:
+                    pos--;
+                    break;
+                case 80:
+                    pos++;
+                    break;
+                case 0x47:
+                    pos=m;
+                    break;
+                case 0x4F:
+                    pos=m+nbr-1;
+                    break;
+                case 0x51:
+                    pos+=5;
+                    break;
+                case 0x49:
+                    pos-=5;
+                    break;
+                case 0x86:
+                    WinMesg("Info. on dir",app[pos-m].dir);       // F12
+                    break;
+                }
 			}
-
-        } while ( (a!=27) & (a!=13) & (a!=0x8D) & (a!=0x4B) & (a!=0x4D) );
+        }
+    while ( (a!=27) & (a!=13) & (a!=0x8D) & (a!=0x4B) & (a!=0x4D) );
 	ChargeEcran();
 
 	if (a==27) return 3;
@@ -215,12 +238,12 @@ if ((kefaire==1) | (a!=13))
 return 0;
 }
 
-
-// Code de retour:
-// 0: perfect
-// 1: error
-// 2: no player for this file
-
+/*--------------------------------------------------------------------*\
+|- Code de retour:                                                    -|
+|- 0: perfect                                                         -|
+|- 1: error                                                           -|
+|- 2: no player for this file                                         -|
+\*--------------------------------------------------------------------*/
 
 int PlayerIdf(char *name,int numero)
 {
@@ -232,14 +255,15 @@ a=numero;
 
 fic=fopen(Fics->FicIdfFile,"rb");
 
-
-if (fic==NULL) {
+if (fic==NULL)
+    {
 	PUTSERR("IDFEXT.RB missing");
 	return 1;
 	}
 
 fread(key,1,8,fic);
-if (memcmp(key,"RedBLEXU",8)) {
+if (memcmp(key,"RedBLEXU",8))
+    {
 	PUTSERR("File IDFEXT.RB is bad");
 	return 1;
 	}
@@ -272,19 +296,21 @@ for (j=0;j<nbr;j++)
     a[n]=0;
     fread(a,n,1,fic);
 
-    fread(&(app[nbrappl].ext),2,1,fic);    // Numero de format
-    fread(&(app[nbrappl].NoDir),2,1,fic);   // Numero directory
+    fread(&(app[nbrappl].ext),2,1,fic);              // Numero de format
+    fread(&(app[nbrappl].NoDir),2,1,fic);            // Numero directory
 
-    fread(&(app[nbrappl].type),1,1,fic);   // Numero directory
+    fread(&(app[nbrappl].type),1,1,fic);             // Numero directory
 
     if (app[nbrappl].ext==numero)  nbrappl++;
 	}
 
 fread(&nbrdir,1,2,fic);
 
-for(n=0;n<nbrdir;n++)	{
+for(n=0;n<nbrdir;n++)
+    {
 	fread(col,1,128,fic);
-	for (i=0;i<nbrappl;i++) {
+    for (i=0;i<nbrappl;i++)
+        {
         if (n==app[i].NoDir-1)
             strcpy(app[i].dir,col);
 		}
@@ -292,7 +318,8 @@ for(n=0;n<nbrdir;n++)	{
 
 fclose(fic);
 
-if (nbrappl==0) {
+if (nbrappl==0)
+    {
 	PUTSERR("No player for this file !");
 	return 2;
 	}

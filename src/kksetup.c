@@ -1,3 +1,7 @@
+/*--------------------------------------------------------------------*\
+|- KKSETUP: Main configuration program                                -|
+\*--------------------------------------------------------------------*/
+
 #include <stdarg.h>
 #include <dos.h>
 #include <direct.h>
@@ -27,7 +31,9 @@ char PathOfKK[256];
 char ActualPath[256];
 
 
-// Pour Statistique;
+/*--------------------------------------------------------------------*\
+|- Pour Statistique;                                                  -|
+\*--------------------------------------------------------------------*/
 int St_App;
 int St_Dir;
 
@@ -410,7 +416,9 @@ return strcmp(a1->ext,b1->ext);                           // ou format ?
 }
 
 
-
+/*--------------------------------------------------------------------*\
+|- Liste des fichiers reconnus par IDF                                -|
+\*--------------------------------------------------------------------*/
 void IdfListe(void)
 {
 int car,y;
@@ -566,8 +574,12 @@ fclose(fic);
 }
 
 
-// Retourne -1 en cas d'erreur
-//           0 si tout va bien
+
+/*--------------------------------------------------------------------*\
+|- Chargement de KKRB.CFG                                             -|
+|-  Retourne -1 en cas d'erreur                                       -|
+|-            0 si tout va bien                                       -|
+\*--------------------------------------------------------------------*/
 int LoadCfg(void)
 {
 int i,t,n,m;
@@ -633,11 +645,9 @@ return 0;
 }
 
 
-
-
-/*--------------------------------------------------------------------*
- -                 Change drive of current window -                   -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                 Change drive of current window -                   -|
+\*--------------------------------------------------------------------*/
 void ListDrive(char *lstdrv)
 {
 char drive[26],etat[26];
@@ -704,8 +714,6 @@ car=DROITE*256;
 
 do	{
     do {
-
-
         if ( (LO(car)==32) & (drive[i]!=0) )
             {
             if (lstdrv[i]==0)
@@ -792,7 +800,8 @@ static char **dir;
 
 k=Cfg->TailleY-5;
 
-DispMessage("Select the directory where you will that KKSETUP copy the batch files for");
+DispMessage("Select the directory where you will that KKSETUP"
+                                           " copy the batch files for");
 DispMessage("the execution of KK and KKDESC. (ESC for cancel)");
 DispMessage("");
 
@@ -855,25 +864,25 @@ if (i!=0)
 
     switch(HI(car))
         {
-        case 72:        // UP
+        case 72:                                                   // UP
             pos--;
             if (pos==-1) pos=0;  // i-1;
             break;
-        case 80:        // DOWN
+        case 80:                                                 // DOWN
             pos++;
             if (pos==i) pos=i-1; // 0;
             break;
-        case 0x47:      // HOME
+        case 0x47:                                               // HOME
             pos=0;
             break;
-        case 0x4F:      // END
+        case 0x4F:                                                // END
             pos=i-1;
             break;
-        case 0x49:      // PGUP
+        case 0x49:                                               // PGUP
             pos-=5;
             if (pos<0) pos=0;
             break;
-        case 0x51:      // PGDN
+        case 0x51:                                               // PGDN
             pos+=5;
             if (pos>=i) pos=i-1;
             break;
@@ -925,6 +934,10 @@ if (erreur==1)
 
 }
 
+
+/*--------------------------------------------------------------------*\
+|- Procedure principale                                               -|
+\*--------------------------------------------------------------------*/
 void main(short argc,char **argv)
 {
 char buffer[256],chaine[256];
@@ -936,15 +949,15 @@ char *path;
 
 IOerr=1;
 
-/*****************************
- - Initialisation de l'ecran -
- *****************************/
+/*--------------------------------------------------------------------*\
+|-  Initialisation de l'ecran                                         -|
+\*--------------------------------------------------------------------*/
 
 InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
-/***********************
- - Gestion des erreurs -
- ***********************/
+/*--------------------------------------------------------------------*\
+|-  Gestion des erreurs                                               -|
+\*--------------------------------------------------------------------*/
 
 _harderr(Error_handler);
 
@@ -961,20 +974,18 @@ for (n=strlen(path);n>0;n--) {
     }
 
 
-
-
-/********************************
- - Initialisation des variables -
- ********************************/
+/*--------------------------------------------------------------------*\
+|-  Initialisation des variables                                      -|
+\*--------------------------------------------------------------------*/
 
 Fenetre[0]=GetMem(sizeof(struct fenetre));
-Fenetre[0]->F=GetMem(TOTFIC*sizeof(void *));        // allocation des pointeurs
+Fenetre[0]->F=GetMem(TOTFIC*sizeof(void *)); // allocation des pointeurs
 
 Fenetre[1]=GetMem(sizeof(struct fenetre));
-Fenetre[1]->F=GetMem(TOTFIC*sizeof(void *));        // allocation des pointeurs
+Fenetre[1]->F=GetMem(TOTFIC*sizeof(void *)); // allocation des pointeurs
 
 Fenetre[2]=GetMem(sizeof(struct fenetre));
-Fenetre[2]->F=GetMem(TOTFIC*sizeof(void *));        // allocation des pointeurs
+Fenetre[2]->F=GetMem(TOTFIC*sizeof(void *)); // allocation des pointeurs
 
 Cfg=GetMem(sizeof(struct config));
 Fics=GetMem(sizeof(struct fichier));
@@ -1034,11 +1045,11 @@ NoFlash();
 switch (Cfg->TailleY)
     {
     case 50:
-        Font8x8();
+        Font8x(8);
         break;
     case 25:
     case 30:
-        Font8x16();
+        Font8x(16);
         break;
     }
 
@@ -1062,9 +1073,9 @@ ChrLin(1,0,78,32);
 
 PrintAt(21,0,"Setup of Ketchup Killers Commander");
 
-/*-----------------*
- - Gestion Message -
- *-----------------*/
+/*--------------------------------------------------------------------*\
+|-  Gestion Message                                                   -|
+\*--------------------------------------------------------------------*/
 
 InitMessage();
 
@@ -1099,11 +1110,9 @@ if (mkdir(chaine)==0)
 
 
 
-
-/*------------------------------*
- - Insertion de KK dans la path -
- - Si pas d‚ja pr‚sent !        -
- *------------------------------*/
+/*--------------------------------------------------------------------*\
+|-  Insertion de KK dans la path si pas d‚ja pr‚sent !                -|
+\*--------------------------------------------------------------------*/
 
 strcpy(ActualPath,path);
 
@@ -1157,7 +1166,8 @@ if (strlen(PathOfKK)!=0)
     }
     else
     {
-    DispMessage("WARNING: You couldn't run KK from everywhere (Reload KKSETUP)");
+    DispMessage("WARNING: You couldn't run KK from everywhere "
+                                                    "(Reload KKSETUP)");
     }
 
 DispMessage("");
@@ -1251,10 +1261,10 @@ if (nbr>0)
                 fwrite(&sn,1,1,fic);
                 fwrite(a,sn,1,fic);
 
-                fwrite(&(app[n]->ext),2,1,fic);    // Numero de format
-                fwrite(&(app[n]->pres),2,1,fic);   // Numero directory
+                fwrite(&(app[n]->ext),2,1,fic);      // Numero de format
+                fwrite(&(app[n]->pres),2,1,fic);     // Numero directory
 
-                fwrite(&(app[n]->type),1,1,fic);   // Numero directory
+                fwrite(&(app[n]->type),1,1,fic);     // Numero directory
                 }
 
         fwrite(&nbrdir,1,2,fic);
@@ -1305,12 +1315,13 @@ fread(Key,4,1,Fic);
 if (!strncmp(Key,"KKRB",4))
     do {
     fread(&Code,1,1,Fic);
-    switch(Code)  {
-        case 0:             // Commentaire (sans importance)
+    switch(Code)
+        {
+        case 0:                         // Commentaire (sans importance)
             fread(&SComment,1,1,Fic);
             fread(Comment,SComment,1,Fic);
             break;
-        case 1:             // Code Titre
+        case 1:                                            // Code Titre
             fread(&STitre,1,1,Fic);
             Titre[STitre]=0;
             fread(Titre,STitre,1,Fic);
@@ -1325,20 +1336,20 @@ if (!strncmp(Key,"KKRB",4))
                 ChrLin(1,(Cfg->TailleY-2),78,32);
                 }
             break;
-        case 2:             // Code Programmeur
+        case 2:                                      // Code Programmeur
             fread(&SMeneur,1,1,Fic);
             fread(Meneur,SMeneur,1,Fic);
             Meneur[SMeneur]=0;
             break;
-        case 3:             // Code Nom du programme
+        case 3:                                 // Code Nom du programme
             fread(&SFilename,1,1,Fic);
             Filename[SFilename]=0;
             fread(Filename,SFilename,1,Fic);
             break;
-        case 4:             // Checksum
+        case 4:                                              // Checksum
             fread(&Checksum,4,1,Fic);
             break;
-        case 5:             // Format
+        case 5:                                                // Format
             fread(&format,2,1,Fic);
             app[nbr]=malloc(sizeof(struct player));
 
@@ -1359,10 +1370,10 @@ if (!strncmp(Key,"KKRB",4))
 
             nbr++;
             break;
-        case 6:             // Fin de fichier
+        case 6:                                        // Fin de fichier
             fin=1;
             break;
-        case 7:             // Reset
+        case 7:                                                 // Reset
             Checksum=0;
 
             strcpy(Titre,"?");
@@ -1375,7 +1386,7 @@ if (!strncmp(Key,"KKRB",4))
 
             KKType=0;
             break;
-        case 8:             // Checksum
+        case 8:                                              // Checksum
             fread(&KKType,1,1,Fic);
             break;
         }
@@ -1395,8 +1406,8 @@ char moi[256],nom[256];
 char ok;
 FILE *Fic;
 
-char **TabRec;  // Tableau qui remplace les appels recursifs
-int NbrRec;     // Nombre d'element dans le tableau
+char **TabRec;              // Tableau qui remplace les appels recursifs
+int NbrRec;                          // Nombre d'element dans le tableau
 
 TabRec=malloc(500*sizeof(char*));
 TabRec[0]=malloc(strlen(nom2)+1);
@@ -1416,7 +1427,8 @@ if (_dos_findfirst(moi,63-_A_SUBDIR,&fic)==0)
 do
     {
     ok=0;
-    if ((fic.attrib&_A_SUBDIR)!=_A_SUBDIR)  {
+    if ((fic.attrib&_A_SUBDIR)!=_A_SUBDIR)
+        {
         strcpy(moi,nom);
         strcat(moi,fic.name);
         Fic=fopen(moi,"rb");
@@ -1440,7 +1452,7 @@ strcat(moi,"*.*");
 if (_dos_findfirst(moi,_A_SUBDIR,&fic)==0)
 do
     {
-    if  ( (fic.name[0]!='.') & (((fic.attrib) & _A_SUBDIR) == _A_SUBDIR) )
+    if  ( (fic.name[0]!='.') & (((fic.attrib)&_A_SUBDIR) == _A_SUBDIR) )
             {
             strcpy(moi,nom);
             strcat(moi,fic.name);
@@ -1457,11 +1469,8 @@ while(NbrRec>0);
 
 
 free(TabRec);
-
 }
 
-
-// int Allform[1024];
 
 
 void SSearch(char *nom2)
@@ -1475,12 +1484,12 @@ char bill;
 signed long wok;
 
 unsigned long KKcrc;
-unsigned long K1crc;    // crc calcul‚ une fois pour toutes
+unsigned long K1crc;                 // crc calcul‚ une fois pour toutes
 
 unsigned long C;
 
-char **TabRec;  // Tableau qui remplace les appels recursifs
-int NbrRec;     // Nombre d'element dans le tableau
+char **TabRec;              // Tableau qui remplace les appels recursifs
+int NbrRec;                          // Nombre d'element dans le tableau
 
 char *StrVerif,Verif;
 
@@ -1509,11 +1518,12 @@ do
     if ((fic.attrib&_A_SUBDIR)!=_A_SUBDIR)
         {
         C=0;
-        KKcrc=0;    // CRC du fichier courant
+        KKcrc=0;                               // CRC du fichier courant
         K1crc=0;
 
         for(n=0;n<nbr;n++)
-            if ( (!stricmp(fic.name,app[n]->Filename)) & (app[n]->Checksum!=0) )
+            if ( (!stricmp(fic.name,app[n]->Filename)) &
+                                                 (app[n]->Checksum!=0) )
                 {
                 if (KKcrc==0)
                     {
@@ -1683,8 +1693,8 @@ void ClearAllSpace(char *name)
 char c,buf[128];
 short i,j;
 
-i=0;    // navigation dans name
-j=0;    // position dans buf
+i=0;                                             // navigation dans name
+j=0;                                                // position dans buf
 
 while ( (TestCar(name[i])) & (name[i]!=0) ) i++;
 
@@ -1968,9 +1978,9 @@ struct {
     char dir[128];
     } IDF_app;
 
-/*--------------------------------------------------------------------*
- -             Montre tous les players que vous possedez              -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-  Montre tous les players que vous possedez                         -|
+\*--------------------------------------------------------------------*/
 char ShowYourPlayer(void)
 {
 char key[9];
@@ -2174,9 +2184,9 @@ return 1;
 
 
 
-/*--------------------------------------------------------------------*
- - Gestion de la barre de menu du haut                                -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-  Gestion de la barre de menu du haut                               -|
+\*--------------------------------------------------------------------*/
 
 int GestionBar(void)
 {
@@ -2267,17 +2277,17 @@ ChargeEcran();
 return fin;
 }
 
-/*--------------------------------------------------------------------*
- - 0: Quit                                                            -
- - 1: Help                                                            -
- - 2: About                                                           -
- - 3: list all the format                                             -
- - 4: search application                                              -
- - 5: load kksetup.ini                                                -
- - 6: Putinpath                                                       -
- - 7: Exit                                                            -
- - 8: Show all player                                                 -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|- 0: Quit                                                            -|
+|- 1: Help                                                            -|
+|- 2: About                                                           -|
+|- 3: list all the format                                             -|
+|- 4: search application                                              -|
+|- 5: load kksetup.ini                                                -|
+|- 6: Putinpath                                                       -|
+|- 7: Exit                                                            -|
+|- 8: Show all player                                                 -|
+\*--------------------------------------------------------------------*/
 
 void GestionFct(int i)
 {

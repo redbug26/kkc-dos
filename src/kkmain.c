@@ -1,3 +1,6 @@
+/*--------------------------------------------------------------------*\
+|- Programme principal                                                -|
+\*--------------------------------------------------------------------*/
 #include <direct.h>
 #include <i86.h>
 #include <stdio.h>
@@ -22,18 +25,18 @@
 #include "win.h"
 #include "kk.h"
 
-/*---------------------*
- - Declaration interne -
- *---------------------*/
+/*--------------------------------------------------------------------*\
+|-  Declaration interne                                               -|
+\*--------------------------------------------------------------------*/
 
 void Fin(void);
 
 void SaveSel(struct fenetre *F1);
 void LoadSel(int n);
 
-/*---------------------------*
- - Declaration des variables -
- *---------------------------*/
+/*--------------------------------------------------------------------*\
+|-  Declaration des variables                                         -|
+\*--------------------------------------------------------------------*/
 
 int OldCol;                                 // Ancienne couleur du texte
 char OldY,PosX,PosY;
@@ -44,7 +47,7 @@ sig_atomic_t signal_count;
 char *SpecMessy=NULL;
 char SpecSortie[256];
 
-char Select_Chaine[16]="*.*";
+char Select_Chaine[32]="*.*";
 
 char *Screen_Buffer;
 
@@ -63,9 +66,9 @@ extern int IOver;
 extern int IOerr;
 
 
-/*-------------------------*
- - Procedure en Assembleur -
- *-------------------------*/
+/*--------------------------------------------------------------------*\
+|-  Procedure en Assembleur                                           -|
+\*--------------------------------------------------------------------*/
 
 char GetDriveReady(char i);
 #pragma aux GetDriveReady = \
@@ -85,13 +88,12 @@ char GetDriveReady(char i);
     value [cl];
 
 
-/*------------------*
- - Other Procedures -
- *------------------*/
-
-// c=0 --> change from selection
-//   1 --> default set of color
-//   2 --> norton set
+/*--------------------------------------------------------------------*\
+|-  Other Procedures                                                  -|
+|-   c=0 --> change from selection                                    -|
+|-     1 --> default set of color                                     -|
+|-     2 --> norton set                                               -|
+\*--------------------------------------------------------------------*/
 void ChangePalette(char c)
 {
 int x,y,i;
@@ -123,7 +125,8 @@ char defcol[NBRS][48]={ RBPALDEF ,
                       20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
                        };
 
-char *Style[NBRS]={"Default Style","Norton Style","Cyan Style","Venus "};
+char *Style[NBRS]={"Default Style","Norton Style","Cyan Style",
+                                                             "Venus "};
 int posx[NBRS],posy[NBRS];
 
 if (c>0)
@@ -333,9 +336,9 @@ ChargeEcran();
 
 }
 
-/*--------------------*
- - Programme de setup -
- *--------------------*/
+/*--------------------------------------------------------------------*\
+|-  Programme de setup                                                -|
+\*--------------------------------------------------------------------*/
 
 
 
@@ -350,73 +353,74 @@ memset(SpecSortie,0,256);
 Fin();
 }
 
-/* Gestion de toutes les fonctions
-
-  0: ?
-  1: Help
-  2: Invert Selection
-  3: Select Group of file
-  4: Unselect Group of file
-  5: Search File
-  6: Create a KKD file
-  7: View file
-  8: Quick view file
-  9: Edit file
- 10: Copy
- 11: Move
- 12: Create Directory
- 13: Delete selection
- 14: Close left window
- 15: Close right window
- 16: Select current file
- 17: Change palette
- 18: About
- 19: Select temporary file
- 20: Quit KKC
- 21: Fenetre DIZ
- 22: Sort by name
- 23: Sort by extension
- 24: Sort by date
- 25: Sort by size
- 26: Sort by unsort ;)
- 27: Reload Directory
- 28: ASCII Table
- 29: Win CD
- 30: Put file on command line
- 31: Appel du programme de configuration
- 32: Switch les fontes
- 33: Switch special sort
- 34: Efface la trash
- 35: Affiche les infos
- 36: Ligne suivante
- 37: Ligne precedente
- 38: Fenˆtre information
- 39: Changement d'attribut
- 40: Fenetre history des directories
- 41: Va dans le r‚p‚rtoire pere
- 42: Va dans le r‚p‚rtoire trash
- 43: Active la fenetre principal (Cfg->FenAct)
- 44: Rename Window
- 45: Internal editor
- 46: Selection du fichier en tant que repertoire courant
- 47: Switch le mode ecran (nombre de lignes)
- 48: Switch le type d'ecran (watcom, norton, ...)
- 49: Change le drive de la fenetre 0
- 50: Change le drive de la fenetre 1
- 51: Va dans le repertoire d'o— l'on a lanc‚ KK
- 52: 10 lignes avant
- 53: 10 lignes apres
- 54: Premiere ligne
- 55: Derniere ligne
- 56: Va dans la premiere fenˆtre
- 57: Va dans la deuxieme fenˆtre
- 58: Change la fenˆtre avec la path de l'autre fenˆtre
- 59: Edit New File
- 60: Switch Display Mode
- 61: Mode serveur
- 62: Appelle KKSETUP.EXE
- 63: Info on disk
-*/
+/*--------------------------------------------------------------------*\
+|-  Gestion de toutes les fonctions                                   -|
+|----------------------------------------------------------------------|
+|-  0: ?                                                              -|
+|-  1: Help                                                           -|
+|-  2: Invert Selection                                               -|
+|-  3: Select Group of file                                           -|
+|-  4: Unselect Group of file                                         -|
+|-  5: Search File                                                    -|
+|-  6: Create a KKD file                                              -|
+|-  7: View file                                                      -|
+|-  8: Quick view file                                                -|
+|-  9: Edit file                                                      -|
+|- 10: Copy                                                           -|
+|- 11: Move                                                           -|
+|- 12: Create Directory                                               -|
+|- 13: Delete selection                                               -|
+|- 14: Close left window                                              -|
+|- 15: Close right window                                             -|
+|- 16: Select current file                                            -|
+|- 17: Change palette                                                 -|
+|- 18: About                                                          -|
+|- 19: Select temporary file                                          -|
+|- 20: Quit KKC                                                       -|
+|- 21: Fenetre DIZ                                                    -|
+|- 22: Sort by name                                                   -|
+|- 23: Sort by extension                                              -|
+|- 24: Sort by date                                                   -|
+|- 25: Sort by size                                                   -|
+|- 26: Sort by unsort ;)                                              -|
+|- 27: Reload Directory                                               -|
+|- 28: ASCII Table                                                    -|
+|- 29: Win CD                                                         -|
+|- 30: Put file on command line                                       -|
+|- 31: Appel du programme de configuration                            -|
+|- 32: Switch les fontes                                              -|
+|- 33: Switch special sort                                            -|
+|- 34: Efface la trash                                                -|
+|- 35: Affiche les infos                                              -|
+|- 36: Ligne suivante                                                 -|
+|- 37: Ligne precedente                                               -|
+|- 38: Fenˆtre information                                            -|
+|- 39: Changement d'attribut                                          -|
+|- 40: Fenetre history des directories                                -|
+|- 41: Va dans le r‚p‚rtoire pere                                     -|
+|- 42: Va dans le r‚p‚rtoire trash                                    -|
+|- 43: Active la fenetre principal (Cfg->FenAct)                      -|
+|- 44: Rename Window                                                  -|
+|- 45: Internal editor                                                -|
+|- 46: Selection du fichier en tant que repertoire courant            -|
+|- 47: Switch le mode ecran (nombre de lignes)                        -|
+|- 48: Switch le type d'ecran (watcom, norton, ...)                   -|
+|- 49: Change le drive de la fenetre 0                                -|
+|- 50: Change le drive de la fenetre 1                                -|
+|- 51: Va dans le repertoire d'o— l'on a lanc‚ KK                     -|
+|- 52: 10 lignes avant                                                -|
+|- 53: 10 lignes apres                                                -|
+|- 54: Premiere ligne                                                 -|
+|- 55: Derniere ligne                                                 -|
+|- 56: Va dans la premiere fenˆtre                                    -|
+|- 57: Va dans la deuxieme fenˆtre                                    -|
+|- 58: Change la fenˆtre avec la path de l'autre fenˆtre              -|
+|- 59: Edit New File                                                  -|
+|- 60: Switch Display Mode                                            -|
+|- 61: Mode serveur                                                   -|
+|- 62: Appelle KKSETUP.EXE                                            -|
+|- 63: Info on disk                                                   -|
+\*--------------------------------------------------------------------*/
 
 void GestionFct(int fct)
 {
@@ -829,9 +833,9 @@ switch(fct)
 
 }
 
-/*--------------------------------------------------------------------*
- - Gestion de la barre de menu du haut                                -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-  Gestion de la barre de menu du haut                               -|
+\*--------------------------------------------------------------------*/
 
 int GestionBar(int i)
 {
@@ -915,13 +919,14 @@ switch (poscur)
    strcpy(bar[1].titre, "Close right window   CTRL-F2");  bar[1].fct=15;
    strcpy(bar[2].titre, "");                              bar[2].fct=0;
    strcpy(bar[3].titre, "DIZ Window            ALT-F3");  bar[3].fct=21;
-   strcpy(bar[4].titre, "");                              bar[4].fct=0;
-   strcpy(bar[5].titre, "Name                 CTRL-F3");  bar[5].fct=22;
-   strcpy(bar[6].titre, "Extension            CTRL-F4");  bar[6].fct=23;
-   strcpy(bar[7].titre, "Time/Date            CTRL-F5");  bar[7].fct=24;
-   strcpy(bar[8].titre, "Size                 CTRL-F6");  bar[8].fct=25;
-   strcpy(bar[9].titre, "Unsort               CTRL-F7");  bar[9].fct=26;
-   nbmenu=10;
+   strcpy(bar[4].titre, "Info Window           CTRL-L");  bar[4].fct=63;
+   strcpy(bar[5].titre, "");                              bar[5].fct=0;
+   strcpy(bar[6].titre, "Name                 CTRL-F3");  bar[6].fct=22;
+   strcpy(bar[7].titre, "Extension            CTRL-F4");  bar[7].fct=23;
+   strcpy(bar[8].titre, "Time/Date            CTRL-F5");  bar[8].fct=24;
+   strcpy(bar[9].titre, "Size                 CTRL-F6");  bar[9].fct=25;
+   strcpy(bar[10].titre, "Unsort               CTRL-F7"); bar[10].fct=26;
+   nbmenu=11;
    break;
  case 2:
    strcpy(bar[0].titre,"Create KKD");           bar[0].fct=6;
@@ -982,11 +987,11 @@ return fin;
 
 
 
-/*--------------------------------------------------------------------*
- - Fonction ChangeType:                                               -
- -     Change le type des fenˆtres                                    -
- - (0 pour incrementer le type des fenˆtres                           -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|- Fonction ChangeType:                                               -|
+|-     Change le type des fenˆtres                                    -|
+|- (0 pour incrementer le type des fenˆtres                           -|
+\*--------------------------------------------------------------------*/
 void ChangeType(int n)
 {
 if (n==0)
@@ -995,76 +1000,56 @@ if (n==0)
    Cfg->fentype=n;
 
 if (Cfg->fentype>4) Cfg->fentype=1;
-
-Cfg->colnor=1*16+9;
-Cfg->inscol=1*16+14;
-Cfg->bkcol=3*16+7;
 }
 
 
-/*--------------------------------------------------------------------*
- -                       Fenetre Select File                          -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                        Fenetre Select File                         -|
+\*--------------------------------------------------------------------*/
 
 void SelectPlus(void)
 {
+static int DirLength=32;
 int i;
-char fin;
 
-SaveEcran();
+struct Tmt T[1] = { { 2,2,1,Select_Chaine,&DirLength} };
 
-WinCadre(29,6,51,11,0);
-Window(30,7,50,10,0*16+1);
+struct TmtWin F = {22,8,57,11,"Selection of files"};
 
-WinCadre(30,8,50,10,1);
+if (WinTraite(T,1,&F)==27) return;                             // ESCape
 
-PrintAt(30,7,"Selection of files");
-
-fin=InputAt(31,9,Select_Chaine,12);
-
-ChargeEcran();
-
-if (fin!=1)
-    for (i=0;i<DFen->nbrfic;i++)
-        if ( (Cfg->seldir==1) |
-             ((DFen->F[i]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
+for (i=0;i<DFen->nbrfic;i++)
+    if ( (Cfg->seldir==1) |
+                         ((DFen->F[i]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
             if (!WildCmp(DFen->F[i]->name,Select_Chaine))
                 FicSelect(i,1);
 }
 
-/*--------------------------------------------------------------------*
- -                      Fenetre Deselect File                         -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                       Fenetre Deselect File                        -|
+\*--------------------------------------------------------------------*/
 
 void SelectMoins(void)
 {
+static int DirLength=32;
 int i;
-char fin;
 
-SaveEcran();
+struct Tmt T[1] = { { 2,2,1,Select_Chaine,&DirLength} };
 
-WinCadre(29,6,51,11,0);
-Window(30,7,50,10,0*16+1);
+struct TmtWin F = {22,8,57,11,"Deselection of files"};
 
-WinCadre(30,8,50,10,1);
+if (WinTraite(T,1,&F)==27) return;                             // ESCape
 
-PrintAt(30,7,"Deselection of files");
-
-fin=InputAt(31,9,Select_Chaine,12);
-
-ChargeEcran();
-
-if (fin!=1)
-    for (i=0;i<DFen->nbrfic;i++)
-        if ( (Cfg->seldir==1) |
-             ((DFen->F[i]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
-            if (!WildCmp(DFen->F[i]->name,Select_Chaine))
-                FicSelect(i,0);
+for (i=0;i<DFen->nbrfic;i++)
+    if ( (Cfg->seldir==1) |
+                         ((DFen->F[i]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
+        if (!WildCmp(DFen->F[i]->name,Select_Chaine))
+            FicSelect(i,0);
 }
 
-/*--------------------------------------------------------------------*
- -                     Fenetre History Directory                      -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                      Fenetre History Directory                     -|
+\*--------------------------------------------------------------------*/
 
 void HistDir(void)
 {
@@ -1155,9 +1140,9 @@ free(dir);
 }
 
 
-/*--------------------------------------------------------------------*
- -                        Fenetre CD machin                           -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                         Fenetre CD machin                          -|
+\*--------------------------------------------------------------------*/
 
 void WinCD(void)
 {
@@ -1184,9 +1169,9 @@ if (n!=27)
 }
 
 
-/*--------------------------------------------------------------------*
- -               Create directory in current window                   -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                Create directory in current window                  -|
+\*--------------------------------------------------------------------*/
 
 void CreateDirectory(void)
 {
@@ -1215,18 +1200,18 @@ if (n!=27)
         }
 }
 
-/*--------------------------------------------------------------------*
- -                            Edit File                               -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                             Edit File                              -|
+\*--------------------------------------------------------------------*/
 void EditFile(char *s)
 {
 if (Cfg->editeur[0]!=0)
     CommandLine("#%s %s",Cfg->editeur,s);
 }
 
-/*--------------------------------------------------------------------*
- -                          Edit New File                             -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                           Edit New File                            -|
+\*--------------------------------------------------------------------*/
 
 void EditNewFile(void)
 {
@@ -1252,10 +1237,9 @@ if (n!=27)
         EditFile(Dir);
 }
 
-/*--------------------------------------------------------------------*
- -                      Create KKD disk                               -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-                       Create KKD disk                              -|
+\*--------------------------------------------------------------------*/
 void CreateKKD(void)
 {
 static char Name[256];
@@ -1297,10 +1281,9 @@ if (n!=27)
         }
 }
 
-/*--------------------------------------------------------------------*
- -                   Change drive of current window                   -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-                    Change drive of current window                  -|
+\*--------------------------------------------------------------------*/
 void ChangeDrive(void)
 {
 static char path[256],path2[256];
@@ -1332,7 +1315,6 @@ x=(40-(l*nbr))/2+DFen->x;
 
 
 SaveEcran();
-
 
 x1=DFen->x+1;
 
@@ -1500,10 +1482,9 @@ if (car==13)
 }
 
 
-/*--------------------------------------------------------------------*
- -               Change drive of current window for KKD               -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-                Change drive of current window for KKD              -|
+\*--------------------------------------------------------------------*/
 void ChangeToKKD(void)
 {
 char drive[26];
@@ -1652,9 +1633,9 @@ ChargeEcran();
 
 /*--------------------------------------------------------------------*/
 
-/*--------------------------------------------------------------------*
- -                     Access fichier suivant system                  -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                      Access fichier suivant system                 -|
+\*--------------------------------------------------------------------*/
 
 char *AccessFile(void)
 {
@@ -1753,10 +1734,10 @@ return nom;
 }
 
 
-/**********************************************************************
- - Retourne 0 si OK                                                   -
- - Sinon retourne numero de IDF                                       -
- **********************************************************************/
+/*--------------------------------------------------------------------*\
+|-  Retourne 0 si OK                                                  -|
+|- Sinon retourne numero de IDF                                       -|
+\*--------------------------------------------------------------------*/
 int EnterArchive(void)
 {
 int i;
@@ -1802,10 +1783,9 @@ return 0;                                                          // OK
 
 
 
-/*--------------------------------------------------------------------*
- - Sauvegarde la selection sur disque                                 -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-  Sauvegarde la selection sur disque                                -|
+\*--------------------------------------------------------------------*/
 void SaveSel(struct fenetre *F1)
 {
 struct file *F;
@@ -1829,10 +1809,9 @@ for(i=0;i<F1->nbrfic;i++)
 fclose(fic);
 }
 
-/*--------------------------------------------------------------------*
- - Charge la selection du disque                                      -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-  Charge la selection du disque                                     -|
+\*--------------------------------------------------------------------*/
 void LoadSel(int n)
 {
 char nom[256];
@@ -1856,11 +1835,6 @@ for (i=0;i<DFen->nbrfic;i++)
         j=0;
         break;
         }
-
-/*
-if (j==1)
-    DFen->pcur=DFen->scur;
-*/
 
 while(!feof(fic))
     {
@@ -1887,10 +1861,9 @@ fclose(fic);
 }
 
 
-/*--------------------------------------------------------------------*
- -                         Fonction RENAME                            -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-                          Fonction RENAME                           -|
+\*--------------------------------------------------------------------*/
 void WinRename(struct fenetre *F1,struct fenetre *F2)
 {
 static char Dir[70];
@@ -1930,12 +1903,9 @@ if (n!=27)
         }
 }
 
-
-
-
-/*--------------------------------------------------------------------*
- -                         Programme Principal                        -
- *--------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                          Programme Principal                       -|
+\*--------------------------------------------------------------------*/
 void Gestion(void)
 {
 char *ext;
@@ -1945,7 +1915,7 @@ char car,car2;
 
 unsigned short car3,c;
 
-int i;  // Compteur
+int i;  //--- Compteur -------------------------------------------------
 
 Info->temps=clock()-Info->temps;
 
@@ -2193,7 +2163,7 @@ do
             case 0:
                 CommandLine("\n");
                 break;
-            case 1:              // Pas de fichier IDFEXT.RB
+            case 1:                          // Pas de fichier IDFEXT.RB
                 CommandLine("@ ERROR WITH FICIDF @");
                 break;
             case 2:
@@ -2368,30 +2338,14 @@ do
                PrintAt(78,0,"%02X",car2);
         break;
     }                                                   // switch (car2)
-
-
-
-/*    switch(inp(0x60))
-        {
-        case 72:         // HAUT
-            DFen->scur--;
-            DFen->pcur--;
-            break;
-        case 80:         // BAS
-            DFen->scur++;
-            DFen->pcur++;
-            break;
-        }
-*/
     }
 while(car2!=0x44);      // F10
 }
 
 
-/*--------------------------------------------------------------------*
- -                             DOS Shell                              -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-                              DOS Shell                             -|
+\*--------------------------------------------------------------------*/
 void Shell(char *string,...)
 {
 char sortie[256];
@@ -2424,10 +2378,9 @@ chdir(DFen->path);
 }
 
 
-/*--------------------------------------------------------------------*
- -                       Fin d'execution                              -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-                        Fin d'execution                             -|
+\*--------------------------------------------------------------------*/
 void Fin(void)
 {
 int n;
@@ -2445,7 +2398,6 @@ if (Cfg->_4dos==1)
     _4DOSShistdir();
 
 GotoXY(0,PosY);
-_settextcolor(OldCol);
 
 #ifdef DEBUG
     cprintf("%s / RedBug (DEBUG MODE)\n\r",RBTitle);
@@ -2475,7 +2427,6 @@ ColLin( 0,0,40,1*16+5);
 ColLin(40,0,40,1*16+3);
 ColLin(0,(Cfg->TailleY)-2,80,5);
 
-
 DFen->init=1;
 DFen->Fen2->init=1;
 
@@ -2485,11 +2436,11 @@ MenuBar(3);
 }
 
 
-/*--------------------------------------------------------------------*
- -                        Gestion 4DOS                                -
- *--------------------------------------------------------------------*/
-
-// Put Cfg->_4dos on if 4dos found
+/*--------------------------------------------------------------------*\
+|-                         Gestion 4DOS                               -|
+|-  Put Cfg->_4dos on if 4dos found                                   -|
+\*--------------------------------------------------------------------*/
+/*
 void _4DOSverif(void)
 {
 union REGS R;
@@ -2547,6 +2498,7 @@ if (R.w.ax==0x44DD)
     Cfg->_4dos=0;
     }
 }
+*/
 
 void _4DOSShistdir(void)
 {
@@ -2585,10 +2537,9 @@ if (R.w.ax==0x44DD)
     }
 }
 
-/*--------------------------------------------------------------------*
- -                     Save Configuration File                        -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-                      Save Configuration File                       -|
+\*--------------------------------------------------------------------*/
 void SaveCfg(void)
 {
 int m,n,t,ns;
@@ -2649,13 +2600,11 @@ fclose(fic);
 }
 
 
-/*--------------------------------------------------------------------*
- -                    Load Configuration File                         -
- *--------------------------------------------------------------------*
- - Retourne -1 en cas d'erreur                                        -
- -           0 si tout va bien                                        -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-                     Load Configuration File                        -|
+|- Retourne -1 en cas d'erreur                                        -|
+|-           0 si tout va bien                                        -|
+\*--------------------------------------------------------------------*/
 int LoadCfg(void)
 {
 int m,n,i,t,nbr;
@@ -2744,10 +2693,9 @@ fclose(fic);
 return 0;
 }
 
-/*--------------------------------------------------------------------*
- -                     Affichage des fenetres                         -
- *--------------------------------------------------------------------*/
-
+/*--------------------------------------------------------------------*\
+|-   Affichage des fenˆtres                                           -|
+\*--------------------------------------------------------------------*/
 void AffFen(struct fenetre *Fen)
 {
 int x,y;
@@ -2816,18 +2764,17 @@ Info=GetMem(sizeof(struct RB_info));                // Heure de demarage
 Info->temps=clock();
 
 /*--------------------------------------------------------------------*\
- -                    Initialisation de l'ecran                       -
+|-                     Initialisation de l'ecran                      -|
 \*--------------------------------------------------------------------*/
 
 InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 OldY=(*(char*)(0x484))+1;
 WhereXY(&PosX,&PosY);
-OldCol=_gettextcolor();
 
 
 /*--------------------------------------------------------------------*\
- -                      Initialise les buffers                        -
+|-                       Initialise les buffers                       -|
 \*--------------------------------------------------------------------*/
 
 Fenetre[0]=GetMem(sizeof(struct fenetre));
@@ -2855,7 +2802,7 @@ for (n=0;n<8000;n++)
 path=GetMem(256);
 
 /*--------------------------------------------------------------------*\
- -               Lecture et verification des arguments                -
+|-                Lecture et verification des arguments               -|
 \*--------------------------------------------------------------------*/
 
 strcpy(ShellAdr+128,*argv);
@@ -2883,7 +2830,7 @@ if (strncmp(LC,"6969",4))
 
 
 /*--------------------------------------------------------------------*\
- -                         Gestion des erreurs                        -
+|-                          Gestion des erreurs                       -|
 \*--------------------------------------------------------------------*/
 
 _harderr(Error_handler);
@@ -2898,7 +2845,7 @@ signal(SIGTERM,Signal_Handler);
 
 
 /*--------------------------------------------------------------------*\
- -                     Initialisation des fichiers                    -
+|-                      Initialisation des fichiers                   -|
 \*--------------------------------------------------------------------*/
 
 Fics->LastDir=GetMem(256);
@@ -2934,7 +2881,7 @@ Path2Abs(Fics->log,"trash\\logfile");                   // logfile trash
 
 
 /*--------------------------------------------------------------------*\
- -                              Default                               -
+|-                               Default                              -|
 \*--------------------------------------------------------------------*/
 
 ChangeType(4);
@@ -2953,7 +2900,7 @@ if (Cfg->_4dos==1)
 
 
 /*--------------------------------------------------------------------*\
- -                           Initialisation                           -
+|-                            Initialisation                          -|
 \*--------------------------------------------------------------------*/
 
 Fenetre[0]->x=0;
@@ -3005,7 +2952,7 @@ Fenetre[2]->order=17;
 
 
 /*--------------------------------------------------------------------*\
- -               Chargement du fichier config (s'il existe)           -
+|-                Chargement du fichier config (s'il existe)          -|
 \*--------------------------------------------------------------------*/
 
 if (LoadCfg()==-1)
@@ -3040,7 +2987,7 @@ Gestion();
 
 
 /*--------------------------------------------------------------------*\
- -                                 FIN                                -
+|-                                  FIN                               -|
 \*--------------------------------------------------------------------*/
 
 memset(SpecSortie,0,256);

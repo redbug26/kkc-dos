@@ -1095,9 +1095,9 @@ char *b;
 ULONG result;
 
 if (position>(Info->posbuf+Info->sizebuf+4)) {
-        pos=tell(Info->handle);
-        read(Info->handle,&entier,4);
-        lseek(Info->handle,pos,SEEK_SET);
+        pos=ftell(Info->fic);
+        fread(&entier,4,1,Info->fic);
+        fseek(Info->fic,pos,SEEK_SET);
                 }
         else
         entier=*(ULONG*)(Info->buffer+(WORD)position);
@@ -1132,38 +1132,45 @@ WORD result;
 int pos;
 
 
+if (position>(Info->posbuf+Info->sizebuf+2))
+    {
+    pos=ftell(Info->fic);
+    fread(&entier,2,1,Info->fic);
+    fseek(Info->fic,pos,SEEK_SET);
+    }
+else
+    {
+    entier=*(WORD*)(Info->buffer+(WORD)position);
+    }
 
-if (position>(Info->posbuf+Info->sizebuf+2)) {
-        pos=tell(Info->handle);
-        read(Info->handle,&entier,2);
-        lseek(Info->handle,pos,SEEK_SET);
-         }
-        else
-        entier=*(WORD*)(Info->buffer+(WORD)position);
+if (type==1)
+    return entier;
+if (type==2)
+    {
+    result=entier;
+    a=(char*)&entier;
+    b=(char*)&result;
 
-if (type==1) return entier;
-if (type==2) {
-        result=entier;
-        a=(char*)&entier;
-        b=(char*)&result;
+    b[1]=a[0];
+    b[0]=a[1];
 
-        b[1]=a[0];
-        b[0]=a[1];
+    return result;
+    }
 
-        return result;
-        }
 return -1;
 }
 
-// positon par rapport … posfic
+/*--------------------------------------------------------------------*\
+|-  positon par rapport … posfic                                      -|
+\*--------------------------------------------------------------------*/
 void ReadStr(RB_IDF *Info,ULONG position,char *str,short taille)
 {
 int pos;
 
 if (position>(Info->posbuf+Info->sizebuf+taille)) {
-        pos=tell(Info->handle);
-        read(Info->handle,str,taille);
-        lseek(Info->handle,pos,SEEK_SET);
+        pos=ftell(Info->fic);
+        fread(str,taille,1,Info->fic);
+        fseek(Info->fic,pos,SEEK_SET);
          }
         else
         memcpy(str,Info->buffer+(WORD)position,taille);
@@ -1174,7 +1181,9 @@ ClearSpace(str);
 }
 
 
-// Inverse un ULONG (hihilolo -> lolohihi)
+/*--------------------------------------------------------------------*\
+|-  Inverse un ULONG (hihilolo -> lolohihi)                           -|
+\*--------------------------------------------------------------------*/
 ULONG InvLong(ULONG entier)
 {
 char *a;
@@ -1194,7 +1203,9 @@ return result;
 
 }
 
-// Inverse un WORD (hihilolo -> lolohihi)
+/*--------------------------------------------------------------------*\
+|-  Inverse un WORD (hihilolo -> lolohihi)                            -|
+\*--------------------------------------------------------------------*/
 WORD InvWord(WORD entier)
 {
 char *a;
@@ -1245,7 +1256,7 @@ if (name!=NULL)
 void Traitefic(RB_IDF *Info)
 {
 short n;
-short handle;
+FILE *fic;
 short err;
 
 char path[256];
@@ -1254,18 +1265,18 @@ short trv=-1;     //--- vaut -1 tant que l'on a rien trouv‚ ------------
 
 strcpy(path,Info->path);
 
-handle=open(path,O_BINARY | O_RDONLY);
-if (handle==-1) return;
+fic=fopen(path,"rb");
+if (fic==NULL) return;
 
 memset(buffer,0,32768U);
 
-read(handle,buffer,32768U);
+fread(buffer,32768U,1,fic);
 
 n=0;    //--- recherche dans tous les formats --------------------------
 
 memset(Info,0,sizeof(RB_IDF));
 strcpy(Info->path,path);
-Info->handle=handle;
+Info->fic=fic;
 Info->posfic=0L;
 
 GetFile(Info->path,Info->filename);
@@ -1384,7 +1395,7 @@ ClearSpace(Info->fullname);
 Info->posfic+=Info->taille;
 Info->numero=n;
 
-close(handle);
+fclose(fic);
 }
 
 
@@ -1531,7 +1542,7 @@ short mess;
 sprintf(Info->Tinfo, "Tracks");
 sprintf(Info->info,"%3d",ReadInt(Info,10,2));
 
-lseek(Info->handle,Info->posfic,SEEK_SET);
+fseek(Info->fic,Info->posfic,SEEK_SET);
 
 
 mess=-1;
@@ -1541,29 +1552,28 @@ lng=0;
 
 while(1)
         {
-        lseek(Info->handle,pos+lng,SEEK_SET);
-        if (read(Info->handle,chunk,4)!=4) break;
+        fseek(Info->fic,pos+lng,SEEK_SET);
+        if (fread(chunk,4,1,Info->fic)!=4) break;
         if (!((!strncmp(chunk,"MThd",4)) | (!strncmp(chunk,"MTrk",4))))
                                                                   break;
 
-
-        read(Info->handle,&lng,4);
-        pos=tell(Info->handle);
+        fread(&lng,4,1,Info->fic);
+        pos=ftell(Info->fic);
         lng=InvLong(lng);
 
-        read(Info->handle,&info,2);
+        fread(&info,2,1,Info->fic);
         info=InvWord(info);
         if      (info==0xFF)
                 {
                 char chaine[40];
                 char strlng;
 
-                read(Info->handle,&strlng,1);    //--- lit le type -----
+                fread(&strlng,1,1,Info->fic);    //--- lit le type -----
                 if (strlng!=3) continue;
 
-                read(Info->handle,&strlng,1);
+                fread(&strlng,1,1,Info->fic);
                 if (strlng>34) continue;
-                read(Info->handle,chaine,strlng);
+                fread(chaine,strlng,1,Info->fic);
                 chaine[strlng]=0;
 
                 if (mess==-1)
@@ -1795,12 +1805,12 @@ if (buf[5]!='a') return 1;
 
 sprintf(Info->format,"Compuserve GIF8%ca",buf[4]);
 
-lseek(Info->handle,Info->posfic+6,SEEK_SET);
+fseek(Info->fic,Info->posfic+6,SEEK_SET);
 
-read(Info->handle,&Lp,2);
-read(Info->handle,&Hp,2);
+fread(&Lp,2,1,Info->fic);
+fread(&Hp,2,1,Info->fic);
 
-read(Info->handle,&map,1);
+fread(&map,1,1,Info->fic);
 PG=(map&128)>>7;
 BP=(map&7)+1;
 
@@ -1813,16 +1823,16 @@ sprintf(Info->message[0],"  Picture is    %4d * %4d / %2dBps",Lp,Hp,BP);
 
 
 
-read(Info->handle,&fond,1);
-read(Info->handle,&car,1);
+fread(&fond,1,1,Info->fic);
+fread(&car,1,1,Info->fic);
 
 if (PG==1)
-        lseek(Info->handle,(1<<BP)*3,SEEK_CUR);  // palette
+        fseek(Info->fic,(1<<BP)*3,SEEK_CUR);  // palette
 
 // while((car=fgetc(fic))!=';')
 
 do {
-read(Info->handle,&car,1);
+fread(&car,1,1,Info->fic);
 
 // PrshortPos(10,0,"'%c':",car);
 switch(car)
@@ -1833,19 +1843,19 @@ switch(car)
         BYTE lng;
         short mess;
 
-        read(Info->handle,&car,1);  //--- code information -------------
+        fread(&car,1,1,Info->fic);  //--- code information -------------
 
         mess=1;
 
         do
             {
-            read(Info->handle,&lng,1);
+            fread(&lng,1,1,Info->fic);
 
             if ( (car==-1) & (lng==11) ) //--- application names -------
                 {
                 char appl[11];
 
-                read(Info->handle,appl,11);   //--- comment ------------
+                fread(appl,11,1,Info->fic);   //--- comment ------------
                 appl[8]=0;
 
                 ClearSpace(appl);
@@ -1862,7 +1872,7 @@ switch(car)
                     }
                 }
             else
-            lseek(Info->handle,lng,SEEK_CUR);       // passe information
+            fseek(Info->fic,lng,SEEK_CUR);       // passe information
             }
         while(lng!=0);
         car=0;
@@ -1874,25 +1884,25 @@ switch(car)
         char PL,BP;
         unsigned char Code_size,t;
 
-        read(Info->handle,&DX,2);
-        read(Info->handle,&DY,2);
-        read(Info->handle,&TX,2);
-        read(Info->handle,&TY,2);
+        fread(&DX,2,1,Info->fic);
+        fread(&DY,2,1,Info->fic);
+        fread(&TX,2,1,Info->fic);
+        fread(&TY,2,1,Info->fic);
 
-        read(Info->handle,&map,1);
+        fread(&map,1,1,Info->fic);
 
         PL=(map&128)>>7;
         BP=(map&7)+1;
 
         if (PL==1)      //--- tester -----------------------------------
-            lseek(Info->handle,(1<<BP)*3,SEEK_CUR);           // palette
+            fseek(Info->fic,(1<<BP)*3,SEEK_CUR);              // palette
 
-        read(Info->handle,&Code_size,1);
+        fread(&Code_size,1,1,Info->fic);
 
         do
             {
-            read(Info->handle,&t,1);
-            lseek(Info->handle,t,SEEK_CUR);                   // palette
+            fread(&t,1,1,Info->fic);
+            fseek(Info->fic,t,SEEK_CUR);                      // palette
             }
         while (t!=0);
 
@@ -1901,7 +1911,7 @@ switch(car)
 }      //--- fin du while (buf) ----------------------------------------
 while(car!=';');
 
-Info->taille=(tell(Info->handle)-Info->posfic);
+Info->taille=(ftell(Info->fic)-Info->posfic);
 
 return 0;
 }
@@ -1917,8 +1927,6 @@ Hp=ReadInt(Info,10,1)+1;
 BP=Info->buffer[3];
 
 sprintf(Info->message[0]," Picture is    %4d * %4d / %2dBps",Lp,Hp,BP);
-
-// Info->taille=(tell(Info->handle)-Info->posfic);
 
 return 0;
 }
@@ -1936,8 +1944,6 @@ Lp=ReadLng(Info,16,1);
 Hp=ReadLng(Info,20,1);
 
 sprintf(Info->message[1]," Original picture is    %4d * %4d",Lp,Hp);
-
-// Info->taille=(tell(Info->handle)-Info->posfic);
 
 return 0;
 }
@@ -2010,7 +2016,7 @@ ULONG pos;
 char chunk[5];
 char cont;
 
-lseek(Info->handle,Info->posfic+8,SEEK_SET);
+fseek(Info->fic,Info->posfic+8,SEEK_SET);
 
 patt=0;
 inst=0;
@@ -2018,7 +2024,7 @@ chnl=8;
 
 do
 {
-if (read(Info->handle,chunk,4)!=4) break;
+if (fread(chunk,4,1,Info->fic)!=4) break;
 
 cont=0;
 
@@ -2031,24 +2037,25 @@ if (!memcmp(chunk,"SAMP",4)) cont=6;
 if (!memcmp(chunk,"SLEN",4)) cont=7;
 if (!memcmp(chunk,"CMOD",4)) cont=8;
 
-if (cont==0)    {
-        lseek(Info->handle,-4,SEEK_CUR);
-        break;
-        }
+if (cont==0)
+    {
+    fseek(Info->fic,-4,SEEK_CUR);
+    break;
+    }
 
-read(Info->handle,&pos,4);
+fread(&pos,4,1,Info->fic);
 pos=InvLong(pos);
 
 if (cont==1) inst++;
-// if (cont==2) patt++;  // nombre de pattern differents
 
-if (cont==5) {
-        read(Info->handle,&patt,2);
-        patt=InvWord(patt);
-        lseek(Info->handle,-2,SEEK_CUR);
-        }
+if (cont==5)
+    {
+    fread(&patt,2,1,Info->fic);
+    patt=InvWord(patt);
+    fseek(Info->fic,-2,SEEK_CUR);
+    }
 
-lseek(Info->handle,pos,SEEK_CUR);
+fseek(Info->fic,pos,SEEK_CUR);
 }
 while(1);
 
@@ -2056,7 +2063,7 @@ while(1);
 sprintf(Info->info, "%3d /%3d /%3d",inst,patt,chnl);
 strcpy(Info->Tinfo,"Inst/Patt/Chnl");
 
-Info->taille=(tell(Info->handle)-Info->posfic);
+Info->taille=(ftell(Info->fic)-Info->posfic);
 
 
 return 0;
@@ -2127,19 +2134,19 @@ if (memcmp(buf+8,"8SVX",4))
 memcpy((char*)(&pos),buf+4,4);
 Info->taille=InvLong(pos)+8;
 
-lseek(Info->handle,Info->posfic+12,SEEK_SET);
+fseek(Info->fic,Info->posfic+12,SEEK_SET);
 
 do
 {
-if (read(Info->handle,chunk,4)!=4) break;
+if (fread(chunk,4,1,Info->fic)!=4) break;
 
 if (!memcmp(chunk,"NAME",4))
     {
-    read(Info->handle,&pos,4);
+    fread(&pos,4,1,Info->fic);
     pos=InvLong(pos);
     if (pos<256L)
         {
-        read(Info->handle,fullname,(short)pos);
+        fread(fullname,(short)pos,1,Info->fic);
         ClearSpace(fullname);
         if (strlen(fullname)<40) strcpy(Info->fullname,fullname);
         }
@@ -2147,8 +2154,8 @@ if (!memcmp(chunk,"NAME",4))
     }
 if (!memcmp(chunk,"VHDR",4))
     {
-    lseek(Info->handle,16,SEEK_CUR);
-    read(Info->handle,&samplingRate,2);
+    fseek(Info->fic,16,SEEK_CUR);
+    fread(&samplingRate,2,1,Info->fic);
     samplingRate=InvWord(samplingRate);
     sprintf(Info->message[0], "  Sampling rate: %15d Hz",samplingRate);
     break;
@@ -2173,27 +2180,27 @@ char *buf;
 
 buf=Info->buffer;
 
-
 if (memcmp(buf,"FORM",4))   return 1;
 
-if ( (memcmp(buf+8,"ILBM",4)) & (memcmp(buf+8,"HPBM",4)) )
-        return 1;
+if ( (memcmp(buf+ 8,"ILBM",4))
+   & (memcmp(buf+ 8,"HPBM",4))
+   & (memcmp(buf+12,"BMHD",4)) )   return 1;
 
 Info->taille=ReadLng(Info,4,2)+8;
 
-lseek(Info->handle,Info->posfic+12,SEEK_SET);
+fseek(Info->fic,Info->posfic+12,SEEK_SET);
 
 do
 {
-if (read(Info->handle,chunk,4)!=4) break;
+if (fread(chunk,4,1,Info->fic)!=4) break;
 
 if (!memcmp(chunk,"NAME",4))
     {
-    read(Info->handle,&pos,4);
+    fread(&pos,4,1,Info->fic);
     pos=InvLong(pos);
     if (pos<256L)
         {
-        read(Info->handle,fullname,(short)pos);
+        fread(fullname,(short)pos,1,Info->fic);
         ClearSpace(fullname);
         if (strlen(fullname)<40) strcpy(Info->fullname,fullname);
         }
@@ -2202,13 +2209,13 @@ if (!memcmp(chunk,"NAME",4))
 
 if (!memcmp(chunk,"BMHD",4))
     {
-    lseek(Info->handle,4,SEEK_CUR);
-    read(Info->handle,&Lp,2);
+    fseek(Info->fic,4,SEEK_CUR);
+    fread(&Lp,2,1,Info->fic);
     Lp=InvWord(Lp);
-    read(Info->handle,&Hp,2);
+    fread(&Hp,2,1,Info->fic);
     Hp=InvWord(Hp);
-    lseek(Info->handle,4,SEEK_CUR);
-    read(Info->handle,&BP,1);
+    fseek(Info->fic,4,SEEK_CUR);
+    fread(&BP,1,1,Info->fic);
 
     if (Lp>9999) Lp=9999;
     if (Hp>9999) Hp=9999;
@@ -2303,22 +2310,22 @@ short mess;
 
 
 
-lseek(Info->handle,Info->posfic+0x1A,SEEK_SET);
+fseek(Info->fic,Info->posfic+0x1A,SEEK_SET);
 
 mess=0;
 
 while(1)
         {
-        if (read(Info->handle,&type,1)!=1) break;
+        if (fread(&type,1,1,Info->fic)!=1) break;
         if (type==0) break;
 
-        read(Info->handle,Csize,3);
+        fread(Csize,3,1,Info->fic);
         size=((int)Csize[0])+((int)Csize[1])*256+((int)Csize[2])*65536;
-        pos=tell(Info->handle);
+        pos=ftell(Info->fic);
 
         if ( (type==1) & (mess<9) )
                 {
-                read(Info->handle,Csize,2);
+                fread(Csize,2,1,Info->fic);
                 sprintf(Info->message[mess],
                    "  Sampling rate: %15ld Hz",1000000L/(256-Csize[0]));
                 if (Csize[1]==0) sprintf(Info->message[mess+1],
@@ -2336,14 +2343,14 @@ while(1)
                 {
                 if ( (size<=30) & ((Info->fullname[0])==0) ) //msg ASCII
                         {
-                        read(Info->handle,Csize,(unsigned short)size);
+                        fread(Csize,(unsigned short)size,1,Info->fic);
                         Csize[(unsigned short)size]=0;
                         strcpy(Info->fullname,(char*)Csize);
                         }
                         else
                 if ( (size<=34) & (mess<10) )                //msg ASCII
                         {
-                        read(Info->handle,Csize,(unsigned short)size);
+                        fread(Csize,(unsigned short)size,1,Info->fic);
                         Csize[(unsigned short)size]=0;
                         sprintf(Info->message[mess],"  %s",Csize);
                         mess++;
@@ -2351,11 +2358,11 @@ while(1)
 
                 }
 
-        lseek(Info->handle,pos+size,SEEK_SET);
+        fseek(Info->fic,pos+size,SEEK_SET);
 
         }
 
-Info->taille=tell(Info->handle)-Info->posfic;
+Info->taille=ftell(Info->fic)-Info->posfic;
 
 return 0;
 }
@@ -2409,8 +2416,8 @@ if ( (cs==0xFFF0) & (ip==0x100) )
         else
         pe=ip+(header*16)+(cs*16);
 
-lseek(Info->handle,Info->posfic+(int)pe,SEEK_SET);
-read(Info->handle,buf2,32);
+fseek(Info->fic,Info->posfic+(int)pe,SEEK_SET);
+fread(buf2,32,1,Info->fic);
 
 sprintf(Info->message[0]," Header is %18ld bytes",((int)header)*16);
 
@@ -2837,23 +2844,23 @@ taille=Info->posfic+5;
 
 while(1)
     {
-    lseek(Info->handle,taille,SEEK_SET);
+    fseek(Info->fic,taille,SEEK_SET);
 
-    if (read(Info->handle,chunk,2)!=2) break;
-    if (read(Info->handle,&taille,4)!=4) break;
-    taille+=tell(Info->handle);
+    if (fread(chunk,2,1,Info->fic)!=2) break;
+    if (fread(&taille,4,1,Info->fic)!=4) break;
+    taille+=ftell(Info->fic);
 
     if (!memcmp(chunk,"IN",2))
         {
         char nom[33];
 
-        read(Info->handle,nom,32);
+        fread(nom,32,1,Info->fic);
         nom[32]=0;
         ClearSpace(nom);
         nom[30]=0;
         memcpy(Info->fullname,nom,31);
 
-        read(Info->handle,Info->composer,20);
+        fread(Info->composer,20,1,Info->fic);
         ClearSpace(Info->composer);
         continue;
         }
@@ -2864,11 +2871,11 @@ while(1)
     if (!memcmp(chunk,"IS",2)) continue;
     if (!memcmp(chunk,"SA",2)) continue;
 
-    lseek(Info->handle,-6,SEEK_CUR);
+    fseek(Info->fic,-6,SEEK_CUR);
     break;
     }
 
-Info->taille=tell(Info->handle)-Info->posfic;
+Info->taille=ftell(Info->fic)-Info->posfic;
 
 return 0;
 }
@@ -2898,10 +2905,10 @@ buf=Info->buffer;
 
 Info->taille=(int)(*(WORD*)(buf+6));
 
-lseek(Info->handle,Info->taille+Info->posfic,SEEK_SET);
-if (read(Info->handle,name,6)==6)
+fseek(Info->fic,Info->taille+Info->posfic,SEEK_SET);
+if (fread(name,6,1,Info->fic)==6)
   if (!memcmp(name,key2,6))
-     if (read(Info->handle,name,10)==10)
+     if (fread(name,10,1,Info->fic)==10)
         if (!memcmp(name,key,4))
            Info->taille+=(16+((*(WORD*)(name+6))+1)*(*(WORD*)(name+8)));
 
@@ -3068,7 +3075,9 @@ short Infotxt(RB_IDF *Info)
 unsigned short pos,i;
 unsigned char a;
 
-// Recherche de la valeur texte par statistique
+/*--------------------------------------------------------------------*\
+|-  Recherche de la valeur texte par statistique                      -|
+\*--------------------------------------------------------------------*/
 /*
 unsigned short tab[256];
 short ord[256];

@@ -1,4 +1,7 @@
-#include <time.h>           // Heure presente
+/*--------------------------------------------------------------------*\
+|- gestion ligne de commande ...                                      -|
+\*--------------------------------------------------------------------*/
+#include <time.h>                                      // Heure presente
 
 #include <direct.h>
 #include <stdio.h>
@@ -30,9 +33,9 @@ void GetFreeMem(char *buffer);
 	parm [edi];
 
 
-/*-----------------------------------------------------*
- -  Fonction utilis‚e pour le classement des fichiers  -
- *-----------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-   Fonction utilis‚e pour le classement des fichiers                -|
+\*--------------------------------------------------------------------*/
 int SortTest(void *P1,void *P2)
 {
 char *e1,*e2,e[4];
@@ -138,9 +141,9 @@ return c;
 
 }
 
-/*---------------------*
- - Classe les fichiers -
- *---------------------*/
+/*--------------------------------------------------------------------*\
+|-  Classe les fichiers                                               -|
+\*--------------------------------------------------------------------*/
 void SortFic(struct fenetre *Fen)
 {
 qsort(Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
@@ -193,9 +196,9 @@ return 0;
 }
 
 
-/*----------------------*
- - Change de repertoire -
- *----------------------*/
+/*--------------------------------------------------------------------*\
+|-   Change de repertoire                                             -|
+\*--------------------------------------------------------------------*/
 void ChangeDir(char *Ficname)
 {
 static char nom[256];
@@ -376,9 +379,9 @@ if (err==0)
 }
 
 
-/*--------------------------------------------------------------*
- -                     Gestion history                          -
- *--------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                      Gestion history                               -|
+\*--------------------------------------------------------------------*/
 
 // Give Last Directory in History
 char *GetLastHistDir(void)
@@ -401,9 +404,9 @@ while(1)
 return dir2;
 }
 
-//----------------//
-// Verify history //
-//----------------//
+/*--------------------------------------------------------------------*\
+|-  Verify history                                                    -|
+\*--------------------------------------------------------------------*/
 void VerifHistDir(void)
 {
 char *dir;
@@ -477,7 +480,8 @@ do
 
     for (k=0;k<i;k++)
         {
-        if (!memcmp(DFen->path, &(Cfg->HistDir[TabDir[k]]),strlen(DFen->path)+1))
+        if (!memcmp(DFen->path,
+                       &(Cfg->HistDir[TabDir[k]]),strlen(DFen->path)+1))
             {
             a=k+1;
             break;
@@ -515,19 +519,21 @@ switch(DFen->system)
 }
 
 
-/*-----------------------------*
- -  Gestion ligne de commande  -
- *-----------------------------*/
+/*--------------------------------------------------------------------*\
+|-   Gestion ligne de commande                                        -|
+\*--------------------------------------------------------------------*/
 
-// Commandes globales
-// ------------------
-static int x0,py,xmax;       // position en X,Y ,X initial, Taille de X max.
-static char str[256];        // commande interne
-static int px;               // Chaipus
-static char flag;            // direction flag pour plein de choses
+/*--------------------------------------------------------------------*\
+|-  Commandes globales                                                -|
+\*--------------------------------------------------------------------*/
+static int x0,py,xmax;   // position en X,Y ,X initial, Taille de X max.
+static char str[256];                                // commande interne
+static int px;                                                // Chaipus
+static char flag;                 // direction flag pour plein de choses
 
-// Execution d'une commande
-// ------------------------
+/*--------------------------------------------------------------------*\
+|-  Execution d'une commande                                          -|
+\*--------------------------------------------------------------------*/
 int Run(char *chaine)
 {
 FILE *fic;
@@ -588,8 +594,9 @@ if (!strnicmp(chaine,"#DF",4))
 return 0;
 }
 
-// Affichage de la ligne de commande
-// ---------------------------------
+/*--------------------------------------------------------------------*\
+|-  Affichage de la ligne de commande                                 -|
+\*--------------------------------------------------------------------*/
 void ChangeLine(void)
 {
 int x1,m,n;
@@ -615,27 +622,30 @@ if ( ((x1+m)>75) & (x1>40) )
 }
 
 
-// affiche le message en command line
-//	  si la premiere lettre est '#', alors on n'affiche pas.
+/*--------------------------------------------------------------------*\
+|-  affiche le message en command line                                -|
+|-     si la premiere lettre est '#', alors on n'affiche pas.         -|
+|*--------------------------------------------------------------------*|
+|-  Commandes                                                         -|
+|-  #INIT x0 y0 px                                                    -|
+|-                position initial du curseur et longueur             -|
+|-  #MEM                                                              -|
+|-                m‚moire restante                                    -|
+|-  #DF x                                                             -|
+|-                direction flag                                      -|
+\*--------------------------------------------------------------------*/
 
-// Commandes
-// ---------
-// #INIT x0 y0 px
-//				 position initial du curseur et longueur
-// #MEM
-//				 m‚moire restante
-// #DF x
-//				 direction flag
+/*--------------------------------------------------------------------*\
+|-  Valeur de car                                                     -|
+|-   0: Commande normale                                              -|
+|-   1: Structure fenˆtre                                             -|
+\*--------------------------------------------------------------------*/
 
-// Valeur de car
-// -------------
-//	0: Commande normale
-//	1: Structure fenˆtre
-
-// Code de retour
-// --------------
-//	- 1: Execution du commande externe OK
-//	- 0: Pas d'execution
+/*--------------------------------------------------------------------*\
+|-  Code de retour                                                    -|
+|-   - 1: Execution du commande externe OK                            -|
+|-   - 0: Pas d'execution                                             -|
+\*--------------------------------------------------------------------*/
 
 int CommandLine(char *string,...)
 {
@@ -655,7 +665,7 @@ char inter[256];              // commande interne
 char FctType;                 // =1 suite[0]=='#'
                               // =2 commande de ligne
 
-int traite=0;                 // vaut 1 si on doit traiter la ligne
+int traite=0;                      // vaut 1 si on doit traiter la ligne
 
 suite=sortie;
 
@@ -664,20 +674,22 @@ vsprintf(sortie,string,parameter);
 va_end(parameter);
 
 
-if (suite[0]=='#')  {
-   pos=0;           // position dans commande interne
-   chaine=inter;    // commande interne
-   affich=0;        // ne pas afficher
-   FctType=1;
-   n=1;             // commencer … la deuxieme lettre
-   }
-   else   {
-   pos=px;          // position dans command
-   chaine=str;      // commande externe
-   affich=1;        // afficher
-   FctType=2;
-   n=0;             // commencer … la premiere lettre
-   }
+if (suite[0]=='#')
+    {
+    pos=0;                             // position dans commande interne
+    chaine=inter;                                    // commande interne
+    affich=0;                                         // ne pas afficher
+    FctType=1;
+    n=1;                               // commencer … la deuxieme lettre
+    }
+    else
+    {
+    pos=px;                                     // position dans command
+    chaine=str;                                      // commande externe
+    affich=1;                                                // afficher
+    FctType=2;
+    n=0;                               // commencer … la premiere lettre
+    }
 
 traite=0;
 
@@ -720,7 +732,9 @@ do {
 if (affich==1)
     ChangeLine();
 
-// Traite les commandes normales (mˆme si traite==0) mais mettre … 1 aprŠs
+/*--------------------------------------------------------------------*\
+|-Traite les commandes normales (mˆme si traite==0) ! mettre … 1 aprŠs-|
+\*--------------------------------------------------------------------*/
 
 if (FctType==1) traite=1;
 
@@ -795,7 +809,7 @@ if (traite==1)
     switch (FctType)
         {
         case 1:
-            break;  // Commande Interne (Rien … faire)
+            break;                    // Commande Interne (Rien … faire)
         case 2:
             str[0]=0;
             px=0;
@@ -810,7 +824,7 @@ if (traite==1)
     switch (FctType)
         {
         case 1:
-            break;  // Commande Interne (Rien … faire)
+            break;                    // Commande Interne (Rien … faire)
         case 2:
             px=pos;
             break;

@@ -1,6 +1,6 @@
-#define VERSION "0.4"
+#define VERSION "0.5"
 
-#define RBTitle "Ketchup Killers Commander V0.4"
+#define RBTitle "Ketchup Killers Commander V0.5"
 
 #define ENTIER short
 

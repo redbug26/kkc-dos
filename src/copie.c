@@ -1,5 +1,6 @@
-// Copy-function
-
+/*--------------------------------------------------------------------*\
+|-   Copy Function                                                    -|
+\*--------------------------------------------------------------------*/
 #include <ctype.h>
 
 #include <stdio.h>
@@ -10,7 +11,6 @@
 #include <io.h>
 #include <direct.h>
 
-#include <dos.h>
 #include <fcntl.h>
 
 #include <time.h>
@@ -39,9 +39,11 @@ static char temp[256];
 int FenCopie(struct fenetre *F1,struct fenetre *F2);
 int FenMove(struct fenetre *F1,struct fenetre *F2);
 
-// Convertit un masque en ce qui faut ;)
-//---------------------------------------
 
+
+/*--------------------------------------------------------------------*\
+|- Convertit un masque en ce qui faut ;)                              -|
+\*--------------------------------------------------------------------*/
 void MaskCnv(char *path)
 {
 if (!strcmp(temp,"*.*")) return;
@@ -51,30 +53,37 @@ Path2Abs(path,temp);
 }
 
 
-// Copytree
-//----------
+/*--------------------------------------------------------------------*\
+|- Copytree                                                           -|
+\*--------------------------------------------------------------------*/
 
 int Copytree(char *inpath,char *outpath)
 {
-struct find_t ff;
+DIR *dirp;
+struct dirent *ff;
+
 char error;
 
 Path2Abs(inpath,"*.*");
 Path2Abs(outpath,"*.*");
-error=_dos_findfirst(inpath,63,&ff);
+dirp=opendir(inpath);
 Path2Abs(inpath,"..");
 Path2Abs(outpath,"..");
 
 mkdir(outpath);
 
-while(error==0)
+if (dirp!=NULL)
+    while(1)
     {
-    error=ff.attrib;
+    ff=readdir(dirp);
+    if (ff==NULL) break;
 
-    if (ff.name[0]!='.')
+    error=ff->d_attr;
+
+    if (ff->d_name[0]!='.')
         {
-        Path2Abs(inpath,ff.name);
-        Path2Abs(outpath,ff.name);
+        Path2Abs(inpath,ff->d_name);
+        Path2Abs(outpath,ff->d_name);
         if ((error&0x10)==0x10)
             Copytree(inpath,outpath);
             else
@@ -82,17 +91,18 @@ while(error==0)
         Path2Abs(inpath,"..");
         Path2Abs(outpath,"..");
         }
-    error=_dos_findnext(&ff);
-
     if (FicEcrase==2) return 0;
     }
+
+closedir(dirp);
 
 return 1;
 }
 
 
-// Copie convenablement
-//----------------------
+/*--------------------------------------------------------------------*\
+|- Copie convenablement                                               -|
+\*--------------------------------------------------------------------*/
 
 int recopy(char *inpath,char *outpath,struct file *F)
 {
@@ -109,7 +119,9 @@ return i;
 }
 
 
-// Impossible de copier
+/*--------------------------------------------------------------------*\
+|- Impossible de copier                                               -|
+\*--------------------------------------------------------------------*/
 void ProtFile(char *path)
 {
 static int CadreLength=71;
@@ -148,7 +160,11 @@ switch(n)   {
 
 
 
-// Fichier existe d‚j…: Renvoie 0 si il faut l'ecraser
+/*--------------------------------------------------------------------*\
+|-  Fichier existe d‚j…: Renvoie 0 si il faut l'ecraser               -|
+\*--------------------------------------------------------------------*/
+
+
 int FileExist(char *path)
 {
 static int CadreLength=71;
@@ -197,8 +213,9 @@ return 0;
 }
 
 
-// Vrai copie de FICHIER
-//-----------------------
+/*--------------------------------------------------------------------*\
+|- Vrai copie de FICHIER                                              -|
+\*--------------------------------------------------------------------*/
 int truecopy(char *inpath,char *outpath)
 {
 long size;
@@ -339,8 +356,9 @@ return ok;
 }
 
 
-// retourne 0 si pas copie
-//-------------------------
+/*--------------------------------------------------------------------*\
+|- retourne 0 si pas copie                                            -|
+\*--------------------------------------------------------------------*/
 
 int FenCopie(struct fenetre *F1,struct fenetre *FTrash)
 {
@@ -408,9 +426,9 @@ if (n!=27)  // pas escape
 return 0;       // Erreur
 }
 
-// retourne 0 si pas move
-//-------------------------
-
+/*--------------------------------------------------------------------*\
+|- retourne 0 si pas move                                             -|
+\*--------------------------------------------------------------------*/
 int FenMove(struct fenetre *F1,struct fenetre *FTrash)
 {
 static int DirLength=70;
@@ -516,7 +534,8 @@ strcpy(nom,F2->path+strlen(F2->VolName));
 
 if (PlayerIdf(player,30)==0)
     {
-    CommandLine("#%s a -ep1 -std %s @%s %s",player,F2->VolName,Fics->temp,nom);
+    CommandLine("#%s a -ep1 -std %s @%s %s",player,F2->VolName,
+                                                        Fics->temp,nom);
     }
 }
 
@@ -567,7 +586,8 @@ fclose(fic);
 
 if (PlayerIdf(player,34)==0)
     {
-    CommandLine("#%s %c -std -y %s @%s %s",player,option,F1->VolName,Fics->temp,F2->path);
+    CommandLine("#%s %c -std -y %s @%s %s",player,option,
+                                       F1->VolName,Fics->temp,F2->path);
     }
 }
 
@@ -620,7 +640,8 @@ fclose(fic);
 
 if (PlayerIdf(player,35)==0)
     {
-    CommandLine("#%s -%c -o %s @%s %s",player,option,F1->VolName,Fics->temp,F2->path);
+    CommandLine("#%s -%c -o %s @%s %s",player,option,F1->VolName,
+                                                   Fics->temp,F2->path);
     }                    // Overwrite newer file
 }
 
@@ -670,7 +691,8 @@ for(i=0;i<F1->nbrfic;i++)
 fclose(fic);
 if (PlayerIdf(player,30)==0)
     {
-    CommandLine("#%s %c -P -y %s %s !%s",player,option,F1->VolName,F2->path,Fics->temp);
+    CommandLine("#%s %c -P -y %s %s !%s",player,option,F1->VolName,
+                                                   F2->path,Fics->temp);
     }
 }
 
@@ -683,30 +705,37 @@ if (PlayerIdf(player,30)==0)
 
 
 
-// Movetree
-//----------
-
+/*--------------------------------------------------------------------*\
+|- Movetree                                                           -|
+\*--------------------------------------------------------------------*/
 int Movetree(char *inpath,char *outpath)
 {
+int error;
+DIR *dirp;
+struct dirent *ff;
+
 int i;
-struct find_t ff;
-char error;
 
 Path2Abs(inpath,"*.*");
 Path2Abs(outpath,"*.*");
-error=_dos_findfirst(inpath,63,&ff);
+dirp=opendir(inpath);
 Path2Abs(inpath,"..");
 Path2Abs(outpath,"..");
 
 mkdir(outpath);
 
-while(error==0)  {
-    error=ff.attrib;
+if (dirp!=NULL)
+    while(1)
+    {
+    ff=readdir(dirp);
+    if (ff==NULL) break;
 
-    if (ff.name[0]!='.')
+    error=ff->d_attr;
+
+    if (ff->d_name[0]!='.')
         {
-        Path2Abs(inpath,ff.name);
-        Path2Abs(outpath,ff.name);
+        Path2Abs(inpath,ff->d_name);
+        Path2Abs(outpath,ff->d_name);
         if ((error&0x10)==0x10)
             {
             i=Movetree(inpath,outpath);
@@ -728,10 +757,10 @@ while(error==0)  {
         Path2Abs(inpath,"..");
         Path2Abs(outpath,"..");
         }
-    error=_dos_findnext(&ff);
-
     if (FicEcrase==2) return 0;
     }
+
+closedir(dirp);
 
 return 1;
 }
@@ -751,9 +780,9 @@ return i;
 }
 
 
-// Move convenablement
-//----------------------
-
+/*--------------------------------------------------------------------*\
+|- Move convenablement                                                -|
+\*--------------------------------------------------------------------*/
 int RemoveM(char *inpath,char *outpath,struct file *F)
 {
 int i;
@@ -783,7 +812,9 @@ return i;
 }
 
 
-// Impossible de mover
+/*--------------------------------------------------------------------*\
+|- Impossible de mover                                                -|
+\*--------------------------------------------------------------------*/
 void ProtFileM(char *path)
 {
 static int CadreLength=71;
@@ -822,16 +853,18 @@ switch(n)   {
 
 
 
-// Fichier existe d‚j…: Renvoie 0 si il faut l'ecraser
+/*--------------------------------------------------------------------*\
+|-  Fichier existe d‚j…: Renvoie 0 si il faut l'ecraser               -|
+\*--------------------------------------------------------------------*/
 int FileExistM(char *path)
 {
 static int CadreLength=71;
 static int Dir[256];
 
 struct Tmt T[7] = {
-      {5,5,5, "     Yes     ",NULL}, // Move
-      {22,5,5,"     No      ",NULL}, // No replace
-      {39,5,5,"   ALL Yes   ",NULL}, // Move All
+      {5,5,5, "     Yes     ",NULL},                             // Move
+      {22,5,5,"     No      ",NULL},                       // No replace
+      {39,5,5,"   ALL Yes   ",NULL},                         // Move All
       {56,5,3,NULL,NULL},
       { 5,3,0,Dir,NULL},
       { 5,2,0,"Overwrite file ?",NULL},
@@ -850,20 +883,21 @@ memcpy(Dir,path,255);
 
 n=WinTraite(T,7,&F);
 
-switch(n)   {
+switch(n)
+    {
     case 0:
-        return 0;       // Replace
+        return 0;                                             // Replace
         break;
     case 27:
     case 1:
-        return 1;       // Cancel
+        return 1;                                              // Cancel
     case 2:
         FicEcrase=1;
-        return 0;       // Replace ALL
+        return 0;                                         // Replace ALL
         break;
     case 3:
         FicEcrase=2;
-        return 1;       // Cancel ALL
+        return 1;                                          // Cancel ALL
     default:
         PrintAt(0,0,"(%d)",n);
     }
@@ -871,8 +905,9 @@ return 0;
 }
 
 
-// Vrai move de FICHIER
-//-----------------------
+/*--------------------------------------------------------------------*\
+|- Vrai move de FICHIER                                               -|
+\*--------------------------------------------------------------------*/
 int Truemove(char *inpath,char *outpath)
 {
 long size;
@@ -1010,16 +1045,16 @@ return ok;
 
 
 
-/*-----------------------------*
- - Fonction de MOVE principale -
- *-----------------------------*/
-void Move(struct fenetre *F1,struct fenetre *FTrash,char *path) // Move Multiple
+/*--------------------------------------------------------------------*\
+|- Fonction de MOVE principale                                        -|
+\*--------------------------------------------------------------------*/
+void Move(struct fenetre *F1,struct fenetre *FTrash,char *path)
 {
 int i;
 int TailleTotale;
 int TailleRest;
 
-int j1,j2;                          // postion du compteur (read,write)
+int j1,j2;                           // postion du compteur (read,write)
 
 char inpath[128],outpath[128];
 
@@ -1109,10 +1144,10 @@ for (i=0;i<F1->nbrfic;i++)
 ChargeEcran();
 }
 
-/*-----------------------------*
- - Fonction de COPY principale -
- *-----------------------------*/
-void Copie(struct fenetre *F1,struct fenetre *FTrash,char *path) // Copie Multiple
+/*--------------------------------------------------------------------*\
+|- Fonction de COPY principale                                        -|
+\*--------------------------------------------------------------------*/
+void Copie(struct fenetre *F1,struct fenetre *FTrash,char *path)
 {
 int i;
 int TailleTotale;
@@ -1216,8 +1251,10 @@ for (i=0;i<F1->nbrfic;i++)
 ChargeEcran();
 }
 
-// Avancement de graduation
-// Renvoit le prochain
+/*--------------------------------------------------------------------*\
+|- Avancement de graduation                                           -|
+|- Renvoit le prochain                                                -|
+\*--------------------------------------------------------------------*/
 int LongGradue(int x,int y,int length,int from,int to,int total)
 {
 short j1;

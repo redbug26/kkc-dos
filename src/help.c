@@ -1,5 +1,6 @@
-// Help-functions
-
+/*--------------------------------------------------------------------*\
+|-  Help-functions                                                    -|
+\*--------------------------------------------------------------------*/
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
@@ -110,7 +111,7 @@ short pos;
 
 
 
-max=10;     // Lenght of "Main Topic"
+max=10;                                        // Lenght of "Main Topic"
 for (n=0;n<NbrMain;n++)
     {
     Hlp2Chaine(NdxMainTopic[n],chaine);
@@ -153,8 +154,9 @@ do
     car=LO(c);
     car2=HI(c);
 
-    switch(car2)    {
-       case 0x47:
+    switch(car2)
+        {
+        case 0x47:
             pos=0;
             break;
         case 0x4F:
@@ -253,7 +255,8 @@ do
     car=LO(c);
     car2=HI(c);
 
-    switch(car2)    {
+    switch(car2)
+        {
         case 0x47:
             pos=0;
             break;
@@ -298,8 +301,7 @@ int nbrkey;
 
 short x,y;
 
-char type;  // 1: Centre & highlighted
-            // 2: Highlighted
+char type;                   // 1: Centre & highlighted & 2: Highlighted
 
 char chaine[256];
 
@@ -328,7 +330,7 @@ n++;
 
 while(1)
     {
-    switch(hlp[n])      // Premier caractere
+    switch(hlp[n])                                  // Premier caractere
         {
         case '^':
             type=1;
@@ -348,11 +350,11 @@ while(1)
             break;
         }
 
-    if (type==69)       // Autre type -> fin d'affichage
+    if (type==69)                       // Autre type -> fin d'affichage
         break;
 
     n++;
-    if (n>lng) break;   // Depassement de ligne -> fin d'affichage
+    if (n>lng) break;         // Depassement de ligne -> fin d'affichage
 
     y++;
     x=1;
@@ -397,9 +399,9 @@ while(1)
         n++;
         }
 
-    ChrLin(x,y,79-x,SPACE);             // Efface jusqu'a la fin
+    ChrLin(x,y,79-x,SPACE);                     // Efface jusqu'a la fin
 
-    if (type!=0)                        // Couleur de la ligne
+    if (type!=0)                                  // Couleur de la ligne
         ColLin(1,y,78,10*16+5);
         else
         ColLin(1,y,78,10*16+1);
@@ -410,7 +412,7 @@ while(1)
         {
         while(hlp[apres]!=0x0A) apres++;
         apres++;
-        break;  // On arrive en bas --> fin d'affichage
+        break;                   // On arrive en bas --> fin d'affichage
         }
     }
 

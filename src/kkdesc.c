@@ -94,7 +94,7 @@ strcat(Fics->help,"\\kkdesc.hlp");
 TXTMode(30);
 NoFlash();
 
-Font8x16();
+Font8x(16);
 
 Cfg->TailleY=30;
 

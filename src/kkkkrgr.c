@@ -1,3 +1,6 @@
+/*--------------------------------------------------------------------*\
+|- programme de concat‚nation des kkr                                 -|
+\*--------------------------------------------------------------------*/
 #include <dos.h>
 #include <direct.h>
 #include <io.h>
@@ -11,7 +14,9 @@
 
 #include "hard.h"
 
-// Pour Statistique;
+/*--------------------------------------------------------------------*\
+|- Pour Statistique;                                                  -|
+\*--------------------------------------------------------------------*/
 int St_App;
 int St_Dir;
 
@@ -20,13 +25,13 @@ struct player {
     char *Meneur;
     char *Titre;
     unsigned long Checksum;
-    short ext;      // Numero d'extension
-    short pres;     // 0 si pas trouv‚ sinon numero du directory
+    short ext;                                     // Numero d'extension
+    short pres;             // 0 si pas trouv‚ sinon numero du directory
     } *app[5000];
 
-char dir[100][256]; // 50 directory diff‚rents de 128 caracteres
+char dir[100][256];         // 50 directory diff‚rents de 128 caracteres
 
-short nbr;    // nombre d'application lu dans les fichiers KKR
+short nbr;              // nombre d'application lu dans les fichiers KKR
 
 void Search(char *nom);
 
@@ -37,9 +42,9 @@ void main(short argc,char **argv)
 int n;
 char *path;
 
-/*****************************
- - Initialisation de l'ecran -
- *****************************/
+/*--------------------------------------------------------------------*\
+|-  Initialisation de l'ecran                                         -|
+\*--------------------------------------------------------------------*/
 
 InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
@@ -77,7 +82,7 @@ strcat(Fics->help,"\\kkc.hlp");
 TXTMode(50);
 NoFlash();
 
-Font8x8();
+Font8x(8);
 
 SetPal(0, 43, 37, 30);
 SetPal(1, 31, 22, 17);
@@ -134,11 +139,11 @@ if (!strncmp(Key,"KKRB",4))
     do {
     fread(&Code,1,1,Fic);
     switch(Code)  {
-        case 0:             // Commentaire (sans importance)
+        case 0:                         // Commentaire (sans importance)
             fread(&SComment,1,1,Fic);
             fread(Comment,SComment,1,Fic);
             break;
-        case 1:             // Code Titre
+        case 1:                                            // Code Titre
             fread(&STitre,1,1,Fic);
             Titre[STitre]=0;
             fread(Titre,STitre,1,Fic);
@@ -152,20 +157,20 @@ if (!strncmp(Key,"KKRB",4))
                 ChrLin(1,46,78,32);
                 }
             break;
-        case 2:             // Code Programmeur
+        case 2:                                      // Code Programmeur
             fread(&SMeneur,1,1,Fic);
             fread(Meneur,SMeneur,1,Fic);
             Meneur[SMeneur]=0;
             break;
-        case 3:             // Code Nom du programme
+        case 3:                                 // Code Nom du programme
             fread(&SFilename,1,1,Fic);
             Filename[SFilename]=0;
             fread(Filename,SFilename,1,Fic);
             break;
-        case 4:             // Checksum
+        case 4:                                              // Checksum
             fread(&Checksum,4,1,Fic);
             break;
-        case 5:             // Format
+        case 5:                                                // Format
             fread(&format,2,1,Fic);
             app[nbr]=malloc(sizeof(struct player));
 
@@ -184,10 +189,10 @@ if (!strncmp(Key,"KKRB",4))
 
             nbr++;
             break;
-        case 6:             // Fin de fichier
+        case 6:                                        // Fin de fichier
             fin=1;
             break;
-        case 7:             // Reset
+        case 7:                                                 // Reset
             Checksum=0;
 
             strcpy(Titre,"?");
@@ -245,7 +250,7 @@ strcat(moi,"*.*");
 if (_dos_findfirst(moi,_A_SUBDIR,&fic)==0)
 do
 	{
-    if  ( (fic.name[0]!='.') & (((fic.attrib) & _A_SUBDIR) == _A_SUBDIR) )
+    if  ( (fic.name[0]!='.') & (((fic.attrib) & _A_SUBDIR)==_A_SUBDIR) )
 			{
             strcpy(moi,nom);
             strcat(moi,fic.name);
@@ -276,10 +281,10 @@ fwrite(key,4,1,fic);
 n=0;
 
 do {
-code=7;     // reset
+code=7;                                                         // reset
 fwrite(&code,1,1,fic);
 
-code=2;     // meneur
+code=2;                                                        // meneur
 a=app[n]->Meneur;
 
 sa=strlen(a);
@@ -287,11 +292,11 @@ fwrite(&code,1,1,fic);
 fwrite(&sa,1,1,fic);
 fwrite(a,sa,1,fic);
 
-code=4;     // checksum
+code=4;                                                      // checksum
 fwrite(&code,1,1,fic);
 fwrite(&(app[n]->Checksum),4,1,fic);
 
-code=1;     // titre
+code=1;                                                         // titre
 a=app[n]->Titre;
 
 sa=strlen(a);
@@ -299,7 +304,7 @@ fwrite(&code,1,1,fic);
 fwrite(&sa,1,1,fic);
 fwrite(a,sa,1,fic);
 
-code=3;     // Nom de programme
+code=3;                                              // Nom de programme
 a=app[n]->Filename;
 
 sa=strlen(a);
@@ -317,7 +322,7 @@ do  {
 }
 while(n<nbr);
 
-code=6;     // Fin de fichier
+code=6;                                                // Fin de fichier
 fwrite(&code,1,1,fic);
 
 fclose(fic);

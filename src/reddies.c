@@ -1,11 +1,11 @@
-/*-----------------------------------------------------------------------*
- -                                                                       -
- -  Toutes les fonctions independantes (logiquement) … l'O.S. ainsi qu'  -
- -                                                   aux fichiers hard.c -
- -                                                                       -
- - By RedBug/Ketchup Killers                                             -
- -                                                                       -
- *-----------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------*\
+|-                                                                       -|
+|-  Toutes les fonctions independantes (logiquement) … l'O.S. ainsi qu'  -|
+|-                                                   aux fichiers hard.c -|
+|-                                                                       -|
+|- By RedBug/Ketchup Killers                                             -|
+|-                                                                       -|
+\*-----------------------------------------------------------------------*/
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -15,9 +15,9 @@
 void TPath2Abs(char *p,char *Ficname);
 
 
-/*-----------------------------------------------------------*
- - Fonction qui convertit les caracteres ASCII en RedBug one -
- *-----------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-     Fonction qui convertit les caracteres ASCII en RedBug one      -|
+\*--------------------------------------------------------------------*/
 char CnvASCII(char car)
 {
 switch(car)
@@ -81,9 +81,9 @@ switch(car)
     }
 }
 
-/*------------------------------*
- - Renvoit l'extension d'un nom -
- *------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                  Renvoit l'extension d'un nom                      -|
+\*--------------------------------------------------------------------*/
 char *getext(const char *nom)
 {
 char *e,*ext;
@@ -98,9 +98,9 @@ if (e==NULL)
 return ext;
 }
 
-/*--------------------------------------*
- - Comparaison entre un nom et un autre -
- *--------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                Comparaison entre un nom et un autre                -|
+\*--------------------------------------------------------------------*/
 int Maskcmp(char *src,char *mask)
 {
 int n;
@@ -119,10 +119,10 @@ return 0;
 }
 
 
-/*-----------------------------------------------------------*
- - Envoie le nom du fichier src dans dest si le mask est bon -
- - Renvoit 1 dans ce cas, sinon renvoie 0                    -
- *-----------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-     Envoie le nom du fichier src dans dest si le mask est bon      -|
+|-     Renvoit 1 dans ce cas, sinon renvoie 0                         -|
+\*--------------------------------------------------------------------*/
 int find1st(char *src,char *dest,char *mask)
 {
 int i;
@@ -147,9 +147,9 @@ return 0;
 }
 
 
-/*----------------------------*
- - Comparaison avec WildCards -
- *----------------------------*/
+/*--------------------------------------------------------------------*\
+|-                 Comparaison avec WildCards                         -|
+\*--------------------------------------------------------------------*/
 int WildCmp(char *a,char *b)
 {
 short p1=0,p2=0;
@@ -202,13 +202,13 @@ while (1)
 return ok;
 }
 
-/*---------------------------------*
- - Give the name include in a path -
- - E.G. c:\kkcom\kkc.c --> "kkc.c" -
- -      c:\            --> ""      -
- -      c:\kkcom       --> "kkcom" -
- -           p         --> Ficname -
- *---------------------------------*/
+/*--------------------------------------------------------------------*\
+|- Give the name include in a path                                    -|
+|- E.G. c:\kkcom\kkc.c --> "kkc.c"                                    -|
+|-      c:\            --> ""                                         -|
+|-      c:\kkcom       --> "kkcom"                                    -|
+|-           p         --> Ficname                                    -|
+\*--------------------------------------------------------------------*/
 char *FileinPath(char *p,char *Ficname)
 {
 int n;
@@ -223,9 +223,9 @@ strcpy(Ficname,s);
 return s;
 }
 
-/*---------------------------------------------*
- - Make absolue path from old path and ficname -
- *---------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-           Make absolue path from old path and ficname              -|
+\*--------------------------------------------------------------------*/
 void Path2Abs(char *p,const char *relatif)
 {
 static char Ficname[256];
@@ -299,11 +299,11 @@ if (Ficname[0]!='.') {
 if (p[strlen(p)-1]==':') strcat(p,"\\");
 }
 
-/*----------------------------------------------*
- - Recherche l'extension ext dans la chaine src -
- - Renvoit 1 si trouve                          -
- - Ex: FoundExt(ext,"EXE COM BAT BTM")          -
- *----------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|- Recherche l'extension ext dans la chaine src                       -|
+|- Renvoit 1 si trouve                                                -|
+|- Ex: FoundExt(ext,"EXE COM BAT BTM")                                -|
+\*--------------------------------------------------------------------*/
 
 char FoundExt(char *ext,char *src)
 {
@@ -311,6 +311,8 @@ char e[4];
 short c1,c3,c4;
 
 c1=c3=c4=0;
+
+if (*ext==0) return 0;
 
 do
     {
@@ -328,9 +330,9 @@ while(src[c3]!=0);
 return 0;
 }
 
-/*--------------------------------------------------*
- - Convertit un entier en chaine de longueur length -
- *--------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-         Convertit un entier en chaine de longueur length           -|
+\*--------------------------------------------------------------------*/
 
 char *Int2Char(int n,char *s,char length)
 {
@@ -349,9 +351,9 @@ strcpy(s,s+strlen(s)-length);
 return s;
 }
 
-/*---------------------------------------------*
- - Convertit un long en string de 10 positions -
- *---------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-            Convertit un long en string de 10 positions             -|
+\*--------------------------------------------------------------------*/
 
 char *Long2Str(long entier,char *chaine)
 {
@@ -359,6 +361,7 @@ char chaine2[20];
 short i,j,n;
 
 ltoa(entier,chaine2,10);
+
 if ((n=strlen(chaine2))<9)
     {
     chaine[0]=chaine2[0];

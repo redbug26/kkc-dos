@@ -51,8 +51,7 @@ void Delay(long ms);
 void SaveEcran(void);
 void ChargeEcran(void);
 
-void Font8x8(void);
-void Font8x16(void);
+void Font8x(int height);
 void *GetMem(int);      // Malloc avec mise … z‚ro
 void *GetMemSZ(int);    // Malloc sans mise … z‚ro
 
@@ -70,7 +69,6 @@ int WinMesg(char *,char *);
 int Gradue(int x,int y,int length,int from,int to,int total);
 
 void DefaultCfg(void);
-
 
 /*-------------------------------------------*
  -       Gestion de la barre de menu         -
@@ -163,6 +161,12 @@ struct config
      char editeur[64];     // ligne de commande pour l'editeur
      char vieweur[64];     // ligne de commande pour le viewer
 
+     char ExtTxt[64];
+     char ExtBmp[64];
+     char ExtSnd[64];
+     char ExtArc[64];
+     char ExtExe[64];
+     char ExtUsr[64];
 
     // Pas touche
     //-----------
@@ -174,10 +178,6 @@ struct config
      char overflow;        // Vaut tjs 0 (pour overflow)
 
      char extens[39];      // extension qui viennent tout devant
-
-     short colnor;
-     short bkcol;
-     short inscol;
 
      short FenTyp[3];     // Type des fenˆtres SHELL
      short KeyAfterShell; // Vaut 1 si wait key after dosshell

@@ -1,4 +1,6 @@
-// Editor
+/*--------------------------------------------------------------------*\
+|-  Editor                                                            -|
+\*--------------------------------------------------------------------*/
 
 #include <ctype.h>
 
@@ -33,22 +35,20 @@ int TxtEdit(char *fichier);
 static long taille;
 char Edit_buffer[32768];
 
-// static char srcch[80];
-
 int TxtEdit(char *fichier)
 {
-long tableau[50][80]; // Position du buffer dans l'ecran
+long tableau[50][80];                 // Position du buffer dans l'ecran
 char aff,wrap;
 
-long posn;  // position courante dans buffer
+long posn;                              // position courante dans buffer
 
 
-long posd;  // Dernier position courante dans buffer affich‚e
-int xl,yl;  // Taille de la fenˆtre
-int xd,yd;  // Position initiale de la fenˆtre
+long posd;             // Dernier position courante dans buffer affich‚e
+int xl,yl;                                       // Taille de la fenˆtre
+int xd,yd;                            // Position initiale de la fenˆtre
 
-int x,y;    // Position du curseur par rapport a (xd,yd)
-char ins;   // Insertion ou pas
+int x,y;                    // Position du curseur par rapport a (xd,yd)
+char ins;                                            // Insertion ou pas
 
 int x2,y2;
 
@@ -76,7 +76,9 @@ Bar(" Help  ----  ----  Hexa  ----  ---- Search Print Mask  ---- ");
 wrap=0;
 aff=1;
 
-//-------------------- Calcul de la taille maximum ------------------------//
+/*--------------------------------------------------------------------*\
+|- Calcul de la taille maximum                                        -|
+\*--------------------------------------------------------------------*/
 xl=yl=0;
 
 xd=0;
@@ -153,7 +155,9 @@ if ( (xd>0) & (yd>0) & (xd+xl<80) & (yd+yl<Cfg->TailleY) )
 ChrWin(xd,yd,xd+xl-1,yd+yl-1,32);
 ColWin(xd,yd,xd+xl-1,yd+yl-1,10*16+9);
 
-//-------------------------------------------------------------------------//
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
 affichage[xl]=0;
 
 x=y=0;      // Position dans fenˆtre
@@ -183,8 +187,8 @@ do
     switch(chaine[0])
         {
         case 10:
-            lchaine=xl+1-(x2-xd-warp);          // xl= taille totale de la ligne
-                                      // x2-xd-warp= taille actuelle de la ligne
+            lchaine=xl+1-(x2-xd-warp);  // xl= taille totale de la ligne
+                              // x2-xd-warp= taille actuelle de la ligne
             memset(chaine,32,lchaine);
             chaine[0]=10;
             aff=2;
@@ -214,7 +218,7 @@ do
 
         if ((x2-xd-warp)>=xl)
             {
-            if (aff==2) // Le monsieur te demande d'afficher la ligne
+            if (aff==2)    // Le monsieur te demande d'afficher la ligne
                 {
                 for (m=0;m<xl;m++)
                     AffChr(xd+m,y2,affichage[m]);
@@ -262,7 +266,7 @@ while(1);
 
 while(y2<yd+yl)
     {
-    memset(affichage,' ',xl);        // remplit une ligne entiere de espace
+    memset(affichage,' ',xl);     // remplit une ligne entiere de espace
     affichage[xl]=0;
     PrintAt(xd,y2,"%s",affichage);
     y2++;

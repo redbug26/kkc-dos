@@ -1,9 +1,11 @@
+/*--------------------------------------------------------------------*\
+|- procedure d'effacement                                             -|
+\*--------------------------------------------------------------------*/
 #include <io.h>
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
 #include <direct.h>
-#include <dos.h>
 
 #include <time.h>
 
@@ -14,8 +16,9 @@
 int Erase(char *path,struct file *F);
 int Deltree(char *path);
 
-// Delete File
-//-------------
+/*--------------------------------------------------------------------*\
+|-  Delete File                                                       -|
+\*--------------------------------------------------------------------*/
 
 int Del(char *s)
 {
@@ -27,32 +30,41 @@ return remove(s);
 }
 
 
-// Deltree
-//---------
+/*--------------------------------------------------------------------*\
+|-  Deltree                                                           -|
+\*--------------------------------------------------------------------*/
 
 int Deltree(char *path)
 {
-struct find_t ff;
+DIR *dirp;
+struct dirent *ff;
+
 char error;
 
 Path2Abs(path,"*.*");
-error=_dos_findfirst(path,63,&ff);
+dirp=opendir(path);
 Path2Abs(path,"..");
 
-while(error==0)  {
-    error=ff.attrib;
+if (dirp!=NULL)
+    while(1)
+    {
+    ff=readdir(dirp);
+    if (ff==NULL) break;
 
-    if (ff.name[0]!='.')
+    error=ff->d_attr;
+
+    if (ff->d_name[0]!='.')
         {
-        Path2Abs(path,ff.name);
+        Path2Abs(path,ff->d_name);
         if ((error&0x10)==0x10)
             Deltree(path);
             else
             Del(path);
         Path2Abs(path,"..");
         }
-    error=_dos_findnext(&ff);
     }
+
+closedir(dirp);
 
 IOerr=0;
 
@@ -61,8 +73,9 @@ return rmdir(path);
 
 
 
-// Efface convenablement
-//-----------------------
+/*--------------------------------------------------------------------*\
+|-  Efface convenablement                                             -|
+\*--------------------------------------------------------------------*/
 
 int Erase(char *path,struct file *F)
 {
@@ -135,7 +148,7 @@ return n;
 }
 
 
-void Delete(struct fenetre *F1)   // Delete Multiple
+void Delete(struct fenetre *F1)                       // Delete Multiple
 {
 int i;
 

@@ -1,8 +1,10 @@
+/*--------------------------------------------------------------------*\
+|- Gestion des archives                                               -|
+\*--------------------------------------------------------------------*/
 #include <errno.h>
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <dos.h>
 #include <string.h>
 #include <direct.h>
 
@@ -16,9 +18,9 @@
 #include "win.h"
 #include "kk.h"
 
-/******************************************************************************
-                               FICHIER .ARJ
- *****************************************************************************/
+/*--------------------------------------------------------------------*\
+|-                            FICHIER .ARJ                            -|
+\*--------------------------------------------------------------------*/
 
 struct ARJTime {
  unsigned t_tsec : 5;
@@ -60,7 +62,7 @@ char Nomarch[256];
 char Dest[256];
 ULONG pos;
 char fin;
-int handle;
+FILE *fic;
 
 int n,m;
 
@@ -104,9 +106,9 @@ if (Cfg->pntrep==1)
     }
 
 
-handle=open(DFen->VolName,O_RDONLY | O_BINARY);
+fic=fopen(DFen->VolName,"rb");
 
-// Okay.
+//--- Okay -------------------------------------------------------------
 
 pos=0;
 fin=0;
@@ -116,9 +118,9 @@ while(!fin)
 char car;
 short lng;
 
-lseek(handle,pos,SEEK_SET);
+fseek(fic,pos,SEEK_SET);
 
-if (read(handle,&Header,sizeof(struct ARJHeader))!=sizeof(struct ARJHeader))
+if (fread(&Header,sizeof(struct ARJHeader),1,fic)!=1)
     {
     fin=1;
     break;
@@ -127,14 +129,14 @@ if (read(handle,&Header,sizeof(struct ARJHeader))!=sizeof(struct ARJHeader))
 lng=0;
 do
     {
-    read(handle,&car,1);
+    fread(&car,1,1,fic);
     nom[lng]=car;
     lng++;
     }
 while(car!=0);
 
 do
-    read(handle,&car,1);
+    fread(&car,1,1,fic);
 while(car!=0);
 
 strcpy(Nomarch,nom);
@@ -150,7 +152,9 @@ if (strlen(DFen->path)==strlen(DFen->VolName))
 
 n=find1st(Nomarch,Dest,nom);
 
-// ---fichier normal---
+/*--------------------------------------------------------------------*\
+|-  ---fichier normal---                                              -|
+\*--------------------------------------------------------------------*/
 if ( (n==1) & (Header.FType!=2) )
     {
     Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
@@ -177,7 +181,9 @@ if ( (n==1) & (Header.FType!=2) )
     DFen->nbrfic++;
     }
 
-// ---On fout un repertoire---
+/*--------------------------------------------------------------------*\
+|-  ---On fout un repertoire---                                       -|
+\*--------------------------------------------------------------------*/
 if ( (!Maskcmp(Nomarch,nom)) & (Header.FType!=2) )
     {
     char cont;
@@ -225,16 +231,17 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.FType!=2) )
 
 
 if (Header.FType!=2)
-    pos=tell(handle)+Header.PackSize+4+2;   // Passe le CRC et les Zeros
+    pos=ftell(fic)+Header.PackSize+4+2;     // Passe le CRC et les Zeros
     else
-    pos=tell(handle)+4+2;   // Passe le CRC et les Zeros
+    pos=ftell(fic)+4+2;                     // Passe le CRC et les Zeros
 }
 
-close(handle);
+fclose(fic);
 
 // DFen->init=1;
 
-if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
+if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0)
+                                                  & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
     return 1;
@@ -243,9 +250,9 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
 return 0;
 }
 
-/******************************************************************************
-                               FICHIER .RAR
- *****************************************************************************/
+/*--------------------------------------------------------------------*\
+|-                             FICHIER .RAR                           -|
+\*--------------------------------------------------------------------*/
 
 struct RARTime {
  unsigned t_tsec : 5;
@@ -283,7 +290,7 @@ char Dest[256];
 struct RARHeader Lt;
 ULONG pos;
 char fin;
-int handle;
+FILE *fic;
 
 struct file **Fic;
 
@@ -323,22 +330,23 @@ if (Cfg->pntrep==1)
     DFen->nbrfic=2;
     }
 
-handle=open(DFen->VolName,O_RDONLY | O_BINARY);
+fic=fopen(DFen->VolName,"rb");
 
 
 // Okay.
 
-pos=tell(handle);
+pos=ftell(fic);
 fin=0;
 
 while(!fin)
 {
-lseek(handle,pos,SEEK_SET);
+fseek(fic,pos,SEEK_SET);
 
-if ( (read(handle,&Lt,32)!=32) |
-	 (Lt.TeteType<0x72) | (Lt.TeteType>0x75) | (Lt.TeteSize<7) )  {
-		close(handle);
-		handle=-1;
+if ( (fread(&Lt,32,1,fic)!=1) |
+    (Lt.TeteType<0x72) | (Lt.TeteType>0x75) | (Lt.TeteSize<7) )
+        {
+        fclose(fic);
+        fic=NULL;
 		fin=1;
 		break;
 		}
@@ -347,10 +355,10 @@ if (Lt.TeteType==0x74)
     {
     int n;
 
-    lseek(handle,pos+32,SEEK_SET);
-    read(handle,Nomarch,Lt.NomSize);
+    fseek(fic,pos+32,SEEK_SET);
+    fread(Nomarch,Lt.NomSize,1,fic);
 
-    Nomarch[Lt.NomSize]=0;          // contient les fichiers dans l'archive
+    Nomarch[Lt.NomSize]=0;       // contient les fichiers dans l'archive
 
     if (strlen(DFen->path)==strlen(DFen->VolName))
         strcpy(nom,"");
@@ -369,7 +377,7 @@ if (Lt.TeteType==0x74)
         Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
         memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
-        Fic[DFen->nbrfic]->size=Lt.UnpSize;      // >< Lt.PackSize
+        Fic[DFen->nbrfic]->size=Lt.UnpSize;            // >< Lt.PackSize
 
         DFen->taillefic+=Lt.UnpSize;
 
@@ -394,9 +402,8 @@ pos=pos+Lt.TeteSize;
 if (Lt.Flags & 0x8000) pos+=Lt.PackSize;		// LONG_BLOCK
 }
 
-// DFen->init=1;
-
-if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
+if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) &
+                                                    (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
     return 1;
@@ -405,9 +412,9 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
 return 0;
 }
 
-/******************************************************************************
-                               FICHIER .ZIP
- *****************************************************************************/
+/*--------------------------------------------------------------------*\
+|-                             FICHIER .ZIP                           -|
+\*--------------------------------------------------------------------*/
 
 struct ZIPTime {
  unsigned t_tsec : 5;
@@ -442,7 +449,7 @@ char Nomarch[256];
 char Dest[256];
 ULONG pos;
 char fin;
-int handle;
+FILE *fic;
 
 int n,m;
 
@@ -485,7 +492,7 @@ if (Cfg->pntrep==1)
     DFen->nbrfic=2;
     }
 
-handle=open(DFen->VolName,O_RDONLY | O_BINARY);
+fic=fopen(DFen->VolName,"rb");
 
 // Okay.
 
@@ -494,15 +501,15 @@ fin=0;
 
 while(!fin)
 {
-lseek(handle,pos,SEEK_SET);
+fseek(fic,pos,SEEK_SET);
 
-if (read(handle,&Header,sizeof(struct ZIPHeader))!=sizeof(struct ZIPHeader))
+if (fread(&Header,sizeof(struct ZIPHeader),1,fic)!=1)
     {
     fin=1;
     break;
     }
 
-read(handle,nom,Header.FNameLen);
+fread(nom,Header.FNameLen,1,fic);
 nom[Header.FNameLen]=0;
 
 strcpy(Nomarch,nom);
@@ -518,7 +525,9 @@ if (strlen(DFen->path)==strlen(DFen->VolName))
 
 n=find1st(Nomarch,Dest,nom);
 
-// ---fichier normal---
+/*--------------------------------------------------------------------*\
+|-  ---fichier normal---                                              -|
+\*--------------------------------------------------------------------*/
 if ( (n==1) & (Header.Signature==0x04034B50) )
     {
     Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
@@ -545,7 +554,9 @@ if ( (n==1) & (Header.Signature==0x04034B50) )
     DFen->nbrfic++;
     }
 
-// ---On fout un repertoire---
+/*--------------------------------------------------------------------*\
+|-  ---On fout un repertoire---                                       -|
+\*--------------------------------------------------------------------*/
 if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
     {
     char cont;
@@ -586,14 +597,15 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
         }
     }
 
-pos=tell(handle)+Header.PackSize+Header.ExtraField;
+pos=ftell(fic)+Header.PackSize+Header.ExtraField;
 }
 
-close(handle);
+fclose(fic);
 
 // DFen->init=1;
 
-if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
+if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0)
+                                                  & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
     return 1;
@@ -602,10 +614,9 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
 return 0;
 }
 
-
-/******************************************************************************
-                               FICHIER .LHA
- *****************************************************************************/
+/*--------------------------------------------------------------------*\
+|-                           FICHIER .LHA                             -|
+\*--------------------------------------------------------------------*/
 
 struct LHATime {
  unsigned t_tsec : 5;
@@ -638,7 +649,7 @@ char Nomarch[256];
 char Dest[256];
 ULONG pos;
 char fin;
-int handle;
+FILE *fic;
 
 int n,m;
 
@@ -681,7 +692,7 @@ if (Cfg->pntrep==1)
     DFen->nbrfic=2;
     }
 
-handle=open(DFen->VolName,O_RDONLY | O_BINARY);
+fic=fopen(DFen->VolName,"rb");
 
 // Okay.
 
@@ -690,20 +701,20 @@ fin=0;
 
 while(!fin)
 {
-lseek(handle,pos,SEEK_SET);
+fseek(fic,pos,SEEK_SET);
 
-if (read(handle,&Header,sizeof(struct LHAHeader))!=sizeof(struct LHAHeader))
+if (fread(&Header,sizeof(struct LHAHeader),1,fic)!=1)
     {
     fin=1;
     break;
     }
 
-read(handle,Nomarch,Header.FNameLen);
+fread(Nomarch,Header.FNameLen,1,fic);
 Nomarch[Header.FNameLen]=0;
 
-lseek(handle,pos,SEEK_SET);
+fseek(fic,pos,SEEK_SET);
 
-read(handle,nom,128);
+fread(nom,128,1,fic);
 
 
 
@@ -791,11 +802,12 @@ if (!Maskcmp(Nomarch,nom))
 pos+=Header.HSize+Header.PackSize+2;     // CRC ?
 }
 
-close(handle);
+fclose(fic);
 
 // DFen->init=1;
 
-if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
+if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) &
+                                                    (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
     return 1;
@@ -804,9 +816,9 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
 return 0;
 }
 
-/******************************************************************************
-                               FICHIER .KKD
- *****************************************************************************/
+/*--------------------------------------------------------------------*\
+|-                           FICHIER .KKD                             -|
+\*--------------------------------------------------------------------*/
 
 struct kkdesc
     {
@@ -828,14 +840,11 @@ static char name[256];
 
 char Nomarch[256];
 char fin;
-int handle;
+FILE *fic;
 
+int n,i,j;
 
-int n;
-
-int i,j;
-
-unsigned char tai;  // taille des noms
+unsigned char tai;                                    // taille des noms
 
 struct file **Fic;
 
@@ -886,21 +895,21 @@ if (strlen(DFen->path)==strlen(DFen->VolName))
     strcat(nom,"\\");
     }
 
-handle=open(DFen->VolName,O_RDONLY | O_BINARY);
+fic=fopen(DFen->VolName,"rb");
 
-lseek(handle,3,SEEK_SET);   // Passe la cle
+fseek(fic,3,SEEK_SET);                                   // Passe la cle
 
-read(handle,&tai,1);        // Passe la version
+fread(&tai,1,1,fic);                                 // Passe la version
 
-read(handle,&tai,1);        // Passe le nom du volume
-read(handle,Nomarch,tai);   
+fread(&tai,1,1,fic);                           // Passe le nom du volume
+fread(Nomarch,tai,1,fic);
 
-read(handle,&n,4);          // Passe le nombre d'octets non utilise
-read(handle,&n,4);          // Passe le nombre d'octets non utilise avant reconstruction
+fread(&n,4,1,fic);               // Passe le nombre d'octets non utilise
+fread(&n,4,1,fic);  // Passe le nbr de bytes non utilise avant reconstr.
 
 
-i=0;    // DEBUT
-j=0;    // FIN
+i=0;    //--- DEBUT ----------------------------------------------------
+j=0;    //--- FIN ------------------------------------------------------
 
 i=j;
 strcpy(name,nom+j);
@@ -918,20 +927,20 @@ fin=0;
 
 while(i!=j)
 {
-read(handle,&tai,1);
-read(handle,Nomarch,tai);
+fread(&tai,1,1,fic);
+fread(Nomarch,tai,1,fic);
 Nomarch[tai]=0;
 
-read(handle,&KKD_desc,sizeof(struct kkdesc));
+fread(&KKD_desc,sizeof(struct kkdesc),1,fic);
 
 if ( (!stricmp(Nomarch,name)) & ((KKD_desc.attrib&0x10)==0x10) )
     {
     if (KKD_desc.desc==0)
         {
-        fin=1;          // Un gros probleme: un directory qui ne mene a rien
+        fin=1;      // Un gros probleme: un directory qui ne mene a rien
         break;
         }
-    lseek(handle,KKD_desc.desc,SEEK_SET);
+    fseek(fic,KKD_desc.desc,SEEK_SET);
 
     i=j;
     strcpy(name,nom+j);
@@ -949,10 +958,10 @@ if ( (!stricmp(Nomarch,name)) & ((KKD_desc.attrib&0x10)==0x10) )
     {
     if (KKD_desc.next==0)
         {
-        fin=1;          // Directory pas trouv‚
+        fin=1;                                   // Directory pas trouv‚
         break;
         }
-    lseek(handle,KKD_desc.next,SEEK_SET);
+    fseek(fic,KKD_desc.next,SEEK_SET);
     }
 }
 
@@ -961,12 +970,11 @@ if (fin==0)
     {
     do
         {
-        read(handle,&tai,1);
-        read(handle,Nomarch,tai);
+        fread(&tai,1,1,fic);
+        fread(Nomarch,tai,1,fic);
         Nomarch[tai]=0;
 
-        read(handle,&KKD_desc,sizeof(struct kkdesc));
-
+        fread(&KKD_desc,sizeof(struct kkdesc),1,fic);
 
         Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
         Fic[DFen->nbrfic]->name=GetMem(tai+1);
@@ -987,24 +995,20 @@ if (fin==0)
 
         DFen->nbrfic++;
 
-        lseek(handle,KKD_desc.next,SEEK_SET);
+        fseek(fic,KKD_desc.next,SEEK_SET);
         }
     while(KKD_desc.next!=0);
     }
-
-close(handle);
-// DFen->init=1;
-
-if (fin==1)
-    {
+    else
     strcpy(DFen->path,DFen->VolName);
-    return 1;
-    }
 
-return 0;
+fclose(fic);
+
+return fin;
 }
 
-/**************************/
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
 
 struct HeaderKKD
     {
@@ -1019,7 +1023,9 @@ struct HeaderKKD
 
 void MakeKKD(struct fenetre *Fen,char *ficname)
 {
-struct find_t ff;
+DIR *dirp;
+struct dirent *ff;
+
 char error;
 char **TabRec;
 long NbrRec,CurRec;
@@ -1094,15 +1100,21 @@ Path2Abs(nomtemp,"*.*");
 
 strcpy(nom,TabRec[CurRec]);
 
-// The files
+/*--------------------------------------------------------------------*\
+|-  The files                                                         -|
+\*--------------------------------------------------------------------*/
 
-error=_dos_findfirst(nomtemp,63,&ff);
+dirp=opendir(nomtemp);
 
-while (error==0)
+if (dirp!=NULL)
+    while(1)
     {
-    if  (strcmp(ff.name,".")!=0)
+    ff=readdir(dirp);
+    if (ff==NULL) break;
+
+    if  (strcmp(ff->d_name,".")!=0)
         {
-        error=ff.attrib;
+        error=ff->d_attr;
 
         if ((error&0x10)!=0x10)    // Not a Subdir
             {
@@ -1110,36 +1122,40 @@ while (error==0)
 
             Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
 
-            Fichier[Nbfic]->nom=GetMem(strlen(ff.name)+1);
-            memcpy(Fichier[Nbfic]->nom,ff.name,strlen(ff.name)+1);
-            Fichier[Nbfic]->size=ff.size;
-            Fichier[Nbfic]->time=ff.wr_time;
-            Fichier[Nbfic]->date=ff.wr_date;
-            Fichier[Nbfic]->attrib=ff.attrib;
+            Fichier[Nbfic]->nom=GetMem(strlen(ff->d_name)+1);
+            memcpy(Fichier[Nbfic]->nom,ff->d_name,strlen(ff->d_name)+1);
+            Fichier[Nbfic]->size=ff->d_size;
+            Fichier[Nbfic]->time=ff->d_time;
+            Fichier[Nbfic]->date=ff->d_date;
+            Fichier[Nbfic]->attrib=ff->d_attr;
 
-            oldpos+=18+strlen(ff.name);
+            oldpos+=18+strlen(ff->d_name);
 
             Fichier[Nbfic]->next=oldpos;
 
             Nbfic++;
             }
         }
-
-    error=_dos_findnext(&ff);
     }
+
+closedir(dirp);
 
 free(TabRec[CurRec]);
 NbrRec--;
 
 // The directories
 
-error=_dos_findfirst(nomtemp,63,&ff);
+dirp=opendir(nomtemp);
 
-while (error==0)
+if (dirp!=NULL)
+    while(1)
     {
-    if  (strcmp(ff.name,".")!=0)
+    ff=readdir(dirp);
+    if (ff==NULL) break;
+
+    if  (strcmp(ff->d_name,".")!=0)
         {
-        error=ff.attrib;
+        error=ff->d_attr;
 
         if ((error&0x10)==0x10)    // Not a Subdir
             {
@@ -1147,21 +1163,21 @@ while (error==0)
 
             Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
 
-            Fichier[Nbfic]->nom=GetMem(strlen(ff.name)+1);
-            memcpy(Fichier[Nbfic]->nom,ff.name,strlen(ff.name)+1);
-            Fichier[Nbfic]->size=ff.size;
-            Fichier[Nbfic]->time=ff.wr_time;
-            Fichier[Nbfic]->date=ff.wr_date;
-            Fichier[Nbfic]->attrib=ff.attrib;
+            Fichier[Nbfic]->nom=GetMem(strlen(ff->d_name)+1);
+            memcpy(Fichier[Nbfic]->nom,ff->d_name,strlen(ff->d_name)+1);
+            Fichier[Nbfic]->size=ff->d_size;
+            Fichier[Nbfic]->time=ff->d_time;
+            Fichier[Nbfic]->date=ff->d_date;
+            Fichier[Nbfic]->attrib=ff->d_attr;
 
-            oldpos+=18+strlen(ff.name);
+            oldpos+=18+strlen(ff->d_name);
 
             Fichier[Nbfic]->next=oldpos;
 
-            if (ff.name[0]!='.')
+            if (ff->d_name[0]!='.')
                 {
                 strcpy(moi,nom);
-                Path2Abs(moi,ff.name);
+                Path2Abs(moi,ff->d_name);
 
                 Desc[NbrRec]=Nbfic;
 
@@ -1173,9 +1189,9 @@ while (error==0)
             Nbfic++;
             }
         }
-
-    error=_dos_findnext(&ff);
     }
+
+closedir(dirp);
 
 Fichier[Nbfic-1]->next=0;
 }

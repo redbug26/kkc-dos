@@ -49,7 +49,7 @@ typedef struct __idfinfo
    char *buffer;         // buffer for E/S
    ULONG posbuf;         // position in buffer (from posfic)
    WORD sizebuf;         // size of buffer
-   int handle;
+   FILE *fic;
    ULONG posfic;
 
 

@@ -1,3 +1,6 @@
+/*--------------------------------------------------------------------*\
+|- Outil de recherche de fichiers                                     -|
+\*--------------------------------------------------------------------*/
 #include <ctype.h>
 #include <io.h>
 
@@ -6,9 +9,8 @@
 #include <malloc.h>
 
 #include <conio.h>
-#include <dos.h>
 
-#include <bios.h>   // Gestion clavier
+#include <bios.h>                                     // Gestion clavier
 
 #include <time.h>
 
@@ -29,9 +31,12 @@ static char SearchString[42];
 static char Drive[28];
 static int sw=3;
 
-#define BreakESC  if (kbhit()) touche=_bios_keybrd(0)/256; else if (touche==1) break;
+#define BreakESC  if (kbhit()) touche=_bios_keybrd(0)/256; \
+                                              else if (touche==1) break;
 
-// Recherche la chaine SearchString dans le fichier *name
+/*--------------------------------------------------------------------*\
+|-  Recherche la chaine SearchString dans le fichier *name            -|
+\*--------------------------------------------------------------------*/
 int strfic(char *path,char *name)
 {
 long lng,n,m;
@@ -121,7 +126,9 @@ CommandLine("#cd %s",TabRec[NbrRec-1]);
 
 strcpy(nom,TabRec[NbrRec-1]);
 
-// The files
+/*--------------------------------------------------------------------*\
+|-  The files                                                         -|
+\*--------------------------------------------------------------------*/
 
 for (m=0;m<DFen->nbrfic;m++)
     {
@@ -151,7 +158,8 @@ for (m=0;m<DFen->nbrfic;m++)
             pos=nbr;
 
             for (n=0;n<nbr;n++)
-                if ( (ff->date>tabdate[n]) | ( (ff->date==tabdate[n]) & (ff->time>tabtime[n]) ) )
+                if ( (ff->date>tabdate[n]) |
+                    ( (ff->date==tabdate[n]) & (ff->time>tabtime[n]) ) )
                     {
                     pos=n;
                     break;
@@ -190,7 +198,9 @@ for (m=0;m<DFen->nbrfic;m++)
 free(TabRec[NbrRec-1]);
 NbrRec--;
 
-// The directories
+/*--------------------------------------------------------------------*\
+|-  The directories                                                   -|
+\*--------------------------------------------------------------------*/
 
 for (m=0;m<DFen->nbrfic;m++)
     {
@@ -198,10 +208,15 @@ for (m=0;m<DFen->nbrfic;m++)
 
     error=ff->attrib;
 
+/*--------------------------------------------------------------------*\
+|- Subdir                                                             -|
+\*--------------------------------------------------------------------*/
+
     if ( (ff->name[0]!='.')  & (sw!=5) )
         {
-        if ( ((error&0x10)==0x10) | ((!stricmp(getext(ff->name),"KKD")) & (Cfg->enterkkd==1)) )
-            // Subdir
+        if ( ((error&0x10)==0x10)
+           | ((!stricmp(getext(ff->name),"KKD")) & (Cfg->enterkkd==1)
+                                                 & (DFen->system==0)) )
             {
             strcpy(moi,nom);
             Path2Abs(moi,ff->name);
@@ -315,7 +330,9 @@ PutCur(32,0);
 
 ColLin(0,0,80,1*16+4);
 
-// Allocate Memory
+/*--------------------------------------------------------------------*\
+|-  Allocate Memory                                                   -|
+\*--------------------------------------------------------------------*/
 
 nom=GetMem(255);
 nomtemp=GetMem(255);
@@ -331,7 +348,9 @@ for (n=0;n<nbrmax;n++)
 tabtime=GetMem(sizeof(int *)*nbrmax);
 tabdate=GetMem(sizeof(int *)*nbrmax);
 
-// Setup of all
+/*--------------------------------------------------------------------*\
+|-  Setup of all                                                      -|
+\*--------------------------------------------------------------------*/
 
 WinCadre(0,1,79,(Cfg->TailleY)-2,1);
 ColWin(1,2,78,(Cfg->TailleY)-3,10*16+1);
@@ -451,7 +470,9 @@ if (a==13)
         }
     }
 
-// Free Memory
+/*--------------------------------------------------------------------*\
+|-  Free Memory                                                       -|
+\*--------------------------------------------------------------------*/
 
 free(tabdate);
 free(tabtime);
