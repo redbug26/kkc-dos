@@ -1833,11 +1833,18 @@ KKCfg->hidfil=get_private_profile_int(section,"hiddenfile",
 KKCfg->logfile=get_private_profile_int(section,"logfile",
                                                KKCfg->logfile,filename);
 Cfg->font=get_private_profile_int(section,"font",Cfg->font,filename);
+KKCfg->userfont=get_private_profile_int(section,"userfont",
+                                              KKCfg->userfont,filename);
 Cfg->debug=get_private_profile_int(section,"debug",Cfg->debug,filename);
 KKCfg->confexit=get_private_profile_int(section,"confexit",
                                               KKCfg->confexit,filename);
 KKCfg->mtrash=get_private_profile_int(section,"sizetrash",
                                                 KKCfg->mtrash,filename);
+KKCfg->enterkkd=get_private_profile_int(section,"enterkkd",
+                                              KKCfg->enterkkd,filename);
+KKCfg->cnvhist=get_private_profile_int(section,"converthist",
+                                               KKCfg->cnvhist,filename);
+
 Cfg->display=get_private_profile_int(section,"display",
                                                  Cfg->display,filename);
 Cfg->comport=get_private_profile_int(section,"serial_port",
@@ -2068,6 +2075,7 @@ write_private_profile_int(section,"directpoint",KKCfg->pntrep,filename);
 write_private_profile_int(section,"hiddenfile",KKCfg->hidfil,filename);
 write_private_profile_int(section,"logfile",KKCfg->logfile,filename);
 write_private_profile_int(section,"font",Cfg->font,filename);
+write_private_profile_int(section,"userfont",KKCfg->userfont,filename);
 write_private_profile_int(section,"debug",Cfg->debug,filename);
 write_private_profile_int(section,"confexit",KKCfg->confexit,filename);
 write_private_profile_int(section,"sizetrash",KKCfg->mtrash,filename);
@@ -2089,6 +2097,9 @@ write_private_profile_int(section,"dispupperpath",
                                                KKCfg->dispath,filename);
 write_private_profile_int(section,"displowerpath",
                                               KKCfg->pathdown,filename);
+write_private_profile_int(section,"enterkkd",
+                                              KKCfg->enterkkd,filename);
+write_private_profile_int(section,"converhist",KKCfg->cnvhist,filename);
 write_private_profile_int(section,"sizewin",KKCfg->sizewin,filename);
 write_private_profile_int(section,"dispidf",KKCfg->isidf,filename);
 write_private_profile_int(section,"dispbar",KKCfg->isbar,filename);
@@ -2694,7 +2705,11 @@ int x,y;
 if (todo==0)
     {
     TXTMode();
-    InitFont();
+
+    if (KKCfg->userfont)
+        InitFontFile(KKFics->trash);
+        else
+        InitFont();
 
     LoadPal(Cfg->palette);
 
@@ -3312,7 +3327,7 @@ void AffColScreen(int a)
 switch(a)
     {
     case 0:
-        Cadre(60,3,76,17,0,Cfg->col[37],Cfg->col[38]);
+        Cadre(60,3,76,17,1,Cfg->col[37],Cfg->col[38]);
         ColLin(61,4,15,Cfg->col[0]);
         ColLin(61,5,15,Cfg->col[2]);
         ColLin(61,6,15,Cfg->col[1]);

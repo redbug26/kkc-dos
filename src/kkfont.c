@@ -26,6 +26,52 @@
 void ChgFont(char *font);
 int Seekfile(int x,int y,char *name);
 
+char savefont[16];
+
+char DelByte(char b,char p)
+{
+char a[8];
+int n;
+
+a[0]=(b&1)==1;
+a[1]=(b&2)==2;
+a[2]=(b&4)==4;
+a[3]=(b&8)==8;
+a[4]=(b&16)==16;
+a[5]=(b&32)==32;
+a[6]=(b&64)==64;
+a[7]=(b&128)==128;
+
+for(n=p+1;n<8;n++)
+    a[n-1]=a[n];
+a[7]=0;
+
+return a[0]+a[1]*2+a[2]*4+a[3]*8+a[4]*16+a[5]*32+a[6]*64+a[7]*128;
+}
+
+char InsByte(char b,char p)
+{
+char a[8];
+int n;
+
+a[0]=b&1;
+a[1]=b&2;
+a[2]=b&4;
+a[3]=b&8;
+a[4]=b&16;
+a[5]=b&32;
+a[6]=b&64;
+a[7]=b&128;
+
+for(n=p+1;n<8;n++)
+    a[n-1]=a[n];
+a[7]=0;
+
+return a[0]+a[1]*2+a[2]*4+a[3]*8+a[4]*16+a[5]*32+a[6]*64+a[7]*128;
+}
+
+
+
 void ChgFont(char *font)
 {
 char *buf=(char*)0xA0000;
@@ -143,6 +189,8 @@ FILE *fic;
 
 char tx;
 
+int n;
+
 int cur;
 char a;
 
@@ -150,6 +198,7 @@ int car;
 int pi,pj;
 
 fen=0;
+
 
 fic=fopen("font8x16.cfg","rb");
 fread(font,4096,1,fic);
@@ -204,13 +253,41 @@ AffCol(40+(cur&15),2+(cur/16),7*16+10);
 car=Wait(0,0);
 AffCol(40+(cur&15),2+(cur/16),10*16+7);
 
+
 switch(HI(car))
     {
+    case 0x3C: //--- F2 ------------------------------------------------
+        PrintAt(40,22,"Font saved in buffer");
+        for(n=0;n<tx;n++)
+            savefont[n]=font[cur*tx+n];
+        break;
+
+    case 0x3D: //--- F3 ------------------------------------------------
+        PrintAt(40,22,"Font saved from buffer");
+        for(n=0;n<tx;n++)
+            font[cur*tx+n]=savefont[n];
+        break;
+
+   case 0x53: //--- DEL -----------------------------------------------
+/*        for(n=pj;n<tx-1;n++)
+            font[cur*tx+n]=font[cur*tx+n+1];
+        font[cur*tx+tx-1]=0;
+*/
+        for(n=0;n<16;n++)
+            font[cur*tx+n]=DelByte(font[cur*tx+n],7-pi);
+        break;
+
+    case 0x52: //--- INS -----------------------------------------------
+        for(n=tx-1;n>pj;n--)
+            font[cur*tx+n]=font[cur*tx+n-1];
+        font[cur*tx+pj]=0;
+        break;
+
     case 0x8D: // CTRL-UP
-        cur-=16;
+        cur-=tx;
         break;
     case 0x91: // CTRL-DOWN
-        cur+=16;
+        cur+=tx;
         break;
     case 0x73: // CTRL-LEFT
         cur--;
@@ -219,10 +296,10 @@ switch(HI(car))
         cur++;
         break;
     case 72:   // UP
-        if (fen==0)  pj--; else cur-=16;
+        if (fen==0)  pj--; else cur-=tx;
         break;
     case 80:   // DOWN
-        if (fen==0) pj++; else cur+=16;
+        if (fen==0) pj++; else cur+=tx;
         break;
     case 0x4B:
         if (fen==0) pi--; else cur--;
@@ -246,6 +323,9 @@ switch(HI(car))
 
 switch(car)
     {
+    case 0x19: //--- Ctrl-y --------------------------------------------
+
+
     case 9:
         fen++;
         break;

@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #include <signal.h>                               // For handling signal
 
+#include <bios.h>        //--- Seulement pour _bios_keybrd -------------
+
 #include "kk.h"
 
 #include "idf.h"
@@ -29,6 +31,7 @@ void SaveSel(FENETRE *F1);
 void LoadSel(int n);
 
 void AffFen(FENETRE *Fen);
+int GestionBar(int i);
 
 void SelectPlus(void);
 void SelectPlusMoins(void);
@@ -53,6 +56,7 @@ void AffLonger(void);
 void RBSetup(void);
 
 void SaveRawPage(void);
+void QuickSearch(int key,BYTE *c,BYTE *c2);
 
 
 /*--------------------------------------------------------------------*\
@@ -446,6 +450,7 @@ Fin();
 |- 93: Get Next Command Line                                          -|
 |- 94: Recherche le premier fichier commencant par gnagna             -|
 |- 95: Switch l'‚tat de la barre de fonction et la barre IDF          -|
+|- 96: MessageBox(sbuf0,sbuf1,cbuf0)                                  -|
 \*--------------------------------------------------------------------*/
 
 #define CURRENTNAME DFen->F[DFen->pcur]->name
@@ -463,7 +468,10 @@ switch(fct)
     case 0:
         break;
     case 1:
-        Help();
+        if (Info->macro)
+            HelpTopic(Info->sbuf0);
+            else
+            Help();
         break;
     case 2:
         for (i=0;i<DFen->nbrfic;i++)
@@ -1018,6 +1026,9 @@ switch(fct)
             {
             case 0:                                                // OK
                 break;
+            case 173:
+                RunMacro(CURRENTNAME);
+                break;
             case 57:                                       // Executable
                 CommandLine("%s\n",CURRENTNAME);
                 break;
@@ -1191,6 +1202,10 @@ switch(fct)
         KKCfg->isbar=(KKCfg->isbar)^1;
         KKCfg->isidf=(KKCfg->isidf)^1;
         GestionFct(67);                            // Rafraichit l'ecran
+        break;
+    case 96:
+        if (Info->macro)
+            Info->cbuf0=WinMesg(Info->sbuf0,Info->sbuf1,Info->cbuf0);
         break;
     }
 
@@ -1703,7 +1718,13 @@ struct TmtWin F = {-1,10,74,17, "Change Directory" };
 
 int n;
 
-n=WinTraite(T,7,&F,0);
+if (Info->macro)
+    {
+    n=Info->cbuf0;
+    strcpy(Dir,Info->sbuf0);
+    }
+else
+    n=WinTraite(T,7,&F,0);
 
 if (n!=-1)
     {
@@ -2166,7 +2187,7 @@ CommandLine("#cd %c:\\",i+'A');
 return i;
 }
 
-void QuickSearch(int key,char *c,char *c2)
+void QuickSearch(int key,BYTE *c,BYTE *c2)
 {
 static char chaine[32];
 static int lng=0;
@@ -2326,8 +2347,8 @@ FILE *infic;
 
 OldFen=DFen;
 
-SFen=GetMem(sizeof(FENETRE));
-SFen->F=GetMem(TOTFIC*sizeof(void *));
+SFen=(FENETRE*)GetMem(sizeof(FENETRE));
+SFen->F=(struct file**)GetMem(TOTFIC*sizeof(void *));
 
 SFen->x=40;
 SFen->nfen=7;
@@ -2536,7 +2557,7 @@ void SaveSel(FENETRE *F1)
 struct file *F;
 int i,j;
 
-pcurname=GetMem(strlen(F1->F[F1->pcur]->name)+1);
+pcurname=(char*)GetMem(strlen(F1->F[F1->pcur]->name)+1);
 strcpy(pcurname,F1->F[F1->pcur]->name);
 
 F1pcur=F1->pcur;
@@ -2545,7 +2566,7 @@ F1nbrsel=F1->nbrsel;
 
 if (F1nbrsel!=0)
     {
-    selname=GetMem(sizeof(char*)*F1->nbrsel);
+    selname=(char**)GetMem(sizeof(char*)*F1->nbrsel);
     j=0;
 
     for(i=0;i<F1->nbrfic;i++)
@@ -2554,7 +2575,7 @@ if (F1nbrsel!=0)
 
         if ((F->select)==1)
             {
-            selname[j]=GetMem(strlen(F->name)+1);
+            selname[j]=(char*)GetMem(strlen(F->name)+1);
             strcpy(selname[j],F->name);
             j++;
             }
@@ -3343,6 +3364,24 @@ switch(car2)
     case 0xB6:                                   //
     case 0xB7:                                   //  Windows 95 keyboard
     case 0xB8:                                   //
+/*        {
+        FILE *fic;
+        int n;
+
+        fic=fopen("temp.txt","wt");
+
+        for(n=0;n<48;n++)
+            fprintf(fic,"\\%02X",Cfg->palette[n]);
+        fprintf(fic,"\n");
+
+        for(n=0;n<64;n++)
+            fprintf(fic,"\\%02X",Cfg->col[n]);
+
+        fclose(fic);
+        }
+*/
+
+
         break;
 
 
@@ -3881,9 +3920,9 @@ if (Cfg->TailleX==80) return;
 
 if ( (DFen->Fen2->FenTyp==2) & (DFen->FenTyp==2) )
     {
-    for(y=DFen->y;y<=DFen->yl;y++)
+    for(y=Fenetre[0]->y;y<=Fenetre[0]->yl;y++)
         {
-        nscr=(y+DFen->y)*160+x1*2;
+        nscr=(y+Fenetre[0]->y)*160+x1*2;
         nbuf=(y-((KKCfg->cmdline)-1)+OldY-1)*OldX+x1;
 
         for(x=0;x<x2-x1+1;x++,nbuf++,nscr++)
@@ -3892,9 +3931,9 @@ if ( (DFen->Fen2->FenTyp==2) & (DFen->FenTyp==2) )
             else
                 AffCol(x+x1,y,Screen_Buffer[nbuf*2+1]);
         }
-    for(y=DFen->y;y<=DFen->yl;y++)
+    for(y=Fenetre[0]->y;y<=Fenetre[0]->yl;y++)
         {
-        nscr=(y+DFen->y)*160+x1*2;
+        nscr=(y+Fenetre[0]->y)*160+x1*2;
         nbuf=(y-((KKCfg->cmdline)-1)+OldY-1)*OldX+x1;
 
         for(x=0;x<x2-x1+1;x++,nbuf++,nscr++)
@@ -3913,7 +3952,7 @@ if ( (DFen->Fen2->FenTyp==2) & (DFen->FenTyp==2) )
 
     for (x=0;x<6;x++)
         {
-        if (3+x*3<DFen->yl-3)
+        if (3+x*3<Fenetre[0]->yl-3)
             {
             Cadre(x1, 1+x*3,x2, 3+x*3,2,Cfg->col[55],Cfg->col[56]);
             ColLin(x1+1,2+x*3,8,Cfg->col[17]);
@@ -3922,11 +3961,10 @@ if ( (DFen->Fen2->FenTyp==2) & (DFen->FenTyp==2) )
             }
         }
 
-    Window(x1,19,x2,DFen->yl-3,Cfg->col[17]);     // Efface le reste ---
+    Window(x1,19,x2,Fenetre[0]->yl-3,Cfg->col[17]);     // Efface le reste ---
 
-    Cadre(x1,DFen->yl-2,x2,DFen->yl,2,Cfg->col[55],Cfg->col[56]);
-    ColLin(x1+1,DFen->yl-1,8,Cfg->col[17]);
-
+    Cadre(x1,Fenetre[0]->yl-2,x2,Fenetre[0]->yl,2,Cfg->col[55],Cfg->col[56]);
+    ColLin(x1+1,Fenetre[0]->yl-1,8,Cfg->col[17]);
     }
 
 }

@@ -36,6 +36,7 @@ int TeamSelect(struct barmenu *bar);
 int MenuPcTeamExist(void);
 int UserMenuExist(void);
 
+void PcTeam(void);
 
 /*--------------------------------------------------------------------*\
 |- Buffer global                                                      -|
@@ -647,7 +648,8 @@ void MenuCreat(char *titbuf,char *buf,char *path)
 static char title[34],section[34],line[80];
 static int lng=32;
 static int l1;
-static int x1=42,y1=2;
+static char x1=42;
+static int y1=2;
 
 int n;
 char buffer[256],buf2[256],enter[64];
@@ -989,7 +991,7 @@ do
     if (TeamGetLine(ligne,teamfic)==NULL) break;
     if (ligne[0]!='@') break;
 
-    bar[nbr].Titre=GetMem(strlen(ligne));
+    bar[nbr].Titre=(char*)GetMem(strlen(ligne));
     memcpy(bar[nbr].Titre,ligne+1,strlen(ligne)+1); // On passe le '@' -
 
     bar[nbr].Help="cdteam";
@@ -1149,7 +1151,7 @@ int m,n,l;
 
 err=0;
 
-bar=GetMem(sizeof(struct barmenu)*MAXLCD);
+bar=(struct barmenu*)GetMem(sizeof(struct barmenu)*MAXLCD);
 
 strcpy(rep,Fen->path);
 Path2Abs(rep,"\\treeinfo.ncd");
@@ -1189,7 +1191,7 @@ for(n=0;n<nbr;n++)
     
     if ((!WildCmp(name,dir)) | (!WildCmp(rep,rep2)))
         {
-        bar[nbrbar].Titre=GetMem(strlen(rep)+1);
+        bar[nbrbar].Titre=(char*)GetMem(strlen(rep)+1);
         strcpy(bar[nbrbar].Titre,rep);
         bar[nbrbar].Help=NULL;
         bar[nbrbar].fct=nbrbar+1;
@@ -1261,8 +1263,8 @@ fwrite(&nbr,2,1,fic);
 
 OldFen=DFen;
 
-SFen=GetMem(sizeof(FENETRE));
-SFen->F=GetMem(TOTFIC*sizeof(void *));
+SFen=(FENETRE*)GetMem(sizeof(FENETRE));
+SFen->F=(struct file**)GetMem(TOTFIC*sizeof(void *));
 
 SFen->x=40;
 SFen->nfen=7;
@@ -1277,10 +1279,10 @@ SFen->scur=0;
 
 DFen=SFen;
 
-TabRec=GetMem(500*sizeof(char*));
-ARec=GetMem(500*3);
+TabRec=(char**)GetMem(500*sizeof(char*));
+ARec=(char*)GetMem(500*3);
 
-TabRec[0]=GetMem(strlen(volname)+1);
+TabRec[0]=(char*)GetMem(strlen(volname)+1);
 memcpy(TabRec[0],volname,strlen(volname)+1);
 NbrRec=1;
 
@@ -1354,7 +1356,7 @@ for (m=0;m<DFen->nbrfic;m++)
 
             l=strlen(moi)+1;
 
-            TabRec[pos]=GetMem(l);
+            TabRec[pos]=(char*)GetMem(l);
             memcpy(TabRec[pos],moi,l);
 
             ARec[pos*3+1]=prem;

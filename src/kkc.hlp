@@ -1,0 +1,1623 @@
+*RedBug Help Ver 0.9
+
+@Introduction
+
+:Features
+^Features
+
+   The best things:
+
+    ş Compatible with:
+	 - 386/486/Pentium...
+	 - VGA
+	 - ...
+
+    ş Automatically recognize file format & players.
+
+    ş a lot of function (see <History;history> and other parts)
+
+    ş It's a GREAT production from <About;Ketchup Killers>
+
+    ş KKC is FREEWARE !
+
+
+
+   The worst things:
+
+    ş The ... on ... or the ... of ... .
+
+    ş This help :-{
+
+    ş KKC is FREEWARE ! (I don't win money with it)
+
+:Disclaimer and Warranty
+^Disclaimer and Warranty
+
+   KKC is distributed "AS IS".  The author specifically disclaims all
+   warranties, expressed or implied.  In no event shall the <RedBug;authors> be
+   liable for any damages either from the direct use of this product or
+   as a consequence of the use of this product.  Because of the various
+   hardware and software environments in which KKC may be used, no
+   warranty of fitness for a particular purpose is offered.
+
+:Licensing and distribution
+^Licensing and distribution
+
+   KKC is NOT public domain. It is software distributed as freeware.
+   KKC may not be changed or modified in any way except by the <RedBug;author>.
+
+
+@Quick use of command
+
+:Keyboard Summary
+#KS
+^Keyboard Summary
+
+% Functions Keys
+
+    F1           This Help.
+    F2           <User Menu;User Menu>.
+    F3           <View;View file>.
+    F4           <Edit;Edit file>.
+    F5           <Copy;Copy selected files and directories on other window>.
+    F6           <Move;Move selected files and directories on other window>.
+    F7           <Create directory;Create directory>.
+    F8           <Delete;Delete selected files and directories>.
+    F9           Menu bar.
+    F10          Exit to OS.
+    F11          <Execute command;Execute a command and view the result>.
+    F12          Go to the <userdir;USER directory>.
+
+    ı            Select *.BAK, *.OLD, *.TMP, *.MAP, *.LST, *.OBJ, *.$.
+    ENTER        <FicIdf;Call the player linked with the current file>.
+    ESC          Erase command line.
+    INS          Select/deselect file.
+    LEFT         Change to left window.
+    RIGHT        Change to right window.
+    SPACE        Select/deselect file.
+    TAB          Toggle active window.
+
+    A-F1         Change drive of left window.
+    A-F2         Change drive of right window.
+    A-F3         Information on file.
+    A-F4         <FileID;Display the 'file_id.diz' from the current directory>.
+    A-F5         <QPS;Quick Path Switch>
+    A-F6         <histcom;Quick History Command>.
+    A-F7         <search;Search file>.
+    A-F8         Change windows type.
+    A-F9         Switch to 25/50 lines.
+    A-F10        Switch between display mode (direct access, Ansi, doorway).
+
+    A-ENTER      Go to the same directory that the other window.
+    A-PGDN       Go to the directory from where you run KKC.
+
+    C-F1         Open/close left window.
+    C-F2         Open/close right window.
+    C-F3         Sort by name.
+    C-F4         Sort by extension.
+    C-F5         Sort by date.
+    C-F6         Sort by size.
+    C-F7         Unsort.
+    C-F8         Switch 'Rise "RAR,ARJ,ZIP,LHA,DIZ,EXE,COM,BAT,BTM" sorting'.
+    C-F12        Palette configuration.
+
+    C-BACKSPACE  Erase current word or extension.
+    C-BREAK      Exit to OS.
+    C-ENTER      Push current filename into the command line.
+    C-LEFT       Change to up-directory.
+    C-PGUP       Change to up-directory.
+    C-PGDN       <Quick dir;Quick History Directory>.
+    C-RIGHT      Change to selected directory.
+    C-UP         <View;View file (internal viewer)>.
+    C-TAB        Quick search of file.
+
+    S-F2         Change attribute.
+    S-F3         <View;View file (internal viewer)>.
+    S-F4         Edit new file.
+    S-F5         Host Mode.
+    S-F6         Rename file.
+    S-F12        Create <KKD;KKD file>.
+
+% Letters
+    
+    C-A          ASCII table.
+    C-B          Menu Bar..
+    C-D          Change Directory.
+    C-E          Call the last command.
+    C-F          Switch between normal & special font.
+    C-H          Do nothing (try it).
+    C-L          System Information.
+    C-O          Open/close the two windows.
+    C-R          Reload Directory (but keep selection).
+    C-U          Switch the two windows.
+    C-Y          Information on all file.
+
+% Keypad
+
+    +            <Selection of files;Select files>.
+    -            <Deselection of files;Deselect files>.
+    *            <Inverse;Inverse selection>.
+    /            Load/Save selection.
+
+
+:Commands in archives
+^Commands in archives
+
+% RAR
+
+%    Directory  (internal)
+	All Right !
+
+%    Copy
+	Only the copy of files in archive to normal directories is done.
+	( The copy of files in normal directories to archive is not finished )
+
+	REM: When you are extracting a directories, RAR use the entire path
+		of the directories !
+
+% ARJ
+
+%    Directory  (internal)
+	All Right !
+
+%    Copy
+	Only the copy of files in archive to normal directories is done.
+
+	REM: When you are extracting a directories, ARJ use the entire path
+		of the directories !
+
+
+% ZIP
+
+%    Directory  (internal)
+	All Right !
+
+
+%    Copy
+	Only the copy of files in archive to normal directories is done.
+
+	REM: When you are extracting a directories, ZIP use the entire path
+		of the directories !
+
+% LHA
+
+%    Directory  (internal)
+	My GOD !
+
+	 Only Header 0 or 1 are supported
+	    Moreover the directories don't work everytime !
+
+	 AMIGA LHA works beter than DOS LZH ! Why ???
+
+%    Copy
+	Only the copy of files in archive to normal directories is done.
+
+	REM: When you are extracting a directories, LHA use the entire path
+		of the directories !
+
+% KKD
+
+%    Directory  (internal)
+	All Right !
+
+
+%    Copy
+        Yes !
+
+% DFP
+
+%    Directory  (internal)
+	All Right !
+
+
+%    Copy
+        No !
+
+
+
+% Other archives (ZOO, ARC...)
+
+     I search information on other archives to do that !
+
+
+@Command in details
+:Execute player
+#FicIdf
+^Execute player
+
+   When you press ENTER on a file, KKC opens a window in which there are the
+   players of this file
+
+  e.g.
+   When I press ENTER on the file 'riffraff.mod' (a module of Dark Angel, THE
+   musician of <About;Ketchup Killers>), this window appears:
+
+			    n-Play V1.0 by n Factor
+  ÉÍÍÍÍÍÍÍÍÍÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿ÍÍÍÍÍÍÍÍÍ»
+  º    Name ³  Modclean 					   ³e  ³Time º
+  º..	    ³  Ketchup Killers ModPlayer			   ³/96³14:30º
+  ºACCESS   ³  CapaMod player V3.09				   ³/97³14:25º
+  ºDRKANGEL ³  CapaMod TSR v3.09				   ³/97³16:26º
+  ºECSTASY  ³  Cubic Player 2.0a				   ³/97³15:57º
+  ºaieaie   ³  Dam Tracker V1.0 				   ³/97³17:10º
+  ºcircus   ³  Fast Tracker 2 V2.06				   ³/97³14:07º
+  ºhtciber  ³  Music Disk Player V1.0				   ³/97³14:11º
+  ºlsoldier ³  Music Disk Player V1.1				   ³/97³20:15º
+  ºriffraff ³  METAL tracker V0.2p15				   ³/96³15:05º
+  ºspac2v20 ³  n-Play V1.0					   ³/97³11:21º
+  ºspattern ³  PMP V2.06					   ³/97³15:23º
+  º	    ³  PolyPlayer V2.0b 				   ³/97³08:36º
+  º	    ³  RealTech Module Player V2.02			   ³/97³08:37º
+  º	    ³  StarPlayer V2.25 				   ³/97³08:36º
+  º	    ³  UltraMOD V1.0					   ³/97³19:41º
+  º	    ³  XTC Player V0.70c				   ³/97³19:45º
+  º	    ³  DuBlay V0.72					   ³/97³17:16º
+  ºÄÄÄÄÄÄÄÄÄ³  Dual Module Player/32 V4.00			   ³ÄÄÄÄÄÄÄÄÄº
+  º 418.464 ³  Dual Module Player V4.00 			   ³s	     º
+  ÈÍÍÍÍÍÍÍÍÍÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙÍÍÍÍÍÍÍÍÍ¼
+
+  Press ENTER to run the player with the selected file as argument
+  Press LEFT or RIGHT to run the player without argument
+
+  Press F2 to create automatically an entry in your <New User Menu;user menu>.
+
+% Default Command
+	ENTER
+
+:Search file(s)
+#Search file(s)
+#search
+^Search file(s)
+
+   ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄSearch file(s)ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+   ³ ÉÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ» ³
+   ³ º	 Filename							  º ³
+   ³ º*.*²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²º ³
+   ³ ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼ ³
+   ³ ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿ ³
+   ³ ³(X) Current drive 	³³ Search String:			  ³ ³
+   ³ ³( ) Current dir & subdir	³³²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²²³ ³
+   ³ ³( ) Selected dir & subdir ³ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ ³
+   ³ ³( ) Only current directory³                                           ³
+   ³ ³( ) All drive		³ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿ ³
+   ³ ³( ) user defined drive	³³[X] Search in KKD			  ³ ³
+   ³ ³²²²²²²²²²²²²²²²²²²²²²²²²²²³³ Ketchup Killers	  Search Function ³ ³
+   ³ ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ ³
+   ³		  ±±±±±±OK±±±±±Ü		±±±±CANCEL±±±Ü		    ³
+   ³		   ßßßßßßßßßßßßß		 ßßßßßßßßßßßßß		    ³
+   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+   Select "Current drive" for a search on the current drive.
+   Select "Current dir & subdir" for a search into the current directory and
+       all its subdirectories.
+   Select "Select dir & sbudir" for a search only into the selected directory.
+   Select "Only current directory" for a search only into the current
+       directory.
+   Select "All drive" for search on all available drives.
+   Select "user defined drive" to choose the drives to be searched in the text
+       filed (f.e. "ACDF" to search on drive A: C: D: and F:
+
+
+   Choose "OK" to start the search with the specified options.
+   By the "Cancel" button you leave the <About;Ketchup Killers> Search Function.
+
+% Default Command
+      ALT-F7
+
+:Change attributs
+^Change attributs
+
+       ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄChange attribute/timeÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+       ³					    Not 	    ³
+       ³     Change Attribute	     Set    Unset   Change	    ³
+       ³			 ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿	    ³
+       ³     Archive		 ³   (X)     ( )     ( )    ³	    ³
+       ³			 ³			    ³	    ³
+       ³     Hidden		 ³   ( )     (X)     ( )    ³	    ³
+       ³			 ³			    ³	    ³
+       ³     Read-only		 ³   ( )     (X)     ( )    ³	    ³
+       ³			 ³			    ³	    ³
+       ³     System		 ³   ( )     (X)     ( )    ³	    ³
+       ³			 ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	    ³
+       ³				ÚÄÄÄÄÄÄÄÄÄÄÄÄ¿		    ³
+       ³     Date			³ 29/ 3/1997 ³		    ³
+       ³				³	     ³		    ³
+       ³     Time			³ 14:08:50   ³		    ³
+       ³				ÀÄÄÄÄÄÄÄÄÄÄÄÄÙ		    ³
+       ³	  ±±±±±OK±±±±±Ü 	   ±±±CANCEL±±±Ü	    ³
+       ³	   ßßßßßßßßßßßß 	    ßßßßßßßßßßßß	    ³
+       ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+:User Menu
+#User Menu
+^User Menu
+
+      This command opens a user menu. (kkc.mnu in the <userdir;user directory>)
+      You could modify the user menu with your favourite editor (not yet
+      the KKC editor :( )
+
+      The 'kkc.mnu' has the following format:
+
+  ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ Ä Ä
+  ³[Main]
+  ³
+  ³Utility	      = [Util]
+  ³Games	      = [Games]
+  ³Dosshell	      = c:\4dos.com
+  ³
+  ³[Games]
+  ³
+  ³Eclipse pacman     = cd f:\epacman
+  ³			greedy
+  ³
+  ³[Utility]
+  ³
+  ³Cubic player       = cd c:\cubic
+  ³			cp !.!
+  ³
+  ³; use this at your own risk
+  ³Loving Windows     = deltree c:\windows
+
+  ³
+
+     There is no limit for the number of menu levels.
+     Each menu could have 20 entries.
+     And the title of each entry couldn't exceed 20 characters.
+
+     You could use <File Shortcut;shortcut>.
+
+
+#New User Menu
+^Create an new entry
+
+     When you are in the history command (with ALT-F6), you could press
+     F2 to create automatically an entry in your user menu.
+
+     When you select the 'Change to current directory', KKC insert the
+     command 'cd [directory]' in the user menu. Thus, don't forget that
+     the filename have changed too.
+
+
+:View file
+#View
+^Internal view file
+
+% What ?
+      View the selected file
+
+% Notes
+      The viewer detect the type of the file.
+
+	  1) Ansi: The file is loading with then ansi viewer :-)
+		   The number of the line couldn't exceed 1000 lines.
+
+               Ú The key are ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+               ³SHIFT ÄÄ¿To display information on file  ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+	  2) Hex:  The file is loading with the hex viewer.
+
+               Ú The key are ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+               ³F7 ÄÄÄÄÄ¿To search text/hexa string      ³
+	       ³F8	³To print file			 ³
+	       ³F9	³To change the mask		 ³
+	       ³SHIFT	³To display information on file  ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+	  3) Text: The file is loading normally.
+
+               Ú The key are ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+               ³F2ÄÄÄÄÄÄ¿To change the wrap mode         ³
+	       ³F3	³To change line feed		 ³
+               ³F5      ³To zoom the window              ³
+	       ³F6	³To change the traduction table  ³
+	       ³F7	³To search text 		 ³
+	       ³F8	³To print file			 ³
+	       ³F9	³To change the mask		 ³
+	       ³SHIFT	³To display information on file  ³
+	       ³RIGHT	³To scroll 8 columns right	 ³
+	       ³LEFT	³To scroll 8 columns left	 ³
+	       ³C-RIGHT ³To scroll 40 columns right	 ³
+	       ³C-LEFT	³To scroll 40 columns left	 ³
+	       ³C-HOME	³To scroll to column 0		 ³
+	       ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+	  4) HTML: The file is loading in text mode.
+
+               Ú The key are ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+               ³TAB ÄÄÄÄ¿To go to the next reference     ³
+               ³S-TAB   ³To go to the previous reference ³
+               ³ENTER   ³To select the current reference ³
+	       ³SHIFT	³To display information on file  ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+    in all the viewers:
+
+               Ú The keys are ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	       ³F1ÄÄÄÄÄÄ¿This help			 ³
+               ³F4      ³To change the viewer type       ³
+               ³F10     ³To quit viewer                  ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+
+% Default Command
+      SHIFT-F3
+      CTRL-UP
+
+^View file
+
+% What
+      View the selected file
+
+% Notes
+      I do that for those who prefer their own viewer.
+      You could change the default viewer from the configuration menu
+      by pressing the 'file setup' button.
+
+
+% Default Command
+      F3
+
+
+:Edit file
+#Edit
+^Edit file
+
+% What ?
+      Edit the selected file
+
+% Notes
+      I do that for those who prefer their own editor.
+		( I am also too lazy to do a editor )
+
+% Default Command
+      F4
+
+:Copy file
+#Copy
+^Copy file
+
+% What ?
+      Copy the selected files
+
+% Notes
+
+      [ ] Keep attribut.
+
+         When this switch is on, the copy keep the attribut of the source
+     file for the destination file.
+
+
+      [ ] Change extension.
+
+         When this switch is on, KKC examine the source file and look
+     about the true extension of this file (eg: LBM, if the file is an
+     interleaved bitmap) and change the extension of the destination
+     file by the true one.
+
+      [ ] Change name.
+
+         When this switch is on, KKC change the filename by the title
+     of the file (with a little help from IDF :)
+
+
+% Default Command
+      F5
+
+:Move file
+#Move
+^Move file
+
+% What ?
+      Move the selected files
+
+% Notes
+      No.
+
+% Default Command
+      F6
+
+:Create directory
+#Create directory
+^Create directory
+
+% What ?
+      Create directory.
+
+
+% Default Command
+      F7
+
+:Delete file
+#Delete
+^Delete file
+
+% What ?
+      Delete the selected files
+
+% Notes
+      No.
+
+% Default Command
+      F8
+
+:Select files
+#Selection of files
+^Select files
+
+% What ?
+      Select files.
+      Enter the file names to be selected by using wildcards.
+
+% E.G.
+      *.EXE select all files that finish by .EXE
+      ...
+
+
+% Default Command
+      '+' in keypad
+
+:Deselect files
+#Deselection of files
+^Deselect files
+
+% What ?
+      Deselect files.
+      Enter the file names to be deselected by using wildcards.
+
+% E.G.
+      *.EXE deselect all files that finish by .EXE
+      ...
+
+
+% Default Command
+      '-' in keypad
+
+:Inverse selection
+#Inverse
+^Inverse selection
+
+% What ?
+      Inverse current selection.
+
+
+% Default Command
+      '*' in keypad
+
+
+:Quick dir
+#Quick dir
+^Quick dir
+
+% What ?
+	Open a window where they are the old directory that you have
+	   used.
+
+
+% Default Command
+	CTRL-PGDN
+
+@Questions and answers
+:The KKD files ?
+#KKD
+^The KKD files ?
+
+%What is a KKD file.
+
+   KKD Files are a list of files and subdirectories.
+
+   These files are a copy of the tree of a disk (removable for a best
+   use) and they could be used for quick search of information without
+   using the original disk.
+
+%How could I do a KKD file ?
+
+   Go to the root of the disk that you would create a KKD file.
+   Press SHIFT-F12.
+   Enter the name of the KKD file to be created.
+   Wait... wait... wait.
+   ÀÄ It's finished !
+
+   In the other window, the KKD file exists...
+
+%How could I use a KKD file ?
+
+   When you are on a KKD file, press ENTER on it.
+   You are now into the KKD file.
+   The structure of the files is the same that on the original disk.
+   You could access to a file in a KKD as any file on any disk.
+
+   A menu ask you to enter the drive where is the orignal disk.
+
+%What is the structure of a KKD file
+
+   Header:
+
+     0	 1   2	 3   4	 5   6	 7   8	 9   A	 B   C	 D   E	 F
+   ÚÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄ¿
+   ³ K	 K   D ³Ver³255³  description  of  volume  ...		   ³
+   ÃÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄ´
+   ³								   ³
+   ÃÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÅÄÄÄÁÄÄÄÁÄÄÄÙ
+   ³		    ...³  Left	 Size  ³ Size before R.³
+   ÀÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÙ
+
+   Each file
+
+     0	 1   2	 3   4	 5   6	 7   8	 9   A	 B   C	 D   E	 F
+   ÚÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄ¿
+   ³ N ³ File ...  ³
+   ÀÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÙ
+   ÚÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄ¿
+   ³Adr.of descript³Adr.of next fil³ Size of file  ³ Time  ³  Date ³
+   ÃÄÄÄÅÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÁÄÄÄÙ
+   ³Att³
+   ÀÄÄÄÙ
+
+   It's all ;)
+   More informations will come in a few time (I don't feel like doing more)
+
+
+:Windows ?
+#Bug?
+
+%How erase windows of my disk ?
+
+   KKC have a special command to do that !
+
+   You go in the root of the disk where is Windows. You go on the WINDOWS
+   directory (with UP, DOWN ...) and you press F8.
+
+
+%   Remember:
+%
+%  ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+%  ³ KKC is distributed "AS IS".  The authors specifically disclaim all   ³
+%  ³ warranties, expressed or implied.	In no event shall the authors be  ³
+%  ³ liable for any damages either from the direct use of this product or ³
+%  ³ as a consequence of the use of this product.  Because of the various ³
+%  ³ hardware and software environments in which KKC may be used, no	  ³
+%  ³ warranty of fitness for a particular purpose is offered.	;)	  ³
+%  ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+:Little questions
+^Questions and answers
+
+
+% KKC is too slow on my computer.
+
+   - :(  Here is a few tips to speed up KKC:
+
+     - Select the Quick Palette Option.
+       (On my P100, I win 5 clocks while the startup when this option
+        is on. It's weird...this option only change the palette)
+
+     - Unselect the 'Verify History Directory' in the Configuration.
+
+     - Don't load 'emm386' in your config.sys (a ems driver slow dowm
+       all the application what run in protected mode).
+
+     - Load a Disk Cache Utility.
+ 
+% I couldn't copy or view file in archive !
+
+   - You must have the archiver on your disk ;).
+
+   - KKC couldn't be in a huge directories.
+     EG: Not in C:\MYDISK\UTIL\DOS\PROTECT\MANAGER\KETCHUP\KILLERS\REDBUG\KKC
+
+% I don't like the font.
+
+   - Erase the file font8x16.cfg (in mode 25/30 lines)
+		 or font8x8.cfg (in mode 50 lines).
+     You could too press CTRL-F (to switch to normal fonts)
+
+   - You could create and import new font with my program 'kkfont'
+     kkfont is not included in the current version of KKC (it is not finished)
+     but if you want its presence in a next version, you could ask to me !
+
+% ALT-F4 don't work.
+
+   - Verify that the size of the <userdir;user directory> is greater than the the size of
+     file_id.diz.
+   - Verify that your archiver works.
+
+#dos4gw
+% When I run a player, there is an error with this message:
+    ³Stub exec failed:
+    ³dos4gw.exe
+
+   - You must copy the 'DOS4GW.EXE' file in a directory accessible by
+     the path.
+
+% Could I find secret part in KKC ?
+
+   - Yes.
+
+% CTRL-H does nothing !
+
+   - <link;Indeed...>
+
+% This shitty program doesn't work !
+
+   - No ? What a shame...
+
+% My mother hurts me !
+
+   - Call access@pctrading.be. He could help you ...
+
+% I am not in the <Greets;greets> !
+
+   - Do I know you ? Yes, I have forgotten your name ;(
+     Send me a <RedBug;email>.
+
+:One hand use
+^One hand use
+
+  You have only one hand or you make thing with your other hand ?
+
+  - You could use CTRL-UP to call the internal viewer.
+
+  - You could use CTRL-UP too in many place to exit. (in help, in viewer ...)
+
+@Menu
+
+:Mask configuration
+#Mask Setup
+^Mask
+
+% User config
+
+       You could enter the line that you would highlight when select this
+       config in 'change mask' (F9 while viewing text file).
+       To highlight a double word (eg. dark angel), you must write
+       'darköangel' (ö is ALT 246) in the config window.
+
+
+:Configuration
+#Setup
+^Configuration
+
+
+% [X] Convert History
+
+    When this option is on, each command that you enter in command line is
+    translated in a <File Shortcut;shorter form>.
+    So, when you call the history window, the command line is automatically
+    translated in a new form depending on the files in the two panels.
+
+% [X] Confirmation before exiting
+
+    Ask if you really want to quit when press F10.
+
+% [ ] Point SubDir
+
+    Display the '.' directory (reload) in the file panel.
+
+% [ ] LogFile
+
+    Create a logfile of the command in the <userdir;user directory>.
+
+% [ ] ESC to close windows
+
+    You could press ESC to open/close the two file panel.
+
+% [ ] Display Hidden File
+
+    Display also the hidden file in the file panel.
+
+% [X] Auto Reload Directory
+
+    When modifying file, it reload the file panel to corresponding
+    to the true contents of the directory.
+    Set this option to on unless KKC run slowly on your system.
+
+% [ ] Verify History Directory
+
+    When starting KKC, it verify the directory list in the history.
+
+% [X] Quick Palette
+
+    When off, the palette is loaded during the starting of KKC.
+    When on, the palette is loaded after all checking.
+
+% [X] Highlight groups
+
+    Highlight groups of files according to their extension.
+    You could unset a group by modifying directly the list in 'Ext. Setup'.
+
+% [X] Insert move down
+
+    When you press insert, cursor go down.
+
+% [X] Select directories
+
+    When you select multiple files, the directories are also selectionned.
+
+% [X] Estimated copying time
+
+    When copying file, you have a estimation of the remaining time.
+
+% [X] Auto adjust viewer size
+
+    Adjust the size of the window when viewing a file.
+
+% [X] Save position in viewer
+
+    Save the viewing position when you quit the viewer.
+
+% [X] Load startup directory
+
+    Go in the current directory when you start KKC.
+
+% Size Trash
+
+    Maximum size of the trash before erasing temp files
+
+% [ ] Key After Shell
+
+    Wait for a keypress after a program's execution.
+
+% [ ] Add Selection Function
+
+    Add a selection function at the end of each pannel.
+    Very useful for the notebook where there aren't numeric keypad.
+
+:Execute command
+#Execute command
+^Execute command
+
+% Execute command
+
+   Enter the command you will execute.
+   All the result were redirected to an temporary file and are
+   displayed with the internal viewer
+
+
+@Miscellaneous
+:The Greets
+#Greets
+^All the greets
+
+     Coucou
+     ÄÄÄÄÄÄÙ
+
+   - X-man/Sunset Design: Mais non ! Decapiter, c'est apres. (37-2)
+
+   - Venus: C'est mignimignon <Venus;> (40-1)
+
+   - Snipa: Oui, fa m'a furpris auffi... (16-2)
+
+   - Sammy: I am happy to see that some guy love Cobol...
+
+   - Robinson/Sunset Design: Vous pouvez me faire ca quand ? (11-2)
+
+   - Pascal Bestebroer: My dog couldn't live without the DFP library.
+
+   - DarkSide: Whahaha ! Jamais rien entendu de plus idiot ! (41-2)
+
+   - Gedeon & RedWarrior: Thanx for all ideas & Humgulumbulu%Gedeonulu@
+
+   - Gandalf/Pulse: Are you the Aaricia's father ?
+
+   - Dark Angel/Ketchup^Pulpe: Ce type prend facilement la mouche... (21-2)
+
+   - Cray/Ketchup^Pulpe: Is the design beter now ?
+
+   - Cobra/Ketchup^Pulpe: God is with you.
+
+   - BlackWard: J'ai vu une tete dans la baignoire ! (36-2)
+
+   - aCceSs/Ketchup^Pulpe: C'est le cadeau de Papy: il me fait peur ! (32-2)
+
+
+   - all members of <About;Ketchup Killers> to encourage me to do KKC. Thanks ':)
+
+   - Z, Type One, Magic Fred, Ecstasy and all others members of Pulpe
+
+
+   - all the coders:
+	- Don't make self-modifying programs coz the CRC always changes.
+
+   and
+
+   - TBF & Co / Hcl
+
+   - Statix/Psychic Link
+
+   - Wonderboy & Seyda / Realms
+
+   - Dash / SayMeWhat!
+
+   - Phar & Roudoudou / Flowers corps
+
+   - Machin
+
+   - Binary Bros
+
+   - Mea Culpa
+
+   - and many more we can't remember right now.. don't worry
+     we love you too!  (awkward sentence from aCceSs. Sorry)
+
+
+
+     Special Thanks
+     ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+   - Charles Scheffold and Thomas Pytel for the great PMODE/W
+
+   - ZaStaR for his Impulse Tracker Font Customizer.
+	    ( I use the font set in the same order than IT !)
+
+   - You !
+
+
+     The beta-testers
+     ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+   - BlackWard,
+
+   - DarkSide,
+
+   - Gedeon,
+
+   - Dark Angel,
+
+   - Cray,
+
+   - aCceSs.
+
+
+
+
+
+
+				   Ã¿
+				   ÀÙ	    Ú¿
+			     Ã¿  Ú¿Ã¿ÃÄÂÂ¿  ³³ÃÄÄ¿Ã¿  Ú¿ÚÄÄ¿
+     ÚÄÄÄÄ¿ ____ ___ _	     ³³Ú¿³³³³³ÚÁ³³ÚÄÙ³³Ã¿³³³Ú¿³³³ÚÄÙ
+     ³ ÚÄÄÙ		     ³³³³³³³³³³ ³³³Ã¿³³³³³³³³³³³ÀÁÄ¿
+     ³ ÃÙ		     ³ÀÅÅÙ³³³³³ ³³³ÀÙ³³ÀÙ³³ÀÁÁÙ³ÚÄÙ³
+     ÀÄÙ		     ÀÄÁÁÄÙÀÙÀÙ ÀÙÀÄÄÙÀÄÄÙÀÄÄÄÄÙÀÄÄÙ
+							     RedB
+
+:About Ketchup Killers
+#About
+%ÛßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßÛ
+%Û		       K E T C H U P	K I L L E R S			      Û
+%ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+
+
+% 1. Introduction
+
+	Welcome to this production of Ketchup Killers
+
+
+% 2. Group Members
+
+	In alphabetical order...
+
+	access		coder
+     blackward          swapper & graphic artist
+	 cobra		whq sysop
+	  cray		graphic artist
+    dark angel		musician & coder
+    dethknight          swapper
+       ecstasy		coder
+	katana		3d artist
+        <RedBug;redbug>          coder                    --------------- It's me !
+							   O
+							  /³\
+							  / }
+
+:Ketchup Release List
+
+% Ketchup Killers Release List
+
+
+  1996
+  ----------------------------------------------------------------------------
+  10/01/96  Wired'96:
+
+    - reverse.zip  64K : 'Reverse' Intro (9th) Party Version    / A,K,R & MF
+
+  10/12/96
+
+    - kk-rvsf.zip 126K : 'Reverse' Final version                / A,C,K,R & MF
+
+  1997
+  ----------------------------------------------------------------------------
+  03/31/97  Mekka Symposium 97:
+
+    - kkc.zip	  272K : Ketchup Killers Commander v0.3 	/ RedBug
+    - idf.zip	   27K : <IDF;IDF Library> v0.3 		      / RedBug
+
+  05/11/97
+
+    - kkc.zip	  310K : Ketchup Killers Commander v0.4 	/ RedBug
+
+  06/08/97
+
+    - kkc05.zip   320K : Ketchup Killers Commander v0.5 	/ RedBug
+
+  07/18/97  Wired'97:
+
+    - kkc06.zip   340K : Ketchup Killers Commander v0.6 	/ RedBug
+
+  08/20/97
+
+    - kkc07.zip   324K : Ketchup Killers Commander v0.7         / RedBug
+
+  09/12/97
+
+    - kkc08.zip   344K : Ketchup Killers Commander v0.8         / RedBug
+
+*Marjo
+:History
+#History
+^History
+
+  V0.9  (11/01/97)  The Saturne'97 Release
+      - The idf or the function bar are optionnal (look in screen setup).
+      - Support the KKP macros.
+
+  V0.83 (10/17/97)  The Calimero Release
+      - A new option in the <search;search function> and in the <Copy;copy function>.
+      - A few improvment in the html viewer.
+      - Press ALT to display the true name of a file.
+      - When you close the pannel, you have access to a <quickey;optimized command line>.
+
+  V0.82 (10/05/97)  The Venus II Release
+      - You can make KKC waiting for a <Setup;keypress> after a program's execution.
+      - <Setup;Selection Function> in pannel.
+      - Improve <mouse;mouse> handling. (Drag and drop...)
+
+  V0.81 (09/24/97)  The Dark Angel II Release
+      - SHIFT-ENTER to load the <secres;safety resolution>.
+      - Improvement of all the <View;viewers>.
+      - A few others bug corrected (error handler, setup...)
+
+  V0.8  (09/15/97)  The Dark Angel Release
+      - <QPS;ALT-F5> to go in a path directory.
+      - <KS;Keyboard Summary> in help.
+      - ALT-key call the 'quick search of file' window.
+      - CTRL-D to change to a directory so LCD or NCD.
+      - You could alter the size of the pannel.
+      - F2 when you look the format in the setup. (management of the players)
+
+  V0.71 (08/31/97)  The Gedeon II Release
+      - A true color configuration. (try to load the 'peter' section in setup)
+      - Keep attribut in 'copy' box
+
+  V0.7  (08/20/97)  The Gedeon Release
+      - F2 to call the <User Menu;User Menu>.
+      - Repair the ansi viewer (but no more delay).
+      - Link in help. (Tab for switch)	EG. Press this <link;button> now.
+      - ALT-F3 on a directory compute the size of the directory.
+      - <FileID;ALT-F4> now display the file_id.diz before entering in the directory.
+      - <userdir;User directory> with the environment variable 'KKUSER'.
+      - Many new functions in <View;internal viewer>
+      - Old bug removed:
+        - ARJ works now.
+
+
+  V0.6  (07/18/97)  The Wired'97 Release
+      - Long filename is handled correctly in Win95 run mode.
+      - Support mouse.
+      - Search function in hexa viewer.
+      - Multi config in .ini file.
+      - Saving state in viewer. (for further viewing)
+      - The 90 column mode ! (Press SHIFT-F9)
+      - ALT-I to display the information on all files in the other window.
+      - Search function (ALT-F7) was improved (view & delete).
+      - F11 to redirect a command to internal viewer.
+      - Keypad '/' to load or save the list of selected files.
+
+  V0.5  (06/08/97)  The Belgian Release
+      - You could modify the highlight files selection.
+      - the CTRL-TAB option was improved.
+      - Command COPY improved (total, estimed time, ...)
+      - Improve LHA support (copy and display)
+      - History line (CTRL-E & ALT-F6)
+      - Multiple selection allowed (EG: *.*;-*.c;-*.h)
+      - Display 'file_id.diz' in other window (alt-f4)
+
+  V0.4  (05/11/97)  The Venus Release
+      - The frontdoor works ! (use alt-F10 after the port setup)
+      - ANSI display (use alt-F10 too)
+      - You could modify setup with your favourite text editor.
+      - Host mode option must be work (I hope :-)
+
+  V0.31 (04/12/97)  The French Release (Bugfixed version of Mekka)
+      - Old bug removed:
+	- Corrected bug when there are no file present on disk
+      - Load old directory. (if required)
+      - A beginning of universal function for display. (with a screen cache)
+      - Highlight files according to the extension.
+
+  V0.3  (03/31/97)  Mekka/Symposium'97 Release
+      - Old bug removed:
+	- ZIP works perfect now.
+      - Increase start-up speed.
+      - Search function works too in a KKD file.
+
+  V0.23 (03/09/97)
+      - Old bug removed:
+	- Increase speed of ansi viewer...
+	- Sort function quicker !
+	- Corrected bug in archive gestion
+      - Change structure of KKD file. I don't think change the structure
+	anymore.
+      - Command MOVE improved
+      - A true menu-bar
+      - Erase file in trash when overflow
+      - Improve search function
+
+  V0.22 (02/24/97)  The First Version.
+      - Old bug removed:
+	- KKSETUP works too if the config file doesn't exist before.
+	- Display '.' in archive only if you will that.
+	- Number of file in KKD was limited to 10000  now: 50000!
+      - Switch hexa-text while view file.
+      - Change directory while change drive.
+      - KKDESC is now easier (try it !)
+
+  V0.21 (02/15/97)
+      - Old bug removed:
+	- KKSETUP gives you the choice of the disk.
+	- When exiting KKC & KKSETUP, the screen mode was restablished.
+	- Removed a bug in HTML viewer (with the A HREF tag)
+	- KKSETUP searches archivers too.
+	- Copy don't crash when your disk is full
+      - CTRL-LEFT to change up-directory.
+      - CTRL-RIGHT to enter in directory.
+      - View text file with varying windows.
+      - When view a text file, you could press F9 key to use the mask.
+      - When view file '..', the viewer open FILE_ID.DIZ
+      - Add mode 30 lines with new fonts (these font works too in mode 25 l.)
+      - Add rename function (SHIFT-F6)
+      - IDF: Add 11 formats  now 115 formats (see key F4 in KKSETUP)
+
+  V0.2	(01/26/97)
+      - Internal viewer (S-F3) (Hex and ansi-file) (see Com. in details)
+      - Old bug removed:
+	- KK.EXE works too with WINdows (I have forgotten to initialize DI)
+      - New things (idea from Betatest-team)
+	- Ctrl-D to change directory.
+	- Display Window 'information on file' with a delay.
+	- Html viewer.
+      - Support KKD file !
+      - ALT-F7 is improved: you could search a filename with wildcards.
+      - New things in secret part. (Once more... Thanks)
+      - A beginning of screensaver...
+      - Ctrl-PGUP to change up-directory.
+      - View and execute work too with an archiver.
+      - Move function works (it's only a copy-delete function).
+      - Internal viewer for FILE_ID.DIZ and small file (SHIFT-F3 too)
+      - Improve error handler.
+
+  V0.11 (01/15/97)
+      - Old bug removed:
+	- Removing bug in KKSETUP and ALT-F7 (The stack wasn't so big than
+	  it would be for the recursivity ).
+	- ESC in ALT-F7 works now.
+	- ALT-F7 works always  I don't search file on good drive.
+	- Don't select label.
+	- Error when changing drive are controled by KK.
+	- Error when copying are controled too.
+	- Use comspec when load KKMAIN.EXE and
+	    not display title two times. (Error in my EXEC function)
+      - New things (idea from Betatest-team)
+	- Pgup & pgdn in help.
+	     ( Home & End works too ;)
+	- Erase screen when quit (font and palette).
+	- Change info. on SUB-DIR and RELOAD. (see '.' and '..' directories)
+	- A window appears when the destination files exist in a copy.
+	- Verify place on destination disk when copying.
+      - CTRL-F12: Palette configuration.
+      - Save all system when quit.
+      - New things in secret part.
+
+  V0.1  (first version that I would release but I couldn't: 01/07/97)
+      - Clone of Norton Commander(c) with a new look
+      - Use protected mode (pmode/w)
+      - Support RAR, ZIP, ARJ, LHA.
+      - Support more than 100 formats (I use my old IDF)
+      - An I.A.R. very useful (see hlp)
+      - Quick Dir and fast trash.
+      - Setup and other utilities
+
+
+
+
+:In the next version
+^To Do
+
+      ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+      ³From the betatest-team of IRAM ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ³
+      ³& from the ketchup killers's members   ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿ÚÙ
+      ÀÄÄÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ Priority 09 (Highlow)³³
+	 ³    ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ³
+	 ³ 5  ³ * list of files in ALT-F7  disk			³
+	 ³ 7  ³ * format						³
+	 ³ 9+ ³ * vgaread support					³
+	 ³ 9+ ³ * cd player						³
+	 ³ 3  ³ * recycled of WIN95					³
+	 ³    ³ 							³
+	 ³ 7  ³ * macro 						³
+	 ³ 5  ³ * descript.ion of 4DOS					³
+	 ³    ³ 							³
+	 ³ 5  ³ * Using Subst internal					³
+	 ³ 5  ³ * Scroll-lock ? 					³
+	 ³ 5  ³ * Split file						³
+	 ³    ³ 							³
+	 ³ 5  ³ * Editor in kksetup					³
+	 ³ 5  ³ * Username & password in kksetup			³
+	 ³    ³ 							³
+	 ³ 4  ³ * Support other archive (ZOO, TAR, GZIP...)		³
+	 ³    ³ 							³
+	 ³ 4  ³ * Directory tree					³
+	 ³    ³ 							³
+	 ³    ³ 							³
+	 ³HELP³ 							³
+	 ³----³ * Limit of file in a directory ?			³
+	 ³    ³ 							³
+	 ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+
+									  ÚÄÄÄ¿
+									 ÚÙ   ³
+ ÚÄ¿	 ÚÄÄÄ¿	ÚÄÄ¿	   ÚÄ¿	    ÚÄÄÄ¿  ÚÄ¿		  ÚÄ¿	   ÚÄ¿	 ³    ³
+ ³ ³ Ú¿ ÚÙ   À¿ ³Ü ³	   ³ ³	    ³	³  ³ ÀÄÄÄÄ¿	  ³ ³	   ³ ³	 ³    ³
+ ³ ³ ³³ ³ Ü   ³ ³ ßÀÄ¿	 ÚÄÙ ³	    ³	À¿ ³	  ³ ÚÄÄÄÄ¿³ ³  ÚÄ¿ ³ ³	ÚÙ    ³
+ ³ ÀÄÙÀÄÙ   ß ÀÄÙ    ÀÄÄÄÙß  ÀÄÄÄÄÄÄÙß	 ÀÄÙ	  ÀÄÙ	 ÀÙ ÀÄÄÙ ÀÄÙ ÀÄÄÙ     ³
+ ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+ ³ ÚÄ¿ÚÄ¿     ÚÄ¿    ÚÄÄÄ¿	 ÚÄÄ¿	 ÚÄ¿	  Ú¿	ÚÄ¿ ÚÄÄ¿ ÚÄ¿ ÚÄ¿      ³
+ ³ ³ ³³ ³    ÚÙ ³   ÚÙ	 ÀÄ¿ ÚÄÄÄÙ  ³	ÚÙ ³	  ³À¿  ÚÙ ³ ³  ÀÄÙ ³ ³ ÀÄ¿    ³
+ ³ ³ ³³ À¿  ÚÙ	³   ³	   ³ ³	    ³	³  ³	  ³ ÀÄÄÙ  ³ ³	   ³ ³	 ³    ³
+ ³ ³ ÀÙ  ³  ³   ³ ÚÄÙ      ³ ³      ³   ³  ³      ³       ³ ³      ³ ³   ³    ³
+ ³ ³	 ³  ³	³ ³	   ³ ³	    ³	³  ³	  ³	  ³ ³	   ³ ³	 ³    ³
+ ³ ³	 ³  ³	ÀÄÙ	   ³ ³	    ³	³  ³ ÚÄÄÄÄÙ	  ÀÄÙ	   ÀÄÙ	 ³    ³
+ ³ ³	 ÀÄÄÙ		   ³ ³	    ÀÄÄÄÙ  ÀÄÙ				 À¿   ³
+ ÀÄÙ			   ³ ³						  ÀÄÄÄÙ
+			   ÀÄÙ
+
+% If you are not RedBug, don't look that !
+
+  KKMAIN:
+	Archive RAR, ARJ, ZIP, LHA:
+		 - Erase
+		 - Copie normal  archive
+
+	CTRL-Pgup: 4dos  KKC (OK with ver 5,51)
+		   KKC  4dos (No (link son - father ?)
+
+	Long and short window (40, 80 columns)
+
+	I must finish my Descent-like game !
+
+
+  You have see that. Thanks.
+
+
+:Contact and update
+#RedBug
+^How to contact me ?
+
+  If you found a <Bug?;bug> or any improvement for KKC, contact me !
+  I always answer ;)
+
+% Email
+	redbug@pctrading.be
+	redbug@genesis.be
+	Miguel.Vanhove@advalvas.be
+
+   If I don't answer, send the mail again... My email is weird !
+
+% On Belgian BBS
+
+        on <WHQ;Edge of Delight> (32-2-3900494, WHQ of Ketchup - see next part -):
+		Vanhove Miguel or RedBug
+
+	on Genesis (32-2-2453498):
+		RedBug
+
+% By snail mail
+       Vanhove Miguel
+       Rue Sainte Barbe, 26
+       7060 Soignies (belgium)
+
+ ------------------------------------------------------------------------------
+^How to contact us ?
+
+	For informations about Ketchup Killers Commander, please use
+
+%       <RedBug;redbug@pctrading.be>
+
+	Emails address to contact us personally are available on the web:
+
+%	http://cubic.pctrading.be/ketchup
+
+	For general informations about Ketchup Killers, please use:
+
+%	ketchup@pctrading.be
+
+ ------------------------------------------------------------------------------
+^New Versions
+
+	new versions are available:
+	by www:
+	      http://cubic.pctrading.be/ketchup
+	by ftp:
+	      ftp://cubic.pctrading.be/pub/ketchup/kkc.zip
+	or on whq:
+			    ! <WHQ;Edge of Delight> !
+                   Node #1:  +32-2-390.02.94 USR V.34+      (33.6k)
+                   Node #2:  +32-2-390.90.28 Teles ISDN X75 (64.0k)
+
+
+:Ketchup WHQ
+#WHQ
+  ÄÄ ÄÄÄÄ ÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄ ÄÄÄÄ ÄÄ Ä
+				Edge Of Delight
+		      Gate Keepers: Cobra & aCceSs^aNTaReS
+  ÄÄ ÄÄÄÄ ÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄ ÄÄÄÄ ÄÄ Ä
+   DEMOS í HIGH-QUALITY GiFS í SOUNDBLASTER í GUS í PCB í INTERNET í FIDONET
+ SOURCES í WINDOWS í NOVELL í MOVIE í GAMES í SPECIAL DOOM AREA í COOL RATIOS
+  ÄÄ ÄÄÄÄ ÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄ ÄÄÄÄ ÄÄ Ä
+			     A Real Art Devoted Board
+		    Running under ultra custom PCBoard 15.21
+                               2 Blazing Fast Nodes
+                 Node #1:  +32-2-390.02.94 USR V.34+      (33.6k)
+                 Node #2:  +32-2-390.90.28 Teles ISDN X75 (64.0k)
+  ÄÄ ÄÄÄÄ ÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄ ÄÄÄÄ ÄÄ Ä
+				       WHQ
+				       ===
+		     aNTaReS // Ketchup // EuroSoft // Pulpe
+
+				       BHQ
+				       ===
+		    Midas Sound System	í aRSeN Production
+
+				    DiSTSiTES
+				    =========
+      TFL/TDV / Sub-Normals / New Data Team í Terminate / Cubic Player
+      Arj SoftWare / TsF SoftWare / DemOS / AMP / AWMP
+
+		     Official WiRED Party Information Center
+  ÄÄ ÄÄÄÄ ÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ÄÄÄÄÄÄÄÄ ÄÄÄÄ ÄÄ Ä
+
+*
+*  Help:
+*    * -> end of section & remarks (ignore line)
+*    # -> begin of a reference (ignore line)
+*    ^ -> Title (center line)
+*    @ -> Entry in main group
+*    : -> Entry in subgroup
+*    % -> Highlight line
+
+*
+* All the interactive help text
+*
+
+#File Shortcut
+^File Shortcut
+
+	!.! replace the filename in active file panel
+	!\  replace the directory in active file panel
+	!/  replace the directory in active file panel without backslash
+	!:  replace the drive in active file panel
+	$.$ replace the filename in passive file panel
+	$\  replace the directory in passive file panel
+	$/  replace the directory in passive file panel without backslash
+	$:  replace the drive in passive file panel
+
+* Remarks about IDF Library
+#IDF
+^IDF Library
+
+   To recognize the type of a file, I use my IDF Librarry.
+   If you are interresting about it, send me a mail...
+
+   The IDF Library recognize more than 150 formats.
+   And for more than the half, you could have more information.
+     (Title for the sound module, size for the bitmap...)
+
+
+
+* C'est pour rigoler...
+#link
+^Yeah
+
+	You are really intelligent.
+
+* Venus
+#Venus
+^Venus
+
+     What do you want to see their ? GO OUT !
+
+
+* Changement de drive
+#chdrive
+^Change Drive
+
+   Select the drive you want to go :-)
+
+* Quick Path Switch
+#QPS
+^Quick Path Switch
+
+% What ?
+   When pressing alt-f5, you could switch to a directory that is in the
+   path environment.
+
+
+* Historique des commandes
+#histcom
+^History Command
+
+% What ?
+   When you run a file, KKC push automaticelly the command line
+   in its internal stack.
+
+   You could recall the last command with CTRL-E.
+
+   Unless you have unset the <Setup;'Convert History' option>, KKC translate
+   the command line in a <File Shortcut;shorter form>.
+
+% Default Command
+      ALT-F6
+
+* Fenetre File_id.Diz
+#FileID
+^Quick View: file_id.diz
+
+% What ?
+      In the other window, KKC display the 'file_id.diz' what contains
+      the current directory or the current archive.
+
+      If you will see this file entirely, activate this window  (tab, , ...)
+
+% Default Command
+      ALT-F4
+
+
+* User directory
+#userdir
+^User Directory
+
+  When you run KKC for the first time, it creates a directory where it
+  will copy all your personnal files (config, menu, temp...)
+  The default user directory is the 'trash' directory in your KKC
+  directory.
+
+  You could modify the user directory with the environment variable
+  KKUSER.
+
+  EG.    KKC is in the 'c:\util\kkc' directory.
+       - If you don't use the KKUSER variable,
+             your u.d. is 'c:\util\kkc\trash'
+
+       - If you use 'set KKUSER=redbug',
+             your u.d. is 'c:\util\kkc\redbug'
+
+       - If you use 'set KKUSER=c:\redbug',
+             your u.d. is 'c:\redbug'
+
+  If you will put KKC on a CD, think to this variable :-)
+
+  Rem. Be careful the variable 'KKUSER' (with 'set KKUSER=redbug') is not
+    the same that the variable 'KKUSER ' (with 'set KKUSER = redbug') !
+
+* Le menu pour CD team
+#cdteam
+^CD team Menu
+
+  Hello Fred :-)
+
+* Change directory with treeinfo.ncd
+#Change Directory
+^Change Directory
+
+   Enter the directory you want to go.
+   If the file 'treeinfo.ncd' doesn't exist in the root of the current
+   disk, it is automatically created.
+   You could create it too on pressing the button [Create Tree]
+
+* Help
+#Help
+^Help
+
+   Help... I need help !!!!
+
+   I need anybody who could explain a function in the help beter than me.
+   I need the description of the format of a file you have created.
+   I need descriptions about player. (with kkdesc & .KKR)
+   I need bug report.
+   I need you !
+
+* Safety Resolution
+#secres
+^The Safety Resolution
+
+   Automaticaly switches to a safety resolution:
+
+     - text mode to 80 columns and 25 lines,
+     - dos font,
+     - dos palette,
+     - NC Style's color,
+     - Normal Output (nor ansi, nor doorway).
+
+
+   You could recall this function to restore the previous configuration.
+
+* Use mouse
+#mouse
+^Mouse support
+
+  If there is a mouse connected to your PC and a valid mouse driver is
+  installed, KKC automatically uses the mouse.
+
+  The mouse support permit you to do everything you do with the
+  keyboard (I hope...)
+
+% In a pannel
+
+  Left click on a file to go on it.
+  Left click on the current file to execute it.
+  Shift + left click to selection the file. (You could extend your
+  selection if you don't release the left button)
+
+  Drag & Drop: you select a pannel and whithout releasing the button,
+  you go to the other pannel. ( such with windows or OS/2 )
+
+% In the other place.
+
+  Normaly you use buttons and switches by pressing the left mouse button
+  and the right button to cancel.
+
+* History Key
+#quickey
+
+^The optimized command line
+
+  TAB to get the next matching filename.
+
+  UP to search the previous matching command line in the history.
+
+  DOWN to search the next matching command line in the history.
+
+
+  And soon other features as INSert...
+
+
+* Debut divers
+
+#Print file
+#Error!
+#File Setup
+#Extension Setup
+#Window & Color
+#Serial Setup
+#Speed Test
+
+#Create Directory
+#Edit New File
+#Create KKD File
+#Rename
+
+^Error
+
+   No help available here.
+
+* Fin divers

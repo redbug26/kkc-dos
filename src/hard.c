@@ -72,6 +72,10 @@ char _IntBuffe2[256];              // Buffer interne multi usage -------
 
 char _RB_screen[256*128*2];
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 void (*AffChr)(long x,long y,long c);
 void (*AffCol)(long x,long y,long c);
@@ -82,13 +86,17 @@ void (*WhereXY)(long *x,long *y);
 void (*Window)(long left,long top,long right,long bottom,long color);
 void (*Clr)(void);
 
+#ifdef __cplusplus
+};
+#endif
+
 
 /*--------------------------------------------------------------------*\
 |- Fonction interne                                                   -|
 \*--------------------------------------------------------------------*/
 void MakeFont(char *font,char *adr);
 void Beep(void);
-void Font8x(int height);
+void Font8xFile(int height,char *path);
 void InitSeg(void);
 
 int __far Error_handler(unsigned, unsigned, unsigned far *);
@@ -1730,7 +1738,8 @@ outpw( 0x3CE, 0x1005);
 outpw( 0x3CE, 0xE06);
 }
 
-void Font8x(int height)
+
+void Font8xFile(int height,char *path)
 {
 FILE *fic;
 char *pol;
@@ -1739,7 +1748,7 @@ int n;
 
 Cfg->Tfont=179;                            // Barre Verticale | with 8x?
 
-strcpy(_IntBuffer,Fics->path);
+strcpy(_IntBuffer,path);
 sprintf(_IntBuffer+strlen(_IntBuffer),"\\font8x%d.cfg",height);
 
 Cfg->UseFont=0;
@@ -3232,7 +3241,7 @@ xp=menu->x;
 yp=menu->y;
 c=menu->cur;
 
-let=GetMem(nbr);
+let=(char*)GetMem(nbr);
 
 if (((menu->attr)&2)==2)
     {
@@ -4431,14 +4440,19 @@ if (_zmok==0) _zm=0;         // Touche est relache si pas encore relache
 
 void InitFont(void)
 {
+InitFontFile(Fics->path);
+}
+
+void InitFontFile(char *path)
+{
 switch (Cfg->TailleY)
     {
     case 50:
-        Font8x(8);
+        Font8xFile(8,path);
         break;
     case 25:
     case 30:
-        Font8x(16);
+        Font8xFile(16,path);
         break;
     }
 }
@@ -4486,7 +4500,7 @@ int FreeMem(void)
 {
 int tail[12];
 
-GetFreeMem((void*)tail);                           // inconsistent ?
+GetFreeMem((char*)tail);                           // inconsistent ?
 
 return tail[0];
 }

@@ -29,6 +29,10 @@ void MasqueSetup(void);
 void SplitMasque(char *chaine,char *buf1,char *buf2);
 void JointMasque(char *chaine,char *buf1,char *buf2);
 
+void CtrlMenu(void);
+void ShiftMenu(void);
+void AltMenu(void);
+
 static char _intbuffer[256];
 
 /*--------------------------------------------------------------------*\
@@ -232,7 +236,7 @@ return;
 
 void MenuBar(char c)
 {
-static char bar[4][60]=
+static char bar[][61]=
  {" Help  User  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
   " ---- Attrib View  Edit  Host Rename ----  ----   Row  ---- ",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
@@ -575,17 +579,18 @@ void ScreenSetup(void)
 {
 static int sw,sy;
 
-static int l1,l2,l3,l4,l5,l6;
+static int l1,l2,l3,l4,l5,l6,l7;
 
 static char x1=32,x2=32,x3=32,x4=32;
-static int y1=3,y2=2,y3=4,y4=4;
+static int y1=3,y2=3,y3=4,y4=4;
 
 struct Tmt T[] = {
       { 5, 2,10,"25 lines",&sw},
       { 5, 3,10,"30 lines",&sw},
       { 5, 4,10,"50 lines",&sw},
       { 5, 7, 8,"Use Font",&l1},
-      { 5, 8, 7,"Screen Saver ",&l2},
+      { 5, 8, 8,"Use User Font",&l7},
+      { 5, 9, 7,"Screen Saver ",&l2},
 
       {39, 2,10,"Norton like ",&sy},
       {39, 3,10,"7-bit mode  ",&sy},
@@ -627,6 +632,7 @@ l3=KKCfg->sizewin;
 l4=KKCfg->pathdown;
 l5=KKCfg->isidf;
 l6=KKCfg->isbar;
+l7=KKCfg->userfont;
 
 n=WinTraite(T,22,&F,0);
 
@@ -648,6 +654,7 @@ if ((l3>=6) | (l3==0))
 KKCfg->pathdown=l4;
 KKCfg->isidf=l5;
 KKCfg->isbar=l6;
+KKCfg->userfont=l7;
 
 GestionFct(67);                                    // Rafraichit l'ecran
 }
@@ -937,7 +944,7 @@ struct file *F;
 RB_IDF Info;
 FENETRE *Fen2;
 static char Buffer[256];
-int new=0;                // Renvoit le nombre de nouvelles informations
+int nouv=0;               // Renvoit le nombre de nouvelles informations
 
 Fen2=Fen->Fen2;
 
@@ -947,9 +954,9 @@ for (i=0;i<Fen2->nbrfic;i++)
 
     if (F->info==NULL)
         {
-        new++;
+        nouv++;
 
-        F->info=GetMem(82);
+        F->info=(char*)GetMem(82);
 
         if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
             sprintf(F->info,"%cDirectory",0);
@@ -974,7 +981,7 @@ for (i=0;i<Fen2->nbrfic;i++)
     if (KbHit()) break;
     }
 
-return new;
+return nouv;
 }
 
 
@@ -1081,7 +1088,10 @@ if (i==0)
 TXTMode();
 LoadPal(Cfg->palette);
 
-InitFont();
+if (KKCfg->userfont)
+    InitFontFile(KKFics->trash);
+    else
+    InitFont();
 
 CalcSizeWin(Fenetre[0]);
 CalcSizeWin(Fenetre[1]);
@@ -1489,7 +1499,7 @@ if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
     Traitefic(&Info);
     }
 
-Buf=GetMem(4000);
+Buf=(char*)GetMem(4000);
 
 Makediz(&Info,Buf);
 

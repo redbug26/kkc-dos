@@ -360,9 +360,9 @@ while(err==1);
 
 if (KKCfg->addselect)
     {
-     DFen->F[DFen->nbrfic]=GetMem(sizeof(struct file));
+     DFen->F[DFen->nbrfic]=(file*)GetMem(sizeof(struct file));
 
-     DFen->F[DFen->nbrfic]->name=GetMem(4);
+     DFen->F[DFen->nbrfic]->name=(char*)GetMem(4);
      strcpy(DFen->F[DFen->nbrfic]->name,"*92");
      DFen->F[DFen->nbrfic]->time=0;
      DFen->F[DFen->nbrfic]->date=0;

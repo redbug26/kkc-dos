@@ -26,32 +26,24 @@
 
 struct config
      {
-     long SaveSpeed;  // Number of ticks before calling the screen saver
+     long SaveSpeed; // Nbr of ticks before calling the screen saver-04-
+     long TailleY;                            // Width of the screen-01-
+     long TailleX;                           // Length of the screen-02-
+     char palette[48];                                // The PALETTE-14-
+     char debug;                                     // DEBUG mode ?-23-
+     char speedkey;                                   // Turbo key ?-25-
+     char font;                               // You will use font ?-05-
+     char display;                                   // Display type-06-
+     char comport;                    // Serial port number  (eg: 2)-28-
+     long comspeed;                   // Speed            (eg:19200)-33-
+     char combit;                     // Number of bit        (eg:8)-41-
+     char comparity;                  // Parity             (eg:'N')-42-
+     char comstop;                    // Stop bit             (eg:1)-43-
+     char col[64];                   //  Couleur --------------------15-
 
-     long TailleY;                                // Width of the screen
-     long TailleX;                               // Length of the screen
-
-     char palette[48];                                    // The PALETTE
-
-     char debug;                                         // DEBUG mode ?
-     char speedkey;                                       // Turbo key ?
-     char font;                                   // You will use font ?
-
-     char UseFont;                 // Result after calling font fonction
-
-     char display;                                       // Display type
-
-     char comport;                        // Serial port number  (eg: 2)
-     long comspeed;                       // Speed            (eg:19200)
-     char combit;                         // Number of bit        (eg:8)
-     char comparity;                      // Parity             (eg:'N')
-     char comstop;                        // Stop bit             (eg:1)
-
-     char Tfont;                 // Character used for the vertical line
-     char reinit;
-
-     char col[64];
-
+     char Tfont;             // Character used for the vertical line
+     char reinit;                    //
+     char UseFont;             // Result after calling font fonction
      char crc;                                              // CRC: 0x69
      };
 
@@ -93,6 +85,7 @@ void TXTMode(void);
 void LoadPal(char *);
 void SavePal(char *);
 void InitFont(void);
+void InitFontFile(char*);
 
 /*--------------------------------------------------------------------*\
 |- Function:     int InitScreen(int a)                                -|

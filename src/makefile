@@ -8,10 +8,10 @@
 
 #.SILENT
 
-DEBUG = 1
+#DEBUG = 1
 
 CA = wasm
-CC = wcc386
+CC = wpp386
 CL = *wlink
 CB = wlib
 
@@ -82,7 +82,7 @@ all : kk.exe kkmain.exe kksetup.exe kkdesc.exe kkkkrgr.exe kkfont.exe &
 kkmain.exe  : kkmain.obj     idf.lib  hard.lib    win.obj   gestion.obj &
                 view.obj  driver.obj ficidf.obj copie.obj    delete.obj &
               search.obj   kkfct.obj  util.obj reddies.obj longname.obj &
-               rbdos.obj
+               rbdos.obj   macro.obj
              $(CL) system $(SYSTEM) $(LOPTS)  &
                    option modname = 'Ketchup Killers Commander 0.84' &
                    name $@ file {$<}

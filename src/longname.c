@@ -106,7 +106,7 @@ int386(0x31,&R,&R);
 \*--------------------------------------------------------------------*/
 void InfoLongFile(FENETRE *Fen,char *chaine)
 {
-char *old,*new;
+char *old,*nouv;
 long l;
 
 DOS_Alloc();
@@ -115,12 +115,12 @@ l=DOSbuf1*16;
 old=(char*)l;
 
 l=DOSbuf2*16;
-new=(char*)l;
+nouv=(char*)l;
 
 strcpy(old,Fen->path);
 Path2Abs(old,Fen->F[Fen->pcur]->name);
 
-strcpy(new,"");
+strcpy(nouv,"");
 
 R.eax=0x7160;
 R.ecx=2;
@@ -133,7 +133,7 @@ DOS_Int(0x21,&R);
 
 if (R.eax!=0x7100)
     {
-    FileinPath(new,chaine);
+    FileinPath(nouv,chaine);
     }
     else
     {
@@ -150,7 +150,7 @@ DOS_Free();
 \*--------------------------------------------------------------------*/
 void UpdateLongName(char *from,char *to)
 {
-char *old,*new;
+char *old,*nouv;
 long l;
 
 FileinPath(from,buf1);
@@ -162,10 +162,10 @@ l=DOSbuf1*16;
 old=(char*)l;
 
 l=DOSbuf2*16;
-new=(char*)l;
+nouv=(char*)l;
 
 Path2Abs(old,from);
-strcpy(new,"");
+strcpy(nouv,"");
 
 R.eax=0x7160;
 R.ecx=2;
@@ -182,12 +182,12 @@ if (R.eax!=0x7100)
         {
         strcpy(old,to);
 
-        FileinPath(new,buf1);
+        FileinPath(nouv,buf1);
         strcpy(buf2,to);
         Path2Abs(buf2,"..");
         Path2Abs(buf2,buf1);
 
-        strcpy(new,buf2);
+        strcpy(nouv,buf2);
 
         R.eax=0x7156;
         R.ds=DOSbuf1;
@@ -198,7 +198,7 @@ if (R.eax!=0x7100)
         DOS_Int(0x21,&R);
 
         strcpy(old,buf2);
-        strcpy(new,"");
+        strcpy(nouv,"");
 
         R.eax=0x7160;
         R.ecx=1;
@@ -209,7 +209,7 @@ if (R.eax!=0x7100)
 
         DOS_Int(0x21,&R);
 
-        FileinPath(new,buf1);
+        FileinPath(nouv,buf1);
         Path2Abs(to,"..");
         Path2Abs(to,buf1);
         }
@@ -222,9 +222,9 @@ if (R.eax!=0x7100)
         Path2Abs(old,"..");
         Path2Abs(old,buf1);
 
-        strcpy(new,to);
+        strcpy(nouv,to);
 
-//        PrintAt(0,0,"(%s,%s)",old,new);
+//        PrintAt(0,0,"(%s,%s)",old,nouv);
 //        Wait(0,0,0);
 
         R.eax=0x7156;
@@ -243,7 +243,7 @@ DOS_Free();
 char Verif95(void)
 {
 char a;
-char *old,*new;
+char *old,*nouv;
 long l;
 
 DOS_Alloc();
@@ -252,11 +252,11 @@ l=DOSbuf1*16;
 old=(char*)l;
 
 l=DOSbuf2*16;
-new=(char*)l;
+nouv=(char*)l;
 
 strcpy(old,Fics->path);
 
-strcpy(new,"");
+strcpy(nouv,"");
 
 R.eax=0x7160;
 R.ecx=2;

@@ -52,6 +52,13 @@ int CountRepSize(FENETRE *F1,FENETRE *FTrash,int *nbr,int *size);
 
 void EraseSpace(char *buffer);
 
+int SelectFile(FENETRE *F1,int i);
+int Renome(char *inpath,char *outpath);
+
+int KKDrecopy(FENETRE *F1,int F1pos,FENETRE *F2);
+int KKD2File(FENETRE *F1,int F1pos,FENETRE *F2);
+int File2KKD(FENETRE *F1,int F1pos,FENETRE *F2);
+
 /*--------------------------------------------------------------------*\
 |- internal variable                                                  -|
 \*--------------------------------------------------------------------*/
@@ -242,7 +249,7 @@ n=WinTraite(T,5,&F,0);
 switch(n)   {
     case 0:
         return 0;       // Replace
-        break;
+
     case -1:
     case 1:
         return 1;       // Cancel
@@ -284,14 +291,14 @@ switch(WinTraite(T,7,&F,0))
     {
     case 0:
         return 0;       // Replace
-        break;
+
     case -1:
     case 1:
         return 1;       // Cancel
     case 2:
         FicEcrase=1;
         return 0;       // Replace ALL
-        break;
+
     case 3:
         FicEcrase=2;
         return 1;       // Cancel ALL
@@ -324,7 +331,7 @@ Taille=size;
 TailleEnreg=SizeMaxRecord;
 
 
-buffer=GetMem(TailleEnreg);
+buffer=(char*)GetMem(TailleEnreg);
 
 TailleRest=0;
 
@@ -1206,14 +1213,12 @@ switch(WinTraite(T,7,&F,0))
     {
     case 0:
         return 0;                                             // Replace
-        break;
     case -1:
     case 1:
         return 1;                                              // Cancel
     case 2:
         FicEcrase=1;
         return 0;                                         // Replace ALL
-        break;
     case 3:
         FicEcrase=2;
         return 1;                                          // Cancel ALL
@@ -1252,7 +1257,6 @@ switch(F1->system)
     default:
         YouMad("Move");
         return;
-        break;
     }
 
 switch(FTrash->system)
@@ -1262,7 +1266,6 @@ switch(FTrash->system)
     default:
         YouMad("Move");
         return;
-        break;
     }
 
 SaveScreen();
@@ -1354,7 +1357,6 @@ switch(F1->system)
     default:
         YouMad("Copie");
         return;
-        break;
     }
 
 switch(FTrash->system)
@@ -1370,7 +1372,6 @@ switch(FTrash->system)
     default:
         YouMad("Copie");
         return;
-        break;
     }
 
 
@@ -1493,8 +1494,8 @@ if (SelectFile(F1,i))
 
         DFen=FTrash;
 
-        TabRec=GetMem(500*sizeof(char*));
-        TabRec[0]=GetMem(strlen(nom2)+1);
+        TabRec=(char**)GetMem(500*sizeof(char*));
+        TabRec[0]=(char*)GetMem(strlen(nom2)+1);
         memcpy(TabRec[0],nom2,strlen(nom2)+1);
         NbrRec=1;
 
@@ -1559,7 +1560,7 @@ if (SelectFile(F1,i))
                     strcpy(moi,nom);
                     Path2Abs(moi,ff->name);
 
-                    TabRec[NbrRec]=GetMem(strlen(moi)+1);
+                    TabRec[NbrRec]=(char*)GetMem(strlen(moi)+1);
                     memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
                     NbrRec++;
                     }

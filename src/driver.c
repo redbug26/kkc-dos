@@ -67,8 +67,8 @@ DFen->nbrfic=2;
 DFen->taillesel=0;
 DFen->nbrsel=0;
 
-DFen->F[0]=GetMem(sizeof(struct file));
-DFen->F[0]->name=GetMem(3);
+DFen->F[0]=(struct file*)GetMem(sizeof(struct file));
+DFen->F[0]->name=(char*)GetMem(3);
 strcpy(DFen->F[0]->name,"..");
 
 DFen->F[0]->size=0;
@@ -81,8 +81,8 @@ DFen->nbrfic=1;
 
 if (KKCfg->pntrep==1)
     {
-    DFen->F[1]=GetMem(sizeof(struct file));
-    DFen->F[1]->name=GetMem(2);
+    DFen->F[1]=(struct file*)GetMem(sizeof(struct file));
+    DFen->F[1]->name=(char*)GetMem(2);
     strcpy(DFen->F[1]->name,".");
 
     DFen->F[1]->size=0;
@@ -234,9 +234,9 @@ n=find1st(Nomarch,Dest,nom);
 \*--------------------------------------------------------------------*/
 if ( (n==1) & (Header.FType!=2) )
     {
-    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+    Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+    Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
     memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
     Fic[DFen->nbrfic]->size=Header.UnpSize;
@@ -284,9 +284,9 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.FType!=2) )
 
         if (cont==1)
             {
-            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+            Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-            Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+            Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
             memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
             Fic[DFen->nbrfic]->size=0;
@@ -429,9 +429,9 @@ if (Lt.TeteType==0x74)
 
         if (cont==1)
             {
-            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+            Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-            Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+            Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
             memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
             Fic[DFen->nbrfic]->size=Lt.UnpSize;        // >< Lt.PackSize
@@ -478,9 +478,9 @@ if (Lt.TeteType==0x74)
 
             if (cont==1)
                 {
-                Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+                Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-                Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+                Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
                 memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
                 Fic[DFen->nbrfic]->size=0;
@@ -610,9 +610,9 @@ n=find1st(Nomarch,Dest,nom);
 \*--------------------------------------------------------------------*/
 if ( (n==1) & (Header.Signature==0x04034B50) )
     {
-    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+    Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+    Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
     memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
     Fic[DFen->nbrfic]->size=Header.UnpSize;
@@ -660,9 +660,9 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
 
         if (cont==1)
             {
-            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+            Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-            Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+            Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
             memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
             Fic[DFen->nbrfic]->size=0;
@@ -775,9 +775,9 @@ n=find1st(Nomarch,Dest,nom);
 
 if (n==1)
     {
-    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+    Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+    Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
     memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
     Fic[DFen->nbrfic]->size=Header.UnpSize;
@@ -823,9 +823,9 @@ if (!Maskcmp(Nomarch,nom))
 
         if (cont==1)
             {
-            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+            Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-            Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+            Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
             memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
             Fic[DFen->nbrfic]->size=0;
@@ -982,8 +982,8 @@ if (fin==0)
             {
             Nomarch[tai]=0;
 
-            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
-            Fic[DFen->nbrfic]->name=GetMem(tai+1);
+            Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+            Fic[DFen->nbrfic]->name=(char*)GetMem(tai+1);
 
             strcpy(Fic[DFen->nbrfic]->name,Nomarch);
             Fic[DFen->nbrfic]->name[tai]=0;
@@ -1062,9 +1062,9 @@ for(n=0;n<nbr;n++)
 
     key[12]=0;
 
-    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+    Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=GetMem(strlen(key)+1);
+    Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(key)+1);
     memcpy(Fic[DFen->nbrfic]->name,key,strlen(key)+1);
 
     Fic[DFen->nbrfic]->size=lng;
@@ -1142,8 +1142,8 @@ if (dirp!=NULL)
          (((ff->d_attr)&_A_VOLID)!=_A_VOLID)
          )
         {
-        Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
-        Fic[DFen->nbrfic]->name=GetMem(strlen(ff->d_name)+1);
+        Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+        Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(ff->d_name)+1);
         strcpy(Fic[DFen->nbrfic]->name,ff->d_name);
         Fic[DFen->nbrfic]->time=ff->d_time;
         Fic[DFen->nbrfic]->date=ff->d_date;
@@ -1163,9 +1163,9 @@ rech[3]=0;
 if ( ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
      | (DFen->nbrfic==0) )
     {
-    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+    Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=GetMem(4);                  // Pour Reload
+    Fic[DFen->nbrfic]->name=(char*)GetMem(4);                  // Pour Reload
     strcpy(Fic[DFen->nbrfic]->name,"*27");
     Fic[DFen->nbrfic]->time=0;
     Fic[DFen->nbrfic]->date=0;
@@ -1189,9 +1189,9 @@ if (1)
 
     if ( (R.w.bx==0xADAD) & (R.w.ax!=0) )
         {
-        Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+        Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-        Fic[DFen->nbrfic]->name=GetMem(4);                // Pour Open--
+        Fic[DFen->nbrfic]->name=(char*)GetMem(4);         // Pour Open--
         strcpy(Fic[DFen->nbrfic]->name,"*86");
         Fic[DFen->nbrfic]->time=0;
         Fic[DFen->nbrfic]->date=0;
@@ -1281,14 +1281,14 @@ if (fic==NULL)
 strcpy(nom2,Fen->path);
 
 
-Fichier=GetMem(50000*sizeof(void*));
-Desc=GetMem(50000*sizeof(long));
+Fichier=(struct HeaderKKD**)GetMem(50000*sizeof(void*));
+Desc=(int*)GetMem(50000*sizeof(long));
 
-Repert=GetMem(5000*sizeof(void*));
+Repert=(char**)GetMem(5000*sizeof(void*));
 
 
-TabRec=GetMem(500*sizeof(char*));
-TabRec[0]=GetMem(strlen(nom2)+1);
+TabRec=(char**)GetMem(500*sizeof(char*));
+TabRec[0]=(char*)GetMem(strlen(nom2)+1);
 memcpy(TabRec[0],nom2,strlen(nom2)+1);
 NbrRec=1;
 
@@ -1310,7 +1310,7 @@ CurRec=NbrRec-1;
 if (Fichier[Desc[CurRec]]!=NULL)
     Fichier[Desc[CurRec]]->desc=oldpos;
 
-Repert[Nbdir]=GetMem(strlen(TabRec[CurRec])-1);
+Repert[Nbdir]=(char*)GetMem(strlen(TabRec[CurRec])-1);
 memcpy(Repert[Nbdir],(TabRec[CurRec])+2,strlen(TabRec[CurRec])-1);
 
 Nbdir++;
@@ -1342,9 +1342,9 @@ if (dirp!=NULL)
             {
             Fichier[Nbfic]->desc=0;
 
-            Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
-
-            Fichier[Nbfic]->nom=GetMem(strlen(ff->d_name)+1);
+            Fichier[Nbfic]=(struct HeaderKKD*)
+                                       GetMem(sizeof(struct HeaderKKD));
+            Fichier[Nbfic]->nom=(char*)GetMem(strlen(ff->d_name)+1);
             memcpy(Fichier[Nbfic]->nom,ff->d_name,strlen(ff->d_name)+1);
             Fichier[Nbfic]->size=ff->d_size;
             Fichier[Nbfic]->time=ff->d_time;
@@ -1385,9 +1385,10 @@ if (dirp!=NULL)
             {
             Fichier[Nbfic]->desc=0; //--- On le fera plus tard; --------
 
-            Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
+            Fichier[Nbfic]=(struct HeaderKKD*)
+                                       GetMem(sizeof(struct HeaderKKD));
 
-            Fichier[Nbfic]->nom=GetMem(strlen(ff->d_name)+1);
+            Fichier[Nbfic]->nom=(char*)GetMem(strlen(ff->d_name)+1);
             memcpy(Fichier[Nbfic]->nom,ff->d_name,strlen(ff->d_name)+1);
             Fichier[Nbfic]->size=ff->d_size;
             Fichier[Nbfic]->time=ff->d_time;
@@ -1405,7 +1406,7 @@ if (dirp!=NULL)
 
                 Desc[NbrRec]=Nbfic;
 
-                TabRec[NbrRec]=GetMem(strlen(moi)+1);
+                TabRec[NbrRec]=(char*)GetMem(strlen(moi)+1);
                 memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
                 NbrRec++;
                 }

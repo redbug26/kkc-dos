@@ -1,0 +1,123 @@
+@Command
+
+:Help
+
+
+% This help
+
+:Search Application
+
+
+% Search application
+
+           Setup look your drivers to found players.
+
+:KKSETUP.INI
+
+
+% Read kk_Setup.ini to make setup
+
+           The file KK_SETUP.INI are used to make your own
+
+:Display all format
+
+
+% Display all format
+
+           Display all format that Ketchup Killers Commander recognize by
+           header.
+           It uses the IDF technology TM :) that you could use too.
+           Look on our WWW site or send me a email (look 'how to reach us'
+           in the help of KKC)
+
+
+@Ketchup Killers Commander
+
+:Ketchup Killers ?
+
+%Ketchup Killers !
+      Look the help in KKC
+
+:RedBug ?
+
+%RedBug !
+      Look the help in KKC
+
+* Debut divers
+
+#Configuration
+
+   Select the style of configuration you would like:
+
+      Ketchup Improvement:
+
+         - All the options I prefer ;)
+
+      Classic configuration:
+
+         - Don't enter in KKD archive when searching files.
+         - Don't ajust viewing size.
+         - Don't convert history.
+         - Don't highlight files.
+         - Don't display hidden files.
+
+   For a personnal setting, try to load kksetup.ini in the 'configuration'
+   menu.
+
+* File
+
+#File Setup
+
+^Error
+
+   No help available here.
+
+* Execute player
+#FicIdf
+^Player management
+
+ ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+ ³Title: Modclean                                                             ³
+ ³Coder: Torben Thellefsen                                                    ³
+ ³Filename: modclean.exe                                                      ³
+ ³On                                                                          ³
+ ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ º AMS Advanced mod³°Modclean°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°³   Extreme Info º
+ º AST All Sound Tr³ PolyPlayer                              ³Cagliostro Info º
+ º CMF Creative Mus³ Ketchup Killers ModPlayer               ³ative Labs Info º
+ º D00 EdLib compre³ CapaMod TSR v3.13                       ³stian Huus ---- º
+ º DAT PlaySid Modu³ Dam Tracker V1.0                        ³         ? Info º
+ º DMF Digital Musi³ Fast Tracker 2 V2.06                    ³  Delusion Info º
+ º DSM DigiSound Mo³ Music Disk Player V1.0                  ³    Pelusa Info º
+ º EDL EdLib module³ Music Disk Player V1.1                  ³stian Huus ---- º
+ º F2R Far. Linear ³ METAL tracker V0.2p15                   ³l Infinity Info º
+ º FAR Farandole Mo³ n-Play V1.0                             ³l Infinity Info º
+ º FC4 Futur Compos³ PMP V2.06                               ³         ? ---- º
+ º FPT Farandole Pa³ PolyPlayer V2.0b                        ³l Infinity Info º
+ º  IT Impulse Trac³ RealTech Module Player V2.02            ³   Impulse Info º
+ º JMS Jmplayer mod³ StarPlayer V2.25                        ³ltra Force ---- º
+ º MBM MoonBlaster ³ UltraMOD V1.0                           ³           Info º
+ º MDF MusicDisk Fa³ XTC Player V0.70c                       ³ire Dragon ---- º
+ º MDL Digitrakker ³ DuBlay V0.72                            ³  n-Factor Info º
+ º MED OctaMED modu³ Dual Module Player/32 V4.00             ³o Kinnunen Info º
+ ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼
+
+  F1: This help
+
+  F2: Switch the default option for the player.
+      You could have more than one player as default but only the first
+      works.
+      It's useful to differentiate the default dos applications from the
+      default windows applications.
+
+  F3: Switch the activity of the player.
+
+* list idf
+#idflist
+^Show all format
+
+  F1: This help
+
+  F2: To manage your player
+
+* Fin divers

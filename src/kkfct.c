@@ -14,6 +14,8 @@ void DefaultKKCfg(void)
 {
 short Nm[]={72,68,42,40,92,63};
 
+KKCfg->userfont=0;
+
 KKCfg->isbar=1;
 KKCfg->isidf=1;
 

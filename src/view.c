@@ -81,7 +81,7 @@ void Print(char *fichier,int n);
 
 void StartAnsiPage(void);
 
-
+int ChangeViewer(int i);
 static int xarc,debarc;
 
 void StartWinView(char *titre)
@@ -544,8 +544,7 @@ x = atoi(argbuf);
 
 do
     {
-    if (cury == maxy - 1)
-        break;
+//    if (cury == maxy - 1)        break;
     cury++;
     x--;
     }
@@ -1353,6 +1352,8 @@ do
                 n=xl2;
                 while ( (n>0) & (affichage[n]!=32) ) n--;
 
+                if (n==0) n=xl2-1;    // On coupe pas trop !
+
                 w1=n+1;
                 w2=tpos;
                 }
@@ -1970,11 +1971,11 @@ int x;
 
 x=Cfg->TailleX;
 
-H=GetMem(sizeof(struct HLine));
+H=(struct HLine*)GetMem(sizeof(struct HLine));
 
-H->Chr=GetMem(x);
+H->Chr=(char*)GetMem(x);
 memset(H->Chr,32,x);
-H->Col=GetMem(x);
+H->Col=(char*)GetMem(x);
 memset(H->Col,Cfg->col[16],x);
 
 H->next=NULL;
@@ -2995,7 +2996,10 @@ if (shift!=-1)
                     Info.numero=-1;
                     else
                     {
-                    taille=filelength(fileno(fic));
+                    fseek(fic,0,SEEK_END);
+                    taille=ftell(fic);
+                    //     taille=filelength(fileno(fic));
+                    fseek(fic,0,SEEK_SET);
 
                     if (taille==0) i=-1;
 
@@ -3719,11 +3723,13 @@ void DispAnsiPage(void)
 int x,y;
 
 for(y=0;y<Cfg->TailleY;y++)
+    {
     for(x=0;x<Cfg->TailleX;x++)
         {
         AffChr(x,y,AnsiBuffer[(y+Ansi1)*160+x]);
         AffCol(x,y,AnsiBuffer[(y+Ansi1)*160+80+x]);
         }
+    }
 }
 
 void CloseAllPage(void)
@@ -3958,10 +3964,10 @@ switch(LO(code))
                     Ansi1--;
                 break;
             case 0x51:    //--- PGDN -----------------------------------
-                Ansi1+=10;
+                Ansi1+=Cfg->TailleY;
                 break;
             case 0x49:    //--- PGUP -----------------------------------
-                Ansi1-=10;
+                Ansi1-=Cfg->TailleY;
                 if (Ansi1<0) Ansi1=0;
                 break;
             case 0x4F:    //--- END ------------------------------------
@@ -4166,7 +4172,10 @@ if (fic==NULL)
     }
     else
     {
-    taille=filelength(fileno(fic));
+    fseek(fic,0,SEEK_END);
+    taille=ftell(fic);
+    fseek(fic,0,SEEK_SET);
+    //    taille=filelength(fileno(fic));
 
     if (taille==0) i=-1;
 

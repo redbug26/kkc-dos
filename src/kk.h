@@ -1,5 +1,5 @@
-#define VERSION "0.84"
-#define RBTitle "Ketchup Killers Commander V0.84"
+#define VERSION "0.9"
+#define RBTitle "Ketchup Killers Commander V0.9"
 
 #define CALLING __cdecl
 
@@ -40,6 +40,11 @@ extern struct kkfichier *KKFics;
 struct RB_info
      {
      int temps;          // Temps entre le main() et l'appel utilisateur
+     char macro;
+     char *sbuf0;
+     char *sbuf1;
+     char cbuf0;
+     char cbuf1;
      };
 
 extern struct RB_info *Info;
@@ -96,7 +101,7 @@ typedef struct _fenetre
                   // La lettre du disque ne peut prendre que 1 caractere
                            //                  et doit etre en majuscule
                  // Le repertoire ne doit pas finir par '/' sauf le ROOT
-     short FenTyp;                // Type de fenetre: 0: normal -------
+     short FenTyp;                 // Type de fenetre: 0: normal -------
                                                    // 1: info file -----
                                                    // 2: user screen ---
                                                    // 3: info all file -
@@ -132,66 +137,44 @@ struct kkconfig
      {
     // Selon user
     //-----------
-
-     char sizewin;     // Taille de la fenˆtre en hauteur (0=max) ------
-
-     char fentype;     // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
-
-     char pntrep;              // vaut 1 si on affiche le repertoire "."
-     char hidfil;            // vaut 1 si on affiche les fichiers caches
-
-     char logfile;                    // vaut 1 si on utilise un logfile
-
-     char autoreload;   // Reload auto. quand les 2 fen. sont identiques
-     char verifhist;  // Verify history at any loading of KK (CTRL-PGDN)
-     char palafter;    // Load the palette only when configuration is ok
-     BYTE noprompt;    // Si x&1 vaut 1 alors on ne prompte pdt la copie
-     char currentdir;      // Va dans le repertoire courant au demarrage
-     char alcddir;       // Va dans le repertoire chang‚ par une applic.
-
-     char dispcolor;    // Highlight les fichiers suivant les extensions
-
-     char insdown;    // vaut 1 si on descent quand on appuie sur insert
-     char seldir;     // vaut 1 si on selectionne les repertoires avec +
-
-     long strash;                                       // Size of trash
-
-     char enterkkd;           // entre dans les kkd pendant la recherche
-
-     char editeur[64];               // ligne de commande pour l'editeur
-     char vieweur[64];               // ligne de commande pour le viewer
-     char ssaver[64];          // ligne de commande pour le screen saver
-
+     char userfont; // vaut 1 si on charge les fonts dans la trash --16
+     char sizewin;  // Taille de la fenˆtre en hauteur (0=max) ------10
+     char fentype; // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font-03
+     char pntrep;          // vaut 1 si on affiche le repertoire "."-17
+     char hidfil;        // vaut 1 si on affiche les fichiers caches-18
+     char logfile;                // vaut 1 si on utilise un logfile-19
+     char autoreload; // Reload auto quand les 2 fen sont identiques-20
+     char verifhist;          // Verify history at any loading of KK-21
+     char palafter;          // Load the palette only when cfg is ok-22
+     char currentdir;  // Va dans le repertoire courant au demarrage-24
+     char alcddir;   // Va dans le repertoire chang‚ par une applic.-25
+     char dispcolor;    // Highlight les fichiers svt les extensions-13
+     char insdown;   // = 1 si on descent quand on appuie sur insert-26
+     char seldir;    // = 1 si on selectionne les repertoires avec +-27
+     char enterkkd;       // entre dans les kkd pendant la recherche-29
+     char editeur[64];           // ligne de commande pour l'editeur-30
+     char vieweur[64];           // ligne de commande pour le viewer-31
+     char ssaver[64];      // ligne de commande pour le screen saver-32
      char ExtTxt[64],Enable_Txt;
      char ExtBmp[64],Enable_Bmp;
      char ExtSnd[64],Enable_Snd;
      char ExtArc[64],Enable_Arc;
      char ExtExe[64],Enable_Exe;
      char ExtUsr[64],Enable_Usr;
-
      char Qmenu[48];
      short Nmenu[8];
-
-     char isbar;  // vaut 1 si on affiche la barre en bas --------------
-     char isidf;  // vaut 1 si on affiche la barre en haut -------------
-     char cmdline; //---------------------------------------------------
-
-     char Esc2Close;   // vaut 1 si on doit fermer les fenˆtres avec ESC
-
-     char cnvhist;         // 1: si on convertit a chaque fois l'history
-     char esttime;                 // estime le temps pendant la copie ?
-
-     char confexit;      // vaut 1: si on doit confirmer avant de sortir
-
-     char dispath;              // Affiche la path en haut de la fenˆtre
-
-     char pathdown;                       // Affiche la path tout en bas
-
-     char savekey; // Vaut 1 si on sauvegarde les touches dans un buffer
-
-     char KeyAfterShell;            // Vaut 1 si wait key after dosshell
-
-     char addselect;  // 1 -> on rajoute une ligne select dans le pannel
+     char isbar;  // vaut 1 si on affiche la barre en bas -----------12
+     char isidf;  // vaut 1 si on affiche la barre en haut ----------11
+     char Esc2Close;  // = 1 si on doit fermer les fenˆtres avec ESC-07
+     char cnvhist;     // 1: si on convertit a chaque fois l'history-34
+     char esttime;             // estime le temps pendant la copie ?-35
+     char confexit;  // vaut 1: si on doit confirmer avant de sortir-36
+     char dispath;          // Affiche la path en haut de la fenˆtre-09
+     char pathdown;                   // Affiche la path tout en bas-08
+     char savekey; // =1 si on sauvegarde les touches dans un buffer-37
+     char KeyAfterShell;        // Vaut 1 si wait key after dosshell-38
+     char addselect; //=1 on rajoute une ligne select dans le pannel-39
+     long mtrash;                      // taille maximum de la trash-40
 
     //--- Variable pour le viewer --------------------------------------
 
@@ -199,9 +182,14 @@ struct kkconfig
 
     //--- Don't look this ----------------------------------------------
 
+     BYTE noprompt; // Si x&1 vaut 1 alors on ne prompt pdt la copie----
+     char cmdline; //---------------------------------------------------
+     long strash;                               // Actual Size of trash-
+
+
      char scrrest;
 
-     long mtrash;                          // taille maximum de la trash
+     
      long FenAct;                         // Quelle fenˆtre est active ?
      char _4dos;                                // equal 1 if 4DOS found
      char _Win95;                                    // Support nom long
@@ -274,5 +262,8 @@ void RemplisVide(void);  // Remplissage du vide pour les plus de 80 col.
 
 void Console(void);
 
-
+/*--------------------------------------------------------------------*\
+|- prototype de macro.c                                               -|
+\*--------------------------------------------------------------------*/
+void RunMacro(char*);
 

@@ -1082,9 +1082,16 @@ struct key K[nbrkey]=   {
     "Fractal Imager",
     "FIF",
     "PROPRIO",172,0*2+1,4},
+{  "MCRB",
+    4,
+    0,
+    "Ketchup Killers Commander Macro",
+    "KKP",
+    "RedBug",
+    173,0*2+1,6},
 
 
-// Dernier employe: 172 //marjo
+// Dernier employe: 173 //marjo
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -1248,6 +1255,7 @@ short Infong(RB_IDF *Info);
 short Infoexe1(RB_IDF *Info);
 short Infopsm(RB_IDF *Info);
 short Info669(RB_IDF *Info);
+short Infokkp(RB_IDF *Info);
 short Infomod(RB_IDF *Info);   // Nø1
 short Infodmf(RB_IDF *Info);
 short Infoxm(RB_IDF *Info);    // Nø2
@@ -1720,6 +1728,7 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case 160:err=Infong(Info); break;
             case 163:err=Infonsf(Info); break;
             case 164:err=Infohlp2(Info);break;
+            case 173:err=Infokkp(Info); break;
             default:     //--- Ca serait une erreur de ma part alors ---
                 sprintf(Info->format,"Pingouin %d",K[n].numero);
                 trv=1;
@@ -3629,6 +3638,13 @@ return 0;
 short Infong(RB_IDF *Info)
 {
 ReadStr(Info,8,Info->fullname,40);
+
+return 0;
+}
+
+short Infokkp(RB_IDF *Info)
+{
+ReadStr(Info,4,Info->fullname,32);
 
 return 0;
 }

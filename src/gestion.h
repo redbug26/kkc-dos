@@ -9,6 +9,7 @@ char *GetLastHistDir(void);
 
 char *GetPrevHistCom(char *chaine);
 char *GetNextHistCom(char *chaine);
+void PutInHistCom(char *chaine);
 
 void ExecCom(void);
 

@@ -52,6 +52,7 @@ static char Filename[256],Titre[256],Meneur[256];
 void ReadIarEntry(FILE *fic,struct iarapp *app);
 int IarF0Fct(struct barmenu *bar);
 int IarF2Fct(struct barmenu *bar);
+void FicIdfDev(char *dest,char *chaine,char *name);
 
 void ReadIarEntry(FILE *fic,struct iarapp *app)
 {
@@ -251,16 +252,16 @@ do
                     ((app[nbrappl].os==1) & (KKCfg->_Win95==1))|
                     (kefaire==3) )  )
                 {
-                app[nbrappl].Filename=GetMem(strlen(Filename)+1);
+                app[nbrappl].Filename=(char*)GetMem(strlen(Filename)+1);
                 strcpy(app[nbrappl].Filename,Filename);
 
-                app[nbrappl].Meneur=GetMem(strlen(Meneur)+1);
+                app[nbrappl].Meneur=(char*)GetMem(strlen(Meneur)+1);
                 strcpy(app[nbrappl].Meneur,Meneur);
 
-                app[nbrappl].Titre=GetMem(strlen(Titre)+1);
+                app[nbrappl].Titre=(char*)GetMem(strlen(Titre)+1);
                 strcpy(app[nbrappl].Titre,Titre);
 
-                bar[nbrappl].Titre=GetMem(41);
+                bar[nbrappl].Titre=(char*)GetMem(41);
                 sprintf(bar[nbrappl].Titre," %-39s",Titre);
 
                 bar[nbrappl].fct=nbrappl+1;
@@ -450,13 +451,13 @@ do
                  (  (app[nbrappl].os==0) |
                     ((app[nbrappl].os==1) & (KKCfg->_Win95==1)) )  )
                 {
-                app[nbrappl].Filename=GetMem(strlen(Filename)+1);
+                app[nbrappl].Filename=(char*)GetMem(strlen(Filename)+1);
                 strcpy(app[nbrappl].Filename,Filename);
 
-                app[nbrappl].Meneur=GetMem(strlen(Meneur)+1);
+                app[nbrappl].Meneur=(char*)GetMem(strlen(Meneur)+1);
                 strcpy(app[nbrappl].Meneur,Meneur);
 
-                app[nbrappl].Titre=GetMem(strlen(Titre)+1);
+                app[nbrappl].Titre=(char*)GetMem(strlen(Titre)+1);
                 strcpy(app[nbrappl].Titre,Titre);
 
                 nbrappl++;
@@ -638,7 +639,7 @@ if (curr>0)
     if (ch2!=NULL)
         strcpy(buffer,ch2);
 
-bar=GetMem(sizeof(struct barmenu)*nbrkey);
+bar=(struct barmenu*)GetMem(sizeof(struct barmenu)*nbrkey);
 
 fic=fopen(KKFics->FicIdfFile,"rb");
 
@@ -672,16 +673,16 @@ do
 
             if (!stricmp(Titre,buffer))
                 {
-                app[nbrappl].Filename=GetMem(strlen(Filename)+1);
+                app[nbrappl].Filename=(char*)GetMem(strlen(Filename)+1);
                 strcpy(app[nbrappl].Filename,Filename);
 
-                app[nbrappl].Meneur=GetMem(strlen(Meneur)+1);
+                app[nbrappl].Meneur=(char*)GetMem(strlen(Meneur)+1);
                 strcpy(app[nbrappl].Meneur,Meneur);
 
-                app[nbrappl].Titre=GetMem(strlen(Titre)+1);
+                app[nbrappl].Titre=(char*)GetMem(strlen(Titre)+1);
                 strcpy(app[nbrappl].Titre,Titre);
 
-                bar[nbrappl].Titre=GetMem(41);
+                bar[nbrappl].Titre=(char*)GetMem(41);
 
                 n=0;
                 while(K[n].numero!=app[nbrappl].ext)

@@ -1,14 +1,16 @@
-/*-----------------------------------------------------------------------*\
-|-                                                                       -|
-|-  Toutes les fonctions independantes (logiquement) … l'O.S. ainsi qu'  -|
-|-                                                   aux fichiers hard.c -|
-|-                                                                       -|
-|- By RedBug/Ketchup Killers                                             -|
-|-                                                                       -|
-\*-----------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-                                                                    -|
+|- Toutes les fonctions independantes (logiquement) … l'O.S. ainsi qu'-|
+|-                                                aux fichiers hard.c -|
+|-                                                                    -|
+|- By RedBug/Ketchup Killers                                          -|
+|-                                                                    -|
+\*--------------------------------------------------------------------*/
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+
+#include <io.h> //--- pour filelength ----------------------------------
 
 #include "reddies.h"
 #include "hard.h"

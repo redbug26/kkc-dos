@@ -32,6 +32,8 @@ static int sw=3;
 #define BreakESC  if (KbHit()) touche=Wait(0,0); \
                                              else if (touche==27) break;
 
+static int oldIOver;
+
 /*--------------------------------------------------------------------*\
 |-  Recherche la chaine SearchString dans le fichier *name            -|
 \*--------------------------------------------------------------------*/
@@ -106,10 +108,12 @@ int NbrRec;
 int n,m;
 static char moi[256],nom[256];
 
+char ok;
 
-TabRec=GetMem(500*sizeof(char*));
 
-TabRec[0]=GetMem(strlen(nom2)+1);
+TabRec=(char**)GetMem(500*sizeof(char*));
+
+TabRec[0]=(char*)GetMem(strlen(nom2)+1);
 memcpy(TabRec[0],nom2,strlen(nom2)+1);
 NbrRec=1;
 
@@ -123,10 +127,13 @@ CommandLine("#cd %s",TabRec[NbrRec-1]);
 
 strcpy(nom,TabRec[NbrRec-1]);
 
+ok=(!stricmp(nom,DFen->path));
+
 /*--------------------------------------------------------------------*\
 |-  The files                                                         -|
 \*--------------------------------------------------------------------*/
 
+if (ok)
 for (m=0;m<DFen->nbrfic;m++)
     {
     ff=DFen->F[m];
@@ -201,6 +208,7 @@ LibMem(TabRec[NbrRec]);
 |-  The directories                                                   -|
 \*--------------------------------------------------------------------*/
 
+if (ok)
 for (m=0;m<DFen->nbrfic;m++)
     {
     ff=DFen->F[m];
@@ -220,7 +228,7 @@ for (m=0;m<DFen->nbrfic;m++)
             strcpy(moi,nom);
             Path2Abs(moi,ff->name);
 
-            TabRec[NbrRec]=GetMem(strlen(moi)+1);
+            TabRec[NbrRec]=(char*)GetMem(strlen(moi)+1);
             memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
             NbrRec++;
             }
@@ -326,11 +334,13 @@ FENETRE *SFen;
 
 if (WinSearch()==1) return;
 
-SFen=GetMem(sizeof(FENETRE));
-SFen->F=GetMem(TOTFIC*sizeof(void *));
+oldIOver=IOver;
+IOver=1;
+
+SFen=(FENETRE*)GetMem(sizeof(FENETRE));
+SFen->F=(struct file**)GetMem(TOTFIC*sizeof(void *));
 
 SFen->x=40;
-//SFen->actif=0;
 SFen->nfen=7;
 SFen->FenTyp=0;
 SFen->Fen2=SFen;
@@ -342,7 +352,6 @@ SFen->pcur=0;
 SFen->scur=0;
 
 
-
 nbr=0;
 nbrmax=200;
 
@@ -350,22 +359,24 @@ SaveScreen();
 PutCur(32,0);
 
 ColLin(0,0,Cfg->TailleX,1*16+4);
+ChrLin(0,0,Cfg->TailleX,32);
+
 
 /*--------------------------------------------------------------------*\
 |-  Allocate Memory                                                   -|
 \*--------------------------------------------------------------------*/
 
-tabnom=GetMem(sizeof(char *)*nbrmax);
+tabnom=(char**)GetMem(sizeof(char *)*nbrmax);
 for (n=0;n<nbrmax;n++)
-    tabnom[n]=GetMem(255);
+    tabnom[n]=(char*)GetMem(255);
 
-tabpath=GetMem(sizeof(char *)*nbrmax);
+tabpath=(char**)GetMem(sizeof(char *)*nbrmax);
 for (n=0;n<nbrmax;n++)
-    tabpath[n]=GetMem(255);
+    tabpath[n]=(char*)GetMem(255);
 
-tabtime=GetMem(sizeof(int)*nbrmax);
-tabdate=GetMem(sizeof(int)*nbrmax);
-tabsize=GetMem(sizeof(int)*nbrmax);
+tabtime=(int*)GetMem(sizeof(int)*nbrmax);
+tabdate=(int*)GetMem(sizeof(int)*nbrmax);
+tabsize=(int*)GetMem(sizeof(int)*nbrmax);
 
 /*--------------------------------------------------------------------*\
 |-  Setup of all                                                      -|
@@ -633,5 +644,7 @@ LibMem(tabnom);
 
 LibMem(SFen->F);
 LibMem(SFen);
+
+IOver=oldIOver;
 }
 
