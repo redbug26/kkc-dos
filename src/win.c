@@ -502,9 +502,11 @@ free (Buf);
 Fen->init=0;
 }
 
-/*--------------------------------------------------------------------*
- -                                                                    -
- *--------------------------------------------------------------------*/
+
+
+/*--------------------------------------------------------------------*\
+|-                                                                    -|
+\*--------------------------------------------------------------------*/
 
 void ClearInfo(struct fenetre *Fen)
 {
@@ -639,7 +641,7 @@ void MenuBar(char c)
 {
 static char bar[4][60]=
  {" Help  ----  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
-  " ---- Attrib View  Edit  ---- Rename ----  ----  ----  ---- ",//SHIFT
+  " ---- Attrib View  Edit  Host Rename ----  ----  ----  ---- ",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
   " Drv1  Drv2  FDiz  ----  ----  ---- Search Type  Line  Disp "}; //ALT
 
@@ -807,7 +809,7 @@ static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14;
 static char x1=32,x2=32,x3=32;
 static int y1=8,y2=3,y3=15;
 
-struct Tmt T[21] = {
+struct Tmt T[22] = {
       {6,17,2,NULL,NULL},                                       // le OK
       {21,17,3,NULL,NULL},                                  // le CANCEL
 
@@ -833,7 +835,8 @@ struct Tmt T[21] = {
       {37,2,9,&x3,&y3},
 
       {40, 7,5," Serial Port ",NULL},        // la gestion du port serie
-      {55, 7,5," Mask Setup  ",NULL}           // la gestion des masques
+      {55, 7,5," Mask Setup  ",NULL},          // la gestion des masques
+      {40, 9,5," File Setup  ",NULL}           // la gestion des masques
       };
 
 struct TmtWin F = {3,3,76,22,"Setup"};
@@ -857,7 +860,7 @@ l14=Cfg->seldir;
 
 do
 {
-n=WinTraite(T,21,&F);
+n=WinTraite(T,22,&F);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -866,6 +869,7 @@ if (T[n].type==5)
     {
     if (n==19)  SerialSetup();
     if (n==20)  MasqueSetup();
+    if (n==21)  FileSetup();
     }
 }
 while(T[n].type==5);
@@ -905,6 +909,39 @@ LoadCfg();
 UseCfg();
 
 }
+
+void FileSetup(void)
+{
+static char Edit[64],View[64];
+static int DirLength=63;
+
+
+struct Tmt T[6] = {
+      { 8,3,1,Edit,&DirLength},
+      { 8,5,1,View,&DirLength},
+      { 1,3,0, "Editor:",NULL},
+      { 1,5,0, "Viewer:",NULL},
+
+      {3,10,2,NULL,NULL},                                       // le OK
+      {18,10,3,NULL,NULL}                                   // le CANCEL
+      };
+
+struct TmtWin F = {3,5,76,18,"File Setup"};
+
+int n;
+
+strcpy(Edit,Cfg->editeur);
+strcpy(View,Cfg->vieweur);
+
+n=WinTraite(T,6,&F);
+
+if (n==27) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+strcpy(Cfg->editeur,Edit);
+strcpy(Cfg->vieweur,View);
+}
+
 
 void SerialSetup(void)
 {
@@ -1081,11 +1118,11 @@ while(chaine[n]!=0)
 }
 
 
-/*-------------------------------------*
- - Utilise les donnees dans la         -
- -  structure configuration            -
- -  avec les verifications necessaires -
- *-------------------------------------*/
+/*--------------------------------------------------------------------*\
+|-    Utilise les donnees dans la structure configuration avec les    -|
+|-    verifications necessaires                                       -|
+\*--------------------------------------------------------------------*/
+
 void UseCfg(void)
 {
 ChangeTaille(Cfg->TailleY);                        // Rafraichit l'ecran
@@ -1113,112 +1150,64 @@ if (Cfg->speedkey==1)
 }
 
 
-/*-----------------------------*
- - Test la vitesse d'affichage -
- *-----------------------------*/
-
-void SpeedTest(void)
-{
-static char vit1[64],vit2[64];
-
-int x,y;
-clock_t Cl;
-long Cl1,Cl2;
-char c;
-int n,m;
-double fvit1,fvit2;
-
-struct Tmt T[6] =  {
-      {6,17,2,NULL,NULL},                                       // le OK
-      {21,17,3,NULL,NULL},                                  // le CANCEL
-
-      {5,3,0,"No-Random Char",NULL},
-      {5,4,0,"Random Char",NULL},
-      {25,3,0,vit1,NULL},
-      {25,4,0,vit2,NULL}
-      };
-
-struct TmtWin F = {3,3,76,22,"Speed Test"};
-
-SaveEcran();
-
-c=(rand()*80)/RAND_MAX+32;
-m=0;
-n=0;
-
-Cl=clock();
-while(clock()==Cl);            //  met l'horloge au debut
-
-while((clock()-Cl)<270)
-    {
-    x=(rand()*80)/RAND_MAX;
-    y=(rand()*Cfg->TailleY)/RAND_MAX;
-
-    AffChr(x,y,c);
-    if (m>10000) m=0,c=(rand()*80)/RAND_MAX+32;
-    n++;
-    m++;
-    }
-Cl1=n;
-
-c=(rand()*80)/RAND_MAX+32;
-n=0;
-
-Cl=clock();
-while(clock()==Cl);                           //  met l'horloge au debut
-
-while((clock()-Cl)<270)
-    {
-    x=(rand()*80)/RAND_MAX;
-    y=(rand()*Cfg->TailleY)/RAND_MAX;
-
-    AffChr(x,y,c);
-    c++;
-    n++;
-    }
-Cl2=n;
-
-ChargeEcran();
-
-SaveEcran();
-         
-fvit1=(Cl1*CLOCKS_PER_SEC)/270;
-fvit2=(Cl2*CLOCKS_PER_SEC)/270;
-
-sprintf(vit1,"%f characters/seconds",fvit1);
-sprintf(vit2,"%f characters/seconds",fvit2);
-
-n=WinTraite(T,6,&F);
-
-ChargeEcran();
-}
-
-
-
 /*--------------------------------------------------------------------*
- - S E C R E T                                                P A R T -
+ - Information on disk                                                -
  *--------------------------------------------------------------------*/
 
-//----------------------------------//
-// Affiche les infos sur le systeme //
-//----------------------------------//
-
-void WinInfo(struct fenetre **Fenetre)
+void FenDisk(struct fenetre *Fen)
 {
+char *Buf,temp[32],disk[4],volume[32];
+struct fenetre *Fen2;
+struct file *F;
+int n,m,x,y;
+struct find_t ff;
+int error;
+
 static char chaine[80];
 short WindowsActif,HVer,NVer;
 union REGS R;
 
+static long oldfree;
+static char oldpath[256];
+
+struct diskfree_t d;
+long tfree,ttotal;
+
+Fen2=Fen->Fen2;
+F=Fen2->F[Fen2->pcur];
+
+if (Fen->init==1)
+    {
+    oldfree=0;
+    oldpath[0]=0;
+    }
+
+_dos_getdiskfree(toupper(Fen2->path[0])-'A'+1,&d);
+tfree=(d.avail_clusters)*(d.sectors_per_cluster);
+tfree=tfree*(d.bytes_per_sector);
+
+if ( (tfree!=oldfree) | (strcmp(oldpath,Fen2->path)!=0) )
+    Fen->init=1;
+
+if (Fen->init==0)
+    {
+    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"?");
+    return;
+    }
+
+x=Fen->x+1;
+y=Fen->y+1;
+
+
+Buf=Fen2->path;
+if (strlen(Buf)>37) Buf+=(strlen(Buf)-37);
+
+ttotal=(d.total_clusters)*(d.sectors_per_cluster);
+ttotal=ttotal*(d.bytes_per_sector)/1024;
 
 R.w.ax=0x0900;
 int386(0x16,&R,&R);
 
-SaveEcran();
-
-WinCadre(19,9,61,18,0);
-Window(20,10,60,17,10*16+4);
-
-PrintAt(23,10,"System Information");
 
 WindowsActif = windows( &HVer, &NVer );
 
@@ -1240,13 +1229,63 @@ switch ( WindowsActif )
         sprintf(chaine,"Windows V %d.%d Exended Mode",HVer,NVer);
         break;
     }
-PrintAt(21,11,"þ %s",chaine);
-PrintAt(21,12,"þ %s",Fenetre[2]->path);
-PrintAt(21,13,"þ Initialisation: %d clocks ",Info->temps);
-PrintAt(21,14,"þ Keyboard function: %X",R.h.ah);
 
-Wait(0,0,0);
-ChargeEcran();
+memcpy(disk,Fen2->path,3);
+disk[3]=0;
+strcpy(volume,disk);
+strcat(volume,"*.*");
+
+error=_dos_findfirst(volume,_A_VOLID,&ff);
+
+if (error!=0)
+    strcpy(volume,"Unknow");
+    else
+    strcpy(volume,ff.name);
+
+n=0;
+while (volume[n]!=0)
+    {
+    if (volume[n]=='.')
+        for (m=n;m<strlen(volume);m++)
+            volume[m]=volume[m+1];
+        else
+        n++;
+    }
+
+WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+1);
+
+PrintAt(x+1,y,"%s",RBTitle);
+ColLin(x,y,38,10*16+5);
+ChrLin(x,y+1,38,196);
+
+PrintAt(x+1,y+2,"Current directory");
+ColLin(x+1,y+2,37,10*16+3);
+PrintAt(x+1,y+3,"%s",Buf);
+ChrLin(x,y+4,38,196);
+
+PrintAt(x+1,y+5,"Current disk");
+ColLin(x+1,y+5,37,10*16+3);
+
+PrintAt(x+1,y+6,"%s [%s]",disk,volume);
+
+PrintAt(x+1,y+7,"Free space: %12s bytes",Long2Str(tfree,temp));
+PrintAt(x+1,y+8,"Capacity:   %8s kilobytes",Long2Str(ttotal,temp));
+
+ChrLin(x,y+9,38,196);
+PrintAt(x+1,y+10,"System Information");
+ColLin(x+1,y+10,37,10*16+3);
+
+PrintAt(x+1,y+11,"þ %s",chaine);            // Information about windows
+PrintAt(x+1,y+12,"þ Initialisation: %d clocks ",Info->temps);
+
+PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
+
+oldfree=tfree;
+strcpy(oldpath,Fen2->path);
+
+Fen->init=0;
+
 }
 
 //---------------------------------//
@@ -1306,6 +1345,94 @@ switch ( regs.h.al )
     }
 }
 
+
+/*--------------------------------------------------------------------*\
+|- S E C R E T                                                P A R T -|
+\*--------------------------------------------------------------------*/
+
+
+
+/*--------------------------------------------------------------------*\
+|-                     Test la vitesse d'affichage                    -|
+\*--------------------------------------------------------------------*/
+
+void SpeedTest(void)
+{
+static char vit1[64],vit2[64];
+
+int x,y;
+clock_t Cl;
+long Cl1,Cl2;
+char c;
+int n,m;
+double fvit1,fvit2;
+
+struct Tmt T[6] =  {
+      {6,17,2,NULL,NULL},                                       // le OK
+      {21,17,3,NULL,NULL},                                  // le CANCEL
+
+      {5,3,0,"No-Random Char",NULL},
+      {5,4,0,"Random Char",NULL},
+      {25,3,0,vit1,NULL},
+      {25,4,0,vit2,NULL}
+      };
+
+struct TmtWin F = {3,3,76,22,"Speed Test"};
+
+SaveEcran();
+
+c=(rand()*80)/RAND_MAX+32;
+m=0;
+n=0;
+
+Cl=clock();
+while(clock()==Cl);                           //  met l'horloge au debut
+
+while((clock()-Cl)<270)
+    {
+    x=(rand()*80)/RAND_MAX;
+    y=(rand()*Cfg->TailleY)/RAND_MAX;
+
+    AffChr(x,y,c);
+    if (m>10000) m=0,c=(rand()*80)/RAND_MAX+32;
+    n++;
+    m++;
+    }
+Cl1=n;
+
+c=(rand()*80)/RAND_MAX+32;
+n=0;
+
+Cl=clock();
+while(clock()==Cl);                           //  met l'horloge au debut
+
+while((clock()-Cl)<270)
+    {
+    x=(rand()*80)/RAND_MAX;
+    y=(rand()*Cfg->TailleY)/RAND_MAX;
+
+    AffChr(x,y,c);
+    c++;
+    n++;
+    }
+Cl2=n;
+
+ChargeEcran();
+
+SaveEcran();
+         
+fvit1=(Cl1*CLOCKS_PER_SEC)/270;
+fvit2=(Cl2*CLOCKS_PER_SEC)/270;
+
+sprintf(vit1,"%f characters/seconds",fvit1);
+sprintf(vit2,"%f characters/seconds",fvit2);
+
+n=WinTraite(T,6,&F);
+
+ChargeEcran();
+}
+
+
 //----------------------------------------------------//
 // Fenˆtre avec les infos sur fichiers d'apres header //
 //----------------------------------------------------//
@@ -1362,6 +1489,7 @@ for (i=0;(i<Fen2->yl2) & (n<Fen->nbrfic);i++,n++,y++)
 }
 
 
+/*
 void PacNoe(void)
 {
 char pac [] = {
@@ -1558,3 +1686,4 @@ for (z=-16;z<80;z++,n++)
             }
     }
 }
+*/

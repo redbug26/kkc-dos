@@ -1,5 +1,7 @@
 #define VERSION "0.4"
 
+#define RBTitle "Ketchup Killers Commander V0.4"
+
 #define ENTIER short
 
 #define CALLING __cdecl
@@ -94,7 +96,7 @@ extern int IOerr;
 #include "reddies.h"
 
 #ifdef DEBUG
-#define PUTSERR(__Chaine) PrintAt(0,0,__Chaine); getch()
+#define PUTSERR(__Chaine) PrintAt(0,0,"DEBUG MODE ERROR: %s",__Chaine); getch()
 #else
 #define PUTSERR(__Chaine)
 #endif

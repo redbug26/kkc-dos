@@ -15,6 +15,8 @@
 #include "kk.h"
 #include "idf.h"
 
+char *RBTitle2="Ketchup Killers Setup V"VERSION" / RedBug";
+
 #define GAUCHE 0x4B
 #define DROITE 0x4D
 
@@ -24,7 +26,6 @@ extern int IOerr;
 char PathOfKK[256];
 char ActualPath[256];
 
-char *RBTitle="Setup of Ketchup Killers Commander V"VERSION" / RedBug";
 
 // Pour Statistique;
 int St_App;
@@ -35,15 +36,15 @@ struct player {
     char *Meneur;
     char *Titre;
     unsigned long Checksum;
-    short ext;      // Numero d'extension
-    short pres;     // 0 si pas trouv‚ sinon numero du directory
+    short ext;                                     // Numero d'extension
+    short pres;             // 0 si pas trouv‚ sinon numero du directory
     char type;
     } *app[5000];
 
-char dir[50][128]; // 50 directory diff‚rents de 128 caracteres
+char dir[50][128];          // 50 directory diff‚rents de 128 caracteres
 
-short nbr;    // nombre d'application lu dans les fichiers KKR
-short nbrdir; //
+short nbr;              // nombre d'application lu dans les fichiers KKR
+short nbrdir;
 
 char OldY;
 
@@ -60,23 +61,23 @@ char ShowYourPlayer(void);
 
 int posy;
 
-/*-----------------*
- - Gestion Message -
- *-----------------*/
+/*--------------------------------------------------------------------*
+ -                          Gestion Message                           -
+ *--------------------------------------------------------------------*/
 
 int MesgY;
 
-/*-------------------------*
- - Initialise les messages -
- *-------------------------*/
+/*--------------------------------------------------------------------*
+ -                      Initialise les messages                       -
+ *--------------------------------------------------------------------*/
 void InitMessage(void)
 {
 MesgY=3;
 }
 
-/*--------------------*
- - Affiche un message -
- *--------------------*/
+/*--------------------------------------------------------------------*
+ -                        Affiche un message                          -
+ *--------------------------------------------------------------------*/
 void DispMessage(char *string,...)
 {
 static char sortie[256];
@@ -116,23 +117,23 @@ if (MesgY>(Cfg->TailleY-2))
     }
 }
 
-/*-----------------*
- - Gestion profile -
- *-----------------*/
+/*--------------------------------------------------------------------*
+ -                         Gestion profile                            -
+ *--------------------------------------------------------------------*/
 
 #define MAX_LINE_LENGTH    80
 
 int get_private_profile_int(char *, char *, int,    char *);
-int get_private_profile_string(char *, char *, char *, char *, int, char *);
+int get_private_profile_string(char *,char *,char *,char *,int, char *);
 int write_private_profile_string(char *, char *, char *, char *);
 int write_private_profile_int(char *, char *, int, char *);
 
-/*****************************************************************
-* Function:     read_line()
-* Arguments:    <FILE *> fp - a pointer to the file to be read from
-*               <char *> bp - a pointer to the copy buffer
-* Returns:      TRUE if successful FALSE otherwise
-******************************************************************/
+/*--------------------------------------------------------------------*
+ - Function:     read_line()                                          -
+ - Arguments:    <FILE *> fp - a pointer to the file to be read from  -
+ -               <char *> bp - a pointer to the copy buffer           -
+ - Returns:      TRUE if successful FALSE otherwise                   -
+ *--------------------------------------------------------------------*/
 int read_line(FILE *fp, char *bp)
 {
 int cc;
@@ -147,120 +148,140 @@ while( (cc = getc(fp)) != '\n' )
 bp[i] = '\0';
 return(1);
 }
-/**************************************************************************
-* Function:     get_private_profile_int()
-* Arguments:    <char *> section - the name of the section to search for
-*               <char *> entry - the name of the entry to find the value of
-*               <int> def - the default value in the event of a failed read
-*               <char *> file_name - the name of the .ini file to read from
-* Returns:      the value located at entry
-***************************************************************************/
-int get_private_profile_int(char *section,char *entry, int def, char *file_name)
+/*--------------------------------------------------------------------*
+ - Function:     get_private_profile_int()                            -
+ - Arg: <char *> section - the name of the section to search for      -
+ -      <char *> entry - the name of the entry to find the value of   -
+ -      <int> def - the default value in the event of a failed read   -
+ -      <char *> file_name - the name of the .ini file to read from   -
+ - Returns:      the value located at entry                           -
+ *--------------------------------------------------------------------*/
+int get_private_profile_int(char *section,char *entry, int def,
+                                                        char *file_name)
 {
 FILE *fp = fopen(file_name,"r");
 char buff[MAX_LINE_LENGTH];
 char *ep;
 char t_section[MAX_LINE_LENGTH];
 char value[6];
+
 int len = strlen(entry);
 int i;
-if( !fp ) return(0);
-    sprintf(t_section,"[%s]",section); /* Format the section name */
-    /*  Move through file 1 line at a time until a section is matched or EOF */
-    do
-    {   if( !read_line(fp,buff) )
-        {   fclose(fp);
-            return(def);
+if (!fp) return(0);
+
+sprintf(t_section,"[%s]",section);            // Format the section name
+ // Move through file 1 line at a time until a section is matched or EOF
+
+do
+    {
+    if( !read_line(fp,buff) )
+        {
+        fclose(fp);
+        return(def);
         }
     } while( strcmp(buff,t_section) );
-    /* Now that the section has been found, find the entry.
-     * Stop searching upon leaving the section's area. */
-    do
-    {   if( !read_line(fp,buff) || buff[0] == '[' )
-        {   fclose(fp);
-            return(def);
+                  // Now that the section has been found, find the entry
+                       // Stop searching upon leaving the section's area
+do
+    {
+    if( !read_line(fp,buff) || buff[0] == '[' )
+        {
+        fclose(fp);
+        return(def);
         }
     }  while( strncmp(buff,entry,len) );
-    ep = strrchr(buff,'=');    /* Parse out the equal sign */
-    ep++;
-    if( !strlen(ep) )          /* No setting? */
-        return(def);
-    /* Copy only numbers fail on characters */
 
-    for(i = 0; isdigit(ep[i]); i++ )
-        value[i] = ep[i];
-    value[i] = '\0';
-    fclose(fp);                /* Clean up and return the value */
-    return(atoi(value));
+ep = strrchr(buff,'=');                      // Parse out the equal sign
+ep++;
+if( !strlen(ep) )                                         // No setting?
+        return(def);
+                                 // Copy only numbers fail on characters
+for(i = 0; isdigit(ep[i]); i++ )
+    value[i] = ep[i];
+
+value[i] = '\0';
+fclose(fp);                             // Clean up and return the value
+return(atoi(value));
 }
-/**************************************************************************
-* Function:     get_private_profile_string()
-* Arguments:    <char *> section - the name of the section to search for
-*               <char *> entry - the name of the entry to find the value of
-*               <char *> def - default string in the event of a failed read
-*               <char *> buffer - a pointer to the buffer to copy into
-*               <int> buffer_len - the max number of characters to copy
-*               <char *> file_name - the name of the .ini file to read from
-* Returns:      the number of characters copied into the supplied buffer
-***************************************************************************/
+/*--------------------------------------------------------------------*
+ - Function:     get_private_profile_string()                         -
+ - Arg:   <char *> section - the name of the section to search for    -
+ -        <char *> entry - the name of the entry to find the value of -
+ -        <char *> def - default string in the event of a failed read -
+ -        <char *> buffer - a pointer to the buffer to copy into      -
+ -        <int> buffer_len - the max number of characters to copy     -
+ -        <char *> file_name - the name of the .ini file to read from -
+ - Returns:  the number of characters copied into the supplied buffer -
+ *--------------------------------------------------------------------*/
+
 int get_private_profile_string(char *section, char *entry, char *def, 
     char *buffer, int buffer_len, char *file_name)
-{   FILE *fp = fopen(file_name,"r");
-    char buff[MAX_LINE_LENGTH];
-    char *ep;
-    char t_section[MAX_LINE_LENGTH];
-    int len = strlen(entry);
-    if( !fp ) return(0);
-    sprintf(t_section,"[%s]",section);    /* Format the section name */
-    /*  Move through file 1 line at a time until a section is matched or EOF */
-    do
-    {   if( !read_line(fp,buff) )
-        {   fclose(fp);
-            strncpy(buffer,def,buffer_len);     
-            return(strlen(buffer));
+{
+FILE *fp = fopen(file_name,"r");
+char buff[MAX_LINE_LENGTH];
+char *ep;
+char t_section[MAX_LINE_LENGTH];
+int len = strlen(entry);
+
+if( !fp ) return(0);
+sprintf(t_section,"[%s]",section);            // Format the section name
+//  Move through file 1 line at a time until a section is matched or EOF
+
+do
+    {
+    if( !read_line(fp,buff) )
+        {
+        fclose(fp);
+        strncpy(buffer,def,buffer_len);
+        return(strlen(buffer));
         }
     }
     while( strcmp(buff,t_section) );
-    /* Now that the section has been found, find the entry.
-     * Stop searching upon leaving the section's area. */
-    do
-    {   if( !read_line(fp,buff) || buff[0] == '[' )
-        {   fclose(fp);
-            strncpy(buffer,def,buffer_len);     
-            return(strlen(buffer));
+
+                  // Now that the section has been found, find the entry
+                       // Stop searching upon leaving the section's area
+do
+    {
+    if( !read_line(fp,buff) || buff[0] == '[' )
+        {
+        fclose(fp);
+        strncpy(buffer,def,buffer_len);
+        return(strlen(buffer));
         }
     }  while( strncmp(buff,entry,len) );
-    ep = strrchr(buff,'=');    /* Parse out the equal sign */
-    ep++;
-    /* Copy up to buffer_len chars to buffer */
-    strncpy(buffer,ep,buffer_len - 1);
 
-    buffer[buffer_len] = '\0';
-    fclose(fp);               /* Clean up and return the amount copied */
-    return(strlen(buffer));
+ep = strrchr(buff,'=');                      // Parse out the equal sign
+ep++;
+                                // Copy up to buffer_len chars to buffer
+strncpy(buffer,ep,buffer_len - 1);
+
+buffer[buffer_len] = '\0';
+fclose(fp);                     // Clean up and return the amount copied
+return(strlen(buffer));
 }
 
 
-/***************************************************************************
- * Function:    write_private_profile_string()
- * Arguments:   <char *> section - the name of the section to search for
- *              <char *> entry - the name of the entry to find the value of
- *              <char *> buffer - pointer to the buffer that holds the string
- *              <char *> file_name - the name of the .ini file to read from
- * Returns:     TRUE if successful, otherwise FALSE
- ***************************************************************************/
-int write_private_profile_string(char *section, char *entry, char *buffer, char *file_name)
+/*--------------------------------------------------------------------*
+ - Function:    write_private_profile_string()                        -
+ - Arg: <char *> section - the name of the section to search for      -
+ -      <char *> entry - the name of the entry to find the value of   -
+ -      <char *> buffer - pointer to the buffer that holds the string -
+ -      <char *> file_name - the name of the .ini file to read from   -
+ - Returns:     TRUE if successful, otherwise FALSE                   -
+ *--------------------------------------------------------------------*/
+int write_private_profile_string(char *section, char *entry,
+                                 char *buffer, char *file_name)
 {
 FILE *rfp, *wfp;
 char tmp_name[15];
 char buff[MAX_LINE_LENGTH];
 char t_section[MAX_LINE_LENGTH];
 int len = strlen(entry);
-tmpnam(tmp_name); /* Get a temporary file name to copy to */
-sprintf(t_section,"[%s]",section);/* Format the section name */
-if( !(rfp = fopen(file_name,"r")) )  /* If the .ini file doesn't exist */
+tmpnam(tmp_name);                // Get a temporary file name to copy to
+sprintf(t_section,"[%s]",section);            // Format the section name
+if( !(rfp = fopen(file_name,"r")) )    // If the .ini file doesn't exist
     {
-    if( !(wfp = fopen(file_name,"w")) ) /*  then make one */
+    if( !(wfp = fopen(file_name,"w")) )                 // then make one
         {
         return(0);
         }
@@ -275,15 +296,15 @@ if( !(wfp = fopen(tmp_name,"w")) )
     fclose(rfp);
     return(0);
     }
-    /* Move through the file one line at a time until a section is 
-     * matched or until EOF. Copy to temp file as it is read. */
+          // Move through the file one line at a time until a section is
+                // matched or until EOF. Copy to temp file as it is read
 do
     {
     if( !read_line(rfp,buff) )
-        {   /* Failed to find section, so add one to the end */
+        {               // Failed to find section, so add one to the end
         fprintf(wfp,"\n%s\n",t_section);
         fprintf(wfp,"%s=%s\n",entry,buffer);
-            /* Clean up and rename */
+                                                  // Clean up and rename
         fclose(rfp);
         fclose(wfp);
         unlink(file_name);
@@ -293,16 +314,15 @@ do
     fprintf(wfp,"%s\n",buff);
     } while( strcmp(buff,t_section) );
 
-    /* Now that the section has been found, find the entry. Stop searching
-     * upon leaving the section's area. Copy the file as it is read
-     * and create an entry if one is not found.  */
+  // Now that the section has been found, find the entry. Stop searching
+         // upon leaving the section's area. Copy the file as it is read
+                              // and create an entry if one is not found
 
 while( 1 )
     {
     if( !read_line(rfp,buff) )
-        {   /* EOF without an entry so make one */
-        fprintf(wfp,"%s=%s\n",entry,buffer);
-            /* Clean up and rename */
+        {                            // EOF without an entry so make one
+        fprintf(wfp,"%s=%s\n",entry,buffer);      // Clean up and rename
         fclose(rfp);
         fclose(wfp);
         unlink(file_name);
@@ -333,7 +353,7 @@ if( buff[0] == '\0' )
         }
     }
 
-/* Clean up and rename */
+//--- Clean up and rename ----------------------------------------------
 fclose(wfp);
 fclose(rfp);
 unlink(file_name);
@@ -342,7 +362,8 @@ return(1);
 }
 
 
-int write_private_profile_int(char *section, char *entry, int entier, char *file_name)
+int write_private_profile_int(char *section, char *entry, int entier,
+                           char *file_name)
 {
 char buffer[32];
 
@@ -352,9 +373,9 @@ return write_private_profile_string(section,entry,buffer,file_name);
 }
 
 
-/*-------------------------*
- * Procedure en Assembleur *
- *-------------------------*/
+/*--------------------------------------------------------------------*
+ -                      Procedure en Assembleur                       -
+ *--------------------------------------------------------------------*/
 
 char GetDriveReady(char i);
 #pragma aux GetDriveReady = \
@@ -385,9 +406,8 @@ b1=(struct key*)b;
 
 if (a1->type!=b1->type) return (a1->type)-(b1->type);
 
-return strcmp(a1->ext,b1->ext);		// ou format ?
+return strcmp(a1->ext,b1->ext);                           // ou format ?
 }
-
 
 
 
@@ -415,9 +435,6 @@ prem=0;
 
 do
 {
-// ChrWin(1,3,78,48,32);
-// ColWin(1,3,78,48,10*16+1);
-
 y=3;
 
 for (n=prem;n<nbrkey;n++)
@@ -455,7 +472,8 @@ for (n=prem;n<nbrkey;n++)
             ColLin(74,y,5, 15*16+3);
             }
 
-        PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,K[n].format,K[n].pro,K[n].other==1 ? "Info" : "----");
+        PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,
+                  K[n].format,K[n].pro,K[n].other==1 ? "Info" : "----");
 
         if (K[n].other==1) info++;
         }
@@ -469,31 +487,28 @@ car=Wait(0,0,0);
 
 switch(HI(car))
     {
-    case 72:        // UP
+    case 72:                                                       // UP
         prem--;
         break;
-    case 80:        // DOWN
+    case 80:                                                     // DOWN
         prem++;
         break;
-    case 0x49:      // PGUP
+    case 0x49:                                                   // PGUP
         prem-=10;
         break;
-    case 0x51:      // PGDN
+    case 0x51:                                                   // PGDN
         prem+=10;
         break;
-    case 0x47:  // HOME
+    case 0x47:                                                   // HOME
         prem=0;
         break;
-    case 0X4F: // END
+    case 0X4F:                                                    // END
         prem=nbrkey-(Cfg->TailleY-5);
         break;
     }
 
 if (prem<0) prem=0;
 if (prem>nbrkey-(Cfg->TailleY-5)) prem=nbrkey-(Cfg->TailleY-5);
-
-
-// if ( (y==48) | (n==nbrkey-1) )
 
 }
 while (car!=27);
@@ -620,9 +635,9 @@ return 0;
 
 
 
-//---------------------------------
-// Change drive of current window -
-//---------------------------------
+/*--------------------------------------------------------------------*
+ -                 Change drive of current window -                   -
+ *--------------------------------------------------------------------*/
 void ListDrive(char *lstdrv)
 {
 char drive[26],etat[26];
@@ -976,14 +991,6 @@ Fics->CfgFile=GetMem(256);
 strcpy(Fics->CfgFile,path);
 strcat(Fics->CfgFile,"\\kkrb.cfg");
 
-Fics->view=GetMem(256);
-strcpy(Fics->view,path);
-strcat(Fics->view,"\\view");
-
-Fics->edit=GetMem(256);
-strcpy(Fics->edit,path);
-strcat(Fics->edit,"\\edit");
-
 Fics->path=GetMem(256);
 strcpy(Fics->path,path);
 
@@ -1061,8 +1068,6 @@ PrintAt(21,0,"Setup of Ketchup Killers Commander");
 
 InitMessage();
 
-// DispMessage("RedBug for King");
-// DispMessage("");
 
 posy=3;
 
@@ -1165,7 +1170,7 @@ TXTMode(OldY);
 
 SaveCfg();
 
-puts(RBTitle);
+puts(RBTitle2);
 }
 
 
@@ -1528,7 +1533,7 @@ do
                 }
 
         Verif=0;
-        StrVerif=app[0]->Titre;     // pour pas mettre NULL, ca veut rien dire
+        StrVerif=app[0]->Titre;//pour pas mettre NULL, ca veut rien dire
 
         for(n=0;n<nbr;n++)
             {
@@ -1539,7 +1544,7 @@ do
                     {
                     int x,t;
 
-                    if ( (Verif==0) | (strcmp(StrVerif,app[n]->Titre)!=0) )
+                    if ((Verif==0)| (strcmp(StrVerif,app[n]->Titre)!=0))
                         {
                         strcpy(moi,nom);
                         moi[strlen(moi)-3]=0;
@@ -1547,8 +1552,10 @@ do
 
                         x=20;
                         if (strlen(moi)>x) x=strlen(moi);
-                        if ((6+strlen(app[n]->Titre))>x) x=(strlen(app[n]->Titre)+6);
-                        if (strlen(app[n]->Meneur)>x) x=strlen(app[n]->Meneur);
+                        if ((6+strlen(app[n]->Titre))>x)
+                                            x=(strlen(app[n]->Titre)+6);
+                        if (strlen(app[n]->Meneur)>x)
+                                               x=strlen(app[n]->Meneur);
 
                         if (x>78) x=78;
                         t=(80-x)/2;
@@ -1569,7 +1576,8 @@ do
                             {
                             t=Wait(0,0,0);
                             }
-                        while ( (t!='y') & (t!='Y') & (t!='n') & (t!='N'));
+                        while ( (t!='y') & (t!='Y') & (t!='n') &
+                                                              (t!='N'));
 
                         ChargeEcran();
                         if ( (t=='y') | (t=='Y') )
@@ -1582,7 +1590,8 @@ do
 
                     if (Verif==1)
                         {
-                        app[n]->pres=o;   // l'appl. n est presente dans le dir. o
+                        app[n]->pres=o;
+                                // l'appl. n est presente dans le dir. o
                         bill=1;
                         }
                     }
@@ -1599,6 +1608,15 @@ do
                     moi[strlen(moi)-3]=0;
                     ok=1;
                     wok=n;
+
+                //--- Editeur par default ---
+                    if (app[n]->ext==91)
+                        if (Cfg->editeur[0]==0)
+                            if (strlen(app[n]->Filename)<63)
+                                {
+                                strcpy(Cfg->editeur,moi);
+                                Path2Abs(Cfg->editeur,app[n]->Filename);
+                                }
                     }
                 }
             }
@@ -1613,6 +1631,7 @@ do
 
         PrintAt(3,posy,"Found %s in %s",app[wok]->Titre,dir[o-1]);
         posy++;
+
 
         if (posy>(Cfg->TailleY-2))
                 {
@@ -1630,7 +1649,7 @@ NbrRec--;
 if (_dos_findfirst(nom,_A_SUBDIR,&fic)==0)
 do
 	{
-    if  ( (fic.name[0]!='.') & (((fic.attrib) & _A_SUBDIR) == _A_SUBDIR) )
+    if ( (fic.name[0]!='.') & (((fic.attrib) & _A_SUBDIR)==_A_SUBDIR) )
 			{
 			strcpy(moi,nom);
 			moi[strlen(moi)-3]=0;
@@ -1717,32 +1736,46 @@ return 0;
 
 void LoadConfigFile(void)
 {
-char buf[3][82];
+char buf[82];
 char buffer[32];
 char section[32];
 char filename[32];
-int n;
+int n,m;
 
-strcpy(section,"redbug");
+strcpy(section,"main");
 strcpy(filename,"kksetup.ini");
 
 Cfg->wmask=get_private_profile_int(section,"mask",Cfg->wmask,filename);
-Cfg->TailleY=get_private_profile_int(section,"vsize",Cfg->TailleY,filename);
-Cfg->fentype=get_private_profile_int(section,"wintype",Cfg->fentype,filename);
-Cfg->AnsiSpeed=get_private_profile_int(section,"ansispeed",Cfg->AnsiSpeed,filename);
-Cfg->SaveSpeed=get_private_profile_int(section,"ssaverspeed",Cfg->SaveSpeed,filename);
-Cfg->pntrep=get_private_profile_int(section,"directpoint",Cfg->pntrep,filename);
-Cfg->hidfil=get_private_profile_int(section,"hiddenfile",Cfg->hidfil,filename);
-Cfg->logfile=get_private_profile_int(section,"logfile",Cfg->logfile,filename);
+Cfg->TailleY=get_private_profile_int(section,"vsize",
+                                                 Cfg->TailleY,filename);
+Cfg->fentype=get_private_profile_int(section,"wintype",
+                                                 Cfg->fentype,filename);
+Cfg->AnsiSpeed=get_private_profile_int(section,"ansispeed",
+                                               Cfg->AnsiSpeed,filename);
+Cfg->SaveSpeed=get_private_profile_int(section,"ssaverspeed",
+                                               Cfg->SaveSpeed,filename);
+Cfg->pntrep=get_private_profile_int(section,"directpoint",
+                                                  Cfg->pntrep,filename);
+Cfg->hidfil=get_private_profile_int(section,"hiddenfile",
+                                                  Cfg->hidfil,filename);
+Cfg->logfile=get_private_profile_int(section,"logfile",
+                                                 Cfg->logfile,filename);
 Cfg->font=get_private_profile_int(section,"font",Cfg->font,filename);
-Cfg->debug=get_private_profile_int(section,"debug",Cfg->debug,filename);
-Cfg->mtrash=get_private_profile_int(section,"sizetrash",Cfg->mtrash,filename);
-Cfg->display=get_private_profile_int(section,"display",Cfg->display,filename);
+Cfg->debug=get_private_profile_int(section,"debug",
+                                                   Cfg->debug,filename);
+Cfg->mtrash=get_private_profile_int(section,"sizetrash",
+                                                  Cfg->mtrash,filename);
+Cfg->display=get_private_profile_int(section,"display",
+                                                 Cfg->display,filename);
+Cfg->comport=get_private_profile_int(section,"serial_port",
+                                                 Cfg->comport,filename);
+Cfg->comspeed=get_private_profile_int(section,"serial_speed",
+                                                Cfg->comspeed,filename);
+Cfg->combit=get_private_profile_int(section,"serial_databit",Cfg->combit
+                                                             ,filename);
+get_private_profile_string(section,"serial_parity","N",buffer,16,
+                                                              filename);
 
-Cfg->comport=get_private_profile_int(section,"serial_port",Cfg->comport,filename);
-Cfg->comspeed=get_private_profile_int(section,"serial_speed",Cfg->comspeed,filename);
-Cfg->combit=get_private_profile_int(section,"serial_databit",Cfg->combit,filename);
-get_private_profile_string(section,"serial_parity","N",buffer,16,filename);
 switch(toupper(buffer[0]))
     {
     default:
@@ -1753,25 +1786,35 @@ switch(toupper(buffer[0]))
     case 'S': Cfg->comparity='S'; break;
     }
 
-Cfg->comstop=get_private_profile_int(section,"serial_stopbit",Cfg->comstop,filename);
+Cfg->comstop=get_private_profile_int(section,"serial_stopbit",
+                                                 Cfg->comstop,filename);
 
-for (n=11;n<=15;n++)
+get_private_profile_string(section,"editor","",Cfg->editeur,63,
+                                                              filename);
+get_private_profile_string(section,"viewer","",Cfg->vieweur,63,
+                                                              filename);
+
+for (n=11;n<15;n++)
     {
-    sprintf(buffer,"usermask%d-1",n-10);
-    get_private_profile_string(section,buffer," ",buf[0],80,filename);
+    strcpy(Mask[n]->chaine,"");
 
-    sprintf(buffer,"usermask%d-2",n-10);
-    get_private_profile_string(section,buffer," ",buf[1],80,filename);
+    for (m=0;m<10;m++)
+        {
+        sprintf(buffer,"usermask%d-%d",n-10,m);
+        get_private_profile_string(section,buffer," ",buf,80,filename);
+        JoinMask(Mask[n]->chaine,buf);
+        }
 
-    sprintf(buffer,"usermask%d-3",n-10);
-    get_private_profile_string(section,buffer," ",buf[2],80,filename);
-
-    JoinMask(Mask[n]->chaine,buf[0],buf[1],buf[2]);
+    strcat(Mask[n]->chaine," @");
 
     if (strlen(Mask[n]->chaine)>2)
         sprintf(Mask[n]->title,"User config %d",n-10);
         else
         sprintf(Mask[n]->title,"");
+
+    sprintf(buffer,"ignorecase%d",n-10);
+    Mask[n]->Ignore_Case=get_private_profile_int(section,buffer,0,
+                                                              filename);
     }
 
 
@@ -1831,22 +1874,19 @@ memcpy(buf3,chaine+n+1,m-n-3);
 buf3[m-n-3]=0;
 }
 
-void JoinMask(char *chaine,char *buf1,char *buf2,char *buf3)
+void JoinMask(char *chaine,char *buf1)
 {
 int n,m;
 
-strcpy(chaine,buf1);
 strcat(chaine," ");
-strcat(chaine,buf2);
-strcat(chaine," ");
-strcat(chaine,buf3);
-strcat(chaine," @");
+strcat(chaine,buf1);
 
 n=0;
 
 while(chaine[n]!=0)
     {
-    if ( (chaine[n]==32) & ((chaine[n+1]==32) | (n==0) | (chaine[n+1]==0)) )
+    if ( (chaine[n]==32) & ((chaine[n+1]==32) | (n==0) |
+                                                     (chaine[n+1]==0)) )
         {
         for (m=n+1;m<strlen(chaine)+1;m++)
             chaine[m-1]=chaine[m];
@@ -1871,7 +1911,8 @@ write_private_profile_int(section,"mask",Cfg->wmask,filename);
 write_private_profile_int(section,"vsize",Cfg->TailleY,filename);
 write_private_profile_int(section,"wintype",Cfg->fentype,filename);
 write_private_profile_int(section,"ansispeed",Cfg->AnsiSpeed,filename);
-write_private_profile_int(section,"ssaverspeed",Cfg->SaveSpeed,filename);
+write_private_profile_int(section,"ssaverspeed",Cfg->SaveSpeed,
+                                                              filename);
 write_private_profile_int(section,"directpoint",Cfg->pntrep,filename);
 write_private_profile_int(section,"hiddenfile",Cfg->hidfil,filename);
 write_private_profile_int(section,"logfile",Cfg->logfile,filename);
@@ -1881,24 +1922,34 @@ write_private_profile_int(section,"sizetrash",Cfg->mtrash,filename);
 write_private_profile_int(section,"display",Cfg->display,filename);
 
 write_private_profile_int(section,"serial_port",Cfg->comport,filename);
-write_private_profile_int(section,"serial_speed",Cfg->comspeed,filename);
-write_private_profile_int(section,"serial_databit",Cfg->combit,filename);
+write_private_profile_int(section,"serial_speed",Cfg->comspeed,
+                                                              filename);
+write_private_profile_int(section,"serial_databit",Cfg->combit,
+                                                              filename);
 sprintf(buffer,"%c",Cfg->comparity);
 write_private_profile_string(section,"serial_parity",buffer,filename);
-write_private_profile_int(section,"serial_stopbit",Cfg->comstop,filename);
+write_private_profile_int(section,"serial_stopbit",Cfg->comstop,
+                                                              filename);
 
-for (n=11;n<=15;n++)
+write_private_profile_string(section,"editor",Cfg->editeur,filename);
+write_private_profile_string(section,"viewer",Cfg->vieweur,filename);
+
+for (n=11;n<15;n++)
     {
     SplitMask(Mask[n]->chaine,buf1,buf2,buf3);
 
-    sprintf(buffer,"usermask%d-1",n-10);
+    sprintf(buffer,"usermask%d-0",n-10);
     write_private_profile_string(section,buffer,buf1,filename);
 
-    sprintf(buffer,"usermask%d-2",n-10);
+    sprintf(buffer,"usermask%d-1",n-10);
     write_private_profile_string(section,buffer,buf2,filename);
 
-    sprintf(buffer,"usermask%d-3",n-10);
+    sprintf(buffer,"usermask%d-2",n-10);
     write_private_profile_string(section,buffer,buf3,filename);
+
+    sprintf(buffer,"ignorecase%d",n-10);
+    write_private_profile_int(section,buffer,Mask[n]->Ignore_Case,
+                                                              filename);
     }
 
 DispMessage("Saving [current] section in KKSETUP.INI: OK");
@@ -1917,9 +1968,9 @@ struct {
     char dir[128];
     } IDF_app;
 
-/*-------------------------------------------*
- - Montre tous les players que vous possedez -
- *-------------------------------------------*/
+/*--------------------------------------------------------------------*
+ -             Montre tous les players que vous possedez              -
+ *--------------------------------------------------------------------*/
 char ShowYourPlayer(void)
 {
 char key[9];
@@ -1981,8 +2032,8 @@ do
         fread(&n,1,1,fic);
         fseek(fic,n,SEEK_CUR);
 
-        fseek(fic,2,SEEK_CUR);      // Numero de format
-        fseek(fic,2,SEEK_CUR);      // Numero directory
+        fseek(fic,2,SEEK_CUR);                       // Numero de format
+        fseek(fic,2,SEEK_CUR);                       // Numero directory
         fseek(fic,1,SEEK_CUR);
         }
 
@@ -2009,11 +2060,11 @@ do
         a[n]=0;
         fread(a,n,1,fic);
 
-        fread(&(IDF_app.ext),2,1,fic);    // Numero de format
+        fread(&(IDF_app.ext),2,1,fic);               // Numero de format
 
-        fread(&(IDF_app.NoDir),2,1,fic);  // Numero directory
+        fread(&(IDF_app.NoDir),2,1,fic);             // Numero directory
 
-        fread(&(IDF_app.type),1,1,fic);   // Numero directory
+        fread(&(IDF_app.type),1,1,fic);              // Numero directory
 
         for(k=0;k<nbrkey;k++)
             if (K[k].numero == IDF_app.ext) break;
@@ -2053,7 +2104,8 @@ do
             ColLin(77,y,1, 15*16+3);
             }
 
-        PrintAt(1,y," %3s %-35s from %30s ",K[k].ext,IDF_app.Titre,IDF_app.Meneur);
+        PrintAt(1,y," %3s %-35s from %30s ",K[k].ext,IDF_app.Titre,
+                                                        IDF_app.Meneur);
         y++;
 
         if ( (y==(Cfg->TailleY-2)) | (j==nbr-1) ) break;
@@ -2072,8 +2124,8 @@ do
         fread(&n,1,1,fic);
         fseek(fic,n,SEEK_CUR);
 
-        fseek(fic,2,SEEK_CUR);      // Numero de format
-        fseek(fic,2,SEEK_CUR);      // Numero directory
+        fseek(fic,2,SEEK_CUR);                       // Numero de format
+        fseek(fic,2,SEEK_CUR);                       // Numero directory
         fseek(fic,1,SEEK_CUR);
 
         j++;
@@ -2082,17 +2134,17 @@ do
     car=Wait(0,0,0);
     switch(HI(car))
         {
-        case 72:        // UP
+        case 72:                                                   // UP
             prem--;            break;
-        case 80:        // DOWN
+        case 80:                                                 // DOWN
             prem++;            break;
-        case 0x49:      // PGUP
+        case 0x49:                                               // PGUP
             prem-=10;          break;
-        case 0x51:      // PGDN
+        case 0x51:                                               // PGDN
             prem+=10;          break;
-        case 0x47:      // HOME
+        case 0x47:                                               // HOME
             prem=0;            break;
-        case 0X4F:      // END
+        case 0X4F:                                                // END
             prem=nbr-1;        break;
         }
 
@@ -2175,7 +2227,7 @@ switch (poscur)
     nbmenu=1;
     break;
  case 1:
-    strcpy(bar[0].titre,"Show all format");  bar[0].fct=3;
+    strcpy(bar[0].titre,"Show all format");   bar[0].fct=3;
     strcpy(bar[1].titre,"Show your player");  bar[1].fct=8;
     nbmenu=2;
     break;
@@ -2215,16 +2267,17 @@ ChargeEcran();
 return fin;
 }
 
-/*--------------------------------------------------------------------*/
-// 0: Quit
-// 1: Help
-// 2: About
-// 3: list all the format
-// 4: search application
-// 5: load kksetup.ini
-// 6: Putinpath
-// 7: Exit
-// 8: Show all player
+/*--------------------------------------------------------------------*
+ - 0: Quit                                                            -
+ - 1: Help                                                            -
+ - 2: About                                                           -
+ - 3: list all the format                                             -
+ - 4: search application                                              -
+ - 5: load kksetup.ini                                                -
+ - 6: Putinpath                                                       -
+ - 7: Exit                                                            -
+ - 8: Show all player                                                 -
+ *--------------------------------------------------------------------*/
 
 void GestionFct(int i)
 {

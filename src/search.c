@@ -198,9 +198,10 @@ for (m=0;m<DFen->nbrfic;m++)
 
     error=ff->attrib;
 
-    if ( (ff->name[0]!='.') & (sw!=5) )
+    if ( (ff->name[0]!='.')  & (sw!=5) )
         {
-        if ((error&0x10)==0x10)    // Subdir
+        if ( ((error&0x10)==0x10) | ((!stricmp(getext(ff->name),"KKD")) & (Cfg->enterkkd==1)) )
+            // Subdir
             {
             strcpy(moi,nom);
             Path2Abs(moi,ff->name);
@@ -226,6 +227,8 @@ free(TabRec);
 
 int WinSearch(void)
 {
+static int l1;
+
 static int DirLength=68;
 static int DriveLen=26;
 static int StrLen=40;
@@ -254,9 +257,8 @@ struct Tmt T[18] = {
       { 30,9,9,&x3,&y3},
       { 32,6,0,"Search String:",NULL},
       { 31,7,1,SearchString,&StrLen},
-
-      { 32,10,0,"Ketchup Killers",NULL},
-      { 55,11,0,"Search Function",NULL},
+      { 31,10,8,"Search in KKD",&l1},
+      { 32,11,0,"Ketchup Killers        Search Function",NULL},
 
       {15,13,2,NULL,NULL},                // 1:Ok
       {45,13,3,NULL,NULL},
@@ -270,14 +272,21 @@ int n;
 
 strcpy(SearchOld,SearchName);
 
+l1=Cfg->enterkkd;
+
 n=WinTraite(T,18,&F);
 
 if (n!=27)  // pas escape
     {
-    if (T[n].type!=3) return 0;  // pas cancel
+    if (T[n].type!=3)
+        {
+        Cfg->enterkkd=l1;
+        return 0;  // pas cancel
+        }
     }
 
 strcpy(SearchName,SearchOld);
+
 
 return 1;       // Erreur
 }

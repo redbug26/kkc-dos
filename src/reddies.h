@@ -1,11 +1,11 @@
-/*-----------------------------------------------------------------------*
- -                                                                       -
- -  Toutes les fonctions independantes (logiquement) … l'O.S. ainsi qu'  -
- -                                                   aux fichiers hard.c -
- -                                                                       -
- - By RedBug/Ketchup Killers                                             -
- -                                                                       -
- *-----------------------------------------------------------------------*/
+/*-----------------------------------------------------------------------*\
+|-                                                                       -|
+|-  Toutes les fonctions independantes (logiquement) … l'O.S. ainsi qu'  -|
+|-                                                   aux fichiers hard.c -|
+|-                                                                       -|
+|- By RedBug/Ketchup Killers                                             -|
+|-                                                                       -|
+\*-----------------------------------------------------------------------*/
 
 char *getext(const char *nom);
 char CnvASCII(char car);

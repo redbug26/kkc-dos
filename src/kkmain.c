@@ -59,8 +59,6 @@ struct fenetre *Fenetre[3];
 struct fenetre *DFen;
 
 
-char *RBTitle="Ketchup Killers Commander V"VERSION" / RedBug";
-
 extern int IOver;
 extern int IOerr;
 
@@ -108,7 +106,7 @@ int x1,y1;
 
 char *titre="Palette configuration";
 
-#define NBRS 3
+#define NBRS 4
 
 char defcol[NBRS][48]={ RBPALDEF ,
                      { 0, 0, 0, 43,43,43,  0, 0, 0, 63,63,63,
@@ -118,9 +116,14 @@ char defcol[NBRS][48]={ RBPALDEF ,
                      {25,36,29, 36,18,15,  0, 0, 0, 49,39,45,
                       44,63,63, 42,37,63, 45,39,35,  0, 0, 0,
                        0,63,63, 63,63,63, 25,36,29, 63, 0, 0,
-                       0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0} };
+                       0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0},
+                     {42,37,63, 14,22,17,  0, 0, 0, 58,58,50,
+                      18, 1,36, 63,63,21, 58,42,49, 16,16,32,
+                      63,63, 0, 63,63,63, 43,37,63, 63,20,20,
+                      20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
+                       };
 
-char *Style[NBRS]={"Default Style","Norton Style","Cyan Style"};
+char *Style[NBRS]={"Default Style","Norton Style","Cyan Style","Venus "};
 int posx[NBRS],posy[NBRS];
 
 if (c>0)
@@ -181,7 +184,7 @@ if (Cfg->TailleY==50)
     WinCadre(2,45,77,47,2);
 
     WinCadre(52,16,73,40,2);
-    PrintAt(5,46,RBTitle);
+    PrintAt(5,46,"%s /RedBug",RBTitle);
 
     WinCadre(53,17,72,21,2);
     PrintAt(54,19,"Predefined palette");
@@ -410,6 +413,9 @@ Fin();
  58: Change la fenˆtre avec la path de l'autre fenˆtre
  59: Edit New File
  60: Switch Display Mode
+ 61: Mode serveur
+ 62: Appelle KKSETUP.EXE
+ 63: Info on disk
 */
 
 void GestionFct(int fct)
@@ -443,7 +449,10 @@ switch(fct)
         CreateKKD();
         break;
     case 7:
-        CommandLine("#%s %s",Fics->view,DFen->F[DFen->pcur]->name);
+        if (Cfg->vieweur[0]==0)
+           GestionFct(8);
+           else
+           CommandLine("#%s %s",Cfg->vieweur,DFen->F[DFen->pcur]->name);
         break;
     case 8:
         switch(DFen->system)
@@ -538,7 +547,7 @@ switch(fct)
         ChangePalette(0);
         break;
     case 18:                                                    // About
-        WinMesg("About",RBTitle);
+        WinMesg("About %s /RedBug",RBTitle);
         break;
     case 19:                                    // Select temporary file
         for (i=0;i<DFen->nbrfic;i++)
@@ -648,7 +657,7 @@ switch(fct)
         GestionFct(43);     // Active la fenetre principal (Cfg->FenAct)
         break;
     case 35:
-        WinInfo(Fenetre);
+       // WinInfo(Fenetre);
         break;
     case 36:
         DFen->scur++;
@@ -794,6 +803,27 @@ switch(fct)
         while(!InitScreen(Cfg->display));
         UseCfg();
         break;
+    case 61:
+        ServerMode();
+        break;
+    case 62:                                                  // KKSETUP
+        strcpy(buffer,Fics->path);
+        Path2Abs(buffer,"kksetup.exe");
+        CommandLine("#%s",buffer);
+        break;
+    case 63:                                        // Fenetre info disk
+        DFen=DFen->Fen2;
+
+        DFen->init=1;
+
+        if (DFen->FenTyp==4)
+            DFen->FenTyp=0;
+            else
+            DFen->FenTyp=4;
+
+        DFen=DFen->Fen2;
+        break;
+
     }
 
 
@@ -913,9 +943,11 @@ switch (poscur)
    nbmenu=4;
    break;
  case 5:
-   strcpy(bar[0].titre,"Configuration");         bar[0].fct=31;
+   strcpy(bar[0].titre,"Configuration      ");   bar[0].fct=31;
    strcpy(bar[1].titre,"Color Configuration");   bar[1].fct=17;
-   nbmenu=2;
+   strcpy(bar[2].titre,"");                      bar[2].fct=0;
+   strcpy(bar[3].titre,"Main Setup         ");   bar[3].fct=62;
+   nbmenu=4;
    break;
  case 6:
    strcpy(bar[0].titre,"Help ");    bar[0].fct=1;
@@ -1188,7 +1220,8 @@ if (n!=27)
  *--------------------------------------------------------------------*/
 void EditFile(char *s)
 {
-CommandLine("#%s %s",Fics->edit,s);
+if (Cfg->editeur[0]!=0)
+    CommandLine("#%s %s",Cfg->editeur,s);
 }
 
 /*--------------------------------------------------------------------*
@@ -1944,8 +1977,10 @@ do
             {
             case 1:
             case 2:
+            case 4:
                 if ( ((DFen->Fen2->FenTyp)==1) |
-                     ((DFen->Fen2->FenTyp)==2) ) break;
+                     ((DFen->Fen2->FenTyp)==2) |
+                     ((DFen->Fen2->FenTyp)==4) ) break;
                 Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
                 DFen=Fenetre[Cfg->FenAct];
                 ChangeLine();                          // Affichage Path
@@ -2049,7 +2084,7 @@ do
             case 0x3D:                                             // F3
             case 0x3E:                                             // F4
             case 0x56:                                       // SHIFT-F3
-//            case 0x57:                                       // SHIFT-F4
+//            case 0x57:                                     // SHIFT-F4
             case 0x8D:                                        // CTRL-UP
                 AccessFile();
                 break;
@@ -2172,7 +2207,7 @@ do
         GestionFct(30);
         break;
     case 0x0C:                                                 // CTRL-L
-        GestionFct(35);
+        GestionFct(63);
         break;
     case 0x0F:                                                 // CTRL-O
         GestionFct(14);
@@ -2235,6 +2270,8 @@ do
         GestionFct(12);           break;
     case 0x42:                                                     // F8
         GestionFct(13);           break;
+    case 0x54:                                               // SHIFT-F1
+        break;
     case 0x55:                                               // SHIFT-F2
         GestionFct(39);           break;
     case 0x56:                                               // SHIFT-F3
@@ -2243,6 +2280,8 @@ do
         GestionFct(8);            break;
     case 0x57:                                               // SHIFT-F4
         GestionFct(59);           break;
+    case 0x58:                                               // SHIFT-F5
+        GestionFct(61);           break;
     case 0x59:                                               // SHIFT-F6
         GestionFct(44);           break;
     case 0x5E:                                                // CTRL-F1
@@ -2309,7 +2348,7 @@ do
     case 0xB6:                                   //
     case 0xB7:                                   //  Windows 95 keyboard
     case 0xB8:                                   //
-        PacNoe();
+//        PacNoe();
         break;
 
     case 0x2F:                                                  // ALT-V
@@ -2403,13 +2442,16 @@ for (n=0;n<8000;n++)
     Screen_Adr[n]=Screen_Buffer[n];
 
 if (Cfg->_4dos==1)
-    {
     _4DOSShistdir();
-    }
 
 GotoXY(0,PosY);
 _settextcolor(OldCol);
-cprintf("%s\n\r",RBTitle);
+
+#ifdef DEBUG
+    cprintf("%s / RedBug (DEBUG MODE)\n\r",RBTitle);
+#else
+    cprintf("%s / RedBug\n\r",RBTitle);
+#endif
 
 if (SpecMessy!=NULL)
     cprintf("\n\r%s\n\r",SpecMessy);
@@ -2428,7 +2470,7 @@ DFen=Fenetre[(Cfg->FenAct)&1];
 CommandLine("##INIT 0 %d 80\n",(Cfg->TailleY)-2);
 
 
-PrintAt(0,0,"%-40s%40s","Ketchup Killers Commander","RedBug");
+PrintAt(0,0,"%-40s%40s",RBTitle,"RedBug");
 ColLin( 0,0,40,1*16+5);
 ColLin(40,0,40,1*16+3);
 ColLin(0,(Cfg->TailleY)-2,80,5);
@@ -2747,6 +2789,9 @@ switch (Fen->FenTyp) {
     case 3:
         FenNor(Fen);
         break;
+    case 4:
+        FenDisk(Fen);
+        break;
     }
 }
 
@@ -2758,7 +2803,7 @@ switch (Fen->FenTyp) {
  -     -                         MAIN                           -     -
  -     ----------------------------------------------------------     -
  -                                                                    -
-\---------------------------------------------------------------------*/
+\*--------------------------------------------------------------------*/
 
 void main(int argc,char **argv)
 {
@@ -2770,9 +2815,9 @@ char *LC;
 Info=GetMem(sizeof(struct RB_info));                // Heure de demarage
 Info->temps=clock();
 
-/*--------------------------------------------------------------------*
+/*--------------------------------------------------------------------*\
  -                    Initialisation de l'ecran                       -
- *--------------------------------------------------------------------*/
+\*--------------------------------------------------------------------*/
 
 InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
@@ -2781,9 +2826,9 @@ WhereXY(&PosX,&PosY);
 OldCol=_gettextcolor();
 
 
-/*--------------------------------------------------------------------*
+/*--------------------------------------------------------------------*\
  -                      Initialise les buffers                        -
- *--------------------------------------------------------------------*/
+\*--------------------------------------------------------------------*/
 
 Fenetre[0]=GetMem(sizeof(struct fenetre));
 Fenetre[0]->F=GetMem(TOTFIC*sizeof(void *));        // Memory allocation
@@ -2809,9 +2854,9 @@ for (n=0;n<8000;n++)
 
 path=GetMem(256);
 
-/*--------------------------------------------------------------------*
+/*--------------------------------------------------------------------*\
  -               Lecture et verification des arguments                -
- *--------------------------------------------------------------------*/
+\*--------------------------------------------------------------------*/
 
 strcpy(ShellAdr+128,*argv);
 strcpy(path,*argv);
@@ -2837,9 +2882,9 @@ if (strncmp(LC,"6969",4))
     }
 
 
-/*--------------------------------------------------------------------*
+/*--------------------------------------------------------------------*\
  -                         Gestion des erreurs                        -
- *--------------------------------------------------------------------*/
+\*--------------------------------------------------------------------*/
 
 _harderr(Error_handler);
 
@@ -2852,9 +2897,9 @@ signal(SIGSEGV,Signal_Handler);
 signal(SIGTERM,Signal_Handler);
 
 
-/*--------------------------------------------------------------------*
+/*--------------------------------------------------------------------*\
  -                     Initialisation des fichiers                    -
- *--------------------------------------------------------------------*/
+\*--------------------------------------------------------------------*/
 
 Fics->LastDir=GetMem(256);
 getcwd(Fics->LastDir,256);
@@ -2866,14 +2911,6 @@ Path2Abs(Fics->FicIdfFile,"idfext.rb");
 Fics->CfgFile=GetMem(256);
 strcpy(Fics->CfgFile,path);
 Path2Abs(Fics->CfgFile,"kkrb.cfg");
-
-Fics->view=GetMem(256);
-strcpy(Fics->view,path);
-Path2Abs(Fics->view,"view");
-
-Fics->edit=GetMem(256);
-strcpy(Fics->edit,path);
-Path2Abs(Fics->edit,"edit");
 
 Fics->path=GetMem(256);
 strcpy(Fics->path,path);
@@ -2896,9 +2933,9 @@ Path2Abs(Fics->log,"trash\\logfile");                   // logfile trash
 
 
 
-/*************
- -  Default  -
- *************/
+/*--------------------------------------------------------------------*\
+ -                              Default                               -
+\*--------------------------------------------------------------------*/
 
 ChangeType(4);
 
@@ -2915,9 +2952,10 @@ if (Cfg->_4dos==1)
 
 
 
-/******************
- - Initialisation -
- ******************/
+/*--------------------------------------------------------------------*\
+ -                           Initialisation                           -
+\*--------------------------------------------------------------------*/
+
 Fenetre[0]->x=0;
 Fenetre[0]->y=1;
 Fenetre[0]->yl=(Cfg->TailleY)-4;
@@ -2966,11 +3004,9 @@ Fenetre[2]->Fen2=Fenetre[2];
 Fenetre[2]->order=17;
 
 
-/*--------------------------------------------------------------------*
+/*--------------------------------------------------------------------*\
  -               Chargement du fichier config (s'il existe)           -
- *--------------------------------------------------------------------*/
-
-// AfficheTout();
+\*--------------------------------------------------------------------*/
 
 if (LoadCfg()==-1)
     {
@@ -3003,9 +3039,9 @@ if (Cfg->verifhist==1)
 Gestion();
 
 
-/*--------------------------------------------------------------------*
+/*--------------------------------------------------------------------*\
  -                                 FIN                                -
- *--------------------------------------------------------------------*/
+\*--------------------------------------------------------------------*/
 
 memset(SpecSortie,0,256);
 

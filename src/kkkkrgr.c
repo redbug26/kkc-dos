@@ -67,14 +67,6 @@ Fics->CfgFile=GetMem(256);
 strcpy(Fics->CfgFile,path);
 strcat(Fics->CfgFile,"\\kkrb.cfg");
 
-Fics->view=GetMem(256);
-strcpy(Fics->view,path);
-strcat(Fics->view,"\\view");
-
-Fics->edit=GetMem(256);
-strcpy(Fics->edit,path);
-strcat(Fics->edit,"\\edit");
-
 Fics->path=GetMem(256);
 strcpy(Fics->path,path);
 

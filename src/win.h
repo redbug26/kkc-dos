@@ -7,6 +7,7 @@ void SpeedTest(void);                               // Independant de KK
 
 void FenNor(struct fenetre *Fen);
 void FenDIZ(struct fenetre *Fen);
+void FenDisk(struct fenetre *Fen);
 void LitInfo(struct fenetre *Fen);
 
 

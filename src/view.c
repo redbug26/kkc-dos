@@ -1,4 +1,6 @@
-// Viewer
+/*--------------------------------------------------------------------*\
+|-                             Viewer                                 -|
+\*--------------------------------------------------------------------*/
 
 #include <ctype.h>
 
@@ -23,6 +25,7 @@
 #include "kk.h"
 
 #include "idf.h"
+
 
 static char ReadChar(void);
 static void Bar(char *bar);
@@ -51,10 +54,9 @@ static char srcch[80];
 
 // Lit l'octet se trouvant en posn
 //---------------------------------
+
 char ReadChar(void)
 {
-// PrintAt(0,0,"Position: %9d",posn);
-
 if (posn>taille)
     {
     posn=taille-1;
@@ -98,17 +100,11 @@ PutCur(3,0);
 Bar(" Help  ----  ----  Text  ----  ----  ----  ----  ----  ---- ");
 
 
-ColWin(1,1,78,(Cfg->TailleY)-3,10*16+1);
-ChrWin(1,1,78,(Cfg->TailleY)-3,32);
-
+Window(1,1,78,(Cfg->TailleY)-3,10*16+1);
 WinCadre(0,3,9,(Cfg->TailleY)-2,2);
-
 WinCadre(10,3,58,(Cfg->TailleY)-2,2);
-
 WinCadre(59,3,76,(Cfg->TailleY)-2,2);
-
 WinCadre(77,3,79,(Cfg->TailleY)-2,2);
-
 WinCadre(0,0,79,2,3);
 
 ChrCol(34,4,(Cfg->TailleY)-6,Cfg->Tfont);
@@ -173,34 +169,34 @@ car=Wait(0,0,0);
 switch(LO(car))   {
     case 0:
         switch(HI(car))   {
-            case 80:    // BAS
+            case 80:    // --- BAS -------------------------------------
                 posn+=16;
                 break;
-            case 72:    // HAUT
+            case 72:    // --- HAUT ------------------------------------
                 posn-=16;
                 break;
-            case 0x51:  // PGDN
+            case 0x51:  // --- PGDN ------------------------------------
                 posn+=480;
                 break;
-            case 0x49:  // PGUP
+            case 0x49:  // --- PGUP ------------------------------------
                 posn-=480;
                 break;
-            case 0x47:  // HOME
+            case 0x47:  // --- HOME ------------------------------------
                 posn=0;
                 break;
-            case 0x4F:  // END
+            case 0x4F:  // --- END -------------------------------------
                 posn=taille-((((Cfg->TailleY)-6)*16))+15;
                 break;
-            case 0x43:  // F9
+            case 0x43:  // --- F9 --------------------------------------
                 fin=86;
                 break;
-            case 0x8D:  // CTRL-UP
+            case 0x8D:  // --- CTRL-UP ---------------------------------
                 fin=-1;
                 break;
-            case 0x3B:  // F1
+            case 0x3B:  // --- F1 --------------------------------------
                 Help();
                 break;
-            case 0x3E:  // F4
+            case 0x3E:  // --- F4 --------------------------------------
                 fin=91;
                 break;
             default:
@@ -227,16 +223,16 @@ ChargeEcran();
 return fin;
 }
 
-/*
- * to initialize:
- *   call set_screensize(<# lines to reserve>);
- * to print through ansi interpreter:
- *   call ansi_out(<string>);
- */
+/*--------------------------------------------------------------------*\
+|- to initialize:                                                     -|
+|-   call set_screensize(<# lines to reserve>);                       -|
+|- to print through ansi interpreter:                                 -|
+|-   call ansi_out(<string>);                                         -|
+\*--------------------------------------------------------------------*/
 
 static char curattr = 7;
 static int curx = 0,cury = 0;
-static int maxx = 80, maxy = 25;  /* size of ansi output window */
+static int maxx = 80, maxy = 25;           // size of ansi output window
 static int tabspaces = 8;
 static int savx,savy,issaved = 0;
 static char ansi_terminators[] = "HFABCDnsuJKmp";
@@ -557,7 +553,7 @@ while (*b)
                         }
                     break;
 
-                case '\t':     /* so _you_ figure out what to do... */
+                case '\t':          // so _you_ figure out what to do...
                     for (x = 0; x < tabspaces; x++)
                         {
                         AffChr(curx,cury,' ');
@@ -565,13 +561,14 @@ while (*b)
                               curx++;
                               if (curx > maxx - 1)
                               {
-                                    curx = 0;
-                                    cury++;
-                                    if (cury > maxy - 1)
+                              curx = 0;
+                              cury++;
+                              if (cury > maxy - 1)
                                     {
                                     ScrollUp();
                                     ChrWin(0,maxy-1,maxx-1,maxy,32);
-                                    ColWin(0,maxy-1,maxx-1,maxy,curattr);
+                                    ColWin(0,maxy-1,maxx-1,maxy,
+                                                               curattr);
                                     cury--;
                                     }
                               }
@@ -585,7 +582,7 @@ while (*b)
                         }
                         break;
 
-                  case '\07':     /* usually a console bell */
+                  case '\07':                  // usually a console bell
                         putchar('\07');
                         break;
 
@@ -631,7 +628,7 @@ while (*b)
                               set_pos(argbuf,arglen,*b);
                               break;
 
-                        case 'A':   /* up */
+                        case 'A': // --- up ----------------------------
                               go_up(argbuf,arglen,*b);
                               break;
 
@@ -766,7 +763,7 @@ return (-1);
 int TxtView(char *fichier)
 {
 long xm,ym;
-char aff,wrap;
+int aff,wrap;
 
 long posd;
 long cur1,cur2;
@@ -774,15 +771,18 @@ long cur1,cur2;
 int xl,yl;
 int x,y;
 int x2,y2;
+int lchaine;
 
 char car;
 
 char chaine[256];
-short lchaine;
+
 
 int n,m;
 
-char affichage[81];
+char affichage[101];
+
+int w1,w2;
 
 int code;
 int fin=0;
@@ -795,15 +795,34 @@ int shift=0; // Vaut -1 si reaffichage de l'ecran
 
 char pasfini;
 
+static char bar[81];
+
+
+int xl2;
+int tpos;
+
+
+
+
 SaveEcran();
 PutCur(3,0);
 
-Bar(" Help  ----  ----  Hexa  ----  ---- Search Print Mask  ---- ");
+strcpy
+   (bar," Help  Wrap  ----  Hexa  ----  ---- Search Print Mask  ---- ");
+
+switch(Cfg->warp)
+    {
+    case 0: memcpy(bar+6,"Nowrap",6); break;
+    case 1: memcpy(bar+6," Wrap ",6); break;
+    case 2: memcpy(bar+6,"WoWrap",6); break;
+    }
+
+Bar(bar);
 
 wrap=0;
 aff=1;
 
-//-------------------- Calcul de la taille maximum ------------------------//
+//-------------------- Calcul de la taille maximum -------------------//
 xm=0;
 ym=0;
 
@@ -816,6 +835,7 @@ x=0;
         switch(view_buffer[n])
             {
             case 10:
+            
                 x=0;
                 ym++;
                 break;
@@ -845,15 +865,15 @@ ym++;
 if (xm>=79)
     xl=80;
     else
-    xl=xm;            //--> Longueur
+    xl=xm;                                        //--> Longueur fenˆtre
 
 if (ym>Cfg->TailleY-1)
     yl=Cfg->TailleY-1;
     else
     yl=ym;
 
-x=(80-xl)/2;           // centre le texte
-y=(Cfg->TailleY-yl)/2; //
+x=(80-xl)/2;                                          // centre le texte
+y=(Cfg->TailleY-yl)/2;
 
 if (x<0) x=0;
 if (y<0) y=0;
@@ -881,14 +901,13 @@ if ( (x>0) & (y>0) & (x+xl<80) & (y+yl<Cfg->TailleY) )
 ColWin(x,y,x+xl-1,y+yl-1,10*16+1);
 ChrWin(x,y,x+xl-1,y+yl-1,32);
 
-//-------------------------------------------------------------------------//
+//--------------------------------------------------------------------//
 
 affichage[xl]=0;
 
 
 do
 {
-
 pasfini=0;
 
 posd=posn;
@@ -896,27 +915,38 @@ posd=posn;
 x2=x;
 y2=y;
 
+aff=0;
+
+if (xl==80)
+    xl2=xl-shift;
+    else
+    xl2=xl;
+
+
+
 do
     {
-    lchaine=1;      // Longueur chaine
+    tpos=x2-x-warp;
+
+    lchaine=1;                                        // Longueur chaine
 
     chaine[0]=ReadChar();
 
     switch(chaine[0])
         {
         case 10:
-            lchaine=xl+1-(x2-x-warp);          // xl= taille totale de la ligne
-                                      // x2-x-warp= taille actuelle de la ligne
-            memset(chaine,32,lchaine);
-            aff=2;
+            w1=tpos;
+            aff=1;
             break;
         case 9:
             lchaine=(x2-x)/8;
             lchaine=lchaine*8+8;
             lchaine-=(x2-x);
-            memset(chaine,32,lchaine);
+            if (lchaine>0)
+                memset(chaine,32,lchaine);
             break;
         case 13:
+            lchaine=0;
             chaine[0]=0;
             break;
 
@@ -929,33 +959,75 @@ do
         {
         car=chaine[n];
 
-        if ((x2-x-warp)>=xl)
-            {
-            if (aff==2) // Le monsieur te demande d'afficher la ligne
-                {
-                if ( (shift!=1) | (y2!=0) )
-                    for (m=0;m<xl-shift;m++)
-                        AffChr(x+m,y2,affichage[m]);
+        if ( (tpos<xl+10) & (tpos>=0) )
+            affichage[tpos]=car;
 
-                affichage[0]=0;
-                x2=x;
-                y2++;
-                if (y2>=y+yl) break;
-                lchaine=0;
-                aff=1;
-                }
-                else
-                aff=0;
-            }
-            else
+        tpos++;
+        x2++;
+        }
+
+    tpos=x2-x-warp-1;
+
+    if ( (tpos>=xl2) & (aff==0) )
+                                    // Si le prochain d‚passe la fenˆtre
+        {
+        if (tpos>=xl2)
             {
-            if ((x2-x-warp)>=0)
-                affichage[x2-x-warp]=car;
-            x2++;
+            if (Cfg->warp==1)
+                {
+                aff=2;
+
+                w1=xl2;                             // Premier … retenir
+                w2=tpos;                            // Dernier … retenir
+                }
+            if (Cfg->warp==2)
+                {
+                int n;
+                aff=2;
+                n=xl2;
+                while ( (n>0) & (affichage[n]!=32) ) n--;
+
+                w1=n+1;
+                w2=tpos;
+                }
             }
         }
 
-    if (aff==2) aff=1;
+    if (aff!=0)            // Le monsieur te demande d'afficher la ligne
+        {
+        if ( (shift!=1) | (y2!=0) )
+            {
+            if (w1<0)
+                {
+                for (m=0;m<xl2;m++)
+                    AffChr(x+m,y2,32);
+                }
+                else
+            if (w1>=xl2)
+                {
+                for (m=0;m<xl2;m++)
+                    AffChr(x+m,y2,affichage[m]);
+                }
+                else
+                {
+                for (m=0;m<w1;m++)
+                    AffChr(x+m,y2,affichage[m]);
+                for (m=w1;m<xl2;m++)
+                     AffChr(x+m,y2,32);
+                }
+            }
+
+        x2=x;
+        y2++;
+
+        if (aff==2)
+            {
+            memcpy(affichage,affichage+w1,w2-w1+1);
+            x2+=(w2-w1+1);
+            }
+
+        aff=0;
+        }
 
     if (y2>=y+yl) break;
 
@@ -978,9 +1050,11 @@ do
     }
 while(1);
 
+
+
 while(y2<y+yl)
     {
-    memset(affichage,' ',xl);        // remplit une ligne entiere de espace
+    memset(affichage,' ',xl);     // remplit une ligne entiere de espace
     affichage[xl]=0;
     PrintAt(x,y2,"%s",affichage);
     y2++;
@@ -988,7 +1062,7 @@ while(y2<y+yl)
 
 if (shift==0)
     Masque(x,y,x+xl-1,y+yl-1);
-    else    // Ca marche mais ca pas b“
+    else                                     // Ca marche mais ca pas b“
     {
     if ( (xl==80) & (y==0) )
         Masque(x,y+1,x+xl-2,y+yl-1);
@@ -999,7 +1073,6 @@ if (shift==0)
     if ( (xl!=80) & (y!=0) )
         Masque(x,y,x+xl-1,y+yl-1);
     }
-
 
 
 
@@ -1044,13 +1117,19 @@ if ( ((car&1)==1) | ((car&2)==2) )
 
     temp[45]=0;
 
-    PrintAt(0,0,"View: %-45s Col%3d %9d bytes %3d%% ",temp,warp,taille,prc);
+    PrintAt(0,0,
+            "View: %-45s Col%3d %9d bytes %3d%% ",temp,warp,taille,prc);
 
     ColCol(79,1,Cfg->TailleY-2,1*16+2);
     ChrCol(79,1,cur1-1,32);
     ChrCol(79,cur1,cur2-cur1+1,219);
     ChrCol(79,cur2+1,Cfg->TailleY-1-cur2,32);
 
+    if (shift!=1)
+        {
+        shift=2;
+        break;
+        }
     shift=1;
     }
     else
@@ -1064,7 +1143,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
 
 posn=posd;
 
-if (shift!=-1)
+if ( (shift!=-1) & (shift!=2) )
 {
 code=Wait(0,0,0);
 
@@ -1074,6 +1153,17 @@ switch(LO(code))
        switch(HI(code))   {
             case 0x3B:  // F1
                 Help();
+                break;
+            case 0x3C:  // F2
+                Cfg->warp++;
+                if (Cfg->warp==3) Cfg->warp=0;
+                switch(Cfg->warp)
+                    {
+                    case 0: memcpy(bar+6,"Nowrap",6); break;
+                    case 1: memcpy(bar+6," Wrap ",6); break;
+                    case 2: memcpy(bar+6,"WoWrap",6); break;
+                    }
+                Bar(bar);
                 break;
             case 0x3E:  // F4
                 fin=-2;
@@ -1197,12 +1287,21 @@ switch(LO(code))
         break;
     }
 
+if (Cfg->warp!=0) warp=0;
+
 if (warp<0) warp=0;
 }
 else
 {
-shift=0;
-ChargeEcran();
+if (shift==-1)
+    {
+    shift=0;
+    ChargeEcran();
+    }
+if (shift==2)
+    {
+    shift=1;
+    }
 }
 }
 while(!fin);
@@ -1419,7 +1518,7 @@ ChrLin(0,yl+1,80,32);
 
 
 
-//---------------------------------------------------//
+//--------------------------------------------------------------------//
 
 prem=(struct Href*)GetMem(sizeof(struct Href));
 suiv=prem;
@@ -1506,19 +1605,23 @@ switch(car)  {
             {
             titre[debut-1]=0;
 
-            if (!stricmp(titre,"TITLE"))  nbrcol++,tabcol[nbrcol]=3*16+14,aff=1;
-            if (!strnicmp(titre,"H1",2))  nbrcol++,tabcol[nbrcol]=3*16+13;
-            if (!strnicmp(titre,"H2",2))  nbrcol++,tabcol[nbrcol]=4*16+13;
-            if (!strnicmp(titre,"H3",2))  nbrcol++,tabcol[nbrcol]=5*16+13;
-            if (!strnicmp(titre,"H4",2))  nbrcol++,tabcol[nbrcol]=3*16+1;
-            if (!strnicmp(titre,"H5",2))  nbrcol++,tabcol[nbrcol]=4*16+1;
-            if (!strnicmp(titre,"H6",2))  nbrcol++,tabcol[nbrcol]=5*16+1;
+            if (!stricmp(titre,"TITLE"))
+                                  nbrcol++,tabcol[nbrcol]=3*16+14,aff=1;
+            if (!strnicmp(titre,"H1",2))
+                                        nbrcol++,tabcol[nbrcol]=3*16+13;
+            if (!strnicmp(titre,"H2",2))
+                                        nbrcol++,tabcol[nbrcol]=4*16+13;
+            if (!strnicmp(titre,"H3",2))
+                                        nbrcol++,tabcol[nbrcol]=5*16+13;
+            if (!strnicmp(titre,"H4",2)) nbrcol++,tabcol[nbrcol]=3*16+1;
+            if (!strnicmp(titre,"H5",2)) nbrcol++,tabcol[nbrcol]=4*16+1;
+            if (!strnicmp(titre,"H6",2)) nbrcol++,tabcol[nbrcol]=5*16+1;
 
-            if (!stricmp(titre,"STRONG")) bold++;    // GRAS ON
-            if (!stricmp(titre,"B"))      bold++;    // GRAS ON
-            if (!stricmp(titre,"EM"))     ital++;    // ITALIQUE ON
-            if (!stricmp(titre,"I"))     ital++;    // ITALIQUE ON
-            if (!stricmp(titre,"U"))      unde++;    // UNDERLINE ON
+            if (!stricmp(titre,"STRONG")) bold++;             // GRAS ON
+            if (!stricmp(titre,"B"))      bold++;             // GRAS ON
+            if (!stricmp(titre,"EM"))     ital++;         // ITALIQUE ON
+            if (!stricmp(titre,"I"))     ital++;          // ITALIQUE ON
+            if (!stricmp(titre,"U"))      unde++;        // UNDERLINE ON
 
             if (!strnicmp(titre,"A HREF",6))
                 {
@@ -1547,9 +1650,10 @@ switch(car)  {
                     {
                     nbrcol--;
                     ahref--;
-                    suiv->next=(struct Href*)GetMem(sizeof(struct Href));
+                    suiv->next=(struct Href*)
+                                            GetMem(sizeof(struct Href));
 
-                    suiv->x2=smot;          // REFERENCE DE 1 DE LARGE
+                    suiv->x2=smot;            // REFERENCE DE 1 DE LARGE
                     suiv->y2=yp;
 
                     suiv=suiv->next;
@@ -1558,11 +1662,11 @@ switch(car)  {
                 }
 
 
-            if (!stricmp(titre,"/STRONG")) bold--;    // GRAS OFF
-            if (!stricmp(titre,"/B"))      bold--;    // GRAS OFF
-            if (!stricmp(titre,"/EM"))     ital--;    // ITALIQUE OFF
-            if (!stricmp(titre,"/I"))     ital--;    // ITALIQUE OFF
-            if (!stricmp(titre,"/U"))      unde--;    // UNDERLINE OFF
+            if (!stricmp(titre,"/STRONG")) bold--;           // GRAS OFF
+            if (!stricmp(titre,"/B"))      bold--;           // GRAS OFF
+            if (!stricmp(titre,"/EM"))     ital--;       // ITALIQUE OFF
+            if (!stricmp(titre,"/I"))     ital--;        // ITALIQUE OFF
+            if (!stricmp(titre,"/U"))      unde--;      // UNDERLINE OFF
                 
             if (!stricmp(titre,"/TITLE")) nbrcol--,aff=2;
             if (!stricmp(titre,"/H1")) nbrcol--,aff=1;
@@ -1580,7 +1684,8 @@ switch(car)  {
                             sprintf(titre,"%c%*s%c ",1,nlist*2,"",7);
                             break;
                         case 2:
-                            sprintf(titre,"%c%*s%02d) ",1,nlist*2,"",listn[nlist-1]);
+                            sprintf(titre,"%c%*s%02d) ",1,nlist*2,
+                                                     "",listn[nlist-1]);
                             break;
                         }
                     listn[nlist-1]++;
@@ -1593,13 +1698,17 @@ switch(car)  {
                     }
                 }
 //            if (!stricmp(titre,"LI"))
-            if (!stricmp(titre,"BR"))  aff=1;        // C‚sure forc‚e
+            if (!stricmp(titre,"BR"))  aff=1;           // C‚sure forc‚e
             if (!stricmp(titre,"P")) aff=1;         // fin de paragraphe
-            if (!stricmp(titre,"/P")) aff=1;         // fin de paragraphe
-            if (!stricmp(titre,"OL"))  listt[nlist]=2,listn[nlist]=1,nlist++;
-            if (!stricmp(titre,"/OL")) listt[nlist]=0,listn[nlist]=0,nlist--,aff=1;
-            if (!stricmp(titre,"UL"))  listt[nlist]=1,listn[nlist]=1,nlist++;
-            if (!stricmp(titre,"/UL")) listt[nlist]=0,listn[nlist]=0,nlist--,aff=1;
+            if (!stricmp(titre,"/P")) aff=1;        // fin de paragraphe
+            if (!stricmp(titre,"OL"))
+                                  listt[nlist]=2,listn[nlist]=1,nlist++;
+            if (!stricmp(titre,"/OL"))
+                            listt[nlist]=0,listn[nlist]=0,nlist--,aff=1;
+            if (!stricmp(titre,"UL"))
+                                  listt[nlist]=1,listn[nlist]=1,nlist++;
+            if (!stricmp(titre,"/UL"))
+                            listt[nlist]=0,listn[nlist]=0,nlist--,aff=1;
 
             if (!stricmp(titre,"DL")) aff=1;
             if (!stricmp(titre,"DT")) aff=1;
@@ -1610,7 +1719,7 @@ switch(car)  {
 
             if (!stricmp(titre,"TR")) aff=1;
 
-            if (!stricmp(titre,"I"))  aff=0;    // Chasse fixe
+            if (!stricmp(titre,"I"))  aff=0;              // Chasse fixe
             if (!stricmp(titre,"/I")) aff=0;
 
             if (!stricmp(titre,"PRE")) pre++;
@@ -1694,7 +1803,8 @@ if (code!=0)    // code &...;
             if (!strnicmp(titre,"QUOT",4)) psuiv=1,car=34;
 
             if (!strnicmp(titre,"NBSP",4)) psuiv=1,car=32;
-            if (!strnicmp(titre,"IUML",4)) psuiv=1,car='i';        // En attendant mieux
+            if (!strnicmp(titre,"IUML",4)) psuiv=1,car='i';
+                                                   // En attendant mieux
             if (!strnicmp(titre,"COPY",4))
                  {
                  psuiv=1;
@@ -1778,7 +1888,6 @@ for (k=0;k<lentit;k++)
         if ( (pre==0) & (car==13) & (smot==0) ) car=0;
         if ( (pre==0) & (car==13) ) car=32;
 
-//        if ( (pre==0) & (smot!=0) & (mot[smot-1]==32) & (car==32) ) car=0;
 
         if (car!=0)
             {
@@ -1803,9 +1912,9 @@ for (k=0;k<lentit;k++)
            ColTxt[i+yp*xpage]=motc[i];
            }
 
-        if (j==xpage) j--;      // Car on passe espace quand il y a espace
+        if (j==xpage) j--;    // Car on passe espace quand il y a espace
 
-        for(i=j+1;i<smot;i++)   // +1 car on passe l'espace
+        for(i=j+1;i<smot;i++)                // +1 car on passe l'espace
             {
             mot[i-j-1]=mot[i];
             motc[i-j-1]=motc[i];
@@ -2257,7 +2366,8 @@ while(y<=y2)
     AffCol(x,y,10*16+9);
     c=GetChr(x,y);
 
-    if ( ((c>='a') & (c<='z')) | ((c>='A') & (c<='Z')) | ((c>='0') & (c<='9')) | (c=='_') )
+    if ( ((c>='a') & (c<='z')) | ((c>='A') & (c<='Z')) |
+                                      ((c>='0') & (c<='9')) | (c=='_') )
         {
         chain2[l]=c;
         xt[l]=x;
@@ -2401,8 +2511,10 @@ ChrLin(0,(Cfg->TailleY)-1,80,32);
 
 do
     {
-    PrintAt( 1,(Cfg->TailleY)-1,"F8: Look %3s",(Cfg->wmask&64)==64 ? "ON" : "OFF");
-    PrintAt(17,(Cfg->TailleY)-1,"F9: Mask %3s",(Cfg->wmask&128)==128 ? "OFF" : "ON");
+    PrintAt( 1,(Cfg->TailleY)-1,"F8: Look %3s",
+                                    (Cfg->wmask&64)==64 ? "ON" : "OFF");
+    PrintAt(17,(Cfg->TailleY)-1,"F9: Mask %3s",
+                                  (Cfg->wmask&128)==128 ? "OFF" : "ON");
     PrintAt(40,(Cfg->TailleY)-1,"%-40s",Mask[s[pos]]->title);
 
     for (i=prem;i<n;i++)

@@ -14,9 +14,9 @@
 #include <sys\types.h>
 #include <sys\stat.h>
 
-#include <signal.h> // For handling signal
+#include <signal.h>                               // For handling signal
 
-#include <dos.h>    //  Pour redirection des I/O
+#include <dos.h>                             // Pour redirection des I/O
 
 #include "hard.h"
 
@@ -305,14 +305,6 @@ Fics->CfgFile=GetMem(256);
 strcpy(Fics->CfgFile,path);
 strcat(Fics->CfgFile,"\\kkrb.cfg");
 
-Fics->view=GetMem(256);
-strcpy(Fics->view,path);
-strcat(Fics->view,"\\view");
-
-Fics->edit=GetMem(256);
-strcpy(Fics->edit,path);
-strcat(Fics->edit,"\\edit");
-
 Fics->path=GetMem(256);
 strcpy(Fics->path,path);
 
@@ -366,7 +358,7 @@ TXTMode(OldY);
 }
 
 
-/*****************************************************************************/
+/**********************************************************************/
 
 int SortName(struct find_t *F1,struct find_t *F2)
 {
@@ -451,7 +443,7 @@ for (i=0;i<n-1;i++)
         }
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 // Retourne 1 si erreur
 
 int Seekfile(int x,int y,char *name)
@@ -606,7 +598,7 @@ while(!fini)
         if (o==pos)
             {
             PrintAt(x+1,y,"%13s",fic[o]->name);
-            ColLin(x,o-z+up+1,15,1*16+5);   /* si fic[o] est selectionn‚ */
+            ColLin(x,o-z+up+1,15,1*16+5);   // si fic[o] est selectionn‚
             }
             else
             ColLin(x,o-z+up+1,15,0*16+5);

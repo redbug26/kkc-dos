@@ -1,3 +1,6 @@
+/*--------------------------------------------------------------------*\
+|- Creation des .KKR                                                  -|
+\*--------------------------------------------------------------------*/
 #include <dos.h>
 #include <direct.h>
 #include <io.h>
@@ -13,8 +16,7 @@
 #include "kk.h"
 
 
-
-char *RBTitle="Ketchup Killers Descriptor V"VERSION" / RedBug";
+char *RBTitle2="Ketchup Killers Descriptor V"VERSION" / RedBug";
 
 extern struct key K[nbrkey];
 
@@ -38,9 +40,9 @@ char OldY;
 int n;
 char *path;
 
-/*****************************
- - Initialisation de l'ecran -
- *****************************/
+/*--------------------------------------------------------------------*\
+|-                    Initialisation de l'ecran                       -|
+\*--------------------------------------------------------------------*/
 
 InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
@@ -49,18 +51,18 @@ OldY=(*(char*)(0x484))+1;
 path=GetMem(256);
 
 strcpy(path,*argv);
-for (n=strlen(path);n>0;n--) {
+for (n=strlen(path);n>0;n--)
     if (path[n]=='\\') {
         path[n]=0;
         break;
         }
-    }
 
 ColWin(0,0,79,49,7);
 ChrWin(0,0,79,49,32);
 GotoXY(0,0);
 
-if (argc<=1) {
+if (argc<=1)
+    {
     printf("KKDESC\n");
     printf("-------\n");
     printf("  Parameters:\n");
@@ -81,14 +83,6 @@ strcat(Fics->FicIdfFile,"\\idfext.rb");
 Fics->CfgFile=GetMem(256);
 strcpy(Fics->CfgFile,path);
 strcat(Fics->CfgFile,"\\kkrb.cfg");
-
-Fics->view=GetMem(256);
-strcpy(Fics->view,path);
-strcat(Fics->view,"\\view");
-
-Fics->edit=GetMem(256);
-strcpy(Fics->edit,path);
-strcat(Fics->edit,"\\edit");
 
 Fics->path=GetMem(256);
 strcpy(Fics->path,path);
@@ -114,8 +108,6 @@ SetPal(6,43,37,30);
 SetPal(7,  0,  0,  0);
 SetPal(10, 43, 37, 30);
 SetPal(15, 47, 41, 34);
-
-
 
 
 strcpy(KKRname,argv[1]);
@@ -152,7 +144,7 @@ Sauve();
 
 TXTMode(OldY);
 
-puts(RBTitle);
+puts(RBTitle2);
 }
 
 
@@ -337,7 +329,7 @@ return Code;
 
 
 
-/*****************************************************************************/
+/**********************************************************************/
 
 int sort_function(const void *a,const void *b)
 {
@@ -359,7 +351,7 @@ void FileFormat(void)
 qsort((void*)K,nbrkey,sizeof(struct key),sort_function);
 }
 
-/*****************************************************************************/
+/**********************************************************************/
 
 int SortName(struct find_t *F1,struct find_t *F2)
 {
@@ -445,7 +437,7 @@ for (i=0;i<n-1;i++)
 }
 
 
-/*****************************************************************************/
+/**********************************************************************/
 // Retourne 1 si erreur
 
 int Seekfile(int x,int y,char *name)
@@ -587,7 +579,7 @@ while(!fini)
         if (o==pos)
             {
             PrintAt(x+1,y,"%13s",fic[o]->name);
-            ColLin(x,o-z+up+1,15,1*16+5);   /* si fic[o] est selectionn‚ */
+            ColLin(x,o-z+up+1,15,1*16+5);   // si fic[o] est selectionn‚
             }
             else
             ColLin(x,o-z+up+1,15,0*16+5);
@@ -686,7 +678,7 @@ if (a==27)
 
 }
 
-/****************************************************************************/
+/**********************************************************************/
 int sortidf(const void *a,const void *b)
 {
 struct key *a1,*b1;
@@ -723,7 +715,9 @@ y=3;
 PrintAt(32,0,"Describe player");
 ColLin(32,0,20,10*16+3);
 
-PrintAt(2,(Cfg->TailleY-1),"F1: Help   F3: Information   F7: Compute CRC   ESC: Quit & Save Modification");
+PrintAt(2,(Cfg->TailleY-1),
+                          "F1: Help   F3: Information   F7: Compute CRC"
+                                    "   ESC: Quit & Save Modification");
 
 prem=0;
 pres=0;
@@ -774,7 +768,8 @@ for (n=prem;n<nbrkey;n++)
             ColLin(74,y,5, 15*16+3);
             }
 
-        PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,K[n].format,K[n].pro,NumExt[n]==1 ? " OK " : "    ");
+        PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,K[n].format,
+                               K[n].pro,NumExt[n]==1 ? " OK " : "    ");
 
         if (K[n].other==1) info++;
         }

@@ -410,10 +410,12 @@ if (n==3)
     {
     switch (buf[2])
         {
-        case 'A': return 72*256;
-        case 'B': return 80*256;
-        case 'C': return 77*256;
-        case 'D': return 75*256;
+        case 'A': return 72*256;                                 // HAUT
+        case 'B': return 80*256;                                  // BAS
+        case 'C': return 77*256;                               // DROITE
+        case 'D': return 75*256;                               // GAUCHE
+        case 'H': return 0x47*256;                               // HOME
+        case 'K': return 0x4F*256;                                // END
         }
     }
 
@@ -791,7 +793,7 @@ void ColLin(int left,int top,int length,char color)
 int i;
 
 for (i=left;i<left+length;i++)
-	  AffCol(i,top,color);
+      AffCol(i,top,color);
 }
 
 void ChrLin(int left,int top,int length,char color)
@@ -910,6 +912,7 @@ int x,y;
 
 _WhichEcran--;
 
+#ifdef DEBUG
 if ( (_Ecran[_WhichEcran]==NULL) | (_WhichEcran<0) )
     {
     Clr();
@@ -917,6 +920,7 @@ if ( (_Ecran[_WhichEcran]==NULL) | (_WhichEcran<0) )
     getch();
     return;
     }
+#endif
 
 for (y=0;y<50;y++)
     for (x=0;x<80;x++)
@@ -954,12 +958,12 @@ va_end(arglist);
 
 a=x;
 while (*suite!=0)
-	{
+    {
 //    AffChr(a,y,'Û'), Delay(1000);
     AffChr(a,y,*suite);
-	a++;
-	suite++;
-	}
+    a++;
+    suite++;
+    }
 
 }
 
@@ -995,21 +999,21 @@ retour=0;
 memcpy(old,chaine,255);
 
 fin=strlen(chaine);
-if (fin>longueur)	 {
-	*chaine=0;
-	fin=0;
-	}
+if (fin>longueur)    {
+    *chaine=0;
+    fin=0;
+    }
 
-PrintAt(colonne,ligne,chaine);		/* R‚‚crit la chaine … la position d‚sir‚e */
+PrintAt(colonne,ligne,chaine); //R‚‚crit la chaine … la position d‚sir‚e
 
 couleur=GetCol(colonne,ligne);
 i=0;
 for (n=0;n<fin;n++)
-	AffCol(colonne+n,ligne,((couleur*16)&127)+(couleur&112)/16);
+    AffCol(colonne+n,ligne,((couleur*16)&127)+(couleur&112)/16);
 
 if (fin==0)
-	for (n=0;n<longueur;n++)
-		AffChr(colonne+n,ligne,' ');
+    for (n=0;n<longueur;n++)
+        AffChr(colonne+n,ligne,' ');
 
 do  {
 
@@ -1020,18 +1024,19 @@ if (ins==0)
 
 caractere=Wait(colonne+i,ligne,ins);
 
-if ( ((caractere&255)!=0) & (couleur!=0) & (caractere!=13) & (caractere!=27) & (caractere!=9) )
+if ( ((caractere&255)!=0) & (couleur!=0) & (caractere!=13)
+                                    & (caractere!=27) & (caractere!=9) )
     {
     for (n=0;n<fin;n++)
         {
-		AffCol(colonne+n,ligne,couleur);
-		AffChr(colonne+n,ligne,' ');
-		}
-	couleur=0;
-	fin=0;
-	i=0;
-	*chaine=0;
-	}
+        AffCol(colonne+n,ligne,couleur);
+        AffChr(colonne+n,ligne,' ');
+        }
+    couleur=0;
+    fin=0;
+    i=0;
+    *chaine=0;
+    }
 
 switch (caractere&255)
     {
@@ -1039,140 +1044,140 @@ switch (caractere&255)
         retour=2;
         end=1;
         break;
-    case 0:  /* v‚rifier si pas de touche de fonction press‚e */
-		c2=(caractere/256);
-		if (couleur!=0) 	/* Preserve ou pas l'ancienne valeur  ? */
+    case 0:             // v‚rifier si pas de touche de fonction press‚e
+        c2=(caractere/256);
+        if (couleur!=0)           // Preserve ou pas l'ancienne valeur ?
             {
-			if ( (c2==71) | (c2==75) | (c2==77) | (c2==79) )
-				{
-				for (n=0;n<fin;n++) AffCol(colonne+n,ligne,couleur);
-				couleur=0;
-				}
-			if (c2==83)
-				{
-				for (n=0;n<fin;n++)
-					{
-					AffCol(colonne+n,ligne,couleur);
-					AffChr(colonne+n,ligne,' ');
-					}
-				couleur=0;
-				fin=0;
-				i=0;
-				*chaine=0;
-				}
-			}
-		switch (c2)
-		  {
-          case 0x0F:    // SHIFT-TAB
+            if ( (c2==71) | (c2==75) | (c2==77) | (c2==79) )
+                {
+                for (n=0;n<fin;n++) AffCol(colonne+n,ligne,couleur);
+                couleur=0;
+                }
+            if (c2==83)
+                {
+                for (n=0;n<fin;n++)
+                    {
+                    AffCol(colonne+n,ligne,couleur);
+                    AffChr(colonne+n,ligne,' ');
+                    }
+                couleur=0;
+                fin=0;
+                i=0;
+                *chaine=0;
+                }
+            }
+        switch (c2)
+          {
+          case 0x0F:                                        // SHIFT-TAB
             retour=3;
             end=1;
             break;
-		  case 71: i=0; 						 break;  /* Home */
-		  case 75: if (i>0) i--; else Beep();	 break;  /* Left */
-		  case 77: if (i<fin) i++; else Beep();  break;  /* Right */
-		  case 79: i=fin;						 break;  /* End */
-          case 13: *(chaine+fin)=0;              break;  /* Enter */
+          case 71: i=0;                          break;          // Home
+          case 75: if (i>0) i--; else Beep();    break;          // Left
+          case 77: if (i<fin) i++; else Beep();  break;         // Right
+          case 79: i=fin;                        break;           // End
+          case 13: *(chaine+fin)=0;              break;         // Enter
 
           case 72: retour=3; end=1; break;
           case 80: retour=2; end=1; break;
 
-		  case 83:	/* del */
-			if (i!=fin)  /* v‚rifier si pas premiere position */
-				{
-				fin--;
-				*(chaine+fin+1)=' ';
-				*(chaine+fin+2)='\0';
-				strcpy(chaine+i,chaine+i+1);
-				PrintAt(colonne+i,ligne,chaine+i);
-				}
-			else
-				Beep();
-			break;
+          case 83:                                                // del
+            if (i!=fin)             // v‚rifier si pas premiere position
+                {
+                fin--;
+                *(chaine+fin+1)=' ';
+                *(chaine+fin+2)='\0';
+                strcpy(chaine+i,chaine+i+1);
+                PrintAt(colonne+i,ligne,chaine+i);
+                }
+            else
+                Beep();
+            break;
 
-		  case 82:	ins=(!ins);  break;
+          case 82:  ins=(!ins);  break;
 
-		  default:
-				  break;
-		  }  /* fin du switch */
-		  break;
+          default:
+                  break;
+          }  /* fin du switch */
+          break;
 
-	  case 8:  /* v‚rifier si touche [del] */
-		if (i>0)  /* v‚rifier si pas premiere position */
-			{
-			i--;
-			fin--;
-			if (i!=fin)
-			{
-			*(chaine+fin+1)=' ';
-			*(chaine+fin+2)='\0';
-			strcpy(chaine+i,chaine+i+1);
-			PrintAt(colonne+i,ligne,chaine+i);
-			}
-			else
-			  AffChr(colonne+i,ligne,' ');
-			}
-		else
-			Beep();
-		break;
+      case 8:                                // v‚rifier si touche [del]
+        if (i>0)                    // v‚rifier si pas premiere position
+            {
+            i--;
+            fin--;
+            if (i!=fin)
+            {
+            *(chaine+fin+1)=' ';
+            *(chaine+fin+2)='\0';
+            strcpy(chaine+i,chaine+i+1);
+            PrintAt(colonne+i,ligne,chaine+i);
+            }
+            else
+              AffChr(colonne+i,ligne,' ');
+            }
+        else
+            Beep();
+        break;
 
-	  case 13:	/* v‚rifier si touche [enter] */
+      case 13:                             // v‚rifier si touche [enter]
             retour=0;
             end=1;
             break;
 
-	  case 27:	/* v‚rifier si touche [esc] */
+      case 27:                               // v‚rifier si touche [esc]
         if (couleur!=0)
-				{
+                {
                 for (n=0;n<fin;n++)
                     AffCol(colonne+n,ligne,couleur);
                 retour=1;
                 end=1;
                 break;
-				}
-		if (*chaine==0)
-			{
-			strcpy(chaine,old);
-			PrintAt(colonne,ligne,chaine);
+                }
+        if (*chaine==0)
+            {
+            strcpy(chaine,old);
+            PrintAt(colonne,ligne,chaine);
             retour=1;
             end=1;
-			}
+            }
 
         for (i=0;i<fin;i++)
                 AffChr(colonne+i,ligne,' ');
-		fin=0;
-		i=0;
-		*chaine=0;
-		break;
+        fin=0;
+        i=0;
+        *chaine=0;
+        break;
 
-	  default:
-		{	  /* v‚rifier si caractŠre correcte */
+      default:
+        {                              // v‚rifier si caractŠre correcte
         if ((caractere>31) && (caractere<=255))
-			{
-			if ((i==fin) || (!ins))
-				{
-				if (i==longueur)  i--;
-								else
-				if (i==fin) fin++;
-				*(chaine+i)=caractere;
-				AffChr(colonne+i,ligne,caractere);
-				i++;
-				}  /* fin du if i==fin || !ins */
-			else
-			if (fin<longueur)
-			{
-			*(chaine+fin)=0;
-			strcpy(chaine2,chaine+i);
-			strcpy(chaine+i+1,chaine2);
-			*(chaine+i)=caractere;
-			PrintAt(colonne+i,ligne,chaine+i);
-			fin++;
-			i++;
-			}
-			}  /* fin du if caractere>31 */
-		  else
-			Beep();
-		  }  /* fin du default */
-      }  /* fin du switch */
+            {
+            if ((i==fin) || (!ins))
+                {
+                if (i==longueur)  i--;
+                                else
+                if (i==fin) fin++;
+                *(chaine+i)=caractere;
+                AffChr(colonne+i,ligne,caractere);
+                i++;
+                }                            // fin du if i==fin || !ins
+            else
+            if (fin<longueur)
+            {
+            *(chaine+fin)=0;
+            strcpy(chaine2,chaine+i);
+            strcpy(chaine+i+1,chaine2);
+            *(chaine+i)=caractere;
+            PrintAt(colonne+i,ligne,chaine+i);
+            fin++;
+            i++;
+            }
+            }                                  // fin du if caractere>31
+          else
+            Beep();
+          }  //--- fin du default --------------------------------------
+      }  //--- fin du switch -------------------------------------------
 }
 while (!end);
 
@@ -1180,14 +1185,17 @@ while (!end);
 *(chaine+fin)=0;
 
 if (couleur!=0)
-	for (n=0;n<fin;n++)
+    for (n=0;n<fin;n++)
         AffCol(colonne+n,ligne,couleur);
 
 GotoXY(0,0);
 
 return retour;
-}  /* fin fonction lire_chaine */
+}
 
+/*--------------------------------------------------------------------*\
+ -                          Screen Saver                              -
+\*--------------------------------------------------------------------*/
 int ScreenSaver(void)
 {
 char a;
@@ -1198,7 +1206,10 @@ inp(0x3BA);
 outp(0x3C0,0);
 
 a=getch();
-if (a==0) b=getch()*256+a; else b=a;
+if (a==0)
+    b=getch()*256+a;
+    else
+    b=a;
 
 inp(0x3DA);
 inp(0x3BA);
@@ -1224,7 +1235,7 @@ void Beep(void)
 {
 }
 
-/*****************************************************************************/
+/*--------------------------------------------------------------------*/
 
 // Make a Window (0: exterieurn, 1: interieur)
 // -------------------------------------------
@@ -1258,7 +1269,7 @@ if (Cfg->UseFont==0)
 
         for(x=x1+1;x<x2;x++)    AffChr(x,y1,196);
         for(x=x1+1;x<x2;x++)    AffChr(x,y2,196);
-        
+
         for(y=y1+1;y<y2;y++)    AffChr(x1,y,179);
         for(y=y1+1;y<y2;y++)    AffChr(x2,y,179);
         break;
@@ -1285,7 +1296,7 @@ if (Cfg->UseFont==0)
 
         for(x=x1+1;x<x2;x++)    AffChr(x,y1,143);
         for(x=x1+1;x<x2;x++)    AffChr(x,y2,148);
-        
+
         for(y=y1+1;y<y2;y++)    AffChr(x1,y,145);
         for(y=y1+1;y<y2;y++)    AffChr(x2,y,146);
         break;
@@ -1297,7 +1308,7 @@ if (Cfg->UseFont==0)
 
         for(x=x1+1;x<x2;x++)    AffChr(x,y1,148);
         for(x=x1+1;x<x2;x++)    AffChr(x,y2,143);
-        
+
         for(y=y1+1;y<y2;y++)    AffChr(x1,y,146);
         for(y=y1+1;y<y2;y++)    AffChr(x2,y,145);
         break;
@@ -1325,7 +1336,7 @@ if (Cfg->UseFont==0)
 
         for(x=x1+1;x<x2;x++)    AffChr(x,y1,196);
         for(x=x1+1;x<x2;x++)    AffChr(x,y2,196);
-        
+
         for(y=y1+1;y<y2;y++)    AffChr(x1,y,179);
         for(y=y1+1;y<y2;y++)    AffChr(x2,y,179);
         break;
@@ -1340,7 +1351,7 @@ if (Cfg->UseFont==0)
 
         for(x=x1+1;x<x2;x++)    AffChr(x,y1,134);
         for(x=x1+1;x<x2;x++)    AffChr(x,y2,129);
-        
+
         for(y=y1+1;y<y2;y++)    AffChr(x1,y,132);
         for(y=y1+1;y<y2;y++)    AffChr(x2,y,131);
         break;
@@ -1352,7 +1363,7 @@ if (Cfg->UseFont==0)
 
         for(x=x1+1;x<x2;x++)    AffChr(x,y1,129);
         for(x=x1+1;x<x2;x++)    AffChr(x,y2,134);
-        
+
         for(y=y1+1;y<y2;y++)    AffChr(x1,y,131);
         for(y=y1+1;y<y2;y++)    AffChr(x2,y,132);
         break;
@@ -1465,7 +1476,7 @@ char chaine[256];
 
 
 
-Cfg->Tfont=179;      // Barre Verticale | with 8x8
+Cfg->Tfont=179;                            // Barre Verticale | with 8x8
 
 strcpy(chaine,Fics->path);
 strcat(chaine,"\\font8x8.cfg");
@@ -1476,8 +1487,8 @@ if (Cfg->font==0) return;
 fic=fopen(chaine,"rb");
 if (fic==NULL) return;
 
-Cfg->UseFont=1;         // utilise les fonts 8x8
-Cfg->Tfont=168;      // Barre Verticale | with 8x8
+Cfg->UseFont=1;                                 // utilise les fonts 8x8
+Cfg->Tfont=168;                            // Barre Verticale | with 8x8
 
 pol=malloc(2048);
 
@@ -1485,17 +1496,8 @@ fread(pol,2048,1,fic);
 
 fclose(fic);
 
-/*
-for (n=0;n<8;n++)
-    Cfg->Tfont[n+1]=128+n;
-for (n=0;n<8;n++)
-    Cfg->Tfont[n+9]=142+n;
-*/
-
-for (n=0;n<256;n++)  {
+for (n=0;n<256;n++)
     MakeFont(pol+n*8,buf+n*32);
-    }
-
 
 R.w.bx=(8==8) ? 0x0001 : 0x0800;
 x=inp(0x3CC) & (255-12);
@@ -1523,7 +1525,7 @@ unsigned char x;
 
 char chaine[256];
 
-Cfg->Tfont=179;      // Barre Verticale | with 8x8
+Cfg->Tfont=179;                            // Barre Verticale | with 8x8
 
 strcpy(chaine,Fics->path);
 strcat(chaine,"\\font8x16.cfg");
@@ -1534,8 +1536,8 @@ if (Cfg->font==0) return;
 fic=fopen(chaine,"rb");
 if (fic==NULL) return;
 
-Cfg->UseFont=1;         // utilise les fonts 8x8
-Cfg->Tfont=168;      // Barre Verticale | with 8x8
+Cfg->UseFont=1;                                 // utilise les fonts 8x8
+Cfg->Tfont=168;                            // Barre Verticale | with 8x8
 
 pol=malloc(4096);
 
@@ -1550,9 +1552,8 @@ for (n=0;n<8;n++)
     Cfg->Tfont[n+9]=142+n;
 */
 
-for (n=0;n<256;n++)  {
+for (n=0;n<256;n++)
     MakeFont(pol+n*16,buf+n*32);
-    }
 
 
 R.w.bx=(8==8) ? 0x0001 : 0x0800;
@@ -1696,7 +1697,7 @@ memset(buf,0,s);
 return buf;
 }
 
-void *GetMemSZ(int s)   // GetMem sans mise … z‚ro
+void *GetMemSZ(int s)                         // GetMem sans mise … z‚ro
 {
 void *buf;
 
@@ -1711,9 +1712,9 @@ return buf;
 }
 
 
-// Crc - 32 BIT ANSI X3.66 CRC checksum files
+//--- Crc - 32 BIT ANSI X3.66 CRC checksum files -----------------------
 
-static unsigned long int crc_32_tab[] = { /* CRC polynomial 0xedb88320 */
+static unsigned long int crc_32_tab[] = {   // CRC polynomial 0xedb88320
 0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -1759,7 +1760,6 @@ static unsigned long int crc_32_tab[] = { /* CRC polynomial 0xedb88320 */
 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-#define UPDC32(octet,crc) (crc_32_tab[((crc) ^ (octet)) & 0xff] ^ ((crc) >> 8))
 
 // Return -1 if error, 0 in other case
 
@@ -1784,7 +1784,7 @@ if ((fin=fopen(name, "rb"))==NULL)
 while ((c=getc(fin))!=EOF)
     {
     ++charcnt;
-    oldcrc32 = UPDC32(c, oldcrc32);
+    oldcrc32 = (crc_32_tab[(oldcrc32^c) & 0xff]^(oldcrc32 >> 8));
     }
 
 if (ferror(fin))
@@ -1802,9 +1802,11 @@ oldcrc = oldcrc32 = ~oldcrc32;
 return 0;
 }
 
-// si p vaut 0 mets off
-// si p vaut 1 interroge
-// retourne -1 si SHIFT TAB, 1 si TAB
+/*--------------------------------------------------------------------*\
+ - si p vaut 0 mets off                                               -
+ - si p vaut 1 interroge                                              -
+ - retourne -1 si SHIFT TAB, 1 si TAB                                 -
+\*--------------------------------------------------------------------*/
 int Puce(int x,int y,int lng,char p)
 {
 int r=0;
@@ -1857,14 +1859,16 @@ AffChr(x+lng-1,y,32);
 AffChr(x+lng,y,220);
 ChrLin(x+1,y+1,lng,223);
 
-ColLin(x,y,lng,2*16+3);        // Couleur
+ColLin(x,y,lng,2*16+3);                                       // Couleur
 
 return r;
 }
 
-// si p vaut 0 mets off
-// si p vaut 1 interroge
-// retourne -1 si SHIFT TAB, 1 si TAB
+/*--------------------------------------------------------------------*\
+ - si p vaut 0 mets off                                               -
+ - si p vaut 1 interroge                                              -
+ - retourne -1 si SHIFT TAB, 1 si TAB                                 -
+\*--------------------------------------------------------------------*/
 int Switch(int x,int y,int *Val)
 {
 int r=0;
@@ -1909,13 +1913,16 @@ while (r==0)
 return r;
 }
 
-// 0 si ENTER
-// 1 si ESCAPE
-// 2 si -->
-// 3 si <--
-// 4 si pas bouger
-// 5 si HAUT
-// 6 si BAT
+/*--------------------------------------------------------------------*\
+ - 0 si ENTER                                                         -
+ - 1 si ESCAPE                                                        -
+ - 2 si -->                                                           -
+ - 3 si <--                                                           -
+ - 4 si pas bouger                                                    -
+ - 5 si HAUT                                                          -
+ - 6 si BAT                                                           -
+\*--------------------------------------------------------------------*/
+
 int MSwitch(int x,int y,int *Val,int i)
 {
 int r=0;
@@ -1945,17 +1952,17 @@ while (r==0)
         case 0:
             switch(car/256)
                 {
-                case 0x4B:  // LEFT
-                case 15:    // SHIFT-TAB
+                case 0x4B:                                       // LEFT
+                case 15:                                    // SHIFT-TAB
                     r=3;
                     break;
-                case 72:    // BAS
+                case 72:                                          // BAS
                     r=6;
                     break;
-                case 80:    // HAUT
+                case 80:                                         // HAUT
                     r=5;
                     break;
-                case 0x4D:  // RIGHT
+                case 0x4D:                                      // RIGHT
                     r=2;
                     break;
                 }
@@ -1967,14 +1974,14 @@ while (r==0)
 return r;
 }
 
-
-// Retourne 27 si escape
-// Retourne numero de la liste sinon
-
+/*--------------------------------------------------------------------*\
+ - Retourne 27 si escape                                              -
+ - Retourne numero de la liste sinon                                  -
+\*--------------------------------------------------------------------*/
 int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F)
 {
-char fin;       // si =0 continue
-char direct;    // direction du tab
+char fin;                                              // si =0 continue
+char direct;                                         // direction du tab
 int i,i2,j;
 int *adr;
 static char chaine[80];
@@ -2005,28 +2012,34 @@ switch(T[i].type) {
         Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
         break;
     case 4:
-        WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+3,1);
+        WinCadre(F->x1+T[i].x,F->y1+T[i].y,
+                          *(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+3,1);
         break;
     case 5:
         PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
         Puce(F->x1+T[i].x,F->y1+T[i].y,13,0);
         break;
     case 6:
-        WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+2,2);
+        WinCadre(F->x1+T[i].x,F->y1+T[i].y,
+                          *(T[i].entier)+F->x1+T[i].x,F->y1+T[i].y+2,2);
         break;
     case 7:
         j=strlen(T[i].str)+2;
         ColLin(F->x1+T[i].x+j,F->y1+T[i].y,9,1*16+5);
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"%s: %-9d",T[i].str,*(T[i].entier));
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"%s: %-9d",T[i].str,
+                                                        *(T[i].entier));
         break;
     case 8:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"[%c] %s",*(T[i].entier) ? 'X' : ' ',T[i].str);
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"[%c] %s",
+                                   *(T[i].entier) ? 'X' : ' ',T[i].str);
         break;
     case 9:
-        WinCadre(F->x1+T[i].x,F->y1+T[i].y,*(T[i].str)+F->x1+T[i].x+1,*(T[i].entier)+F->y1+T[i].y+1,2);
+        WinCadre(F->x1+T[i].x,F->y1+T[i].y,
+            *(T[i].str)+F->x1+T[i].x+1,*(T[i].entier)+F->y1+T[i].y+1,2);
         break;
     case 10:
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"(%c) %s",(*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,
+                    "(%c) %s",(*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
         break;
     case 11:
         ChrLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),32);
@@ -2044,7 +2057,8 @@ for(i2=0;i2<nbr;i2++)   // Affichage a ne faire qu'une fois
     switch(T[i2].type)
         {
         case 10:
-            PrintAt(F->x1+T[i2].x,F->y1+T[i2].y,"(%c) %s",(*(T[i2].entier)==i2) ? 'X' : ' ',T[i2].str);
+            PrintAt(F->x1+T[i2].x,F->y1+T[i2].y,"(%c) %s",
+                           (*(T[i2].entier)==i2) ? 'X' : ' ',T[i2].str);
             break;
         }
 
@@ -2055,7 +2069,8 @@ switch(T[i].type) {
         break;
     case 11:
     case 1:
-        direct=InputAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str,*(T[i].entier));
+        direct=InputAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str,
+                                                        *(T[i].entier));
         break;
     case 2:
         direct=Puce(F->x1+T[i].x,F->y1+T[i].y,13,1);
@@ -2068,7 +2083,8 @@ switch(T[i].type) {
         break;
     case 7:
         sprintf(chaine,"%d",*(T[i].entier));
-        direct=InputAt(F->x1+T[i].x+strlen(T[i].str)+2,F->y1+T[i].y,chaine,9);
+        direct=InputAt(F->x1+T[i].x+strlen(T[i].str)+2,
+                                                 F->y1+T[i].y,chaine,9);
         sscanf(chaine,"%d",T[i].entier);
         break;
     case 8:
@@ -2076,27 +2092,28 @@ switch(T[i].type) {
         break;
     case 10:
         direct=MSwitch(F->x1+T[i].x,F->y1+T[i].y,T[i].entier,i);
-        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"(%c) %s",(*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,"(%c) %s",
+                              (*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
         break;
     }
 
 switch(direct)
     {
     case 0:
-        fin=1;  // SELECTION
+        fin=1;                                              // SELECTION
         break;
     case 1:
-        fin=2;  // ABORT
+        fin=2;                                                  // ABORT
         break;
-    case 2:     // Next Case
+    case 2:                                                 // Next Case
         i++;
         break;
-    case 3:     // Previous Case
+    case 3:                                             // Previous Case
         i--;
         break;
-    case 4:     // Rien du tout
+    case 4:                                              // Rien du tout
         break;
-    case 5:     // Type suivant
+    case 5:                                              // Type suivant
         adr=T[i].entier;
         while (adr==T[i].entier)
             {
@@ -2104,7 +2121,7 @@ switch(direct)
             if (i==nbr) i=0;
             }
         break;
-    case 6:     // Type precedent
+    case 6:                                            // Type precedent
         adr=T[i].entier;
         while (adr==T[i].entier)
             {
@@ -2113,8 +2130,7 @@ switch(direct)
             }
         break;
 
-    default:
-        // Pas normal
+    default:                                               // Pas normal
         break;
     }
 
@@ -2128,11 +2144,13 @@ ChargeEcran();
 if (fin==1)
     return i;
 
-return 27;  // ESCAPE
+return 27;                                                     // ESCAPE
 }
 
-// 1 -> Cancel
-// 0 -> OK
+/*--------------------------------------------------------------------*\
+ - 1 -> Cancel                                                        -
+ - 0 -> OK                                                            -
+\*--------------------------------------------------------------------*/
 int WinError(char *erreur)
 {
 int x,l;
@@ -2152,7 +2170,7 @@ struct TmtWin F = {
 
 l=strlen(erreur);
 
-x=(80-l)/2;     // 1-> 39, 2->39
+x=(80-l)/2;                                             // 1-> 39, 2->39
 if (x>25) x=25;
 
 l=(40-x)*2;
@@ -2175,8 +2193,10 @@ if (WinTraite(T,4,&F)==0)
     return 1;
 }
 
-// 1 -> Cancel
-// 0 -> OK
+/*--------------------------------------------------------------------*\
+ - 1 -> Cancel                                                        -
+ - 0 -> OK                                                            -
+\*--------------------------------------------------------------------*/
 int WinMesg(char *mesg,char *erreur)
 {
 int x,l;
@@ -2197,7 +2217,7 @@ struct TmtWin F = {
 
 l=strlen(erreur);
 
-x=(80-l)/2;     // 1-> 39, 2->39
+x=(80-l)/2;                                             // 1-> 39, 2->39
 if (x>25) x=25;
 
 l=(40-x)*2;
@@ -2222,8 +2242,10 @@ if (WinTraite(T,4,&F)==0)
 
 }
 
-// Avancement de graduation
-// Renvoit le prochain
+/*--------------------------------------------------------------------*\
+ - Avancement de graduation                                           -
+ - Renvoit le prochain                                                -
+\*--------------------------------------------------------------------*/
 int Gradue(int x,int y,int length,int from,int to,int total)
 {
 short j1,j2;
@@ -2322,32 +2344,49 @@ Cfg->KeyAfterShell=0;
 memcpy(Cfg->palette,defcol,48);
 
 strcpy(Mask[0]->title,"C Style");
-strcpy(Mask[0]->chaine,"asm break case cdecl char const continue default do double else enum extern far float for goto huge if int interrupt long near pascal register short signed sizeof static struct switch typedef union unsigned void volatile while @");
+strcpy(Mask[0]->chaine,"asm break case cdecl char const continue "
+                       "default do double else enum extern far float "
+                       "for goto huge if int interrupt long near "
+                       "pascal register short signed sizeof static "
+                       "struct switch typedef union unsigned void "
+                       "volatile while @");
 Mask[0]->Ignore_Case=0;
 Mask[0]->Other_Col=1;
 
 strcpy(Mask[1]->title,"Pascal Style");
-strcpy(Mask[1]->chaine,"absolute and array begin case const div do downto else end external file for forward function goto if implementation in inline interface interrupt label mod nil not of or packed procedure program record repeat ");
-strcat(Mask[1]->chaine,"set shl shr string then to type unit until uses var while with xor @");
+strcpy(Mask[1]->chaine,"absolute and array begin case const div do "
+                       "downto else end external file for forward "
+                       "function goto if implementation in inline "
+                       "interface interrupt label mod nil not of or "
+                       "packed procedure program record repeat "
+                       "set shl shr string then to type unit until "
+                       "uses var while with xor @");
 Mask[1]->Ignore_Case=1;
 Mask[1]->Other_Col=1;
 
 strcpy(Mask[2]->title,"Assembler Style");
-strcpy(Mask[2]->chaine,"aaa aad aam aas adc add and arpl bound bsf bsr bswap bt btc btr bts call cbw cdq clc cld cli clts cmc cmp cmps cmpxchg cwd cwde ");
-strcat(Mask[2]->chaine,"daa das dec div enter esc hlt idiv imul in inc ins int into invd invlpg iret iretd jcxz jecxz jmp ");
-strcat(Mask[2]->chaine,"ja jae jb jbe jc jcxz je jg jge jl jle jna jnae jnb jnbe jnc jne jng jnge jnl jnle jno jnp jns jnz jo jp jpe jpo js jz ");
-strcat(Mask[2]->chaine,"lahf lar lds lea leave les lfs lgdt lidt lgs lldt lmsw lock lods loop loope loopz loopnz loopne lsl lss ");
-strcat(Mask[2]->chaine,"ltr mov movs movsx movsz mul neg nop not or out outs pop popa popad push pusha pushad pushf pushfd ");
-strcat(Mask[2]->chaine,"rcl rcr rep repe repz repne repnz ret retf rol ror sahf sal shl sar sbb scas ");
-strcat(Mask[2]->chaine,"setae setnb setb setnae setbe setna sete setz setne setnz setl setng setge setnl setle setng setg setnle ");
-strcat(Mask[2]->chaine,"sets setns setc setnc seto setno setp setpe setnp setpo sgdt ");
-strcat(Mask[2]->chaine,"sidt shl shr shld shrd sldt smsw stc std sti stos str sub test verr verw wait fwait wbinvd xchg xlat xlatb xor @");
-strcat(Mask[2]->chaine,"db dw dd endp ends assume");
+strcpy(Mask[2]->chaine,"aaa aad aam aas adc add and arpl bound bsf bsr "
+  "bswap bt btc btr bts call cbw cdq clc cld cli clts cmc cmp cmps "
+  "cmpxchg cwd cwde daa das dec div enter esc hlt idiv imul in inc "
+  "ins int into invd invlpg iret iretd jcxz jecxz jmp ja jae jb jbe "
+  "jc jcxz je jg jge jl jle jna jnae jnb jnbe jnc jne jng jnge jnl "
+  "jnle jno jnp jns jnz jo jp jpe jpo js jz lahf lar lds lea leave les "
+  "lfs lgdt lidt lgs lldt lmsw lock lods loop loope loopz loopnz "
+  "loopne lsl lss ltr mov movs movsx movsz mul neg nop not or out outs "
+  "pop popa popad push pusha pushad pushf pushfd rcl rcr rep repe repz "
+  "repne repnz ret retf rol ror sahf sal shl sar sbb scas setae setnb "
+  "setb setnae setbe setna sete setz setne setnz setl setng setge "
+  "setnl setle setng setg setnle sets setns setc setnc seto setno "
+  "setp setpe setnp setpo sgdt sidt shl shr shld shrd sldt smsw stc "
+  "std sti stos str sub test verr verw wait fwait wbinvd xchg xlat "
+  "db dw dd endp ends assume xlatb xor @");
+
 Mask[1]->Ignore_Case=1;
 Mask[1]->Other_Col=1;
 
 strcpy(Mask[15]->title,"User Defined Style");
-strcpy(Mask[15]->chaine,"ketchup killers redbug access darkangel katana ecstasy cray magic fred cobra z @");
+strcpy(Mask[15]->chaine,"ketchup killers redbug access darkangel "
+                      "marjorie katana ecstasy cray magic fred cobra z @");
 Mask[15]->Ignore_Case=1;
 Mask[15]->Other_Col=1;
 
@@ -2395,17 +2434,25 @@ Cfg->combit=8;
 Cfg->comparity='N';
 Cfg->comstop=1;
 
+Cfg->enterkkd=1;
+
+Cfg->warp=1;
+
+Cfg->editeur[0]=0;
+Cfg->vieweur[0]=0;
+
 strcpy(Cfg->HistDir,"C:\\");
 }
 
-/*---------------------------------------------------------------------*
- -                       Error and Signal Handler                      -
- -----------------------------------------------------------------------
- - Return IOerr si IOerr = 1 ou 3                                      -
- - Return     3 si IOver = 1                                           -
- *---------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*
+ -                       Error and Signal Handler                     -
+ ----------------------------------------------------------------------
+ - Return IOerr si IOerr = 1 ou 3                                     -
+ - Return     3 si IOver = 1                                          -
+ *--------------------------------------------------------------------*/
 
-int __far Error_handler(unsigned deverr,unsigned errcode,unsigned far *devhdr)
+int __far Error_handler(unsigned deverr,unsigned errcode,
+                                                   unsigned far *devhdr)
 {
 int i,n,erreur[3];
 char car;
@@ -2438,7 +2485,8 @@ switch((deverr&1536)/512)  {
     case 3: PrintAt(42,11,"Data-area"); break;
     }
 
-PrintAt(23,12,"Type of error: %s %04X",((deverr&256)==256) ? "Write":"Read",deverr);
+PrintAt(23,12,"Type of error: %s %04X",((deverr&256)==256) ?
+                                                 "Write":"Read",deverr);
 
 i=8192;
 n=0;
@@ -2452,9 +2500,12 @@ for(n=0;n<3;n++)
     i=i/2;
     }
 
-if (erreur[0]==1) PrintAt(25,14,"Ignore"),AffCol(25,14,10*16+5),WinCadre(24,13,31,15,2);
-if (erreur[1]==1) PrintAt(38,14,"Retry"),AffCol(38,14,10*16+5),WinCadre(37,13,43,15,2);
-if (erreur[2]==1) PrintAt(51,14,"Fail"),AffCol(51,14,10*16+5),WinCadre(50,13,55,15,2);
+if (erreur[0]==1) PrintAt(25,14,"Ignore"),AffCol(25,14,10*16+5),
+                                                WinCadre(24,13,31,15,2);
+if (erreur[1]==1) PrintAt(38,14,"Retry"),AffCol(38,14,10*16+5),
+                                                WinCadre(37,13,43,15,2);
+if (erreur[2]==1) PrintAt(51,14,"Fail"),AffCol(51,14,10*16+5),
+                                                WinCadre(50,13,55,15,2);
 
 IOerr=0;
 do
@@ -2490,8 +2541,8 @@ if ((c<1) | (c>26)) return 1;
 
 n=_bios_equiplist();
 
-if ( ((n&192)==0) & (c==2) ) return 1;    // Seulement un disque
-if ( ((n&1)==0) & (c==1) ) return 1;    // Pas de disque
+if ( ((n&192)==0) & (c==2) ) return 1;            // Seulement un disque
+if ( ((n&1)==0) & (c==1) ) return 1;                    // Pas de disque
 
 
 _dos_getdrive(&cdrv);

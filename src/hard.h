@@ -157,6 +157,13 @@ struct config
      char comparity;       // parity               (ex:'N')
      char comstop;         // Bit de stop          (ex=1)
 
+     char enterkkd;        // entre dans les kkd pendant la recherche
+     char warp;            // 0: pas de warp, 1: word, 2: entier
+
+     char editeur[64];     // ligne de commande pour l'editeur
+     char vieweur[64];     // ligne de commande pour le viewer
+
+
     // Pas touche
     //-----------
      long mtrash;          // taille maximum de la trash
@@ -191,8 +198,6 @@ struct fichier
      {
      char *FicIdfFile;     // idfext.rb
      char *CfgFile;        // kkrb.cfg
-     char *view;           // view
-     char *edit;           // edit
      char *path;           // path
      char *help;           // kkc.hlp
      char *temp;           // temp.tmp

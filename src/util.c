@@ -7,7 +7,7 @@
 
 #include <conio.h>
 #include <dos.h>
-#include <bios.h>   // Gestion clavier
+#include <bios.h>                                     // Gestion clavier
 #include <fcntl.h>
 #include <time.h>
 
@@ -94,7 +94,7 @@ strcpy(Second,"-");
 
 for (n=0;n<DFen->nbrfic;n++)
     {
-    if ( (DFen->F[n]->select==1) | ((DFen->nbrsel==0) & (n==DFen->pcur)) )
+    if ((DFen->F[n]->select==1) | ((DFen->nbrsel==0) & (n==DFen->pcur)))
         {
         o=(DFen->F[n]->attrib);
         o=(o&0x20)!=0x20;
@@ -154,7 +154,8 @@ if (n!=27)  // pas escape
     if (T[n].type!=3)    // pas cancel
         for (n=0;n<DFen->nbrfic;n++)
             {
-            if ( (DFen->F[n]->select==1) | ((DFen->nbrsel==0) & (n==DFen->pcur)) )
+            if ( (DFen->F[n]->select==1) | ((DFen->nbrsel==0) &
+                                                      (n==DFen->pcur)) )
                 {
                 int hand2;
 
@@ -219,9 +220,100 @@ if (n!=27)  // pas escape
             }
     }
 
-return 1;       // Erreur
+return 1;                                                      // Erreur
 }
 
+void ServerMode(void)
+{
+union REGS regs;
+char buf[32];
+int n;
+char ok=0;
 
+SaveEcran();
+
+WinCadre(19,4,61,11,0);
+Window(20,5,60,10,10*16+4);
+
+PrintAt(35,5,"Server Mode");
+
+com_open(Cfg->comport,Cfg->comspeed,Cfg->combit,
+                                           Cfg->comparity,Cfg->comstop);
+sprintf(buf,"ATS0=0");
+for(n=0;n<strlen(buf);n++)
+    com_send_ch(buf[n]);
+com_close();
+
+
+do
+    {
+    regs.w.dx=Cfg->comport-1;
+    regs.w.ax=0x300;
+
+    int386(0x14,&regs,&regs);
+
+    PrintAt(21,7,"Modem Status: (0x%4X) ",regs.w.ax);
+    }
+while( (!kbhit()) & ((regs.h.al&64)==0) );
+
+if ((regs.h.al&64)==64)
+    {
+    PrintAt(44,7,"RING");
+
+    com_open(Cfg->comport,Cfg->comspeed,Cfg->combit,
+                                           Cfg->comparity,Cfg->comstop);
+
+    while ( (com_read_ch()!=27) & (!kbhit()) )
+        {
+        clock_t cl;
+
+        sprintf(buf,"\x1b[6n*");
+        for(n=0;n<strlen(buf);n++)   com_send_ch(buf[n]);
+
+        cl=clock();
+        while((clock()-cl)<60)
+            PrintAt(21,8,"Terminal Ready ? : %s",
+                                           com_ch_ready() ? "Yes":"No");
+        }
+
+    if (com_ch_ready())
+        {
+        PrintAt(21,10,"Erase port buffer");
+
+        while(com_ch_ready()==1)
+            com_read_ch();
+        ok=1;
+        }
+
+    com_close();
+
+    if (ok==1)
+        {
+        ChargeEcran();
+        Cfg->font=0;
+        ChangeTaille(25);                          // Rafraichit l'ecran
+        DFen->yl=(Cfg->TailleY)-4;
+        DFen->Fen2->yl=(Cfg->TailleY)-4;
+        ChangeLine();
+
+        DesinitScreen();
+        Cfg->display=2;
+        InitScreen(Cfg->display);
+
+        sprintf(buf,"\x1b[=255h");
+        for(n=0;n<strlen(buf);n++)   com_send_ch(buf[n]);
+
+        UseCfg();
+
+        com_send_ch(27);
+        com_send_ch(27);
+        }
+    }
+
+if (ok==0)
+    ChargeEcran();
+
+while (kbhit()) Wait(0,0,0);
+}
 
 
