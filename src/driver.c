@@ -232,6 +232,7 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.FType!=2) )
 
             Fic[DFen->nbrfic]->select=0;
 
+
             DFen->nbrfic++;
 
             }
@@ -608,6 +609,7 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
             Fic[DFen->nbrfic]->date=33;
             Fic[DFen->nbrfic]->attrib=0x10;
             Fic[DFen->nbrfic]->select=0;
+
             DFen->nbrfic++;
             }
         }
@@ -1183,8 +1185,8 @@ if (dirp!=NULL)
          (((ff->d_attr)&_A_VOLID)!=_A_VOLID)
          )
         {
-        Fic[DFen->nbrfic]=GetMemSZ(sizeof(struct file));
-        Fic[DFen->nbrfic]->name=GetMemSZ(strlen(ff->d_name)+1);
+        Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+        Fic[DFen->nbrfic]->name=GetMem(strlen(ff->d_name)+1);
         strcpy(Fic[DFen->nbrfic]->name,ff->d_name);
         Fic[DFen->nbrfic]->time=ff->d_time;
         Fic[DFen->nbrfic]->date=ff->d_date;
@@ -1204,9 +1206,9 @@ rech[3]=0;
 if ( ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
      | (DFen->nbrfic==0) )
     {
-    Fic[DFen->nbrfic]=GetMemSZ(sizeof(struct file));
+    Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-    Fic[DFen->nbrfic]->name=GetMemSZ(4);                  // Pour Reload
+    Fic[DFen->nbrfic]->name=GetMem(4);                  // Pour Reload
     memcpy(Fic[DFen->nbrfic]->name,rech,4);
     Fic[DFen->nbrfic]->time=0;
     Fic[DFen->nbrfic]->date=0;

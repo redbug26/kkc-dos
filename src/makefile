@@ -15,7 +15,8 @@ CC = wcc386
 CL = *wlink
 CB = wlib
 
-SYSTEM = dos4g
+SYSTEM = pmodew
+#dos4g
 
 ASM = tasm
 ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
@@ -42,11 +43,10 @@ ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
 #-----------------------------------------------------------------------#
 !ifdef DEBUG
 
-CCOPTS = -wx -5r -fpc -zdp -d__WC32__ -mf -d3 -zm -od
+CCOPTS = -wx -5r -fpc -zdp -d__WC32__ -mf -d3 -zm -od -dDEBUG
 AOPTS = /d1
-LOPTS = option stack=60000 debug all option caseexact
+LOPTS = option stack=60000 debug all option caseexact option map
 LAOPTS = debug all
-
 
 #------------------------  En phase de release  ------------------------#
 #-----------------------------------------------------------------------#
@@ -66,24 +66,28 @@ LAOPTS =
 #----------------- Contruction de tous les executables -----------------#
 #-----------------------------------------------------------------------#
 
-all : kk.exe kkmain.exe kksetup.exe kkdesc.exe kkkkrgr.exe kkfont.exe idf.lib
+all : kk.exe kkmain.exe kksetup.exe kkdesc.exe kkkkrgr.exe kkfont.exe &
+      idf.lib hard.lib
+#      edit.exe
 
-kkmain.exe  : kkmain.obj     idf.lib   hard.obj   win.obj gestion.obj &
-                 dos.obj  driver.obj ficidf.obj copie.obj  delete.obj &
-              search.obj    help.obj   view.obj  util.obj reddies.obj &
-                edit.obj
+kkmain.exe  : kkmain.obj     idf.lib  hard.lib    win.obj   gestion.obj &
+              view.obj    driver.obj ficidf.obj copie.obj    delete.obj &
+              search.obj              util.obj reddies.obj longname.obj
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
-kksetup.exe : kksetup.obj hard.obj idf.lib help.obj reddies.obj
+kksetup.exe : kksetup.obj hard.lib idf.lib reddies.obj ficidf.obj
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
-kkdesc.exe  : kkdesc.obj idf.lib hard.obj help.obj
+kkdesc.exe  : kkdesc.obj idf.lib hard.lib
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
-kkkkrgr.exe : kkkkrgr.obj hard.obj
+kkkkrgr.exe : kkkkrgr.obj hard.lib
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
-kkfont.exe  : kkfont.obj hard.obj
+kkfont.exe  : kkfont.obj hard.lib
+             $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
+
+edit.exe  : edit.obj hard.lib
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 kk.exe      : kk.obj
@@ -95,7 +99,10 @@ kk.exe      : kk.obj
 .c.obj:
          $(CC) $* $(CCOPTS)
 
-idf.lib  : idf.obj
+idf.lib : idf.obj
+         $(CB) -c -n $@ +-$<
+
+hard.lib : hard.obj
          $(CB) -c -n $@ +-$<
 
 

@@ -181,7 +181,8 @@ if ( (nbrappl!=1) & (fin==0) )
         while (pos-prem<0) prem--;
         while (pos-prem>max-1) prem++;
 
-        PrintAt(0,0,"%39s by %-37s",app[pos].Titre,app[pos].Meneur);
+        PrintAt(0,0,"%*s by %-*s",Cfg->TailleX/2-1,app[pos].Titre,
+                                       Cfg->TailleX/2-3,app[pos].Meneur);
 
         for(n=0;n<max;n++)
             PrintTo(2,n,"%-49s",app[n+prem].Titre);
@@ -189,7 +190,7 @@ if ( (nbrappl!=1) & (fin==0) )
         for (n=d;n<=lfin;n++)
             {
             col[n]=GetRCol(n,pos-prem);
-            AffRCol(n,pos-prem,7*16+4);
+            AffRCol(n,pos-prem,1*16+4);     // 7
             }
 
         car=Wait(0,0,0);

@@ -70,6 +70,8 @@ void (*Window)(int left,int top,int right,int bottom,short color);
 \*--------------------------------------------------------------------*/
 void MakeFont(char *font,char *adr);
 
+void Font8x(int height);
+
 /*--------------------------------------------------------------------*\
 |-  Fonction interne d'affichage                                      -|
 \*--------------------------------------------------------------------*/
@@ -896,8 +898,8 @@ for(j=top;j<=bottom;j++)
 void ScrollUp(void)
 {
 int x,y;
-for (y=0;y<49;y++)
-    for (x=0;x<160;x++)
+for (y=0;y<Cfg->TailleY-1;y++)
+    for (x=0;x<Cfg->TailleX;x++)
         {
         AffChr(x,y,GetChr(x,y+1));
         AffCol(x,y,GetCol(x,y+1));
@@ -907,23 +909,26 @@ for (y=0;y<49;y++)
 
 void MoveText(int x1,int y1,int x2,int y2,int x3,int y3)
 {
-static char _MEcran[8000];
 int x,y;
+char *_MEcran;
 
-for (x=0;x<80;x++)
-    for (y=0;y<49;y++)
+_MEcran=GetMem(Cfg->TailleX*Cfg->TailleY*2);
+
+for (x=0;x<Cfg->TailleX;x++)
+    for (y=0;y<Cfg->TailleY;y++)
         {
-        _MEcran[(x+y*80)*2]=GetChr(x,y);
-        _MEcran[(x+y*80)*2+1]=GetCol(x,y);
+        _MEcran[(x+y*Cfg->TailleX)*2]=GetChr(x,y);
+        _MEcran[(x+y*Cfg->TailleX)*2+1]=GetCol(x,y);
         }
 
 for (y=y3;y<=y3+(y2-y1);y++)
     for (x=x3;x<=x3+(x2-x1);x++)
         {
-        AffChr(x,y,_MEcran[((x-x3+x1)+(y-y3+y1)*80)*2]);
-        AffCol(x,y,_MEcran[((x-x3+x1)+(y-y3+y1)*80)*2+1]);
+        AffChr(x,y,_MEcran[((x-x3+x1)+(y-y3+y1)*Cfg->TailleX)*2]);
+        AffCol(x,y,_MEcran[((x-x3+x1)+(y-y3+y1)*Cfg->TailleX)*2+1]);
         }
 
+LibMem(_MEcran);
 }
 
 /*--------------------------------------------------------------------*\
@@ -1432,7 +1437,7 @@ int x,y;
 
 
 if ((type==1) | (type==0))
-{
+    {
     //--- Relief (surtout pour type==1) --------------------------------
     for(x=x1;x<=x2;x++)
         AffCol(x,y1,10*16+1);
@@ -1506,11 +1511,15 @@ if ((type==1) | (type==0))
 else
     {
     //--- Relief (surtout pour type==1) --------------------------------
-    for(x=x1;x<=x2;x++)    AffCol(x,y1,10*16+3);
-    for(y=y1;y<=y2;y++)    AffCol(x1,y,10*16+3);
+    for(x=x1;x<=x2;x++)
+        AffCol(x,y1,10*16+3);
+    for(y=y1;y<=y2;y++)
+        AffCol(x1,y,10*16+3);
 
-    for(x=x1+1;x<=x2;x++)    AffCol(x,y2,10*16+1);
-    for(y=y1+1;y<y2;y++)     AffCol(x2,y,10*16+1);
+    for(x=x1+1;x<=x2;x++)
+        AffCol(x,y2,10*16+1);
+    for(y=y1+1;y<y2;y++)
+        AffCol(x2,y,10*16+1);
 
 
     if (Cfg->UseFont==0)
@@ -1590,7 +1599,8 @@ else
             car=196;    break;
         }
 
-for(x=x1;x<x1+xl;x++)   AffChr(x,y1,car);
+for(x=x1;x<x1+xl;x++)
+    AffChr(x,y1,car);
 }
 
 
@@ -1678,7 +1688,7 @@ LibMem(pol);
 |- Changement de mode texte                                           -|
 \*--------------------------------------------------------------------*/
 
-// Prototype
+//--- Prototype --------------------------------------------------------
 
 void Mode25(void);
 void Mode50(void);
@@ -1687,7 +1697,7 @@ void Mode90(void);
 void Mode80(void);
 
 
-// Fonction
+//--- Fonction ---------------------------------------------------------
 
 void Mode25(void)
 {
@@ -1855,7 +1865,7 @@ outp(0x3C9,g);
 outp(0x3C9,b);
 }
 
-void LibMem(char *mem)
+void LibMem(void *mem)
 {
 free(mem);
 }
@@ -1863,7 +1873,6 @@ free(mem);
 void *GetMem(int s)
 {
 void *buf;
-
 
 buf=malloc(s);
 
@@ -2326,20 +2335,11 @@ return 27;                                                     // ESCAPE
 |-  1 -> Cancel                                                       -|
 |-  0 -> OK                                                           -|
 \*--------------------------------------------------------------------*/
-int WinError(char *erreur)
-{
-return WinMesg("Error",erreur);
-}
-
-/*--------------------------------------------------------------------*\
-|-  1 -> Cancel                                                       -|
-|-  0 -> OK                                                           -|
-\*--------------------------------------------------------------------*/
 int WinMesg(char *mesg,char *erreur)
 {
-int x,l;
+int l;
 static char Buffer[70],Buffer2[70];
-static int CadreLength=71;
+static int CadreLength;
 
 struct Tmt T[4] = {
       {15,4,2,NULL,NULL},
@@ -2348,19 +2348,14 @@ struct Tmt T[4] = {
       { 2,2,0,Buffer,NULL}
       };
 
-struct TmtWin F = {-1,10,74,16, Buffer2};
+struct TmtWin F = {-1,10,0,16, Buffer2};
 
-l=strlen(erreur);
-
-x=((Cfg->TailleX)-l)/2;                                 // 1-> 39, 2->39
-if (x>25) x=25;
-
-l=(40-x)*2;
+l=max(strlen(mesg),strlen(erreur));
+if (l<28) l=28;
 
 CadreLength=l+1;
 
-F.x1=x-2;
-F.x2=x+l+1;
+F.x2=l+4;
 
 l=l+3;
 
@@ -2463,9 +2458,9 @@ if (to==total)
 
 if (to==0)
     if (Cfg->UseFont==0)
-    AffChr(x,y,'*');
-    else
-    AffChr(x,y,155);
+        AffChr(x,y,'*');
+        else
+        AffChr(x,y,155);
 
 return j1;
 }
@@ -2591,15 +2586,18 @@ Cfg->cnvhist=1;
 Cfg->esttime=1;
 
 Cfg->ajustview=1;
+Cfg->saveviewpos=1;
 
 Cfg->editeur[0]=0;
 Cfg->vieweur[0]=0;
 
 Cfg->Esc2Close=0;
 
-strcpy(Cfg->ExtTxt,"ASM BAS C CPP DIZ DOC H HLP HTM INI LOG NFO PAS TXT");
+strcpy(Cfg->ExtTxt,
+                 "ASM BAS C CPP DIZ DOC H HLP HTM INI LOG NFO PAS TXT");
 Cfg->Enable_Txt=1;
-strcpy(Cfg->ExtBmp,"BMP GIF ICO JPG LBM PCX PIC PKM PNG RAW TGA TIF WMF WPG");
+strcpy(Cfg->ExtBmp,
+             "BMP GIF ICO JPG LBM PCX PIC PKM PNG RAW TGA TIF WMF WPG");
 Cfg->Enable_Bmp=1;
 strcpy(Cfg->ExtSnd,"IT IFF MID MOD MTM S3M VOC WAV XM RTM MXM");
 Cfg->Enable_Snd=1;
@@ -2621,7 +2619,6 @@ strcpy(Cfg->HistCom,"!.!");
 |-   Return IOerr si IOerr = 1 ou 3                                   -|
 |-   Return     3 si IOver = 1                                        -|
 \*--------------------------------------------------------------------*/
-
 int __far Error_handler(unsigned deverr,unsigned errcode,
                                                    unsigned far *devhdr)
 {
@@ -2718,7 +2715,6 @@ n=_bios_equiplist();
 if ( ((n&192)==0) & (c==2) ) return 1;            // Seulement un disque
 if ( ((n&1)==0) & (c==1) ) return 1;                    // Pas de disque
 
-
 _dos_getdrive(&cdrv);
 
 IOerr=0;
@@ -2735,6 +2731,9 @@ _dos_setdrive(cdrv,&nbrdrive);
 return IOerr;
 }
 
+/*--------------------------------------------------------------------*\
+|- Initialise les adresses dans la m‚moire vid‚o                      -|
+\*--------------------------------------------------------------------*/
 void InitSeg(void)
 {
 int n;
@@ -2744,6 +2743,9 @@ for(n=0;n<50;n++)
 
 }
 
+/*--------------------------------------------------------------------*\
+|- Initialise l'‚cran                                                 -|
+\*--------------------------------------------------------------------*/
 int InitScreen(int a)
 {
 char buf[31];
@@ -3013,7 +3015,7 @@ for (n=0;n<nbr;n++)
         PrintAt(*xp,(*yp)+n,"%s",bar[n].titre);
         col=1;
         if (n==*c)
-            couleur=7*16+1;
+            couleur=1*16+7;  // 7
             else
             couleur=10*16+4;
 
@@ -3650,7 +3652,7 @@ if (nbrkey==0)
     {
     c=Wait(0,0,0);
 
-    if (c==0)     //--- Pression bouton souris ---------------------------
+    if (c==0)     //--- Pression bouton souris -------------------------
         {
         int button;
 
@@ -3749,32 +3751,28 @@ if ( (path[strlen(path)-1]!='\\') &
 Fics->LastDir=GetMem(256);
 getcwd(Fics->LastDir,256);
 
-Fics->FicIdfFile=GetMem(256);
-strcpy(Fics->FicIdfFile,_IntBuffer);
-strcat(Fics->FicIdfFile,"idfext.rb");
-
-Fics->CfgFile=GetMem(256);
-strcpy(Fics->CfgFile,_IntBuffer);
-strcat(Fics->CfgFile,"kkrb.cfg");
-
 Fics->path=GetMem(256);
 strcpy(Fics->path,_IntBuffer);
-
-Fics->help=GetMem(256);
-strcpy(Fics->help,_IntBuffer);
-strcat(Fics->help,"kkc.hlp");
-
-Fics->temp=GetMem(256);
-strcpy(Fics->temp,_IntBuffer);
-strcat(Fics->temp,"temp.tmp");
 
 Fics->trash=GetMem(256);
 strcpy(Fics->trash,_IntBuffer);
 strcat(Fics->trash,"trash");                         // repertoire trash
 
+Fics->FicIdfFile=GetMem(256);
+strcpy(Fics->FicIdfFile,Fics->trash);
+strcat(Fics->FicIdfFile,"\\idfext.rb");
+
+Fics->CfgFile=GetMem(256);
+strcpy(Fics->CfgFile,Fics->trash);
+strcat(Fics->CfgFile,"\\kkrb.cfg");
+
+Fics->temp=GetMem(256);
+strcpy(Fics->temp,Fics->trash);
+strcat(Fics->temp,"\\kktemp.tmp");
+
 Fics->log=GetMem(256);
-strcpy(Fics->log,_IntBuffer);
-strcat(Fics->log,"trash\\logfile");                     // logfile trash
+strcpy(Fics->log,Fics->trash);
+strcat(Fics->log,"\\logfile");                          // logfile trash
 }
 
 /*--------------------------------------------------------------------*\
@@ -3803,7 +3801,9 @@ GetPosMouse(&x1,&y1,button);
 }
 
 
-// Absolu
+/*--------------------------------------------------------------------*\
+|-  Absolu                                                            -|
+\*--------------------------------------------------------------------*/
 
 int MousePosX(void)
 {
@@ -3818,6 +3818,11 @@ return _ym;
 int MouseButton(void)
 {
 return _zm;
+}
+
+void ReleaseButton(void)
+{
+_zmok=1;
 }
 
 void InitMouse(void)

@@ -161,6 +161,8 @@ char inpath[128];
 
 struct file *F;
 
+if (F1->FenTyp!=0) return;
+
 SaveEcran();
 
 x1=(Cfg->TailleX-66)/2;

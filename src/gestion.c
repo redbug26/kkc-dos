@@ -324,6 +324,22 @@ if (DFen->system==0)
         }
     }
 
+/*--------------------------------------------------------------------*\
+|- Libere la m‚moire utilis‚e par les fichiers                        -|
+\*--------------------------------------------------------------------*/
+
+for(n=0;n<DFen->nbrfic;n++)
+    {
+    if (DFen->F[n]->info!=NULL)
+        LibMem(DFen->F[n]->info);
+    LibMem(DFen->F[n]->name);
+    LibMem(DFen->F[n]);
+    }
+
+/*--------------------------------------------------------------------*\
+|- Lecture d'un repertoire                                            -|
+\*--------------------------------------------------------------------*/
+
 switch(DFen->system)
     {
     case 0:
@@ -483,7 +499,7 @@ do
         j++;
         }
 
-    // Retire a qui empeche le nouveau de se placer
+    //--- Retire a qui empeche le nouveau de se placer -----------------
 
     if ((j+strlen(DFen->path))>=256)
         a=1;
@@ -498,7 +514,7 @@ do
             }
         }
 
-    // Retire celui qui se trouve en a-1
+    //--- Retire celui qui se trouve en a-1 ----------------------------
 
     if (a!=0)
         RemoveHistDir(TabDir[a-1],TabDir[a]);
@@ -773,7 +789,7 @@ do
         j++;
         }
 
-    // Retire a qui empeche le nouveau de se placer
+    //--- Retire a qui empeche le nouveau de se placer -----------------
 
     if ((j+strlen(chaine))>=512)
         a=1;
@@ -788,7 +804,7 @@ do
             }
         }
 
-    // Retire celui qui se trouve en a-1
+    //--- Retire celui qui se trouve en a-1 ----------------------------
 
     if (a!=0)
         RemoveHistCom(TabCom[a-1],TabCom[a]);
@@ -840,7 +856,7 @@ if (!strnicmp(chaine,"CD ",3))
     }
 if (!strnicmp(chaine,"CD..",4))
     {
-    ChangeDir(chaine+2);
+    ChangeDir("..");
     ChangeLine();                                      // Affichage Path
     return 1;
     }

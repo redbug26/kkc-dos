@@ -12,8 +12,10 @@ void SpeedTest(void);                               // Independant de KK
 void FenNor(FENETRE *Fen);
 void FenDIZ(FENETRE *Fen);
 void FenDisk(FENETRE *Fen);
+void FenTree(FENETRE *Fen);
 void FenFileID(FENETRE *Fen);
-void LitInfo(FENETRE *Fen);
+int SearchInfo(FENETRE *Fen);
+void DispInfo(FENETRE *Fen);
 
 
 int InfoIDF(FENETRE *Fen);

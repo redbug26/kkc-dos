@@ -6,104 +6,21 @@
 #define WORD unsigned short
 #define ULONG unsigned long
 
+#define HI(qsd) (qsd/256)
+#define LO(qsd) (qsd%256)
+
+#define DEFSLASH '\\'
 
 #define RBPALDEF   {43,37,30, 31,22,17,  0, 0, 0, 58,58,50, \
                     44,63,63, 63,63,21, 43,37,30,  0, 0, 0, \
                     63,63, 0, 63,63,63, 43,37,30, 63,20,20, \
                     20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
 
-
-
-extern void (*AffChr)(short x,short y,short c);
-extern void (*AffCol)(short x,short y,short c);
-extern int (*Wait)(int x,int y,char c);
-extern int (*KbHit)(void);
-extern void (*GotoXY)(char x,char y);
-extern void (*WhereXY)(char *x,char *y);
-extern void(*Window)(int left,int top,int right,int bottom,short color);
-
-void TXTMode(void);
-void LoadPal(void);
-void InitFont(void);
-
-void GetCur(char *x,char *y);
-void PutCur(char x,char y);
-
-int ScreenSaver(void);
-
-void ScrollUp(void);
-
-void Pause(int n);
-void MoveText(int x1,int y1,int x2,int y2,int x3,int y4);
-
-/*--------------------------------------------------------------------*\
-|- Fonction absolue                                                   -|
-\*--------------------------------------------------------------------*/
-char GetChr(short x,short y);
-char GetCol(short x,short y);
-
-void ColLin(int left,int top,int length,short color);
-void ChrLin(int left,int top,int length,short color);
-void ChrCol(int left,int top,int length,short color);
-void ColCol(int left,int top,int length,short color);
-void ColWin(int right,int top,int left,int bottom,short color);
-void ChrWin(int right,int top,int left,int bottom,short color);
-
-void PrintAt(int x,int y,char *string,...);
-char InputAt(char colonne,char ligne,char *chaine, int longueur);
-
-/*--------------------------------------------------------------------*\
-|- Fonction relative                                                  -|
-\*--------------------------------------------------------------------*/
-char GetRChr(short x,short y);
-char GetRCol(short x,short y);
-
-void ColRLin(int left,int top,int length,short color);
-void ChrRLin(int left,int top,int length,short color);
-void ChrRCol(int left,int top,int length,short color);
-void ColRCol(int left,int top,int length,short color);
-void ColRWin(int right,int top,int left,int bottom,short color);
-void ChrRWin(int right,int top,int left,int bottom,short color);
-
-void PrintTo(int x,int y,char *string,...);
-char InputTo(char colonne,char ligne,char *chaine, int longueur);
-
-void AffRChr(char x,char y,char c);
-void AffRCol(char x,char y,char c);
+#define WinError(_ErrMsg_) WinMesg("Error",_ErrMsg_)
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
-void Delay(long ms);
-
-void SaveEcran(void);
-void ChargeEcran(void);
-
-void Font8x(int height);
-void *GetMem(int);      // Malloc avec mise … z‚ro
-void *GetMemSZ(int);    // Malloc sans mise … z‚ro
-
-void WinCadre(int x1,int y1,int x2,int y2,int type);
-void WinLine(int x1,int y1,int xl,int type);
-
-void SetPal(char x,char r,char g,char b);
-
-int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F);
-int WinError(char*);
-int WinMesg(char *,char *);
-
-int Gradue(int x,int y,int length,int from,int to,int total);
-
-void DefaultCfg(void);
-
-void SetDefaultPath(char *path);   // Initialise les fichiers selon path
-
-/*--------------------------------------------------------------------*\
-|-        Gestion de la barre de menu                                 -|
-\*--------------------------------------------------------------------*/
-
-int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
-int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
 struct barmenu
         {
         char titre[20];
@@ -174,20 +91,20 @@ struct config
      char insdown;    // vaut 1 si on descent quand on appuie sur insert
      char seldir;     // vaut 1 si on selectionne les repertoires avec +
 
-     long strash;                         // taille actuelle de la trash
+     long strash;                                       // Size of trash
 
-     char display;                                   // type d'affichage
+     char display;                                       // Display type
 
-     char comport;                       // Numero du port serie (ex: 2)
-     int comspeed;                    // Vitesse              (ex:19200)
-     char combit;                         // bit                  (ex:8)
-     char comparity;                    // parity               (ex:'N')
-     char comstop;                        // Bit de stop          (ex=1)
+     char comport;                        // Serial port number  (ex: 2)
+     int comspeed;                        // Speed            (eg:19200)
+     char combit;                         // Number of bit        (eg:8)
+     char comparity;                      // Parity             (eg:'N')
+     char comstop;                        // Stop bit             (eg:1)
 
      char enterkkd;           // entre dans les kkd pendant la recherche
      char warp;                    // 0: pas de warp, 1: word, 2: entier
 
-     char cnvhist;          // 1: si on converit a chaque fois l'history
+     char cnvhist;         // 1: si on convertit a chaque fois l'history
      char esttime;                 // estime le temps pendant la copie ?
 
      char editeur[64];               // ligne de commande pour l'editeur
@@ -203,12 +120,13 @@ struct config
      char Qmenu[48];
      short Nmenu[8];
 
-     char ajustview;
+     char ajustview;                  // Fit the width of file in viewer
+     char saveviewpos;                // Save position of file in viewer
 
      char Esc2Close;   // vaut 1 si on doit fermer les fenˆtres avec ESC
 
-    // Pas touche
-    //-----------
+    //--- Don't look this ----------------------------------------------
+
      long mtrash;                          // taille maximum de la trash
      long FenAct;                         // Quelle fenˆtre est active ?
      char _4dos;                                // equal 1 if 4DOS found
@@ -258,16 +176,140 @@ struct PourMask
      char title[40];                                 // nom de ce masque
      };
 
-int InitScreen(int a);                      // Renvoit 1 si tout va bien
-void DesinitScreen(void);
-
 extern struct config *Cfg;
 extern struct RB_info *Info;
 extern struct fichier *Fics;
 extern struct PourMask **Mask;
 
-#define HI(qsd) (qsd/256)
-#define LO(qsd) (qsd%256)
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+extern void (*AffChr)(short x,short y,short c);
+extern void (*AffCol)(short x,short y,short c);
+extern int (*Wait)(int x,int y,char c);
+extern int (*KbHit)(void);
+extern void (*GotoXY)(char x,char y);
+extern void (*WhereXY)(char *x,char *y);
+extern void(*Window)(int left,int top,int right,int bottom,short color);
+
+/*--------------------------------------------------------------------*\
+|- Display function                                                   -|
+\*--------------------------------------------------------------------*/
+void TXTMode(void);
+void LoadPal(void);
+void InitFont(void);
+
+/*--------------------------------------------------------------------*\
+|- Function:     int InitScreen(int a)                                -|
+|-                                                                    -|
+|- Description:  Initialisation of the hard library                   -|
+|-                                                                    -|
+|- Input:        0: Hard display                                      -|
+|-               1: Ansi display                                      -|
+|-               2: Serial port                                       -|
+|-                                                                    -|
+|- Return:       1: It's Okay...                                      -|
+|-                                                                    -|
+|- Notes:        You must call this function before display anything  -|
+|-               else.                                                -|
+\*--------------------------------------------------------------------*/
+
+int InitScreen(int a);
+
+/*--------------------------------------------------------------------*\
+|- Function:     void DesinitScreen(void)                             -|
+|-                                                                    -|
+|- Description:  Close all function of the hard library               -|
+|-                                                                    -|
+|- Notes:        You must call this function at end of your program   -|
+\*--------------------------------------------------------------------*/
+
+void DesinitScreen(void);
+
+/*--------------------------------------------------------------------*\
+|- Cursor function                                                    -|
+\*--------------------------------------------------------------------*/
+void GetCur(char *x,char *y);
+void PutCur(char x,char y);
+
+int ScreenSaver(void);
+
+void ScrollUp(void);
+
+void Pause(int n);
+void MoveText(int x1,int y1,int x2,int y2,int x3,int y4);
+
+/*--------------------------------------------------------------------*\
+|- Absolute function                                                  -|
+\*--------------------------------------------------------------------*/
+char GetChr(short x,short y);
+char GetCol(short x,short y);
+
+void ColLin(int left,int top,int length,short color);
+void ChrLin(int left,int top,int length,short color);
+void ChrCol(int left,int top,int length,short color);
+void ColCol(int left,int top,int length,short color);
+void ColWin(int right,int top,int left,int bottom,short color);
+void ChrWin(int right,int top,int left,int bottom,short color);
+
+void PrintAt(int x,int y,char *string,...);
+char InputAt(char colonne,char ligne,char *chaine, int longueur);
+
+/*--------------------------------------------------------------------*\
+|- Relative function                                                  -|
+\*--------------------------------------------------------------------*/
+char GetRChr(short x,short y);
+char GetRCol(short x,short y);
+
+void ColRLin(int left,int top,int length,short color);
+void ChrRLin(int left,int top,int length,short color);
+void ChrRCol(int left,int top,int length,short color);
+void ColRCol(int left,int top,int length,short color);
+void ColRWin(int right,int top,int left,int bottom,short color);
+void ChrRWin(int right,int top,int left,int bottom,short color);
+
+void PrintTo(int x,int y,char *string,...);
+char InputTo(char colonne,char ligne,char *chaine, int longueur);
+
+void AffRChr(char x,char y,char c);
+void AffRCol(char x,char y,char c);
+
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+void Delay(long ms);
+
+void SaveEcran(void);
+void ChargeEcran(void);
+
+void *GetMem(int);      // Malloc avec mise … z‚ro
+void *GetMemSZ(int);    // Malloc sans mise … z‚ro
+void LibMem(void *);
+
+void WinCadre(int x1,int y1,int x2,int y2,int type);
+void WinLine(int x1,int y1,int xl,int type);
+
+void SetPal(char x,char r,char g,char b);
+
+int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F);
+int WinMesg(char *,char *);
+
+int Gradue(int x,int y,int length,int from,int to,int total);
+
+void DefaultCfg(void);
+
+void SetDefaultPath(char *path);   // Initialise les fichiers selon path
+
+/*--------------------------------------------------------------------*\
+|-        Gestion de la barre de menu                                 -|
+\*--------------------------------------------------------------------*/
+
+int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
+int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
+
+
+
+
+
 
 //--- Retourne 0 si tout va bene ---------------------------------------
 int VerifyDisk(char c);  // 1='A'
@@ -288,14 +330,14 @@ short com_open(short port,long speed,short bit,BYTE parity,BYTE stop);
 void com_close(void);
 
 /*--------------------------------------------------------------------*\
-|-                             Gestion souris                         -|
+|-  Mouse handler                                                     -|
 \*--------------------------------------------------------------------*/
-
 void InitMouse(void);
 void GetPosMouse(int *xm,int *ym,int *button);
 int MousePosX(void);
 int MousePosY(void);
 int MouseButton(void);
+void ReleaseButton(void);
 
 int MouseRPosX(void);
 int MouseRPosY(void);
@@ -309,8 +351,33 @@ void Debug(char *string,...);
 /*--------------------------------------------------------------------*\
 |-  Header for help-functions                                         -|
 \*--------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------*\
+|- Function:     void Help(void)                                      -|
+|-                                                                    -|
+|- Description:  Call the helpfile                                    -|
+|-                                                                    -|
+|- Notes:        Verify that you have put the name of the help file   -|
+|-               in Fics->help                                        -|
+\*--------------------------------------------------------------------*/
+
 void Help(void);
+
+/*--------------------------------------------------------------------*\
+|- Function:     void HelpTopic(char *)                               -|
+|-                                                                    -|
+|- Description:  Call the helpfile for a special topic                -|
+|-                                                                    -|
+|- Input:        The topic name                                       -|
+|-                                                                    -|
+|- Notes:      - Verify that you have put the name of the help file   -|
+|-               in Fics->help                                        -|
+|-             - You could creat a topic with a '#' in column 1       -|
+\*--------------------------------------------------------------------*/
 void HelpTopic(char *);
 
 
-#define DEFSLASH '\\'
+/*--------------------------------------------------------------------*\
+\*--------------------------------------------------------------------*/
+
+

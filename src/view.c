@@ -1,6 +1,9 @@
 /*--------------------------------------------------------------------*\
 |-                             Viewer                                 -|
 \*--------------------------------------------------------------------*/
+#pragma aux View export;
+#pragma aux toto export;
+
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,6 +25,9 @@ static char ReadChar(void);
 
 void ChangeMask(void);
 void Masque(short x1,short y1,short x2,short y2);
+
+void SavePosition(char *fichier,int posn);
+int LoadPosition(char *fichier);
 
 
 int HexaView(char *fichier);
@@ -75,6 +81,90 @@ if (posn-pos<0)
 return view_buffer[posn-pos];
 }
 
+/*--------------------------------------------------------------------*\
+|- Load position of viewing in posdeb                                 -|
+\*--------------------------------------------------------------------*/
+int LoadPosition(char *fichier)
+{
+long posdeb=0;
+FILE *fic;
+unsigned char n;
+long s,size;
+static char ficname[256];
+
+if (Cfg->saveviewpos==1)
+    {
+    strcpy(ficname,Fics->trash);
+    Path2Abs(ficname,"kkview.tmp");
+    fic=fopen(ficname,"rb");
+    if (fic!=NULL)
+        {
+        while(fread(&n,1,1,fic)==1)
+            {
+            fread(ficname,1,n,fic);
+            fread(&size,4,1,fic);
+            fread(&s,4,1,fic);
+            if ( (!stricmp(ficname,fichier)) & (size==taille) )
+                {
+                posdeb=s;
+                break;
+                }
+            }
+        fclose(fic);
+        }
+    }
+return posdeb;
+}
+
+void SavePosition(char *fichier,int posn)
+{
+long pos;
+FILE *fic;
+unsigned char n;
+long s,size;
+static char ficname[256];
+
+if (Cfg->saveviewpos==1)
+    {
+    strcpy(ficname,Fics->trash);
+    Path2Abs(ficname,"kkview.tmp");
+    fic=fopen(ficname,"r+b");
+    if (fic==NULL)
+        fic=fopen(ficname,"w+b");
+    if (fic!=NULL)
+        {
+        fseek(fic,0,SEEK_SET);
+        while(fread(&n,1,1,fic)==1)
+            {
+            fread(ficname,n,1,fic);
+            if (!stricmp(ficname,fichier))
+                {
+                pos=ftell(fic);
+                fseek(fic,pos,SEEK_SET);// Parce qu'on ‚crit juste aprŠs
+
+                fwrite(&taille,4,1,fic);
+                fwrite(&posn,4,1,fic);
+                posn=0;
+                break;
+                }
+            fread(&size,1,4,fic);
+            fread(&s,1,4,fic);
+            }
+        if (posn!=0)
+            {
+            pos=ftell(fic);
+            fseek(fic,pos,SEEK_SET);    // Parce qu'on ‚crit juste aprŠs
+
+            n=strlen(fichier)+1;
+            fwrite(&n,1,1,fic);
+            fwrite(fichier,n,1,fic);
+            fwrite(&taille,4,1,fic);
+            fwrite(&posn,4,1,fic);
+            }
+        fclose(fic);
+        }
+    }
+}
 
 /*--------------------------------------------------------------------*\
 |- Affichage en Hexadecimal                                           -|
@@ -94,7 +184,6 @@ PutCur(3,0);
 
 Bar(" Help  ----  ----  Text  ----  ---- Search ----  ----  ---- ");
 
-
 Window(1,1,Cfg->TailleX-2,(Cfg->TailleY)-3,10*16+1);
 WinCadre(0,3,9,(Cfg->TailleY)-2,2);
 WinCadre(10,3,58,(Cfg->TailleY)-2,2);
@@ -108,6 +197,7 @@ ChrCol(34,4,(Cfg->TailleY)-6,Cfg->Tfont);
 
 PrintAt(3,1,"View File %s",fichier);
 
+posn=LoadPosition(fichier);
 
 do
 {
@@ -182,7 +272,10 @@ if (car==0)     //--- Pression bouton souris ---------------------------
             }
             else
             if (y==Cfg->TailleY-1)
-                car=(0x3B+(x/8))*256;
+                if (Cfg->TailleX==90)
+                    car=(0x3B+(x/9))*256;
+                    else
+                    car=(0x3B+(x/8))*256;
                 else
                 if (y>(Cfg->TailleY)/2)
                     car=80*256;
@@ -250,6 +343,8 @@ while (posn<0) posn+=16;
 
 }
 while(fin==0);
+
+SavePosition(fichier,posn);
 
 ChargeEcran();
 
@@ -833,7 +928,6 @@ char pasfini;
 
 static char bar[81];
 
-
 int xl2;
 int tpos;
 
@@ -946,6 +1040,12 @@ if ( (x>0) & (y>0) & (x+xl<Cfg->TailleX) & (y+yl<Cfg->TailleY) )
 
 ColWin(x,y,x+xl-1,y+yl-1,10*16+4);
 ChrWin(x,y,x+xl-1,y+yl-1,32);
+
+/*--------------------------------------------------------------------*\
+|- Garde la position pr‚c‚dente                                       -|
+\*--------------------------------------------------------------------*/
+
+posn=LoadPosition(fichier);
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
@@ -1175,7 +1275,8 @@ if ( ((car&1)==1) | ((car&2)==2) )
     temp[45]=0;
 
     PrintAt(0,0,
-            "View: %-45s Col%3d %9d bytes %3d%% ",temp,warp,taille,prc);
+            "View: %-*s Col%3d %9d bytes %3d%% ",Cfg->TailleX-35,
+                                                  temp,warp,taille,prc);
 
     ColCol(Cfg->TailleX-1,1,Cfg->TailleY-2,1*16+2);
     ChrCol(Cfg->TailleX-1,1,cur1-1,32);
@@ -1225,12 +1326,18 @@ if (code==0)     //--- Pression bouton souris --------------------------
             }
             else
             if (y==Cfg->TailleY-1)
-                code=(0x3B+(x/8))*256;
+                if (Cfg->TailleX==90)
+                    code=(0x3B+(x/9))*256;
+                    else
+                    code=(0x3B+(x/8))*256;
                 else
+                {
                 if (y>(Cfg->TailleY)/2)
                     code=80*256;
                     else
                     code=72*256;
+                ReleaseButton();
+                }
         }
 
     if ((button&2)==2)     //--- droite --------------------------------
@@ -1286,36 +1393,48 @@ switch(LO(code))
                 ChangeMask();
                 ColWin(x,y,x+xl-1,y+yl-1,10*16+4);
                 break;
-            case 80:    // BAS
+            case 80:    // DOWN
                 if (pasfini==1) break;
-                m=posn;
+                m=0;
                 do
                     {
                     posn++;
                     if (posn==taille)
                         {
-                        posn=taille-2;
+                        posn=taille-1;
                         break;
                         }
-                    if ((posn-m>=79) & (Cfg->warp!=0)) break;
+                    car=ReadChar();
+                    if (car==0x0A) { posn++; break; }
+                    if ((car!=0x0A) & (car!=0x0D)) m++;
+                    if ((m>=xl) & (Cfg->warp!=0)) break;
                     }
-                while(ReadChar()!=0x0A);
-                posn++;
+                while(1);
 
                 break;
-            case 72:    // HAUT
+            case 72:    // UP
                 if (posn==0) break;
                 posn--;
-                m=posn;
+                m=0;
                 if (posn==0) break;
                 do
                     {
                     posn--;
-                    if (posn==0)  break;
-                    if ((m-posn>=Cfg->TailleX) & (Cfg->warp!=0)) break;
+                    if (posn==0)
+                        {
+                        if (posn!=0) posn++;
+                        break;
+                        }
+                    car=ReadChar();
+                    if (car==0x0A)
+                        {
+                        if (posn!=0) posn++;
+                        break;
+                        }
+                    if ((car!=0x0A) & (car!=0x0D)) m++;
+                    if ((m>xl-1) & (Cfg->warp!=0)) break;
                     }
-                while(ReadChar()!=0x0A);
-                if (posn!=0) posn++;
+                while(1);
 
                 break;
             case 0x51:    // PGDN
@@ -1402,6 +1521,7 @@ if (shift==2)
 }
 while(!fin);
 
+SavePosition(fichier,posn);
 
 ChargeEcran();
 
@@ -2439,6 +2559,8 @@ static char buffer[256];
 char *fichier,*liaison;
 short i;
 
+if (F->FenTyp!=0) return;
+
 SaveEcran();
 
 Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
@@ -2843,21 +2965,47 @@ return 1;
 
 void Print(char *fichier,int n)
 {
+static int sw,lf=28,l1,pp;
+
 FILE *fic;
 short lpt;
 char a;
-char Font[]={27,91,3,27,51,28};
 int m;
 
-struct Tmt T[3] = {
-      {5,3,2,NULL,NULL},                                         // 1:Ok
-      {25,3,3,NULL,NULL},
-      {5,1,0,"Do you want copy this file ?",NULL}
+static char x1=22,x2=22,x3=22;
+static int y1=4,y2=7,y3=1;
+
+struct Tmt T[] = {
+      { 5, 2,10,"LPT1",&sw},
+      { 5, 3,10,"LPT2",&sw},
+      { 5, 4,10,"LPT3",&sw},
+      { 5, 5,8,"IBM Graphic Code",&l1},
+
+      { 5, 8, 7,"Line Feed",&lf},
+
+      {32, 2,10,"10    cpi",&pp},
+      {32, 3,10,"12    cpi",&pp},
+      {32, 4,10,"15    cpi",&pp},
+      {32, 5,10,"17.1  cpi",&pp},
+      {32, 6,10,"20    cpi",&pp},
+      {32, 7,10,"24    cpi",&pp},
+      {32, 8,10,"30    cpi",&pp},
+
+      {3,1,9,&x1,&y1},
+      {28,1,9,&x2,&y2},
+      {3,7,9,&x3,&y3},
+
+      { 8,10,2,NULL,NULL},                                        // 1:Ok
+      {33,10,3,NULL,NULL}
       };
 
-struct TmtWin F = {-1,4,44,9, "Print file"};
+struct TmtWin F = {-1,4,55,16, "Print file"};
 
-m=WinTraite(T,3,&F);
+sw=0;
+l1=1;
+pp=8;
+
+m=WinTraite(T,17,&F);
 
 if (m==27)  //--- escape -----------------------------------------------
     return;
@@ -2865,15 +3013,26 @@ if (m==27)  //--- escape -----------------------------------------------
     if (T[m].type==3) return;  //--- cancel ----------------------------
 
 
-lpt=0;
-
 fic=fopen(fichier,"rb");
 if (fic==NULL)
-    { WinError("Couldn't open file"); return; }
+    {
+    WinError("Couldn't open file");
+    return;
+    }
 
-for (m=0;m<6;m++)
-    PRN_print(lpt,Font[m]);
-    
+lpt=sw;
+
+if (l1==1)
+    {
+    PRN_print(lpt,27);
+    PRN_print(lpt,51);
+    PRN_print(lpt,lf);
+
+    PRN_print(lpt,27);
+    PRN_print(lpt,91);
+    PRN_print(lpt,pp-5);
+    }
+
 
 if (n==1)   //--- Fichier TEXTE ----------------------------------------
     {

@@ -8,9 +8,6 @@
 #include <string.h>
 
 #include <conio.h>
-#include <malloc.h>                           // uniquement pour le free
-
-#include <bios.h>                                     // Gestion clavier
 
 #include <time.h>
 
@@ -22,7 +19,6 @@ static int *tabtime;
 static int *tabdate;
 static int *tabsize;
 
-static char *nomtemp;
 static int nbrmax;
 static int nbr;
 
@@ -31,8 +27,8 @@ static char SearchString[42];
 static char Drive[28];
 static int sw=3;
 
-#define BreakESC  if (kbhit()) touche=_bios_keybrd(0)/256; \
-                                              else if (touche==1) break;
+#define BreakESC  if (KbHit()) touche=Wait(0,0,0); \
+                                             else if (touche==27) break;
 
 /*--------------------------------------------------------------------*\
 |-  Recherche la chaine SearchString dans le fichier *name            -|
@@ -96,37 +92,31 @@ chaine[Cfg->TailleX-3]=0;
 PrintAt(1,pos," %s",chaine);
 }
 
-static touche;
+static int touche;
 
 void cherdate(char *nom2)
 {
 char cont;
 struct file *ff;
 char error;
-char **TabRec;
+static char **TabRec;
 int NbrRec;
-int m;
-
-short touche;
-
-char moi[256],nom[256];
+int n,m;
+static char moi[256],nom[256];
 
 TabRec=GetMem(500*sizeof(char*));
+
 TabRec[0]=GetMem(strlen(nom2)+1);
 memcpy(TabRec[0],nom2,strlen(nom2)+1);
 NbrRec=1;
 
-
 do
 {
 m=strlen(TabRec[NbrRec-1]);
-
 m= (m>=72) ? m-72 : 0;
-
 PrintAt(0,0,"Go in  %-73s",TabRec[NbrRec-1]+m);
 
 CommandLine("#cd %s",TabRec[NbrRec-1]);
-
 
 strcpy(nom,TabRec[NbrRec-1]);
 
@@ -144,9 +134,8 @@ for (m=0;m<DFen->nbrfic;m++)
         {
         cont=1;
 
-        if (IsDir(ff)) cont=0; // Not Subdir
-        if ((error&0x08)==0x08) cont=0; // Not Subdir
-
+        if (IsDir(ff)) cont=0; //--- Not Subdir ------------------------
+        if ((error&0x08)==0x08) cont=0; //--- Not Subdir ---------------
 
         if ( ((SearchString[0])!=0) & (cont==1) & (DFen->system==0) )
             {
@@ -201,8 +190,9 @@ for (m=0;m<DFen->nbrfic;m++)
     BreakESC
     }
 
-free(TabRec[NbrRec-1]);
 NbrRec--;
+LibMem(TabRec[NbrRec]);
+
 
 /*--------------------------------------------------------------------*\
 |-  The directories                                                   -|
@@ -238,11 +228,13 @@ for (m=0;m<DFen->nbrfic;m++)
 
 BreakESC
 
-
 }
 while (NbrRec>0);
 
-free(TabRec);
+for(n=0;n<NbrRec;n++)             // Dans le cas o— on appuie sur ESCAPE
+    LibMem(TabRec[n]);
+
+LibMem(TabRec);
 
 }
 
@@ -257,8 +249,6 @@ static int CadreLength=69;
 
 static char x1=26,x2=40,x3=40;
 static int y1=6,y2=2,y3=2;
-
-
 
 char SearchOld[80];
 
@@ -309,22 +299,22 @@ if (n!=27)  // pas escape
 strcpy(SearchName,SearchOld);
 
 
-return 1;       // Erreur
+return 1;       //--- Erreur -------------------------------------------
 }
 
 
 void Search(FENETRE *TempFen,FENETRE *Fen)
 {
 int n;
-char *nom;
+static char nom[256];
 
-char a;
+int a;
 int pos;
 
-int m;          // position de la premiere ligne
-int d,fin;      // debut et fin de la ligne
+int m;          //--- position de la premiere ligne --------------------
+int d,fin;      //--- debut et fin de la ligne -------------------------
 
-int prem;       // premier visible
+int prem;       //--- premier visible ----------------------------------
 
 if (WinSearch()==1) return;
 
@@ -340,9 +330,6 @@ ColLin(0,0,Cfg->TailleX,1*16+4);
 |-  Allocate Memory                                                   -|
 \*--------------------------------------------------------------------*/
 
-nom=GetMem(255);
-nomtemp=GetMem(255);
-
 tabnom=GetMem(sizeof(char *)*nbrmax);
 for (n=0;n<nbrmax;n++)
     tabnom[n]=GetMem(255);
@@ -351,9 +338,9 @@ tabpath=GetMem(sizeof(char *)*nbrmax);
 for (n=0;n<nbrmax;n++)
     tabpath[n]=GetMem(255);
 
-tabtime=GetMem(sizeof(int *)*nbrmax);
-tabdate=GetMem(sizeof(int *)*nbrmax);
-tabsize=GetMem(sizeof(int *)*nbrmax);
+tabtime=GetMem(sizeof(int)*nbrmax);
+tabdate=GetMem(sizeof(int)*nbrmax);
+tabsize=GetMem(sizeof(int)*nbrmax);
 
 /*--------------------------------------------------------------------*\
 |-  Setup of all                                                      -|
@@ -406,6 +393,7 @@ switch(sw)
         break;
     }
 
+
 DFen=Fen;
 
 if (nbr==0)
@@ -448,24 +436,19 @@ if (nbr==0)
         for (n=d;n<=fin;n++)
             AffCol(n,pos+m-prem,7*16+5);
 
-        a=getch();
+        a=Wait(0,0,0);
 
         for (n=d;n<=fin;n++)
             AffCol(n,pos+m-prem,10*16+1);
 
-        if (a==0)
-            {
-            a=getch();
-            if (a==72)      pos--;
-            if (a==80)      pos++;
-            if (a==0x47)    pos=0;
-            if (a==0x4F)    pos=nbr-1;
-            if (a==0x51)    pos+=5;
-            if (a==0x49)    pos-=5;
-            }
+        if (a==72*256)      pos--;
+        if (a==80*256)      pos++;
+        if (a==0x4700)    pos=0;
+        if (a==0x4F00)    pos=nbr-1;
+        if (a==0x5100)    pos+=5;
+        if (a==0x4900)    pos-=5;
         }
     while ( (a!=27) & (a!=13) );
-
 
     ChargeEcran();
 
@@ -486,19 +469,17 @@ if (nbr==0)
 |-  Free Memory                                                       -|
 \*--------------------------------------------------------------------*/
 
-free(tabsize);
-free(tabdate);
-free(tabtime);
+
+LibMem(tabsize);
+LibMem(tabdate);
+LibMem(tabtime);
 
 for (n=0;n<nbrmax;n++)
-    free(tabpath[n]);
-free(tabpath);
+    LibMem(tabpath[n]);
+LibMem(tabpath);
 
 for (n=0;n<nbrmax;n++)
-    free(tabnom[n]);
-free(tabnom);
-
-free(nomtemp);
-free(nom);
+    LibMem(tabnom[n]);
+LibMem(tabnom);
 }
 

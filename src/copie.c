@@ -1238,6 +1238,8 @@ int j1,j2;                           // postion du compteur (read,write)
 char inpath[128],outpath[128];
 struct file *F;
 
+if (F1->FenTyp!=0) return;
+
 noselect=(F1->nbrsel==0);
 
 strcpy(FTrash->path,path);
@@ -1321,6 +1323,8 @@ int i;
 int j1,j2;                          // postion du compteur (read,write)
 char inpath[128],outpath[128];
 struct file *F;
+
+if (F1->FenTyp!=0) return;
 
 noselect=(F1->nbrsel==0);
 

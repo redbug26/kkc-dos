@@ -47,11 +47,17 @@ void SearchPart(char *);            // Search in file .ini all the parts
 void InitMode(void);
 void ClearSpace(char *name);    //--- efface les espaces inutiles ------
 
+void Interroge(char *path,struct player *app,char *Verif,char *GVerif);
+
 /*--------------------------------------------------------------------*\
 |- Pour Statistique;                                                  -|
 \*--------------------------------------------------------------------*/
 int St_App;
 int St_Dir;
+
+char GVerif=0;  // Verification globale: 0, on interroge
+                //                       1, toujours oui
+                //                       2, toujours non
 
 struct player {
     char *Filename;
@@ -133,7 +139,7 @@ while (*suite!=0)
 MesgY++;
 if (MesgY>(Cfg->TailleY-3))
     {
-    MoveText(1,3,78,(Cfg->TailleY-3),1,2);
+    MoveText(1,3,Cfg->TailleX-2,Cfg->TailleY-3,1,2);
     MesgY--;
     ChrLin(1,(Cfg->TailleY-3),Cfg->TailleX-2,32);
     }
@@ -1020,16 +1026,12 @@ Mask=GetMem(sizeof(struct PourMask*)*16);
 for (n=0;n<16;n++)
     Mask[n]=GetMem(sizeof(struct PourMask));
 
-Fics->FicIdfFile=GetMem(256);
-strcpy(Fics->FicIdfFile,path);
-strcat(Fics->FicIdfFile,"\\idfext.rb");
 
-Fics->CfgFile=GetMem(256);
-strcpy(Fics->CfgFile,path);
-strcat(Fics->CfgFile,"\\kkrb.cfg");
+/*--------------------------------------------------------------------*\
+|-                      Initialisation des fichiers                   -|
+\*--------------------------------------------------------------------*/
 
-Fics->path=GetMem(256);
-strcpy(Fics->path,path);
+SetDefaultPath(path);
 
 Fics->help=GetMem(256);
 strcpy(Fics->help,path);
@@ -1198,6 +1200,14 @@ short n,t;
 char ch[256];
 FILE *fic;
 
+/*--------------------------------------------------------------------*\
+|- Initialise les variables globales                                  -|
+\*--------------------------------------------------------------------*/
+
+GVerif=0;
+St_App=0;
+St_Dir=0;
+
 SaveEcran();
 PutCur(32,0);
 
@@ -1284,7 +1294,7 @@ if (nbr>0)
         fclose(fic);
         }
 
-    PrintAt(29,(Cfg->TailleY-3),"Press a key to continue");
+    PrintAt((Cfg->TailleX-22)/2,(Cfg->TailleY-3),"Press a key to continue");
     ColLin(1,(Cfg->TailleY-3),78,0*16+2);
 
     Wait(0,0,0);
@@ -1485,6 +1495,9 @@ free(TabRec);
 
 
 
+
+
+
 void SSearch(char *nom2)
 {
 struct find_t fic;
@@ -1504,6 +1517,8 @@ char **TabRec;              // Tableau qui remplace les appels recursifs
 int NbrRec;                          // Nombre d'element dans le tableau
 
 char *StrVerif,Verif;
+
+
 
 TabRec=GetMem(500*sizeof(char*));
 TabRec[0]=GetMem(strlen(nom2)+1);
@@ -1570,48 +1585,16 @@ do
                 {
                 if ( (KKcrc==0) & (app[n]->Checksum==0) )
                     {
-                    int x,t;
-
                     if ((Verif==0)| (strcmp(StrVerif,app[n]->Titre)!=0))
                         {
                         strcpy(moi,nom);
                         moi[strlen(moi)-3]=0;
                         strcat(moi,fic.name);
 
-                        x=20;
-                        if (strlen(moi)>x) x=strlen(moi);
-                        if ((6+strlen(app[n]->Titre))>x)
-                                            x=(strlen(app[n]->Titre)+6);
-                        if (strlen(app[n]->Meneur)>x)
-                                               x=strlen(app[n]->Meneur);
-
-                        if (x>78) x=78;
-                        t=(80-x)/2;
-
-                        SaveEcran();
-                        PutCur(32,0);
-
-                        WinCadre(t-1,9,t+x,15,0);
-                        ColWin(t,10,t+x-1,14,10*16+2);
-                        ChrWin(t,10,t+x-1,14,32);
-                        PrintAt(t,10,"Do you think that");
-                        PrintAt(t,11,"%s",moi);
-                        PrintAt(t,12,"is %s of",app[n]->Titre);
-                        PrintAt(t,13,"%s",app[n]->Meneur);
-                        PrintAt(t,14,"(Y/N)");
-
-                        do
-                            {
-                            t=Wait(0,0,0);
-                            }
-                        while ( (t!='y') & (t!='Y') & (t!='n') &
-                                                              (t!='N'));
-
-                        ChargeEcran();
-                        if ( (t=='y') | (t=='Y') )
-                            Verif=1;
+                        if (GVerif==0)
+                            Interroge(moi,app[n],&Verif,&GVerif);
                             else
-                            Verif=2;
+                            Verif=GVerif;
 
                         StrVerif=app[n]->Titre;
                         }
@@ -1766,11 +1749,12 @@ void LoadConfigFile(char *part)
 char buf[82];
 char buffer[32];
 char section[32];
-char filename[32];
+char filename[128];
 int n,m;
 
 strcpy(section,part);
-strcpy(filename,"kksetup.ini");
+strcpy(filename,Fics->path);
+Path2Abs(filename,"kksetup.ini");
 
 Cfg->wmask=get_private_profile_int(section,"mask",Cfg->wmask,filename);
 Cfg->TailleY=get_private_profile_int(section,"vsize",
@@ -1820,8 +1804,14 @@ Cfg->esttime=get_private_profile_int(section,"esttime",
                                                  Cfg->esttime,filename);
 Cfg->ajustview=get_private_profile_int(section,"ajustview",
                                                Cfg->ajustview,filename);
-Cfg->currentdir=get_private_profile_int(section,"loadstardir",
+Cfg->currentdir=get_private_profile_int(section,"loadstartdir",
                                               Cfg->currentdir,filename);
+Cfg->saveviewpos=get_private_profile_int(section,"saveviewpos",
+                                             Cfg->saveviewpos,filename);
+Pal2Str(Cfg->palette,buf);
+get_private_profile_string(section,"palette",buf,buf,48,filename);
+Str2Pal(buf,Cfg->palette);
+
 
 switch(toupper(buffer[0]))
     {
@@ -1836,10 +1826,10 @@ switch(toupper(buffer[0]))
 Cfg->comstop=get_private_profile_int(section,"serial_stopbit",
                                                  Cfg->comstop,filename);
 
-get_private_profile_string(section,"editor","",Cfg->editeur,63,
-                                                              filename);
-get_private_profile_string(section,"viewer","",Cfg->vieweur,63,
-                                                              filename);
+get_private_profile_string(section,"editor",Cfg->editeur,Cfg->editeur,
+                                                           63,filename);
+get_private_profile_string(section,"viewer",Cfg->vieweur,Cfg->vieweur,
+                                                           63,filename);
 
 for (n=11;n<15;n++)
     {
@@ -1948,10 +1938,11 @@ int n;
 char buf1[80],buf2[80],buf3[80];
 char buffer[32];
 char section[32];
-char filename[32];
+char filename[128];
 
 strcpy(section,"current");
-strcpy(filename,"kksetup.ini");
+strcpy(filename,Fics->path);
+Path2Abs(filename,"kksetup.ini");
 
 write_private_profile_int(section,"mask",Cfg->wmask,filename);
 write_private_profile_int(section,"hsize",Cfg->TailleX,filename);
@@ -1987,11 +1978,18 @@ write_private_profile_int(section,"insdown",Cfg->insdown,filename);
 write_private_profile_int(section,"seldir",Cfg->seldir,filename);
 write_private_profile_int(section,"esttime",Cfg->esttime,filename);
 write_private_profile_int(section,"ajustview",Cfg->ajustview,filename);
-write_private_profile_int(section,"loadstardir",Cfg->currentdir,
+write_private_profile_int(section,"loadstartdir",Cfg->currentdir,
                                                               filename);
+write_private_profile_int(section,"saveviewpos",
+                                             Cfg->saveviewpos,filename);
 
 write_private_profile_string(section,"editor",Cfg->editeur,filename);
 write_private_profile_string(section,"viewer",Cfg->vieweur,filename);
+
+
+Pal2Str(Cfg->palette,buf1);
+write_private_profile_string(section,"palette",buf1,filename);
+
 
 for (n=11;n<15;n++)
     {
@@ -2544,7 +2542,7 @@ static int sy;
 static char x1=32;
 static int y1=2;
 
-struct Tmt T[5] = {
+struct Tmt T[] = {
       {5, 2,10,"Ketchup Improvement ",&sy},
       {5, 3,10,"Classic Configuration ",&sy},
 
@@ -2554,7 +2552,7 @@ struct Tmt T[5] = {
       {24,5,3,NULL,NULL}                                   // le CANCEL
       };
 
-struct TmtWin F = {20,5,59,12,"Configuration"};
+struct TmtWin F = {-1,5,40,12,"Configuration"};
 
 int n;
 
@@ -2664,7 +2662,7 @@ while(1)
 \*--------------------------------------------------------------------*/
 void SearchPart(char *part)
 {
-char *filename="kksetup.ini";
+char filename[128];
 FILE *fic;
 char buffer[256];
 
@@ -2672,6 +2670,9 @@ int x,y,n;
 
 struct barmenu bar[20];
 int nbmenu=0,retour;
+
+strcpy(filename,Fics->path);
+Path2Abs(filename,"kksetup.ini");
 
 fic=fopen(filename,"rt");
 if (fic==NULL) return;
@@ -2719,21 +2720,104 @@ if (nbmenu==1)
 
 }
 
+void Str2Pal(char *from,char *to)
+{
+int n;
+char cf,ct;
+
+for(n=0;n<48;n++)
+    {
+    ct=0;
+    cf=from[n];
+
+    if ((cf>='A') & (cf<='Z')) ct=cf-'A';
+    if ((cf>='a') & (cf<='z')) ct=cf-'a'+26;
+    if ((cf>='0') & (cf<='9')) ct=cf-'0'+52;
+    if (cf=='+') ct=62;
+    if (cf=='-') ct=63;
+
+    to[n]=ct;
+    }
+}
+
+void Pal2Str(char *from,char *to)
+{
+int n;
+char cf,ct;
+
+for(n=0;n<48;n++)
+    {
+    ct=0;
+    cf=from[n];
+
+    if (cf<26) ct=cf+'A';
+    if ((cf>=26) & (cf<52)) ct=cf+'a'-26;
+    if ((cf>=52) & (cf<62)) ct=cf+'0'-52;
+    if (cf==62) ct='+';
+    if (cf==63) ct='-';
+
+    to[n]=ct;
+    }
+to[48]=0;
+}
+
+void Interroge(char *path,struct player *app,char *Verif,char *GVerif)
+{
+static char CadreLength=70;
+static char Msg1[256],Msg2[256],Msg3[256],Msg4[256];
+static int CadreWidth=4;
+
+struct Tmt T[] = {
+      { 5,7,5,"     Yes     ",NULL},
+      {22,7,5,"     No      ",NULL},
+      {39,7,5,"  Always Yes ",NULL},
+      {56,7,5,"  Always No  ",NULL},
+      { 5,2,0,Msg1,NULL},
+      { 5,3,0,Msg2,NULL},
+      { 5,4,0,Msg3,NULL},
+      { 5,5,0,Msg4,NULL},
+      { 1,1,9,&CadreLength,&CadreWidth}
+      };
+
+struct TmtWin F = {-1,3,74,12, "Security prompt" };
+
+strcpy(Msg1,"Do you think that");
+strcpy(Msg2,path);
+sprintf(Msg3,"is %s of",app->Titre);
+sprintf(Msg4,"%s",app->Meneur);
+
+switch(WinTraite(T,9,&F))
+    {
+    case 0:
+        (*Verif)=1;     // Yes
+        break;
+    case 27:
+    case 1:
+        (*Verif)=2;     // Cancel
+    case 2:
+        (*Verif)=1;
+        (*GVerif)=1;    // Replace ALL
+        break;
+    case 3:
+        (*Verif)=2;
+        (*GVerif)=2;    // Cancel ALL
+    }
+}
 
 void InitMode(void)
 {
 TXTMode();
 InitFont();
 
+LoadPal();
+
 WinCadre(0,1,Cfg->TailleX-1,(Cfg->TailleY-2),1);
 Window(1,2,Cfg->TailleX-2,(Cfg->TailleY-3),10*16+1);
 
-ColLin(1,0,Cfg->TailleX-2,10*16+5);
-ChrLin(1,0,Cfg->TailleX-2,32);
+ColLin(0,0,Cfg->TailleX,10*16+5);
+ChrLin(0,0,Cfg->TailleX,32);
 
-PrintAt(21,0,"Setup of Ketchup Killers Commander");
-
-LoadPal();
+PrintAt((Cfg->TailleX-38)/2,0,"Setup of Ketchup Killers Commander");
 
 InitMessage();
 }

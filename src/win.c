@@ -218,7 +218,6 @@ char a;                                           // Separator Character
 
 int x1,y1;
 
-
 if (Fen->init==1)
     ClearNor(Fen);
 
@@ -383,16 +382,13 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
 
 if (dispall)
     for (;(i<Fen->yl2);i++,y1++)
-        {
+       {
        PrintAt(x1,y1,"            %c          %c        %c     ",a,a,a);
-        ColLin(x1,y1,38,7*16+6);
-        }
+       ColLin(x1,y1,38,7*16+6);
+       }
 
 Fen->oldscur=Fen->scur;
 Fen->oldpcur=Fen->pcur;
-
-if (Fen->FenTyp==3)
-    FenInfo(Fen);       //  Affiche les infos sur les fichiers si type=3
 
 Fen->init=0;
 }
@@ -497,7 +493,6 @@ Makediz(&Info,Buf);
 
 Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+4,170);
 
-
 x=Fen->x+2;
 y=Fen->y+6;
 
@@ -518,7 +513,7 @@ ColWin(Fen->x+2,Fen->y+6,Fen->x+Fen->xl-2,y-1,10*16+1);
 
 Window(Fen->x+1,y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,170);
 
-free (Buf);
+LibMem(Buf);
 
 Fen->init=0;
 }
@@ -529,55 +524,13 @@ Fen->init=0;
 
 void ClearInfo(FENETRE *Fen)
 {
-int i;
-struct file *F;
-RB_IDF Info;
-FENETRE *Fen2;
+WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
 
-SaveEcran();
-
-Fen->oldscur=0;
-Fen->oldpcur=-1;
-
-Fen2=Fen->Fen2;
-
-WinCadre(19,9,61,11,0);
-Window(20,10,60,10,10*16+4);
-
-
-PrintAt(23,10,"Wait Please");
-
-for (i=0;i<Fen->nbrfic;i++)
-    {
-    F=Fen->F[i];
-
-    if (F->info==NULL)
-        F->info=GetMem(41);
-
-    if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
-        {
-        sprintf(F->info,"%cDirectory",0);
-        }
-        else
-        {
-        strcpy(Info.path,Fen->path);
-        Path2Abs(Info.path,F->name);
-
-        Traitefic(&Info);
-        strcpy(F->info+1,Info.format);
-        F->info[0]=Info.Btype;
-        }
-    }
-
-ChargeEcran();
-
-WinCadre(Fen2->x,Fen2->y,Fen2->x+Fen2->xl,Fen2->y+Fen2->yl,1);
-
-Window(Fen2->x+1,Fen2->y+1,Fen2->x+Fen2->xl-1,Fen2->y+Fen2->yl-1,118);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,118);
                                                                // 7*16+6
 
-ChrLin(Fen2->x+1,Fen2->y+Fen2->yl-2,Fen2->xl-1,196);
-PrintAt(Fen2->x+1,Fen2->y+Fen2->yl-1,"Use this at your own risk ;)");
+ChrLin(Fen->x+1,Fen->y+Fen->yl-2,Fen->xl-1,196);
+PrintAt(Fen->x+1,Fen->y+Fen->yl-1,"         Press ALT-I to close");
 }
 
 
@@ -848,36 +801,39 @@ LoadPal();
 void Setup(void)
 {
 static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14,l15,l16,l17;
+static int l18;
 
 static char x1=32,x2=32,x3=32;
-static int y1=9,y2=2,y3=15;
+static int y1=10,y2=2,y3=16;
 
-struct Tmt T[26] = {
+struct Tmt T[] = {
       {40,17,2,NULL,NULL},                                      // le OK
       {55,17,3,NULL,NULL},                                  // le CANCEL
 
-      {5, 3,8,"Convert History",&l7},
-      {5, 4,8,"Debug",&l3},
-      {5, 5,8,"Point SubDir",&l4},
-      {5, 6,8,"LogFile",&l5},
-      {5, 7,8,"ESC to close windows",&l6},
-      {5, 8,8,"Display Hidden File",&l8},
-      {5, 9,8,"Auto Reload Directory",&l9},
-      {5,10,8,"Verify History Directory",&l10},
-      {5,11,8,"Quick Palette",&l11},
-      {5,12,8,"Highlight groups",&l12},
-      {5,13,8,"Insert move down",&l13},
-      {5,14,8,"Select directories",&l14},
-      {5,15,8,"Estimated copying time",&l15},
-      {5,16,8,"Auto adjust viewer size",&l16},
+      {5, 2,8,"Convert History",&l7},
+      {5, 3,8,"Debug",&l3},
+      {5, 4,8,"Point SubDir",&l4},
+      {5, 5,8,"LogFile",&l5},
+      {5, 6,8,"ESC to close windows",&l6},
+      {5, 7,8,"Display Hidden File",&l8},
+      {5, 8,8,"Auto Reload Directory",&l9},
+      {5, 9,8,"Verify History Directory",&l10},
+      {5,10,8,"Quick Palette",&l11},
+      {5,11,8,"Highlight groups",&l12},
+      {5,12,8,"Insert move down",&l13},
+      {5,13,8,"Select directories",&l14},
+      {5,14,8,"Estimated copying time",&l15},
+      {5,15,8,"Auto adjust viewer size",&l16},
+      {5,16,8,"Save position in viewer",&l18},
       {5,17,8,"Load startup directory",&l17},
 
-      {39,3,7, "Size Trash   ",&l1},
-      {39,4,7, "Ansi Speed   ",&l2},
 
-      {3,2,9,&x3,&y3},
-      {37,6,9,&x1,&y1},
-      {37,2,9,&x2,&y2},
+      {39,2,7, "Size Trash   ",&l1},
+      {39,3,7, "Ansi Speed   ",&l2},
+
+      {3,1,9,&x3,&y3},
+      {37,5,9,&x1,&y1},
+      {37,1,9,&x2,&y2},
 
       {40, 8,5," Serial Port ",&l1},         // la gestion du port serie
       {55, 8,5," Mask Setup  ",&l2},           // la gestion des masques
@@ -906,10 +862,11 @@ l14=Cfg->seldir;
 l15=Cfg->esttime;
 l16=Cfg->ajustview;
 l17=Cfg->currentdir;
+l18=Cfg->saveviewpos;
 
 do
 {
-n=WinTraite(T,26,&F);
+n=WinTraite(T,27,&F);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
@@ -942,6 +899,7 @@ Cfg->seldir=l14;
 Cfg->esttime=l15;
 Cfg->ajustview=l16;
 Cfg->currentdir=l17;
+Cfg->saveviewpos=l18;
 
 SaveCfg();
 
@@ -1539,7 +1497,6 @@ oldfree=tfree;
 strcpy(oldpath,Fen2->path);
 
 Fen->init=0;
-
 }
 
 /*--------------------------------------------------------------------*\
@@ -1653,6 +1610,8 @@ fclose(fic);
 
 PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
 }
+
+
 
 /*--------------------------------------------------------------------*\
 |-  Recherche des infos sur Windows                                   -|
@@ -1799,62 +1758,6 @@ ChargeEcran();
 
 
 /*--------------------------------------------------------------------*\
-|-  Fenˆtre avec les infos sur fichiers d'apres header                -|
-\*--------------------------------------------------------------------*/
-
-void FenInfo(FENETRE *Fen)
-{
-int n;                                                       // Compteur
-FENETRE *Fen2;
-
-short i;
-
-char a;                                           // Separator Character
-
-int x1,y1;
-int x=2,y=3;
-
-Fen2=Fen->Fen2;
-
-if (Fen->init==1)
-    ClearInfo(Fen);
-
-a=Cfg->Tfont;
-
-x1=Fen2->x2;
-y1=Fen2->y2;
-
-n=(Fen->pcur)-(Fen->scur);                                    // premier
-
-for (i=0;(i<Fen2->yl2) & (n<Fen->nbrfic);i++,n++,y++)
-    {
-// ------------------ Line Activity ------------------------------------
-    if (n==(Fen->pcur))
-        ColLin(x+x1,y+y1,38,1*16+5);
-        else
-        {
-        if (Fen->F[n]->info!=NULL)
-            switch(Fen->F[n]->info[0])
-                {
-                case 1:  ColLin(x+x1,y+y1,38,4*16+11);   break;
-                case 2:  ColLin(x+x1,y+y1,38,4*16+1);    break;
-                case 3:  ColLin(x+x1,y+y1,38,4*16+13);   break;
-                case 4:  ColLin(x+x1,y+y1,38,3*16+11);   break;
-                case 5:  ColLin(x+x1,y+y1,38,3*16+1);    break;
-                case 6:  ColLin(x+x1,y+y1,38,3*16+13);   break;
-                default: ColLin(x+x1,y+y1,38,7*16+5);    break;
-                }
-            else
-                ColLin(x+x1,y+y1,38,7*16+5);
-        }
-
-    if (Fen->F[n]->info!=NULL)
-        PrintAt(x+x1,y+y1,"%-38s",Fen->F[n]->info+1);
-    }
-}
-
-
-/*--------------------------------------------------------------------*\
 |- Remplis le vide si on est en mode 90 colonnes                      -|
 \*--------------------------------------------------------------------*/
 void RemplisVide(void)
@@ -1868,5 +1771,221 @@ WinCadre(80,3,Cfg->TailleX-1,Cfg->TailleY-2,2);
 Window(81,4,Cfg->TailleX-2,Cfg->TailleY-3,10*16+1);
 
 AffChr(Cfg->TailleX-2,Cfg->TailleY-3,3);
+}
+
+/*--------------------------------------------------------------------*\
+|- Information about files                                            -|
+\*--------------------------------------------------------------------*/
+int SearchInfo(FENETRE *Fen)
+{
+int i;
+struct file *F;
+RB_IDF Info;
+FENETRE *Fen2;
+static char Buffer[256];
+int new=0;                // Renvoit le nombre de nouvelles informations
+
+Fen2=Fen->Fen2;
+
+for (i=0;i<Fen2->nbrfic;i++)
+    {
+    F=Fen2->F[i];
+
+    if (F->info==NULL)
+        {
+        new++;
+
+        F->info=GetMem(82);
+
+        if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
+            sprintf(F->info,"%cDirectory",0);
+            else
+        if (Fen2->system!=0)
+            sprintf(F->info,"%cInternal File",0);
+            else
+            {
+            strcpy(Info.path,Fen2->path);
+            Path2Abs(Info.path,F->name);
+
+            Traitefic(&Info);
+            sprintf(Buffer,"%s - %s - %s",Info.format,Info.fullname,
+                                                       Info.message[0]);
+            ClearSpace(Buffer);
+            Buffer[80]=0;
+            sprintf(F->info+1,"%-80s",Buffer);
+
+            F->info[0]=Info.Btype;
+            }
+        }
+    if (KbHit()) break;
+    }
+
+return new;
+}
+
+void DispInfo(FENETRE *Fen)
+{
+int n;                                                       // Compteur
+FENETRE *Fen2;
+static char buffer[40];
+
+short i;
+
+int x1,y1;
+int x=2,y=3;
+
+Fen2=Fen->Fen2;
+
+if (Fen2->InfoPos>40) Fen2->InfoPos=40;
+
+x1=Fen->x-1;
+
+if (Fen->y==Fen2->y)
+    y1=Fen2->y2;
+    else
+    y1=Fen->y-1;
+
+n=(Fen2->pcur)-(Fen2->scur);                                  // premier
+
+if (n<0) n=0;
+
+for (i=0;(y+y1+1<Fen->yl) & (n<Fen2->nbrfic);i++,n++,y++)
+    {
+// ------------------ Line Activity ------------------------------------
+    if (n==(Fen2->pcur))
+        ColLin(x+x1,y+y1,38,1*16+5);
+        else
+        {
+        if (Fen2->F[n]->info!=NULL)
+            switch(Fen2->F[n]->info[0])
+                {
+                case 1:  ColLin(x+x1,y+y1,38,7*16+12);   break;
+                case 2:  ColLin(x+x1,y+y1,38,7*16+12);   break;
+                case 3:  ColLin(x+x1,y+y1,38,7*16+8);    break;
+                case 4:  ColLin(x+x1,y+y1,38,7*16+11);   break;
+                case 5:  ColLin(x+x1,y+y1,38,7*16+11);   break;
+                case 6:  ColLin(x+x1,y+y1,38,7*16+6);    break;
+                default: ColLin(x+x1,y+y1,38,7*16+6);    break;
+                }
+            else
+                ColLin(x+x1,y+y1,38,7*16+5);
+        }
+
+    if (Fen2->F[n]->info!=NULL)
+        {
+        memcpy(buffer,Fen2->F[n]->info+1+Fen2->InfoPos,38);
+        buffer[38]=0;
+        PrintAt(x+x1,y+y1,"%-38s",buffer);
+        }
+        else
+        PrintAt(x+x1,y+y1,"%-38s","?");
+
+    }
+
+for (;(y+y1+1<Fen->yl);i++,y++)
+    {
+    PrintAt(x+x1,y+y1,"%-38s","");
+    ColLin(x+x1,y+y1,38,7*16+5);
+    }
+}
+
+
+/*--------------------------------------------------------------------*\
+|-  Fenˆtre avec les infos sur fichiers d'apres header                -|
+\*--------------------------------------------------------------------*/
+
+void FenInfo(FENETRE *Fen)
+{
+if (Fen->init==1)
+    {
+    ClearInfo(Fen);
+    Fen->init=0;
+    Fen->Fen2->InfoPos=0;
+    }
+
+DispInfo(Fen);
+
+if (SearchInfo(Fen)!=0)
+    DispInfo(Fen);
+}
+
+
+/*--------------------------------------------------------------------*\
+|-  Fenetre TREE                                                      -|
+\*--------------------------------------------------------------------*/
+
+void FenTree(FENETRE *Fen)  //marjo
+{
+int x,y,n,i,j,t,pos;
+FENETRE *OldFen;
+char path[256];
+
+static char oldpath[256];
+static char prem[256];
+static char tab;
+static char op[50];
+
+x=Fen->x+1;
+y=Fen->y+1;
+
+if ( (!stricmp(oldpath,Fen->Fen2->path)) & (Fen->init==0) )
+    {
+    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"?");
+    }
+    else
+    {
+    WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
+    Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,10*16+4);
+
+    strcpy(oldpath,Fen->Fen2->path);
+
+    PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
+    for(i=0;i<50;i++) op[i]=0;
+
+    strcpy(prem,Fen->Fen2->path);
+    prem[3]=0;
+    tab=1;
+    pos=0;
+    op[12]=1;
+
+    Fen->init=0;
+    }
+
+strcpy(path,prem);
+
+OldFen=DFen;
+DFen=Fenetre[2];
+
+t=tab;
+j=0;
+CommandLine("#cd %s",path);
+
+for(i=0;i<Fen->yl-Fen->y-1;i++)
+    {
+    while ( (j<DFen->nbrfic) & ((DFen->F[j]->attrib&16)!=16) ) j++;
+
+    if (j>=DFen->nbrfic) break;
+
+    if (op[i]==1)
+        {
+        Path2Abs(path,DFen->F[j]->name);
+        CommandLine("#cd %s",path);
+        j=0;
+        t++;
+        }
+        else
+        {
+        for (n=0;n<t;n++)
+            PrintAt(Fen->x+1+n*2,Fen->y+2+i,"ÃÄ");
+
+        PrintAt(Fen->x+1+t*2,Fen->y+2+i,"%s",DFen->F[j]->name);
+        j++;
+        }
+    }
+
+for(;i<Fen->yl-Fen->y-1;i++)
+    PrintAt(Fen->x+1,Fen->y+2+i,"%-38s","|-|");
+
+DFen=OldFen;
 }
 

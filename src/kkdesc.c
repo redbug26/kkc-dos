@@ -97,16 +97,11 @@ Fics=GetMem(sizeof(struct fichier));
 
 Cfg->_4dos=0;
 
-Fics->FicIdfFile=GetMem(256);
-strcpy(Fics->FicIdfFile,path);
-strcat(Fics->FicIdfFile,"\\idfext.rb");
+/*--------------------------------------------------------------------*\
+|-                      Initialisation des fichiers                   -|
+\*--------------------------------------------------------------------*/
 
-Fics->CfgFile=GetMem(256);
-strcpy(Fics->CfgFile,path);
-strcat(Fics->CfgFile,"\\kkrb.cfg");
-
-Fics->path=GetMem(256);
-strcpy(Fics->path,path);
+SetDefaultPath(path);
 
 Fics->help=GetMem(256);
 strcpy(Fics->help,path);

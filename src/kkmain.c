@@ -36,6 +36,10 @@ void Fin(void);
 void SaveSel(FENETRE *F1);
 void LoadSel(int n);
 
+void ExecCom(void);
+
+void AffFen(FENETRE *Fen);
+
 /*--------------------------------------------------------------------*\
 |-  Declaration des variables                                         -|
 \*--------------------------------------------------------------------*/
@@ -66,7 +70,6 @@ FENETRE *DFen;
 
 extern int IOver;
 extern int IOerr;
-
 
 /*--------------------------------------------------------------------*\
 |-  Procedure en Assembleur                                           -|
@@ -114,9 +117,9 @@ char *titre="Palette configuration";
 #define NBRS 4
 
 char defcol[NBRS][48]={ RBPALDEF ,
-                     { 0, 0, 0, 25,25,25,  0, 0, 0, 63,63,63,
-                      63,63,63, 63,32,32, 40,40,56,  0, 0,43,
-                      63,63, 0, 63,63,63,  0, 0,43, 57,12,28,
+                     { 0, 0, 0, 42,42,42,  0, 0, 0, 63,63,63,
+                      63,63,63, 63,63,32, 42,63,63,  0, 0,43,
+                      63,63, 0, 63,63,63,  0, 0,43, 57,63, 0,
                       30,60,30,  0,40,63,  0, 0, 0,  0, 0, 0},
                      {25,36,29, 36,18,15,  0, 0, 0, 49,39,45,
                       44,63,63, 42,37,63, 45,39,35,  0, 0, 0,
@@ -479,6 +482,9 @@ ChargeEcran();
 |- 70: Get Last command                                               -|
 |- 71: Fenetre affichage de file_id.diz                               -|
 |- 72: Change le drive de la fenetre par default                      -|
+|- 73: Execute une commande redirige vers le fichier temporaire       -|
+|- 74: Affiche le fichier temporaire                                  -|
+|- 75: Directory tree                                                 -|
 \*--------------------------------------------------------------------*/
 
 void GestionFct(int fct)
@@ -732,19 +738,16 @@ switch(fct)
         DFen->pcur--;
         break;
     case 38:
+        DFen=DFen->Fen2;
+
         DFen->init=1;
 
         if (DFen->FenTyp==3)
-            {
             DFen->FenTyp=0;
-            DFen->Fen2->FenTyp=0;
-            DFen->Fen2->init=1;
-            }
-        else
-            {
+            else
             DFen->FenTyp=3;
-            DFen->Fen2->FenTyp=2;
-            }
+
+        DFen=DFen->Fen2;
         break;
     case 39:                                     // Change les attributs
         WinAttrib();
@@ -839,14 +842,27 @@ switch(fct)
         DFen->pcur=DFen->nbrfic;
         break;
     case 56:
-        Cfg->FenAct=0;
-        DFen=Fenetre[Cfg->FenAct];
-        ChangeLine();                                  // Affichage Path
+        if (DFen->Fen2->FenTyp==3)
+            {
+            if (DFen->InfoPos>=5)
+                DFen->InfoPos-=5;
+            }
+            else
+            {
+            Cfg->FenAct=0;
+            DFen=Fenetre[Cfg->FenAct];
+            ChangeLine();                              // Affichage Path
+            }
         break;
     case 57:
-        Cfg->FenAct=1;
-        DFen=Fenetre[Cfg->FenAct];
-        ChangeLine();                                  // Affichage Path
+        if (DFen->Fen2->FenTyp==3)
+            DFen->InfoPos+=5;
+            else
+            {
+            Cfg->FenAct=1;
+            DFen=Fenetre[Cfg->FenAct];
+            ChangeLine();                              // Affichage Path
+            }
         break;
     case 58:        // Change la fenˆtre avec la path de l'autre fenˆtre
         CommandLine("#CD %s",DFen->Fen2->path);
@@ -938,6 +954,34 @@ switch(fct)
     case 72:                // Change le drive de la fenetre par default
         ChangeDrive();
         ChangeLine();                                  // Affichage Path
+        break;
+    case 73:
+        ExecCom();
+        break;
+    case 74:
+        DFen=Fenetre[2];                                // Fenetre trash
+        CommandLine("#CD %s",Fics->trash);
+        FileinPath(Fics->temp,buffer);
+        for (i=0;i<DFen->nbrfic;i++)
+            if (!WildCmp(buffer,DFen->F[i]->name))
+                {
+                DFen->pcur=i;
+                DFen->scur=i;
+                break;
+                }
+        GestionFct(8);
+        break;
+    case 75:                                   // Fenetre directory tree
+        DFen=DFen->Fen2;
+
+        DFen->init=1;
+
+        if (DFen->FenTyp==6)
+            DFen->FenTyp=0;
+            else
+            DFen->FenTyp=6;
+
+        DFen=DFen->Fen2;
         break;
     }
 
@@ -1285,7 +1329,7 @@ if (i!=0)
         CommandLine("#cd %s",dir[pos]);
     }
 
-free(dir);
+LibMem(dir);
 }
 
 /*--------------------------------------------------------------------*\
@@ -1384,9 +1428,9 @@ if (i!=0)
     }
 
 for(j=0;j<=i;j++)
-    free(com[j]);
+    LibMem(com[j]);
 
-free(com);
+LibMem(com);
 }
 
 
@@ -1448,6 +1492,41 @@ if (n!=27)
         CommandLine("#md %s",Dir);
         CommandLine("#cd .");
         }
+}
+
+/*--------------------------------------------------------------------*\
+|-                      Execute command                               -|
+\*--------------------------------------------------------------------*/
+
+void ExecCom(void)
+{
+static char Dir[70];
+static int DirLength=70;
+static int CadreLength=71;
+
+struct Tmt T[] =
+    { { 2,3,1,Dir,&DirLength},
+      { 7,5,2,NULL,NULL},
+      {30,5,5," Last result ",NULL},
+      {53,5,3,NULL,NULL},
+      { 5,2,0,"Enter the command:",NULL},
+      { 1,1,4,NULL,&CadreLength} };
+
+struct TmtWin F = {-1,10,74,17, "Execute command" };
+
+int n;
+
+n=WinTraite(T,6,&F);
+
+if (n!=27)
+    {
+    if (T[n].type==5)                          // Le bouton personnalis‚
+        GestionFct(74);
+
+    if (T[n].type!=3)
+        if (strlen(Dir)!=0)
+            CommandLine("#%s >%s",Dir,Fics->temp);
+    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -1690,7 +1769,7 @@ do  {
     if (cpos!=50)
         ColLin(x1+3,cpos-fpos,32,7*16+4);
 
-    AffCol(drive[i],9,1*16+5);
+    AffCol(drive[i],9,10*16+5);
     car=Wait(0,0,0);
 
     if (cpos!=50)
@@ -1723,7 +1802,7 @@ do  {
             car=13;
         }
 
-    AffCol(drive[i],9,0*16+1);
+    AffCol(drive[i],9,10*16+1);
 
     if (HI(car)==0)
         {
@@ -2270,10 +2349,12 @@ do
             {
             case 1:
             case 2:
+            case 3:
             case 4:
             case 5:
                 if ( ((DFen->Fen2->FenTyp)==1) |
                      ((DFen->Fen2->FenTyp)==2) |
+                     ((DFen->Fen2->FenTyp)==3) |
                      ((DFen->Fen2->FenTyp)==4) |
                      ((DFen->Fen2->FenTyp)==5) ) break;
                 Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
@@ -2286,8 +2367,11 @@ do
     DFen->actif=1;
     DFen->Fen2->actif=0;
 
-    for (i=0;i<2;i++)
-        if (Fenetre[i]->FenTyp!=3)
+    if (Fenetre[1]->FenTyp==0)
+        for (i=1;i>=0;i--)
+            AffFen(Fenetre[i]);
+        else
+        for (i=0;i<2;i++)
             AffFen(Fenetre[i]);
 
     Cl_Start=clock();
@@ -2309,7 +2393,10 @@ do
             if ((zm&1)==1)    //--- Bouton droit de la souris ----------
                 {
                 if (ym==Cfg->TailleY-1)
-                    c=(0x3B+(xm/8))*256;
+                    if (Cfg->TailleX==90)
+                        c=(0x3B+(xm/9))*256;
+                        else
+                        c=(0x3B+(xm/8))*256;
                     else
                 if (ym==0)
                     c=0x43*256;
@@ -2331,7 +2418,8 @@ do
                     {
                     int n;
 
-                    n=(ym-2)/3;
+                    n=(ym-1)/3;
+                    PrintAt(0,0,"(%d,%d)",ym,n);
                     if ( (n>=0) & (n<6) )
                         GestionFct(Cfg->Nmenu[n]);
                     c=3;                       //--- On ne fait rien ---
@@ -2340,7 +2428,9 @@ do
 
             if ((zm&4)==4)
                 {
-                c=13;
+                if ( (ym==(DFen->scur+DFen->y2+3)) &
+                     ((xm>=DFen->x) & (xm<=DFen->x+DFen->Fen2->xl)) )
+                    c=13;
                 }
 
             if ( ((clock()-Cl_Start)>DFen->IDFSpeed)  & (Cl_Start!=0))
@@ -2382,11 +2472,10 @@ do
         //--- Positionne le pointeur sur FILE_ID.DIZ si on est sur .. --
         switch(HI(c))  
             {
-            case 0x3D:  // F3
-            case 0x3E:  // F4
-            case 0x56:  // SHIFT-F3
-//            case 0x57:  // SHIFT-F4
-            case 0x8D:  // CTRL-UP
+            case 0x3D:  //--- F3 ---------------------------------------
+            case 0x3E:  //--- F4 ---------------------------------------
+            case 0x56:  //--- SHIFT-F3 ---------------------------------
+            case 0x8D:  //--- CTRL-UP ----------------------------------
                 if (!strcmp(DFen->F[DFen->pcur]->name,".."))
                     {
                     for (i=0;i<DFen->nbrfic;i++)
@@ -2398,6 +2487,11 @@ do
                             }
                     }
                 break;
+            case 0x85:  //--- F11 --------------------------------------
+                GestionFct(73);
+                c=0;
+                break;
+
             }
 
         strcpy(Cfg->FileName,DFen->F[DFen->pcur]->name);
@@ -2428,7 +2522,6 @@ do
             case 0x3D:                                             // F3
             case 0x3E:                                             // F4
             case 0x56:                                       // SHIFT-F3
-//            case 0x57:                                     // SHIFT-F4
             case 0x8D:                                        // CTRL-UP
                 AccessFile(DFen->pcur);
                 break;
@@ -2569,6 +2662,9 @@ do
         GestionFct(14);
         GestionFct(15);
         break;
+    case 0x14:                                                 // CTRL-T
+//        GestionFct(75);
+        break;
     case 0x15:                                                 // CTRL-U
         GestionFct(68);
         break;
@@ -2596,6 +2692,9 @@ do
     switch(car2)
     {                                                   // Switch (car2)
     case 0:
+        break;
+    case 0x85:                                                    // F11
+        GestionFct(74);
         break;
     case 0x1C:                                              // ALT-ENTER
         GestionFct(58);           break;
@@ -3130,6 +3229,7 @@ switch (Fen->FenTyp)
         FenNor(Fen);
         break;
     case 1:                        // FenDIZ --> A lieu au moment de IDF
+        // FenDIZ(Fen);
         break;
     case 2:      // OFF
         x1=Fen->x;
@@ -3166,15 +3266,18 @@ switch (Fen->FenTyp)
 
         break;
     case 3:
-        FenNor(Fen);
+        FenInfo(Fen);
         break;
     case 4:
         FenDisk(Fen);
         break;
     case 5:               // Fen FILE_ID.DIZ --> A lieu au moment de IDF
+        // FenFileID(Fen);
+        break;
+    case 6:
+        FenTree(Fen);
         break;
     }
-
 
 }
 
@@ -3234,6 +3337,7 @@ if ( (DFen->Fen2->FenTyp==2) & (DFen->FenTyp==2) )
     Window(x1,19,x2,Cfg->TailleY-6,10*16+4);          // Efface le reste
 
     WinCadre(x1,Cfg->TailleY-5,x2,Cfg->TailleY-3,2);
+    ColLin(x1+1,Cfg->TailleY-4,8,10*16+4);
 
     }
 
@@ -3329,6 +3433,8 @@ if (strncmp(LC,"6969",4))
     exit(1);
     }
 
+
+
 /*--------------------------------------------------------------------*\
 |-                          Gestion des erreurs                       -|
 \*--------------------------------------------------------------------*/
@@ -3350,7 +3456,9 @@ signal(SIGTERM,Signal_Handler);
 
 SetDefaultPath(path);
 
-
+Fics->help=GetMem(256);
+strcpy(Fics->help,path);
+Path2Abs(Fics->help,"kkc.hlp");
 
 
 /*--------------------------------------------------------------------*\
@@ -3520,3 +3628,5 @@ Fenetre[b]=tfen;
 Fenetre[a]->nfen=a;
 Fenetre[b]->nfen=b;
 }
+
+

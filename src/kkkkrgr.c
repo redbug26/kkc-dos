@@ -234,7 +234,8 @@ if (_dos_findfirst(moi,63-_A_SUBDIR,&fic)==0)
 do
     {
     ok=0;
-    if ((fic.attrib&_A_SUBDIR)!=_A_SUBDIR)  {
+    if ((fic.attrib&_A_SUBDIR)!=_A_SUBDIR)
+        {
         strcpy(moi,nom);
         strcat(moi,fic.name);
         PrintAt(1,47,"%s",fic.name);

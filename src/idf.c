@@ -912,7 +912,7 @@ struct key K[nbrkey]=   {
     139,0,0,3},
 
 
-// Dernier employe: 139
+// Dernier employe: 141
 
 /*--------------------------------------------------------------------*\
 |-              structures … traiter en dernier ressort               -|
@@ -938,6 +938,20 @@ struct key K[nbrkey]=   {
     "PIC",
     "Autodesk",
     128,0,0,4},
+{  {0,0},
+    0,
+    0,
+    "dBase II file",
+    "DBF",
+    "Ashton-Tate",
+    140,1,1,6},
+{  {0,0},
+    0,
+    0,
+    "dBase III file",
+    "DBF",
+    "Ashton-Tate",
+    141,1,1,6},
 {  {0,0},
     0,
     0,
@@ -1094,6 +1108,8 @@ short Infodat(RB_IDF *Info);
 short Infotnl(RB_IDF *Info);
 short Infohsi(RB_IDF *Info);
 short Infoprc(RB_IDF *Info);
+short Infodbf2(RB_IDF *Info);
+short Infodbf3(RB_IDF *Info);
 
 
 void ClearSpace(char *name);    //--- efface les espaces inutiles ------
@@ -1393,6 +1409,8 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
             case 133:err=Infotnl(Info); break;
             case 134:err=Infohsi(Info); break;
             case 137:err=Infoprc(Info); break;
+            case 140:err=Infodbf2(Info); break;
+            case 141:err=Infodbf3(Info); break;
             default:     //--- Ca serait une erreur de ma part alors ---
                 sprintf(Info->format,"Pingouin %d",K[n].numero);
                 trv=1;
@@ -1702,7 +1720,8 @@ memcpy(Info->fullname,buf,28);
 Info->fullname[28]=0;
 
 chnl=0;
-for (n=0;n<32;n++)      if (buf[0x40+n]!=-1) chnl++;
+for (n=0;n<32;n++)
+    if ((buf[0x40+n]&128)!=128) chnl++;
 
 sprintf(Info->info, "%3d /%3d /%3d",
                           *(short*)(buf+0X22),*(short*)(buf+0X24),chnl);
@@ -1855,7 +1874,7 @@ if (Hp>9999) Hp=9999;
 if (BP>99) BP=99;
 
 
-sprintf(Info->message[0],"  Picture is    %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0]," Picture is     %4d * %4d / %2dBps",Lp,Hp,BP);
 
 
 
@@ -2462,7 +2481,7 @@ if ( (cs==0xFFF0) & (ip==0x100) )
 fseek(Info->fic,Info->posfic+(int)pe,SEEK_SET);
 fread(buf2,32,1,Info->fic);
 
-sprintf(Info->message[0]," Header is %18ld bytes",((int)header)*16);
+sprintf(Info->message[3]," Header is %18ld bytes",((int)header)*16);
 
 
 if (!memcmp(buf2,hai,7))
@@ -2499,29 +2518,34 @@ if (!memcmp(buf+0x55,"PMODE",5))
         (Info->message[2])[37]=0;
         }
 if (!memcmp(buf+0x25C,"DOS/4G",6))
-        sprintf(Info->message[3]," Using                       DOS/4G");
+        sprintf(Info->message[0]," Using                       DOS/4G");
+
+if (!memcmp(buf+0x55,"PMODE/W",7))
+        sprintf(Info->message[0]," Using                      PMODE/W");
 
 
 if (!memcmp(buf+0x1C,"L.S.",4))
-        sprintf(Info->message[3]," Crypt  by  LIGHT SHOW/Eclipse 1.13");
+        sprintf(Info->message[0]," Crypt  by  LIGHT SHOW/Eclipse 1.13");
 if (!memcmp(buf+0x1C,"@KLS",4))
-        sprintf(Info->message[3]," Crypt. by  LIGHT SHOW/Eclipse 1.15");
+        sprintf(Info->message[0]," Crypt. by  LIGHT SHOW/Eclipse 1.15");
 if (!memcmp(buf2,dsh,5))
-        sprintf(Info->message[3]," Crypted by                 DSHIELD");
+        sprintf(Info->message[0]," Crypted by                 DSHIELD");
 
+if (!memcmp(buf2+3,"WATCOM C/C++",12))
+        sprintf(Info->message[0]," Compiled with         WATCOM C/C++");
 if (!memcmp(buf+0x371,"WATCOM C",8))
-        sprintf(Info->message[3]," Compiled with             WATCOM C");
+        sprintf(Info->message[0]," Compiled with             WATCOM C");
 if (!memcmp(buf+0x279,"WATCOM C",8))
-        sprintf(Info->message[3]," Compiled with             WATCOM C");
+        sprintf(Info->message[0]," Compiled with             WATCOM C");
 if (!memcmp(buf+0x273,"WATCOM C",8))
-        sprintf(Info->message[3]," Compiled with             WATCOM C");
+        sprintf(Info->message[0]," Compiled with             WATCOM C");
 if (!memcmp(buf2,htp,3))
-        sprintf(Info->message[3]," Compiled with         TURBO PASCAL");
+        sprintf(Info->message[0]," Compiled with         TURBO PASCAL");
 if ( (buf2[0]==htc[0]) & (!memcmp(buf2+3,htc+3,3))
                                            & (!memcmp(buf2+8,htc+8,4)) )
-        sprintf(Info->message[3]," Compiled with          TURBO C/C++");
+        sprintf(Info->message[0]," Compiled with          TURBO C/C++");
 if (!memcmp(buf2,hqc,9))
-        sprintf(Info->message[3]," Compiled with              QUICK C");
+        sprintf(Info->message[0]," Compiled with              QUICK C");
 
 
 if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"NE",2))
@@ -2668,7 +2692,6 @@ short Infotpu(RB_IDF *Info)
 char *buf;
 
 buf=Info->buffer;
-
 
 if (buf[3]=='6') strcat(Info->format," Ver 5.5");
 if (buf[3]=='9') strcat(Info->format," Ver 6.0");
@@ -2981,6 +3004,46 @@ if (!memcmp(buf,key1,4))
 return 0;
 }
 
+short Infodbf2(RB_IDF *Info)
+{
+char day,month,year;
+
+if (Info->buffer[0]!=2) return 1;
+
+day=Info->buffer[4];
+month=Info->buffer[3];
+year=Info->buffer[5];
+
+if ((month<1) | (month>12)) return 1;
+if (day>31) return 1;
+
+sprintf(Info->message[0]," Last update:              %2d/%2d/%2d",
+                                                        day,month,year);
+sprintf(Info->message[1]," %-5d data records",ReadInt(Info,1,1));
+
+return 0;
+}
+
+short Infodbf3(RB_IDF *Info)
+{
+char day,month,year;
+
+if ( (Info->buffer[0]!=3) & (Info->buffer[0]!=0x83) )  return 1;
+
+day=Info->buffer[3];
+month=Info->buffer[2];
+year=Info->buffer[1];
+
+if ((month<1) | (month>12)) return 1;
+if (day>31) return 1;
+
+sprintf(Info->message[0]," Last update:              %2d/%2d/%2d",
+                                                        day,month,year);
+sprintf(Info->message[1]," %-5d data records",ReadLng(Info,4,1));
+
+return 0;
+}
+
 short Infompg(RB_IDF *Info)
 {
 char key[]={0x00,0x00,0x01,0xBA,0x21,0x00};
@@ -3277,5 +3340,6 @@ strcpy(Ficname,s);
 
 return Ficname;
 }
+
 
 

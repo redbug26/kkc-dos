@@ -13,7 +13,9 @@
 #define ULONG unsigned long
 
 
-struct file {
+
+struct file
+    {
     char *name;
     char attrib;
     char select;
@@ -22,8 +24,7 @@ struct file {
     unsigned short date;
     char *info;
     char desc;
-};
-
+    };
 
 
 typedef struct _fenetre
@@ -51,7 +52,14 @@ typedef struct _fenetre
                   // La lettre du disque ne peut prendre que 1 caractere
                            //                  et doit etre en majuscule
                  // Le repertoire ne doit pas finir par '/' sauf le ROOT
-     short FenTyp;                     // Type de fenetre: 0:norm, 1:diz
+     short FenTyp;                // Type de fenetre: 0: normal -------
+                                                   // 1: info file -----
+                                                   // 2: user screen ---
+                                                   // 3: info all file -
+                                                   // 4: information ---
+                                                   // 5: file_id.diz ---
+                                                   // 6: change dir ----
+
      short init;         // si =1 --> r‚initialise fenˆtre (bordure ...)
      struct _fenetre *Fen2;
 
@@ -67,13 +75,17 @@ typedef struct _fenetre
 
      char KKDdrive;                     // Numero du drive pour les .KKD
 
+     char InfoPos;                       // On commence o— dans l'info ?
+
+
 } FENETRE;
+
 
 
 void Shell(char *string,...);
 void SaveCfg(void);
 int LoadCfg(void);
-void AffFen(FENETRE *Fen);
+
 
 int ChangeToKKD(void);
 
