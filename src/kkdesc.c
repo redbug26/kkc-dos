@@ -856,7 +856,7 @@ for (n=prem;n<nbrkey;n++)
         PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,K[n].format,
                                K[n].pro,NumExt[n]==1 ? " OK " : "    ");
 
-        if (K[n].other==1) info++;
+        if (((K[n].other)&1)==1) info++;
         }
 
 

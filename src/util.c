@@ -448,7 +448,9 @@ char ligne[256],*buf;
 char ok;
 int nbr;
 static struct barmenu bar[20];
+char titre[20][25];
 int retour,x,y,n;
+MENU menu;
 
 fic=fopen(KKFics->menu,"rt");
 if (fic==NULL) return 1;
@@ -484,14 +486,16 @@ do
     if (buf!=NULL)
         {
         if (strchr(ligne,'[')!=NULL)
-            strcpy(bar[nbr].titre," ");
+            strcpy(titre[nbr]," ");
             else
-            strcpy(bar[nbr].titre,"");
+            strcpy(titre[nbr],"");
 
         *buf=0;
         ClearSpace(ligne);
         if (strlen(ligne)>20) ligne[20]=0;
-        strcat(bar[nbr].titre,ligne);
+        strcat(titre[nbr],ligne);
+        bar[nbr].Titre=titre[nbr];
+        bar[nbr].Help=NULL;
         nbr++;
         if (nbr==20) break;
         }
@@ -510,7 +514,13 @@ n=0;
 
 do
     {
-    retour=PannelMenu(bar,nbr,&n,&x,&y);
+    menu.x=x;
+    menu.y=y;
+    menu.cur=n;
+
+    retour=PannelMenu(bar,nbr,&menu);
+
+    n=menu.cur;
     }
 while ((retour==1) | (retour==-1));
 

@@ -19,3 +19,5 @@ char *Long2Str(long n,char *chaine);         // Convertit un long en chaine
 char *Int2Char(int n,char *s,char length); // Convertit un entier en chaine
 int LongGradue(int x,int y,int length,int from,int to,int total);
 char *StrUpr(char *chaine);
+
+long flength(int handle);

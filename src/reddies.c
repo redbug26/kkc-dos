@@ -507,3 +507,9 @@ while((*car)!=0)
 return chaine;
 
 }
+
+
+long flength(int handle)
+{
+return filelength(handle);
+}

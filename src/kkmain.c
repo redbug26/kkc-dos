@@ -192,32 +192,37 @@ void SwitchScreen(void)
 {
 int nbr;
 static struct barmenu bar[3];
-int retour,x,y,n;
+int retour;
+MENU menu;
 
 nbr=3;
 
-sprintf(bar[0].titre,"Normal Mode ");
+bar[0].Titre="Normal Mode ";
+bar[0].Help=NULL;
 bar[0].fct=1;
 
-sprintf(bar[1].titre,"Ansi Mode   ");
+bar[1].Titre="Ansi Mode   ";
+bar[1].Help=NULL;
 bar[1].fct=2;
 
-sprintf(bar[2].titre,"Doorway Mode");
+bar[2].Titre="Doorway Mode";
+bar[2].Help=NULL;
 bar[2].fct=3;
 
-x=((Cfg->TailleX)-10)/2;
-y=((Cfg->TailleY)-2*(nbr-2))/2;
+menu.x=((Cfg->TailleX)-10)/2;
+menu.y=((Cfg->TailleY)-2*(nbr-2))/2;
+menu.attr=0;
+menu.cur=0;
 
-n=0;
 
 do
     {
-    retour=PannelMenu(bar,nbr,&n,&x,&y);
+    retour=PannelMenu(bar,nbr,&menu);
 
     if (retour==2)
         {
         DesinitScreen();
-        Cfg->display=bar[n].fct-1;
+        Cfg->display=bar[menu.cur].fct-1;
         if (InitScreen(Cfg->display)) break;
         }
     }
@@ -1360,6 +1365,7 @@ int retour,nbmenu;
 int u,v,s,x;
 
 struct barmenu bar[20];
+MENU menu;
 
 short fin;
 
@@ -1386,23 +1392,23 @@ if (i==0)
 
 do
 {
-strcpy(bar[0].titre,"File");
-strcpy(bar[1].titre,"Panel");
-strcpy(bar[2].titre,"Disk");
-strcpy(bar[3].titre,"Selection");
-strcpy(bar[4].titre,"Tools");
-strcpy(bar[5].titre,"Options");
-strcpy(bar[6].titre,"Help");
+bar[0].Titre="File";
+bar[1].Titre="Panel";
+bar[2].Titre="Disk";
+bar[3].Titre="Selection";
+bar[4].Titre="Tools";
+bar[5].Titre="Options";
+bar[6].Titre="Help";
 
-/*
-strcpy(bar[0].help,"Various");
-strcpy(bar[1].help,"File");
-strcpy(bar[2].help,"Disk");
-strcpy(bar[3].help,"Commands");
-strcpy(bar[4].help,"Tools");
-strcpy(bar[5].help,"Archiver");
-strcpy(bar[6].help,"Options");
-*/
+
+bar[0].Help=NULL;
+bar[1].Help=NULL;
+bar[2].Help=NULL;
+bar[3].Help=NULL;
+bar[4].Help=NULL;
+bar[5].Help=NULL;
+bar[6].Help=NULL;
+
 
 if (retour==0)                             // Navigation sur bar de menu
     v=1;
@@ -1421,70 +1427,118 @@ if (u==0)
 switch (poscur)
  {
  case 0:
-   strcpy(bar[0].titre,"View                F3");  bar[0].fct=7;
-   strcpy(bar[1].titre,"Quick View    Shift-F3");  bar[1].fct=8;
-   strcpy(bar[2].titre,"Edit                F4");  bar[2].fct=9;
-   strcpy(bar[3].titre,"");                        bar[3].fct=0;
-   strcpy(bar[4].titre,"Copy                F5");  bar[4].fct=10;
-   strcpy(bar[5].titre,"Move                F6");  bar[5].fct=11;
-   strcpy(bar[6].titre,"Create Directory... F7");  bar[6].fct=12;
-   strcpy(bar[7].titre,"Delete              F8");  bar[7].fct=13;
-   strcpy(bar[8].titre,"");                        bar[8].fct=0;
-   strcpy(bar[9].titre,"Exit               F10");  bar[9].fct=20;
+   bar[0].Titre="View                F3";bar[0].fct=7;
+   bar[0].Help="View";
+   bar[1].Titre="Quick View    Shift-F3";bar[1].fct=8;
+   bar[1].Help="View";
+   bar[2].Titre="Edit                F4";bar[2].fct=9;
+   bar[2].Help="Edit";
+   bar[3].Titre=NULL;                    bar[3].fct=0;
+   bar[3].Help=NULL;
+   bar[4].Titre="Copy                F5";bar[4].fct=10;
+   bar[4].Help="Copy";
+   bar[5].Titre="Move                F6";bar[5].fct=11;
+   bar[5].Help="Move";
+   bar[6].Titre="Create Directory... F7";bar[6].fct=12;
+   bar[6].Help="Create directory";
+   bar[7].Titre="Delete              F8";bar[7].fct=13;
+   bar[7].Help="Delete";
+   bar[8].Titre=NULL;                    bar[8].fct=0;
+   bar[8].Help=NULL;
+   bar[9].Titre="Exit               F10";bar[9].fct=20;
+   bar[9].Help=NULL;
    nbmenu=10;
    break;
  case 1:
-   strcpy(bar[0].titre, "Close left window    CTRL-F1");  bar[0].fct=14;
-   strcpy(bar[1].titre, "Close right window   CTRL-F2");  bar[1].fct=15;
-   strcpy(bar[2].titre, "");                              bar[2].fct=0;
-   strcpy(bar[3].titre, "DIZ Window            ALT-F3");  bar[3].fct=21;
-   strcpy(bar[4].titre, "Info Window           CTRL-L");  bar[4].fct=63;
-   strcpy(bar[5].titre, "");                              bar[5].fct=0;
-   strcpy(bar[6].titre, "Name                 CTRL-F3");  bar[6].fct=22;
-   strcpy(bar[7].titre, "Extension            CTRL-F4");  bar[7].fct=23;
-   strcpy(bar[8].titre, "Time/Date            CTRL-F5");  bar[8].fct=24;
-   strcpy(bar[9].titre, "Size                 CTRL-F6");  bar[9].fct=25;
-   strcpy(bar[10].titre,"Unsort               CTRL-F7"); bar[10].fct=26;
+   bar[0].Titre="Close left window    CTRL-F1";  bar[0].fct=14;
+   bar[0].Help=NULL;
+   bar[1].Titre="Close right window   CTRL-F2";  bar[1].fct=15;
+   bar[1].Help=NULL;
+   bar[2].Titre=NULL;                            bar[2].fct=0;
+   bar[2].Help=NULL;
+   bar[3].Titre="DIZ Window            ALT-F3";  bar[3].fct=21;
+   bar[3].Help=NULL;
+   bar[4].Titre="Info Window           CTRL-L";  bar[4].fct=63;
+   bar[4].Help=NULL;
+   bar[5].Titre=NULL;                            bar[5].fct=0;
+   bar[5].Help=NULL;
+   bar[6].Titre="Name                 CTRL-F3";  bar[6].fct=22;
+   bar[6].Help=NULL;
+   bar[7].Titre="Extension            CTRL-F4";  bar[7].fct=23;
+   bar[7].Help=NULL;
+   bar[8].Titre="Time/Date            CTRL-F5";  bar[8].fct=24;
+   bar[8].Help=NULL;
+   bar[9].Titre="Size                 CTRL-F6";  bar[9].fct=25;
+   bar[9].Help=NULL;
+   bar[10].Titre="Unsort               CTRL-F7"; bar[10].fct=26;
+   bar[10].Help=NULL;
    nbmenu=11;
    break;
  case 2:
-   strcpy(bar[0].titre,"Create KKD");           bar[0].fct=6;
-   strcpy(bar[1].titre,"");                     bar[1].fct=0;
-   strcpy(bar[2].titre,"Erase files in trash"); bar[2].fct=34;
+   bar[0].Titre="Create KKD";           bar[0].fct=6;
+   bar[0].Help="KKD";
+   bar[1].Titre=NULL;                   bar[1].fct=0;
+   bar[1].Help=NULL;
+   bar[2].Titre="Erase files in trash"; bar[2].fct=34;
+   bar[2].Help=NULL;
    nbmenu=3;
    break;
  case 3:
-   strcpy(bar[0].titre, "Select group...     Gray '+'");  bar[0].fct=3;
-   strcpy(bar[1].titre, "Unselect group...   Gray '-'");  bar[1].fct=4;
-   strcpy(bar[2].titre, "Invert Selection    Gray '*'");  bar[2].fct=2;
+   bar[0].Titre="Select group...     Gray '+'";  bar[0].fct=3;
+   bar[0].Help="Selection of files";
+   bar[1].Titre="Unselect group...   Gray '-'";  bar[1].fct=4;
+   bar[1].Help="Deselection of files";
+   bar[2].Titre="Invert Selection    Gray '*'";  bar[2].fct=2;
+   bar[2].Help="Inverse";
    nbmenu=3;
    break;
  case 4:
-   strcpy(bar[0].titre,"Search File...     Alt-F7");  bar[0].fct=5;
-   strcpy(bar[1].titre,"Select temporary File   ý");  bar[1].fct=19;
-   strcpy(bar[2].titre,"                         ");  bar[2].fct=0;
-   strcpy(bar[3].titre,"ASCII Table        CTRL-A");  bar[3].fct=28;
-   strcpy(bar[4].titre,"Screen Saver             ");  bar[4].fct=76;
+   bar[0].Titre="Search File...     Alt-F7"; bar[0].fct=5;
+   bar[0].Help=NULL;
+   bar[1].Titre="Select temporary File   ý"; bar[1].fct=19;
+   bar[1].Help=NULL;
+   bar[2].Titre=NULL;                        bar[2].fct=0;
+   bar[2].Help=NULL;
+   bar[3].Titre="ASCII Table        CTRL-A"; bar[3].fct=28;
+   bar[3].Help=NULL;
+   bar[4].Titre="Screen Saver             "; bar[4].fct=76;
+   bar[4].Help=NULL;
    nbmenu=5;
    break;
  case 5:
-   strcpy(bar[0].titre,"Configuration   ");   bar[0].fct=31;
-   strcpy(bar[1].titre,"Palette Setup   ");   bar[1].fct=17;
-   strcpy(bar[2].titre,"Color Definition");   bar[2].fct=82;
-   strcpy(bar[3].titre,"Screen Setup    ");   bar[3].fct=66;
-   strcpy(bar[4].titre,"");                   bar[4].fct=0;
-   strcpy(bar[5].titre,"Main Setup      ");   bar[5].fct=62;
+   bar[0].Titre="Configuration   ";   bar[0].fct=31;
+   bar[0].Help=NULL;
+   bar[1].Titre="Palette Setup   ";   bar[1].fct=17;
+   bar[1].Help=NULL;
+   bar[2].Titre="Color Definition";   bar[2].fct=82;
+   bar[2].Help=NULL;
+   bar[3].Titre="Screen Setup    ";   bar[3].fct=66;
+   bar[3].Help=NULL;
+   bar[4].Titre=NULL;                 bar[4].fct=0;
+   bar[4].Help=NULL;
+   bar[5].Titre="Main Setup      ";   bar[5].fct=62;
+   bar[5].Help=NULL;
    nbmenu=6;
    break;
  case 6:
-   strcpy(bar[0].titre,"Help ");    bar[0].fct=1;
-   strcpy(bar[1].titre,"About");    bar[1].fct=18;
+   bar[0].Titre="Help ";    bar[0].fct=1;
+   bar[0].Help=NULL;
+   bar[1].Titre="About";    bar[1].fct=18;
+   bar[1].Help=NULL;
    nbmenu=2;
    break;
    }
 
 s=2;
-retour=PannelMenu(bar,nbmenu,&(cpos[poscur]),&x,&s);      // (x,y)=(t,s)
+
+menu.x=x;
+menu.y=s;
+menu.attr=0;
+menu.cur=cpos[poscur];
+
+retour=PannelMenu(bar,nbmenu,&menu);      // (x,y)=(t,s)
+
+cpos[poscur]=menu.cur;
 
 if (retour==2)
     {
@@ -1593,118 +1647,49 @@ for (n=0;n<DFen->nbrfic;n++)
 void HistDir(void)
 {
 int Mlen;
+MENU menu;
 
 int i,j;
-static char **dir;
+static struct barmenu dir[100];
 
-dir=(char**)GetMem(100*sizeof(char *));
+int x,y,n,retour;
 
 j=0;
 Mlen=0;
 for (i=0;i<100;i++)
     {
-    dir[i]=KKCfg->HistDir+j;
-    dir[i]=StrUpr(dir[i]);
-    if (strlen(dir[i])>Mlen) Mlen=strlen(dir[i]);
-    if (strlen(dir[i])==0) break;
+    dir[i].Titre=KKCfg->HistDir+j;
+    dir[i].Help=NULL;
+    dir[i].fct=i+1;
+    dir[i].Titre=StrUpr(dir[i].Titre);
+    if (strlen(dir[i].Titre)>Mlen) Mlen=strlen(dir[i].Titre);
+    if (strlen(dir[i].Titre)==0) break;
     while ( (j!=256) & (KKCfg->HistDir[j]!=0) ) j++;
     j++;
     }
 
+x=2;
+y=2;
+n=0;
+
 if (i!=0)
     {
-    int x=2,y=2,pos=i-1,car,max,prem;
-
-    SaveScreen();
-
-    Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
-
-    PutCur(32,0);
-
-    max=i;
-    if (max>Cfg->TailleY-4) max=Cfg->TailleY-4;
-
-    Cadre(x-2,y-1,x+Mlen+1,y+max,0,Cfg->col[46],Cfg->col[47]);
-    Window(x-1,y,x+Mlen,y+max-1,Cfg->col[28]);
-
-    prem=0;
-
-    do {
-
-    while((pos-prem)>=max) prem++;
-    while((pos-prem)<0) prem--;
-
-
-    for (j=0;j<max;j++)
-        PrintAt(x,y+j,"%-*s",Mlen,dir[j+prem]);
-
-    ColLin(x-1,y+(pos-prem),Mlen+2,Cfg->col[30]);
-
-    car=Wait(0,0,0);
-
-    ColLin(x-1,y+(pos-prem),Mlen+2,Cfg->col[28]);
-
-    if (car==0)
+    do
         {
-        int px,py,pz;
+        menu.x=x;
+        menu.y=y;
+        menu.cur=n;
+        menu.attr=0;
 
-        px=MousePosX();
-        py=MousePosY();
-        pz=MouseButton();
+        retour=PannelMenu(dir,i,&menu);
 
-        if ((pz&2)==2)
-            car=27;
-
-        if ((pz&4)==4)
-            car=13;
-
-        if ((pz&1)==1)
-            {
-            if (py<=y-1) car=72*256;
-                else
-                if (py>=y+max) car=80*256;
-                    else
-                    {
-                    pos=py-y+prem;
-                    }
-            }
+        n=menu.cur;
         }
+    while ((retour==1) | (retour==-1));
 
-    switch(HI(car))
-        {
-        case 72:                                                   // UP
-            pos--;
-            if (pos==-1) pos=i-1;
-            break;
-        case 80:                                                 // DOWN
-            pos++;
-            if (pos==i) pos=0;
-            break;
-        case 0x47:                                               // HOME
-            pos=0;
-            break;
-        case 0x4F:                                                // END
-            pos=i-1;
-            break;
-        case 0x49:                                               // PGUP
-            pos-=5;
-            if (pos<0) pos=0;
-            break;
-        case 0x51:                                               // PGDN
-            pos+=5;
-            if (pos>=i) pos=i-1;
-            break;
-        }
+    if (retour==2)
+        CommandLine("#cd %s",dir[n].Titre);
     }
-    while ( (car!=13) & (car!=27) & (HI(car)!=0x8D) );
-
-    LoadScreen();
-
-    if (car==13)
-        CommandLine("#cd %s",dir[pos]);
-    }
-
-LibMem(dir);
 }
 
 /*--------------------------------------------------------------------*\
@@ -2465,7 +2450,7 @@ if ( (DFen->system!=0) & (k!=-1) )
     infic=fopen(buf,"rb");
     if (infic!=NULL)
         {
-        i=filelength(fileno(infic));
+        i=flength(fileno(infic));
         if (i==DFen->F[k]->size)
             k=-2;
         fclose(infic);
@@ -3378,7 +3363,7 @@ if (strlen(suite+1)>120)    //-- La ligne de commande est trop grande --
     fprintf(fic,
           "@REM * Batch file created by Ketchup Killers Commander *\n");
     fprintf(fic,
-          "@REM * when command line is too high                   *\n");
+          "@REM * when command line is too long                   *\n");
     fprintf(fic,
           "@REM *-------------------------------------------------*\n");
 

@@ -2823,7 +2823,9 @@ if (*srcch!=0)
 \*--------------------------------------------------------------------*/
 void ChangeMask(void)
 {
+MENU menu;
 int nbr;
+char bars0[25],bars1[25],bars2[25];
 static struct barmenu bar[19];
 int retour,x,y,n,i,max;
 
@@ -2838,7 +2840,8 @@ for(i=0;i<16;i++)
         {
         bar[nbr].fct=i+10;
 
-        strcpy(bar[nbr].titre,Mask[i]->title);
+        bar[nbr].Titre=Mask[i]->title;
+        bar[nbr].Help=NULL;
 
         if ( ((KKCfg->wmask)&15) ==i) n=nbr;
 
@@ -2853,10 +2856,14 @@ if (y<2) y=2;
 
 do
 {
-sprintf(bar[0].titre,"Elite %3s",(KKCfg->wmask&64)==64 ? "ON" : "OFF");
+sprintf(bars0,"Elite %3s",(KKCfg->wmask&64)==64 ? "ON" : "OFF");
+bar[0].Titre=bars0;
+bar[0].Help=NULL;
 bar[0].fct=1;
 
-sprintf(bar[1].titre,"Mask %3s",(KKCfg->wmask&128)==128 ? "OFF" : "ON");
+sprintf(bars1,"Mask %3s",(KKCfg->wmask&128)==128 ? "OFF" : "ON");
+bar[1].Titre=bars1;
+bar[1].Help=NULL;
 bar[1].fct=2;
 
 bar[2].fct=3;
@@ -2868,9 +2875,18 @@ fin=0;
 
 do
     {
-    sprintf(bar[2].titre,"Xor %02X",xor);
+    sprintf(bars2,"Xor %02X",xor);
+    bar[2].Titre=bars2;
+    bar[2].Help=NULL;
 
-    retour=PannelMenu(bar,nbr,&n,&x,&y);
+    menu.x=x;
+    menu.y=y;
+    menu.cur=n;
+    menu.attr=0;
+
+    retour=PannelMenu(bar,nbr,&menu);
+
+    n=menu.cur;
 
     if ((bar[n].fct==3) & (retour!=2))
         xor+=retour;
@@ -2905,7 +2921,9 @@ void ChangeTrad(void)
 {
 int nbr;
 static struct barmenu bar[5];
+char bars0[25],bars1[25],bars2[25],bars4[25];
 int retour,x,y,n,max;
+MENU menu;
 
 char fin;
 
@@ -2923,25 +2941,40 @@ if (KKCfg->autotrad) n=4;
     while (KKCfg->cnvtable!=(bar[n].fct)-1)
         n++;
 
-sprintf(bar[0].titre,"Normal %c",KKCfg->cnvtable==0 ? 15 : 32);
+sprintf(bars0,"Normal %c",KKCfg->cnvtable==0 ? 15 : 32);
+bar[0].Titre=bars0;
+bar[0].Help=NULL;
 bar[0].fct=1;
 
-sprintf(bar[1].titre,"BBS    %c",KKCfg->cnvtable==1 ? 15 : 32);
+sprintf(bars1,"BBS    %c",KKCfg->cnvtable==1 ? 15 : 32);
+bar[1].Titre=bars1;
+bar[1].Help=NULL;
 bar[1].fct=2;
 
-sprintf(bar[2].titre,"Latin  %c",KKCfg->cnvtable==2 ? 15 : 32);
+sprintf(bars2,"Latin  %c",KKCfg->cnvtable==2 ? 15 : 32);
+bar[2].Titre=bars2;
+bar[2].Help=NULL;
 bar[2].fct=3;
 
 bar[3].fct=0;
 
-sprintf(bar[4].titre,"%s",KKCfg->autotrad ? "Auto" : "No Auto");
+sprintf(bars4,"%s",KKCfg->autotrad ? "Auto" : "No Auto");
+bar[4].Titre=bars4;
+bar[4].Help=NULL;
 bar[4].fct=10;
 
 fin=0;
 
 do
     {
-    retour=PannelMenu(bar,nbr,&n,&x,&y);
+    menu.x=x;
+    menu.y=y;
+    menu.cur=n;
+    menu.attr=0;
+
+    retour=PannelMenu(bar,nbr,&menu);
+
+    n=menu.cur;
     }
 while ( (retour==1) | (retour==-1) );
 
@@ -2969,8 +3002,10 @@ if (retour==2)
 \*--------------------------------------------------------------------*/
 int ChangeLnFeed(void)
 {
+MENU menu;
 int nbr;
 static struct barmenu bar[5];
+char bars4[25];
 int retour,x,y,n;
 
 nbr=5;
@@ -2979,16 +3014,20 @@ x=((Cfg->TailleX)-10)/2;
 y=((Cfg->TailleY)-2*(nbr-2))/2;
 if (y<2) y=2;
 
-strcpy(bar[0].titre,"DOS (CR/LF)");
+bar[0].Titre="DOS (CR/LF)";
+bar[0].Help=NULL;
 bar[0].fct=1;
 
-strcpy(bar[1].titre,"Unix (LF)");
+bar[1].Titre="Unix (LF)";
+bar[1].Help=NULL;
 bar[1].fct=3;
 
-strcpy(bar[2].titre,"CR");
+bar[2].Titre="CR";
+bar[2].Help=NULL;
 bar[2].fct=2;
 
-strcpy(bar[3].titre,"Mixed (CR-LF)");
+bar[3].Titre="Mixed (CR-LF)";
+bar[3].Help=NULL;
 bar[3].fct=5;
 
 bar[4].fct=4;
@@ -3000,9 +3039,19 @@ while (KKCfg->lnfeed!=(bar[n].fct)-1)
 
 do
     {
-    sprintf(bar[4].titre,"User Line Feed: $%02X",KKCfg->userfeed);
+    sprintf(bars4,"User Line Feed: $%02X",KKCfg->userfeed);
+    bar[4].Titre=bars4;
+    bar[4].Help=NULL;
 
-    retour=PannelMenu(bar,nbr,&n,&x,&y);
+    menu.x=x;
+    menu.y=y;
+    menu.cur=n;
+    menu.attr=0;
+
+    retour=PannelMenu(bar,nbr,&menu);
+
+    n=menu.cur;
+
     if ((bar[n].fct==4) & (retour!=2))
         KKCfg->userfeed+=retour;
     }
@@ -3586,7 +3635,9 @@ void View(FENETRE *F)
 {
 static char buffer[256];
 char *fichier,*liaison;
+int n,o;
 short i;
+extern struct key K[nbrkey];
 
 xor=0;
 
@@ -3634,9 +3685,6 @@ while(i!=-1)
         case 86:  // Ansi
             i=Ansi2View(fichier);
             break;
-        case 91:  // Texte
-            i=TxtView(fichier);
-            break;
         case 104: // HTML
             i=HtmlView(fichier,liaison);
             break;
@@ -3647,7 +3695,14 @@ while(i!=-1)
             i=-1;
             break;
         default:
-            i=HexaView(fichier);
+            o=-1;
+            for(n=0;n<nbrkey;n++)
+                if (K[n].numero==i) o=n;
+
+            if ((K[o].other&4)==4)
+                i=TxtView(fichier);
+                else
+                i=HexaView(fichier);
             break;
         }
     }

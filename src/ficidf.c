@@ -21,11 +21,15 @@ static struct
     char *Meneur;
     signed short ext;
     short NoDir;
-    char type;  // 0: Rien de particulier
-                // 1: Decompacteur
-                // 2: Compacteur
-    char os;    // 0: DOS
-                // 1: WINDOWS
+    char type;  /* 7 6 5 4 3 2 1 0
+                   Ё Ё Ё Ё Ё Ё Ё юддд Unpacker
+                   Ё Ё Ё Ё Ё Ё юддддд Packer
+                   юдадададададдддддд 0
+                 */
+    char os;    /* 7 6 5 4 3 2 1 0
+                   Ё Ё Ё Ё Ё Ё Ё юддд Windows
+                   юдададададададдддд 0
+                 */
     char info;
     char dir[128];
     } app[50];
@@ -189,11 +193,11 @@ if ( (nbrappl!=1) & (fin==0) )
     prem=0;
 
 	do	{
-        while (pos<0) pos=0;
-        while (pos>nbrappl-1) pos=nbrappl-1;
+        if (pos<0) pos=0;
+        if (pos>nbrappl-1) pos=nbrappl-1;
 
         while (pos-prem<0) prem--;
-        while (pos-prem>max-1) prem++;
+        while (pos-prem>=max) prem++;
 
         PrintAt(0,0,"%*s by %-*s",Cfg->TailleX/2-1,app[pos].Titre,
                                        Cfg->TailleX/2-3,app[pos].Meneur);

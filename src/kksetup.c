@@ -524,9 +524,9 @@ for (n=prem;n<nbrkey;n++)
             }
 
         PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,
-                  K[n].format,K[n].pro,K[n].other==1 ? "Info" : "----");
+            K[n].format,K[n].pro,((K[n].other)&1)==1 ? "Info" : "----");
 
-        if (K[n].other==1) info++;
+        if (((K[n].other)&1)==1) info++;
         }
 
     y++;
@@ -1119,7 +1119,20 @@ if (LoadCfg()==-1)
     LoadConfigFile("main");
     }
 
+Cfg->reinit=0;
 InitMode();
+
+if (todo!=0)
+    {
+    int x;
+
+    x=(Cfg->TailleX-14)/2;
+
+    Window(x,9,x+13,9,Cfg->col[28]);
+    Cadre(x-1,8,x+14,10,0,Cfg->col[46],Cfg->col[47]);
+
+    PrintAt(x+1,9,"Hi everybody");
+    }
 
 /*--------------------------------------------------------------------*\
 |- Autres configurations                                              -|
@@ -2389,6 +2402,7 @@ return 1;
 
 int GestionBar(void)
 {
+MENU menu;
 int retour,nbmenu;
 int u,v,s,x;
 
@@ -2405,16 +2419,15 @@ retour=0;
 
 do
 {
-strcpy(bar[0].titre,"Player");
-strcpy(bar[1].titre,"Information");
-strcpy(bar[2].titre,"Disk");
-strcpy(bar[3].titre,"Help");
-/*
-strcpy(bar[0].help,"Various");
-strcpy(bar[1].help,"File");
-strcpy(bar[2].help,"Disk");
-strcpy(bar[3].help,"Options");
-*/
+bar[0].Titre="Player";
+bar[1].Titre="Information";
+bar[2].Titre="Disk";
+bar[3].Titre="Help";
+
+bar[0].Help=NULL;
+bar[1].Help=NULL;
+bar[2].Help=NULL;
+bar[3].Help=NULL;
 
 if (retour==0)                             // Navigation sur bar de menu
     v=1;
@@ -2433,36 +2446,43 @@ if (u==0)
 switch (poscur)
  {
  case 0:
-    strcpy(bar[0].titre,"Search player");     bar[0].fct=4;
+    bar[0].Titre="Search player";   bar[0].fct=4; bar[0].Help=NULL;
     nbmenu=1;
     break;
  case 1:
-    strcpy(bar[0].titre,"Show all format");   bar[0].fct=3;
-    strcpy(bar[1].titre,"Show your player");  bar[1].fct=8;
+    bar[0].Titre="Show all format "; bar[0].fct=3; bar[0].Help=NULL;
+    bar[1].Titre="Show your player"; bar[1].fct=8; bar[1].Help=NULL;
     nbmenu=2;
     break;
  case 2:
-    strcpy(bar[0].titre,"Config. Default");  bar[0].fct=10;
-    strcpy(bar[1].titre,"File setting");  bar[1].fct=11;
-    strcpy(bar[2].titre,"");                       bar[2].fct=0;
-    strcpy(bar[3].titre,"Color Definition");       bar[3].fct=12;
-    strcpy(bar[4].titre,"Palette");                bar[4].fct=13;
-    strcpy(bar[5].titre,"");                       bar[5].fct=0;
-    strcpy(bar[6].titre,"Load KKSETUP.INI");       bar[6].fct=5;
-    strcpy(bar[7].titre,"Write Profile");          bar[7].fct=9;
+    bar[0].Titre="Config. Default "; bar[0].fct=10; bar[0].Help=NULL;
+    bar[1].Titre="File setting    "; bar[1].fct=11; bar[1].Help=NULL;
+    bar[2].Titre=NULL;               bar[2].fct=0;  bar[2].Help=NULL;
+    bar[3].Titre="Color Definition"; bar[3].fct=12; bar[3].Help=NULL;
+    bar[4].Titre="Palette         "; bar[4].fct=13; bar[4].Help=NULL;
+    bar[5].Titre=NULL;               bar[5].fct=0;  bar[5].Help=NULL;
+    bar[6].Titre="Load KKSETUP.INI"; bar[6].fct=5;  bar[6].Help=NULL;
+    bar[7].Titre="Write Profile   "; bar[7].fct=9;  bar[7].Help=NULL;
     nbmenu=8;
     break;
  case 3:
-    strcpy(bar[0].titre,"Help ");         bar[0].fct=1;
-    strcpy(bar[1].titre,"About");         bar[1].fct=2;
-    strcpy(bar[2].titre,"");              bar[2].fct=0;
-    strcpy(bar[3].titre,"Exit");          bar[3].fct=7;
+    bar[0].Titre="Help "; bar[0].fct=1; bar[0].Help=NULL;
+    bar[1].Titre="About"; bar[1].fct=2; bar[1].Help=NULL;
+    bar[2].Titre=NULL;    bar[2].fct=0; bar[2].Help=NULL;
+    bar[3].Titre="Exit "; bar[3].fct=7; bar[3].Help=NULL;
     nbmenu=4;
     break;
     }
 
 s=2;
-retour=PannelMenu(bar,nbmenu,&(cpos[poscur]),&x,&s);      // (x,y)=(t,s)
+menu.x=x;
+menu.y=s;
+menu.cur=cpos[poscur];
+menu.attr=0;
+
+retour=PannelMenu(bar,nbmenu,&menu);      // (x,y)=(t,s)
+
+cpos[poscur]=menu.cur;
 
 if (retour==2)
     {
@@ -2757,7 +2777,9 @@ char buffer[256];
 
 int x,y,n;
 
+MENU menu;
 struct barmenu bar[20];
+char bars[20][25];
 int nbmenu=0,retour;
 
 strcpy(filename,Fics->path);
@@ -2775,8 +2797,10 @@ while(fgets(buffer,256,fic)!=NULL)
     if (buffer[0]=='[')
         {
         buffer[strlen(buffer)-1]=0;      //--- Efface le ENTER ---------
-        strcpy(bar[nbmenu].titre,buffer+1);
+        strcpy(bars[nbmenu],buffer+1);
+        bar[nbmenu].Titre=bars[nbmenu];
         bar[nbmenu].fct=nbmenu+1;
+        bar[nbmenu].Help=NULL;
         nbmenu++;
         if (nbmenu==20) break;
         }
@@ -2793,18 +2817,25 @@ if (nbmenu>1)
 
     do
         {
-        retour=PannelMenu(bar,nbmenu,&n,&x,&y);
+        menu.x=x;
+        menu.y=y;
+        menu.cur=n;
+        menu.attr=0;
+
+        retour=PannelMenu(bar,nbmenu,&menu);
+
+        n=menu.cur;
         }
     while ((retour==1) | (retour==-1));
 
     if (retour==2)
-        strcpy(part,bar[n].titre);
+        strcpy(part,bar[n].Titre);
         else
         strcpy(part,"*");
     }
 
 if (nbmenu==1)
-    strcpy(part,bar[n].titre);
+    strcpy(part,bar[n].Titre);
 
 
 }
@@ -2951,34 +2982,35 @@ InitMessage();
 
 void ColorChange(void)
 {
+MENU menu;
 int retour,n,x,y;
 static struct barmenu bar[19];
 
-sprintf(bar[0].titre,"Pannel");
+bar[0].Titre="Pannel"; bar[0].Help=NULL;
 bar[0].fct=1;
 
-sprintf(bar[1].titre,"KeyBar");
+bar[1].Titre="KeyBar"; bar[1].Help=NULL;
 bar[1].fct=2;
 
-sprintf(bar[2].titre,"Window 1");
+bar[2].Titre="Window 1"; bar[2].Help=NULL;
 bar[2].fct=3;
 
-sprintf(bar[3].titre,"Window 2");
+bar[3].Titre="Window 2"; bar[3].Help=NULL;
 bar[3].fct=4;
 
-sprintf(bar[4].titre,"Help");
+bar[4].Titre="Help"; bar[4].Help=NULL;
 bar[4].fct=5;
 
-sprintf(bar[5].titre,"Input Box");
+bar[5].Titre="Input Box"; bar[5].Help=NULL;
 bar[5].fct=6;
 
-sprintf(bar[6].titre,"PullDown Bar");
+bar[6].Titre="PullDown Bar"; bar[6].Help=NULL;
 bar[6].fct=7;
 
-sprintf(bar[7].titre,"PullDown Menu");
+bar[7].Titre="PullDown Menu"; bar[7].Help=NULL;
 bar[7].fct=8;
 
-sprintf(bar[8].titre,"HTML Viewer");
+bar[8].Titre="HTML Viewer"; bar[8].Help=NULL;
 bar[8].fct=9;
 
 SaveScreen();
@@ -2992,7 +3024,14 @@ n=0;
 
 do
     {
-    retour=PannelMenu(bar,9,&n,&x,&y);
+    menu.cur=n;
+    menu.x=x;
+    menu.y=y;
+    menu.attr=0;
+
+    retour=PannelMenu(bar,9,&menu);
+
+    n=menu.cur;
     if (retour==2)
         CColor(bar[n].fct-1);
     }
@@ -3059,6 +3098,7 @@ void CColor(int m)
 {
 int retour,n,x,y;
 static struct barmenu bar[16];
+MENU menu;
 int r;
 
 SaveScreen();
@@ -3069,47 +3109,47 @@ y=4;
 switch(m)
     {
     case 0:      // Pannel
-        sprintf(bar[0].titre,"Border1");
+        bar[0].Titre="Border1"; bar[0].Help=NULL;
         bar[0].fct=38;
 
-        sprintf(bar[1].titre,"Border2");
+        bar[1].Titre="Border2"; bar[1].Help=NULL;
         bar[1].fct=39;
 
-        sprintf(bar[2].titre,"Normal");
+        bar[2].Titre="Normal"; bar[2].Help=NULL;
         bar[2].fct=1;
 
-        sprintf(bar[3].titre,"Bright");
+        bar[3].Titre="Bright"; bar[3].Help=NULL;
         bar[3].fct=3;
 
-        sprintf(bar[4].titre,"Reverse");
+        bar[4].Titre="Reverse"; bar[4].Help=NULL;
         bar[4].fct=2;
 
-        sprintf(bar[5].titre,"Underline");
+        bar[5].Titre="Underline"; bar[5].Help=NULL;
         bar[5].fct=5;
 
-        sprintf(bar[6].titre,"Bright Reverse");
+        bar[6].Titre="Bright Reverse"; bar[6].Help=NULL;
         bar[6].fct=4;
 
-        sprintf(bar[7].titre,"Underline");
+        bar[7].Titre="Underline"; bar[7].Help=NULL;
         bar[7].fct=40;
 
-        sprintf(bar[8].titre,"Bright Reverse");
+        bar[8].Titre="Bright Reverse"; bar[8].Help=NULL;
         bar[8].fct=41;
 
-        sprintf(bar[9].titre,"");
+        bar[9].Titre=""; bar[9].Help=NULL;
         bar[9].fct=0;
 
-        sprintf(bar[10].titre,"EXEcutable");
+        bar[10].Titre="EXEcutable"; bar[10].Help=NULL;
         bar[10].fct=16;
-        sprintf(bar[11].titre,"ARChive");
+        bar[11].Titre="ARChive"; bar[11].Help=NULL;
         bar[11].fct=23;
-        sprintf(bar[12].titre,"SouNDfile");
+        bar[12].Titre="SouNDfile"; bar[12].Help=NULL;
         bar[12].fct=24;
-        sprintf(bar[13].titre,"BitMaP");
+        bar[13].Titre="BitMaP"; bar[13].Help=NULL;
         bar[13].fct=33;
-        sprintf(bar[14].titre,"TeXT");
+        bar[14].Titre="TeXT"; bar[14].Help=NULL;
         bar[14].fct=34;
-        sprintf(bar[15].titre,"USeR defined");
+        bar[15].Titre="USeR defined"; bar[15].Help=NULL;
         bar[15].fct=35;
 
         n=0;
@@ -3119,7 +3159,14 @@ switch(m)
 
         do
             {
-            retour=PannelMenu(bar,16,&n,&x,&y);
+            menu.x=x;
+            menu.y=y;
+            menu.cur=n;
+            menu.attr=0;
+
+            retour=PannelMenu(bar,16,&menu);
+
+            n=menu.cur;
 
             if (retour==2)
                 {
@@ -3140,10 +3187,10 @@ switch(m)
 
 
     case 1:     // KeyBar
-        sprintf(bar[0].titre,"Normal");
+        bar[0].Titre="Normal"; bar[0].Help=NULL;
         bar[0].fct=7;
 
-        sprintf(bar[1].titre,"Bright");
+        bar[1].Titre="Bright"; bar[1].Help=NULL;
         bar[1].fct=6;
 
         n=0;
@@ -3153,7 +3200,14 @@ switch(m)
 
         do
             {
-            retour=PannelMenu(bar,2,&n,&x,&y);
+            menu.x=x;
+            menu.y=y;
+            menu.cur=n;
+            menu.attr=0;
+
+            retour=PannelMenu(bar,2,&menu);
+
+            n=menu.cur;
 
             if (retour==2)
                 {
@@ -3172,19 +3226,19 @@ switch(m)
         break;
 
     case 2:     // Window 1
-        sprintf(bar[0].titre,"Border1");
+        bar[0].Titre="Border1"; bar[0].Help=NULL;
         bar[0].fct=56;
 
-        sprintf(bar[1].titre,"Border2");
+        bar[1].Titre="Border2"; bar[1].Help=NULL;
         bar[1].fct=57;
 
-        sprintf(bar[2].titre,"Normal");
+        bar[2].Titre="Normal"; bar[2].Help=NULL;
         bar[2].fct=17;
 
-        sprintf(bar[3].titre,"Bright");
+        bar[3].Titre="Bright"; bar[3].Help=NULL;
         bar[3].fct=18;
 
-        sprintf(bar[4].titre,"Reverse");
+        bar[4].Titre="Reverse"; bar[4].Help=NULL;
         bar[4].fct=19;
 
         n=0;
@@ -3194,7 +3248,14 @@ switch(m)
 
         do
             {
-            retour=PannelMenu(bar,5,&n,&x,&y);
+            menu.x=x;
+            menu.y=y;
+            menu.cur=n;
+            menu.attr=0;
+
+            retour=PannelMenu(bar,5,&menu);
+
+            n=menu.cur;
 
             if (retour==2)
                 {
@@ -3213,19 +3274,19 @@ switch(m)
         break;
 
     case 3:    // Window 2
-        sprintf(bar[0].titre,"Border1");
+        bar[0].Titre="Border1"; bar[0].Help=NULL;
         bar[0].fct=47;
 
-        sprintf(bar[1].titre,"Border2");
+        bar[1].Titre="Border2"; bar[1].Help=NULL;
         bar[1].fct=48;
 
-        sprintf(bar[2].titre,"Normal");
+        bar[2].Titre="Normal"; bar[2].Help=NULL;
         bar[2].fct=29;
 
-        sprintf(bar[3].titre,"Bright");
+        bar[3].Titre="Bright"; bar[3].Help=NULL;
         bar[3].fct=30;
 
-        sprintf(bar[4].titre,"Reverse");
+        bar[4].Titre="Reverse"; bar[4].Help=NULL;
         bar[4].fct=31;
 
         n=0;
@@ -3236,7 +3297,14 @@ switch(m)
 
         do
             {
-            retour=PannelMenu(bar,5,&n,&x,&y);
+            menu.x=x;
+            menu.y=y;
+            menu.cur=n;
+            menu.attr=0;
+
+            retour=PannelMenu(bar,5,&menu);
+
+            n=menu.cur;
 
             if (retour==2)
                 {
@@ -3258,25 +3326,25 @@ switch(m)
         break;
 
     case 4:     // Help
-        sprintf(bar[0].titre,"Border1");
+        bar[0].Titre="Border1"; bar[0].Help=NULL;
         bar[0].fct=53;
 
-        sprintf(bar[1].titre,"Border2");
+        bar[1].Titre="Border2"; bar[1].Help=NULL;
         bar[1].fct=54;
 
-        sprintf(bar[2].titre,"Normal");
+        bar[2].Titre="Normal"; bar[2].Help=NULL;
         bar[2].fct=25;
 
-        sprintf(bar[3].titre,"Bright");
+        bar[3].Titre="Bright"; bar[3].Help=NULL;
         bar[3].fct=26;
 
-        sprintf(bar[4].titre,"Reverse");
+        bar[4].Titre="Reverse"; bar[4].Help=NULL;
         bar[4].fct=27;
 
-        sprintf(bar[5].titre,"Underline");
+        bar[5].Titre="Underline"; bar[5].Help=NULL;
         bar[5].fct=28;
 
-        sprintf(bar[6].titre,"Bright Reverse");
+        bar[6].Titre="Bright Reverse"; bar[6].Help=NULL;
         bar[6].fct=55;
 
         n=0;
@@ -3286,7 +3354,14 @@ switch(m)
 
         do
             {
-            retour=PannelMenu(bar,7,&n,&x,&y);
+            menu.x=x;
+            menu.y=y;
+            menu.cur=n;
+            menu.attr=0;
+
+            retour=PannelMenu(bar,7,&menu);
+
+            n=menu.cur;
 
             if (retour==2)
                 {
@@ -3305,25 +3380,25 @@ switch(m)
         break;
 
     case 5:     // Input Box
-        sprintf(bar[0].titre,"Border1");
+        bar[0].Titre="Border1"; bar[0].Help=NULL;
         bar[0].fct=45;
 
-        sprintf(bar[1].titre,"Border2");
+        bar[1].Titre="Border2"; bar[1].Help=NULL;
         bar[1].fct=46;
 
-        sprintf(bar[2].titre,"Normal");
+        bar[2].Titre="Normal"; bar[2].Help=NULL;
         bar[2].fct=20;
 
-        sprintf(bar[3].titre,"Bright");
+        bar[3].Titre="Bright"; bar[3].Help=NULL;
         bar[3].fct=21;
 
-        sprintf(bar[4].titre,"Reverse");
+        bar[4].Titre="Reverse"; bar[4].Help=NULL;
         bar[4].fct=22;
 
-        sprintf(bar[5].titre,"Button Off");
+        bar[5].Titre="Button Off"; bar[5].Help=NULL;
         bar[5].fct=49;
 
-        sprintf(bar[6].titre,"Button On");
+        bar[6].Titre="Button On"; bar[6].Help=NULL;
         bar[6].fct=50;
 
         n=0;
@@ -3333,7 +3408,14 @@ switch(m)
 
         do
             {
-            retour=PannelMenu(bar,7,&n,&x,&y);
+            menu.x=x;
+            menu.y=y;
+            menu.cur=n;
+            menu.attr=0;
+
+            retour=PannelMenu(bar,7,&menu);
+
+            n=menu.cur;
 
             if (retour==2)
                 {
@@ -3352,16 +3434,16 @@ switch(m)
         break;
 
     case 6:     // PullDown Bar
-        sprintf(bar[0].titre,"Normal");
+        bar[0].Titre="Normal"; bar[0].Help=NULL;
         bar[0].fct=8;
 
-        sprintf(bar[1].titre,"Bright");
+        bar[1].Titre="Bright"; bar[1].Help=NULL;
         bar[1].fct=43;
 
-        sprintf(bar[2].titre,"Reverse");
+        bar[2].Titre="Reverse"; bar[2].Help=NULL;
         bar[2].fct=9;
 
-        sprintf(bar[3].titre,"Bright Reverse");
+        bar[3].Titre="Bright Reverse"; bar[3].Help=NULL;
         bar[3].fct=44;
 
         n=0;
@@ -3371,7 +3453,14 @@ switch(m)
 
         do
             {
-            retour=PannelMenu(bar,4,&n,&x,&y);
+            menu.x=x;
+            menu.y=y;
+            menu.cur=n;
+            menu.attr=0;
+
+            retour=PannelMenu(bar,4,&menu);
+
+            n=menu.cur;
 
             if (retour==2)
                 {
@@ -3390,22 +3479,22 @@ switch(m)
         break;
 
     case 7:     // PullDown Menu
-        sprintf(bar[0].titre,"Border1");
+        bar[0].Titre="Border1"; bar[0].Help=NULL;
         bar[0].fct=10;
 
-        sprintf(bar[1].titre,"Border2");
+        bar[1].Titre="Border2"; bar[1].Help=NULL;
         bar[1].fct=42;
 
-        sprintf(bar[2].titre,"Normal");
+        bar[2].Titre="Normal"; bar[2].Help=NULL;
         bar[2].fct=11;
 
-        sprintf(bar[3].titre,"Bright");
+        bar[3].Titre="Bright"; bar[3].Help=NULL;
         bar[3].fct=12;
 
-        sprintf(bar[4].titre,"Reverse");
+        bar[4].Titre="Reverse"; bar[4].Help=NULL;
         bar[4].fct=13;
 
-        sprintf(bar[5].titre,"Bright Reverse");
+        bar[5].Titre="Bright Reverse"; bar[5].Help=NULL;
         bar[5].fct=14;
 
         n=0;
@@ -3415,7 +3504,14 @@ switch(m)
 
         do
             {
-            retour=PannelMenu(bar,6,&n,&x,&y);
+            menu.x=x;
+            menu.y=y;
+            menu.cur=n;
+            menu.attr=0;
+
+            retour=PannelMenu(bar,6,&menu);
+
+            n=menu.cur;
 
             if (retour==2)
                 {
@@ -3434,34 +3530,34 @@ switch(m)
         break;
 
     case 8:     // Viewer HTML
-        sprintf(bar[0].titre,"Title");
+        bar[0].Titre="Title"; bar[0].Help=NULL;
         bar[0].fct=36;
 
-        sprintf(bar[1].titre,"H1");
+        bar[1].Titre="H1"; bar[1].Help=NULL;
         bar[1].fct=37;
 
-        sprintf(bar[2].titre,"H2");
+        bar[2].Titre="H2"; bar[2].Help=NULL;
         bar[2].fct=51;
 
-        sprintf(bar[3].titre,"H3");
+        bar[3].Titre="H3"; bar[3].Help=NULL;
         bar[3].fct=52;
 
-        sprintf(bar[4].titre,"H4");
+        bar[4].Titre="H4"; bar[4].Help=NULL;
         bar[4].fct=58;
 
-        sprintf(bar[5].titre,"H5");
+        bar[5].Titre="H5"; bar[5].Help=NULL;
         bar[5].fct=59;
 
-        sprintf(bar[6].titre,"H6");
+        bar[6].Titre="H6"; bar[6].Help=NULL;
         bar[6].fct=60;
 
-        sprintf(bar[7].titre,"Bold");
+        bar[7].Titre="Bold"; bar[7].Help=NULL;
         bar[7].fct=61;
 
-        sprintf(bar[8].titre,"Italic");
+        bar[8].Titre="Italic"; bar[8].Help=NULL;
         bar[8].fct=62;
 
-        sprintf(bar[9].titre,"Underline");
+        bar[9].Titre="Underline"; bar[9].Help=NULL;
         bar[9].fct=63;
 
         n=0;
@@ -3471,7 +3567,14 @@ switch(m)
 
         do
             {
-            retour=PannelMenu(bar,10,&n,&x,&y);
+            menu.x=x;
+            menu.y=y;
+            menu.cur=n;
+            menu.attr=0;
+
+            retour=PannelMenu(bar,10,&menu);
+
+            n=menu.cur;
 
             if (retour==2)
                 {

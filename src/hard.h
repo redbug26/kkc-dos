@@ -30,13 +30,6 @@
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
-struct barmenu
-        {
-        char titre[32];
-//        char *help;
-        int fct;
-        };
-
 
 
 
@@ -212,6 +205,7 @@ void WinLine(int x1,int y1,int xl,int type);
 void SetPal(int x,char r,char g,char b);
 void GetPal(int x,char *r,char *g,char *b);
 
+int FreeMem(void);
 
 /*--------------------------------------------------------------------*\
 |- User Window                                                        -|
@@ -268,12 +262,26 @@ void SetDefaultPath(char *path);                      // Set up the file
 /*--------------------------------------------------------------------*\
 |-        Menu & Pannel function                                      -|
 \*--------------------------------------------------------------------*/
-void Bar(char *);                               // Affichage de la barre
+struct barmenu
+    {
+    char *Titre;
+    char *Help;
+    int fct;
+    };
+
+typedef struct __mainmenu
+    {
+    int x,y;
+    int attr;
+    int nbrmax;
+    int cur;
+    } MENU;
 
 int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
-int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
+int PannelMenu(struct barmenu *bar,int nbr,MENU *menu);
 
 
+void Bar(char *);                               // Affichage de la barre
 
 //--- Retourne 0 si tout va bene ---------------------------------------
 int VerifyDisk(long c);                                   //--- 1='A'

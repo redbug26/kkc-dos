@@ -1498,7 +1498,8 @@ int x,y,n,l;
 char c;
 char path[256],*name;
 FILE *fic;
-static char oldpath[256]="",oldname[256];
+char *ext;
+static char oldpath[256],oldname[256];
 
 x=Fen->x+1;
 y=Fen->y+1;
@@ -1508,11 +1509,18 @@ Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
 Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,
                                                           Cfg->col[39]);
 
+ext=getext(Fen->Fen2->F[Fen->Fen2->pcur]->name);
+
 strcpy(path,Fen->Fen2->path);
-if (Fen->Fen2->F[Fen->Fen2->pcur]->name[0]!='.')
+if ( (Fen->Fen2->F[Fen->Fen2->pcur]->name[0]!='.') &
+    ( (((Fen->Fen2->F[Fen->Fen2->pcur]->attrib)&_A_SUBDIR)==_A_SUBDIR)|
+      (!stricmp(ext,"ARJ")) |
+      (!stricmp(ext,"ZIP")) |
+      (!stricmp(ext,"RAR")) |
+      (!stricmp(ext,"LHA")) ))
     Path2Abs(path,Fen->Fen2->F[Fen->Fen2->pcur]->name);  // Ajout gedeon
-    else
-    oldpath[0]=0;
+/*    else
+    oldpath[0]=0;*/  // PQ ?
 Path2Abs(path,"FILE_ID.DIZ");
 
 if (strcmp(path,oldpath)!=0)
@@ -1541,7 +1549,7 @@ if (oldname[0]!=0)
         return;
         }
 
-    l=filelength(fileno(fic));
+    l=flength(fileno(fic));
 
     if (l>32768) l=32768;
 
@@ -1593,131 +1601,6 @@ if (name!=NULL)
 
 DFen->init=1;
 }
-
-void FenFileID2(FENETRE *Fen)
-{
-int x,y,n,l,i;
-char c;
-char path[256];
-static char oldpath[256];
-FILE *fic;
-FENETRE *OldFen;
-int k;
-
-x=Fen->x+1;
-y=Fen->y+1;
-
-if (Fen->init==0)
-    {
-    if (!stricmp(oldpath,Fen->Fen2->path))   // Pas de changement de dir
-        {
-        PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"?");
-        return;
-        }
-    Fen->init=1;
-    }
-
-Cadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1
-                                            ,Cfg->col[37],Cfg->col[38]);
-Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1
-                                                         ,Cfg->col[39]);
-
-strcpy(oldpath,Fen->Fen2->path);
-
-Fen->init=0;
-
-if (Fen->Fen2->system!=0)
-    strcpy(path,KKFics->trash);
-    else
-    strcpy(path,oldpath);
-
-Path2Abs(path,"FILE_ID.DIZ");
-fic=fopen(path,"rb");
-if (fic!=NULL)
-    {
-    l=filelength(fileno(fic));
-    fclose(fic);
-    }
-
-k=-1;
-for (i=0;i<Fen->Fen2->nbrfic;i++)
-    if (!WildCmp("FILE_ID.DIZ",Fen->Fen2->F[i]->name))
-        {
-        k=i;
-        break;
-        }
-
-if (k==-1)
-    {
-    PrintAt(x+1,y+1,"FILE_ID.DIZ doesn't exist !");
-    return;
-    }
-
-if (l!=Fen->Fen2->F[i]->size)
-    {
-    char msg[]="Error with archiver \n";
-    int p;
-
-    OldFen=DFen;
-    DFen=Fen->Fen2;
-
-    p=0;
-    fic=fopen(path,"wb");
-    for(n=0;n<DFen->F[i]->size;n++,p++)
-        {
-        if (p==21) p=0;
-        fputc(msg[p],fic);
-        }
-    fclose(fic);
-
-    AccessFile(k);          // Acces au fichier -----------------------
-    DFen=OldFen;
-    }
-/*--------------------------------------------------------------------*\
-|- Affichage du file_id.diz dans la fenetre                           -|
-\*--------------------------------------------------------------------*/
-
-fic=fopen(path,"rb");
-if (fic==NULL)
-    {
-    PrintAt(x+1,y+1,"FILE_ID.DIZ doesn't exist !");
-    return;
-    }
-
-l=filelength(fileno(fic));
-
-if (l>32768) l=32768;
-
-for(n=0;n<l;n++)
-    {
-    c=fgetc(fic);
-
-    switch(c)
-        {
-        case 10:
-            x=Fen->x+1;
-            y++;
-            break;
-        case 7:
-        case 13:
-            break;
-        default:
-            if (x<Fen->x+Fen->xl)
-                {
-                AffChr(x,y,c);
-                x++;
-                }
-            break;
-        }
-    if (y>Fen->y+Fen->yl-2) break;
-    }
-fclose(fic);
-
-PrintAt(Fen->x+38,Fen->y+Fen->yl-1,"");
-}
-
-
-
 
 
 

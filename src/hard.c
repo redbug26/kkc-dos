@@ -3050,7 +3050,7 @@ char let[32];
 int car=0;
 
 for (n=0;n<nbr;n++)
-    let[n]=toupper(bar[n].titre[0]);
+    let[n]=toupper(bar[n].Titre[0]);
 
 ColLin(0,0,Cfg->TailleX,Cfg->col[7]);
 ChrLin(0,0,Cfg->TailleX,32);
@@ -3058,7 +3058,7 @@ ChrLin(0,0,Cfg->TailleX,32);
 
 x=0;
 for(n=0;n<nbr;n++)
-    x+=strlen(bar[n].titre);
+    x+=strlen(bar[n].Titre);
 
 i=((Cfg->TailleX)-x)/nbr;
 x=((Cfg->TailleX)-(nbr-1)*i-x)/2;
@@ -3079,18 +3079,18 @@ for (n=0;n<nbr;n++)
         {
         AffCol(x+j+n*i-1,0,Cfg->col[8]);
         AffCol(x+j+n*i,0,Cfg->col[43]);
-        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),Cfg->col[8]);
+        ColLin(x+j+n*i+1,0,strlen(bar[n].Titre),Cfg->col[8]);
         *xp=x+j+n*i;
         }
         else
         {
         AffCol(x+j+n*i-1,0,Cfg->col[7]);
         AffCol(x+j+n*i,0,Cfg->col[42]);
-        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),Cfg->col[7]);
+        ColLin(x+j+n*i+1,0,strlen(bar[n].Titre),Cfg->col[7]);
         }
 
-    PrintAt(x+j+n*i,0,"%s",bar[n].titre);
-    j+=strlen(bar[n].titre);
+    PrintAt(x+j+n*i,0,"%s",bar[n].Titre);
+    j+=strlen(bar[n].Titre);
     }
 
 if (ok==1)
@@ -3125,7 +3125,7 @@ if (car==0)
                 {
                 if (xm>=x+j+n*i)
                     c=n;
-                j+=strlen(bar[n].titre);
+                j+=strlen(bar[n].Titre);
                 }
             }
         }
@@ -3168,12 +3168,19 @@ if (car==27)
 |-  1: [RIGHT]   -1: [LEFT]                                           -|
 |-  0: [ESC]      2: [ENTER]                                          -|
 \*--------------------------------------------------------------------*/
-int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp)
+int PannelMenu(struct barmenu *bar,int nbr,MENU *menu)
 {
 int max,n,m,car,fin;
 int i,col;
 int col1,col2;
 char let[32];
+int nbraff,prem;
+int xp,yp;
+int c;
+
+xp=menu->x;
+yp=menu->y;
+c=menu->cur;
 
 for (n=0;n<nbr;n++)
     {
@@ -3183,7 +3190,7 @@ for (n=0;n<nbr;n++)
         {
         do
             {
-            let[n]=toupper(bar[n].titre[i]);
+            let[n]=toupper(bar[n].Titre[i]);
             i++;
             }
         while ((let[n]<=32) & (let[n]!=0));
@@ -3199,35 +3206,47 @@ for (n=0;n<nbr;n++)
 max=0;
 
 for (n=0;n<nbr;n++)
-    if (max<strlen(bar[n].titre))
-        max=strlen(bar[n].titre);
+    if (max<strlen(bar[n].Titre))
+        max=strlen(bar[n].Titre);
+
+if (nbr>(Cfg->TailleY-10))
+    nbraff=10;
+    else
+    nbraff=nbr;
+
+prem=0;
+
 
 SaveScreen();
 
-if ((*xp)<1) (*xp)=1;
 
-Cadre(*xp-1,*yp-1,*xp+max,*yp+nbr,3,Cfg->col[9],Cfg->col[41]);
-Window(*xp,*yp,*xp+max-1,*yp+nbr-1,Cfg->col[10]);
+if (xp<1) xp=1;
+
+Cadre(xp-1,yp-1,xp+max,yp+nbraff,3,Cfg->col[9],Cfg->col[41]);
+Window(xp,yp,xp+max-1,yp+nbraff-1,Cfg->col[10]);
 
 fin=0;
 
 do
 {
-if ((*c)<0)   (*c)=0;
-if ((*c)>=nbr) (*c)=nbr-1;
+if (c<0) c=0;
+if (c>nbr-1) c=nbr-1;
 
-for (n=0;n<nbr;n++)
+while ((c-prem)<0) prem--;
+while ((c-prem)>=nbraff) prem++;
+
+for (n=0;n<nbraff;n++)
     {
-    if (bar[n].fct==0)
+    if (bar[n+prem].fct==0)
         {
-        ChrLin(*xp,(*yp)+n,max,196);
-        ColLin(*xp,(*yp)+n,max,Cfg->col[10]);
+        ChrLin(xp,yp+n,max,196);
+        ColLin(xp,yp+n,max,Cfg->col[10]);
         }
         else
         {
-        PrintAt(*xp,(*yp)+n,"%s",bar[n].titre);
+        PrintAt(xp,yp+n,"%-*s",max,bar[n+prem].Titre);
         col=1;
-        if (n==*c)
+        if ((n+prem)==c)
             {
             col1=Cfg->col[12];  // 7
             col2=Cfg->col[13];  // 7
@@ -3238,15 +3257,23 @@ for (n=0;n<nbr;n++)
             col2=Cfg->col[11];  // 7
             }
 
-        for (i=0;i<strlen(bar[n].titre);i++)
+        for (i=0;i<strlen(bar[n+prem].Titre);i++)
             {
-            if ( (col==1) & (toupper(bar[n].titre[i])==let[n]) )
-                AffCol((*xp)+i,(*yp)+n,col2),col=0;
+            if ((col==1) & (toupper(bar[n+prem].Titre[i])==let[n+prem]))
+                AffCol(xp+i,yp+n,col2),col=0;
                 else
-                AffCol((*xp)+i,(*yp)+n,col1);
+                AffCol(xp+i,yp+n,col1);
             }
+
+        if (i!=max)
+            ColLin(xp+i,yp+n,max-i,col1);
         }
     }
+
+if (bar[c].Help!=NULL)
+    Bar(" Help  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
+    else
+    Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
 car=Wait(0,0,0);
 
@@ -3269,7 +3296,7 @@ if (car==0)
         if ( (ym>=0) & (ym<nbr) )
             {
             if (bar[ym].fct!=0)
-                (*c)=ym;
+                c=ym;
             }
 
         if (xm<0)
@@ -3287,7 +3314,7 @@ do
     switch(HI(car))
         {
         case 0x48:     //--- UP ----------------------------------------
-            (*c)--;
+            c--;
             break;
         case 0x4B:     //--- LEFT --------------------------------------
             fin=-1;
@@ -3298,34 +3325,40 @@ do
             car=27;
             break;
         case 0x50:     //--- DOWN --------------------------------------
-            (*c)++;
+            c++;
             break;
         case 0x47:     //--- HOME --------------------------------------
             for (n=0;n<nbr;n++)
                 if (bar[n].fct!=0)
                     {
-                    (*c)=n;
+                    c=n;
                     break;
                     }
             break;
         case 0x4F:     //--- END ---------------------------------------
             for (n=0;n<nbr;n++)
                 if (bar[n].fct!=0)
-                    (*c)=n;
+                    c=n;
+            break;
+        case 0x3B:     //--- F1 ----------------------------------------
+            if (bar[c].Help!=NULL)
+                HelpTopic(bar[c].Help);
             break;
         }
 
     if (LO(car)!=0)
         for (n=0;n<nbr;n++)
             if (toupper(car)==let[n])
-                (*c)=n,car=13;
+                c=n,car=13;
     }
-while (bar[*c].fct==0);
+while (bar[c].fct==0);
 
 }
 while ( (car!=13) & (car!=27) );
 
 LoadScreen();
+
+menu->cur=c;
 
 if (car==27)
     return fin;
@@ -3585,7 +3618,6 @@ do
             break;
         case 80:
             pos++;
-
             break;
         }
 

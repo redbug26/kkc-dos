@@ -272,7 +272,7 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.FType!=2) )
     strcpy(Dest,Nomarch+strlen(nom) );
     for (m=0;m<strlen(Dest);m++)
         {
-        if (Dest[m]=='/')
+        if ((Dest[m]=='/') | (Dest[m]=='\\'))
             {
             cont=1;
             Dest[m]=0;
@@ -421,31 +421,82 @@ if (Lt.TeteType==0x74)
 
     if (n==1)
         {
-        Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+        char cont;
 
-        Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
-        memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+        cont=1;
 
-        Fic[DFen->nbrfic]->size=Lt.UnpSize;            // >< Lt.PackSize
+        for (n=0;n<DFen->nbrfic;n++)
+            if (!stricmp(Dest,Fic[n]->name))
+                cont=0;
 
-        DFen->taillefic+=Lt.UnpSize;
+        if (cont==1)
+            {
+            Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-        Fic[DFen->nbrfic]->time=(Lt.Filetemps.t_tsec)+
+            Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+            memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+            Fic[DFen->nbrfic]->size=Lt.UnpSize;        // >< Lt.PackSize
+
+            DFen->taillefic+=Lt.UnpSize;
+
+            Fic[DFen->nbrfic]->time=(Lt.Filetemps.t_tsec)+
 			   (Lt.Filetemps.t_min)*32+
 			   (Lt.Filetemps.t_heure)*2048;
 
-        Fic[DFen->nbrfic]->date=(Lt.Filetemps.t_day)+
+            Fic[DFen->nbrfic]->date=(Lt.Filetemps.t_day)+
 			   (Lt.Filetemps.t_mois)*32+
 			   (Lt.Filetemps.t_year)*512;
 
-        Fic[DFen->nbrfic]->attrib=Lt.FileAttr;
+            Fic[DFen->nbrfic]->attrib=Lt.FileAttr;
 
-        Fic[DFen->nbrfic]->select=0;
+            Fic[DFen->nbrfic]->select=0;
 
-        DFen->nbrfic++;
+            DFen->nbrfic++;
+            }
+        }
+    else
+        if (!Maskcmp(Nomarch,nom))
+        {
+        int m;
+        char cont;
+
+        cont=0;
+
+        strcpy(Dest,Nomarch+strlen(nom) );
+        for (m=0;m<strlen(Dest);m++)
+            {
+            if ((Dest[m]=='/') | (Dest[m]=='\\'))
+                {
+                cont=1;
+                Dest[m]=0;
+                }
+            }
+        if (cont==1)
+            {
+            for (n=0;n<DFen->nbrfic;n++)
+                if (!stricmp(Dest,Fic[n]->name))
+                    cont=0;
+
+            if (cont==1)
+                {
+                Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
+
+                Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
+                memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+                Fic[DFen->nbrfic]->size=0;
+                Fic[DFen->nbrfic]->time=33;
+                Fic[DFen->nbrfic]->date=33;
+                Fic[DFen->nbrfic]->attrib=0x10;
+                Fic[DFen->nbrfic]->select=0;
+
+                DFen->nbrfic++;
+                }
+            }
         }
 
-	  }
+    }
 
 pos=pos+Lt.TeteSize;
 if (Lt.Flags & 0x8000) pos+=Lt.PackSize;        //--- LONG_BLOCK -------
@@ -597,7 +648,7 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
     strcpy(Dest,Nomarch+strlen(nom) );
     for (m=0;m<strlen(Dest);m++)
         {
-        if (Dest[m]=='/')
+        if ((Dest[m]=='/') | (Dest[m]=='\\'))
             {
             cont=1;
             Dest[m]=0;

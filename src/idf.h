@@ -2,7 +2,7 @@
 #define uchar  unsigned char
 #define ushort unsigned short
 
-#define nbrkey 164
+#define nbrkey 165
         // number of format + 6
 
 /*--------------------------------------------------------------------*\
@@ -10,17 +10,25 @@
 \*--------------------------------------------------------------------*/
 struct key
         {
-        char buf[25];
+        char *buf;
         char len;
         short pos;
         char *format;
         char *ext;
         char *pro;
         short numero;
-        char proc;
         char other;
         char type;
         };
+
+/*
+   other: bit 7 6 5 4 3 2 1 0
+              ³ ³ ³ ³ ³ ³ ³ ³
+              ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ 0: IDF have more information on file
+              ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ 1: The key is not defined in structure
+              ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄÄ 2: This is a text file
+              ÀÄÁÄÁÄÁÄÁÄÄÄÄÄÄÄ 3-7: Always to 0
+*/
 
 
 /*--------------------------------------------------------------------*\
