@@ -193,7 +193,6 @@ if (Fen->init==1)
     ClearNor(Fen);
 
 
-
 if (Fen->scur>Fen->pcur) Fen->scur=Fen->pcur;
 
 while (Fen->pcur<0)
@@ -627,9 +626,9 @@ PrintAt(DFen->x3,DFen->y3,"[ Hello World !!!                  ]");
 void MenuBar(char c)
 {
 static char bar[4][60]=
-   { " Help  ----  View  Edit  Copy  Move  MDir Delete ----  Quit ",      // NORMAL
+   { " Help  ----  View  Edit  Copy  Move  MDir Delete Menu  Quit ",      // NORMAL
      " ----  ----  View  ----  ---- Rename ----  ----  ----  ---- ",      // SHIFT
-     "On-OffOn-Off Name  .Ext  Date  Size Unsort ----  ----  ---- ",      // CONTROL
+     "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ",      // CONTROL
      " Drv1  Drv2  FDiz  ----  ----  ---- Search Type  Line  ---- "       // ALT
    };
 char i,j,n;

@@ -327,7 +327,7 @@ static int Dir[256];
 struct Tmt T[5] = {
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
-      { 5,3,0,Dir,NULL},
+      { 5,3,1,Dir,NULL},
       { 5,2,0,"Copy files to",NULL},
       { 1,1,4,NULL,&CadreLength}
       };
@@ -546,111 +546,9 @@ if (PlayerIdf(player,30)==0)
 }
 
 
-void Copie(struct fenetre *F1,struct fenetre *F2)   // Copie Multiple
-{
-int i;
-int TailleTotale;
-int TailleRest;
-
-int j1,j2;                          // postion du compteur (read,write)
-
-char inpath[128],outpath[128];
-
-struct file *F;
-
-FicEcrase=0;
-
-if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') ) {
-    F1->F[F1->pcur]->select=1;
-    F1->nbrsel++;
-    F1->taillesel+=F1->F[F1->pcur]->size;
-    }
-
-switch(F1->system)  {
-    case 1:
-        RarCopie(F1,F2);
-        break;
-    case 2:
-        ArjCopie(F1,F2);
-        break;
-    case 3:
-        ZipCopie(F1,F2);
-        break;
-    case 0:
-        break;
-    default:
-        YouMad("Copie");
-        return;
-        break;
-        }
-
-switch(F2->system)  {
-    case 0:
-        break;
-    case 1:
-        CopieRar(F1,F2);
-        break;
-    default:
-        YouMad("Copie");
-        return;
-        break;
-        }
-
-if (!strcmp(F1->path,F2->path))
-    return;
-
-TailleTotale=F1->taillesel;
-TailleRest=0;
-
-if (FenCopie(F2->path)==0) return;
-
-F=F1->F[F1->pcur];
-
-SaveEcran();
-
-WinCadre(7,4,73,15,0);
-ColWin(8,5,72,14,10*16+1);
-ChrWin(8,5,72,14,32);
-
-WinCadre(9,8,71,10,1);
-WinCadre(9,11,71,13,2);
 
 
-j1=0;
-j2=0;
 
-for (i=0;i<F1->nbrfic;i++)
-    {
-    F=F1->F[i];
-    if ((F->select)==1)
-        {
-        strcpy(inpath,F1->path);
-        if (inpath[strlen(inpath)-1]!='\\') strcat(inpath,"\\");
-        strcat(inpath,F->name);
-
-        strcpy(outpath,F2->path);
-        if (outpath[strlen(outpath)-1]!='\\') strcat(outpath,"\\");
-        strcat(outpath,F->name);
-
-        if (recopy(inpath,outpath,(F1->F[i]))==1)
-            {
-            F1->F[i]->select=0;
-            F1->nbrsel--;
-            (F1->taillesel)-=F1->F[i]->size;
-            }
-        }
-    if (FicEcrase==2) break;
-    }
-
-// Fenˆtre 1 ne change pas
-
-
-ChargeEcran();
-
-DFen=F2;
-CommandLine("#cd .");
-DFen=F1;
-}
 
 
 
@@ -944,7 +842,7 @@ if (ok==1)
         if (IOerr==3) { ok=1; break; }
         Taille-=TailleEnreg;
         TailleRest+=TailleEnreg;
-        PrintAt(12,9,"Moveing %9d of %9d",TailleRest,size);
+        PrintAt(12,9,"Moving %9d of %9d",TailleRest,size);
 
         j3=Gradue(10,12,60,j3,TailleRest,size);
         }
@@ -971,9 +869,6 @@ if (ok==1)      // Mise a l'heure
     _dos_close(hand1);
     _dos_close(hand2);
     }
-
-
-
 
 
 return ok;
@@ -1014,7 +909,9 @@ if (n==0)
 
 }
 
-
+/*-----------------------------*
+ - Fonction de MOVE principale -
+ *-----------------------------*/
 void Move(struct fenetre *F1,struct fenetre *F2)   // Move Multiple
 {
 int i;
@@ -1029,29 +926,32 @@ struct file *F;
 
 FicEcrase=0;
 
-if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') ) {
+if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') )
+    {
     F1->F[F1->pcur]->select=1;
     F1->nbrsel++;
     F1->taillesel+=F1->F[F1->pcur]->size;
     }
 
-switch(F1->system)  {
+switch(F1->system)
+    {
     case 0:
         break;
     default:
         YouMad("Move");
         return;
         break;
-        }
+    }
 
-switch(F2->system)  {
+switch(F2->system)
+    {
     case 0:
         break;
     default:
         YouMad("Move");
         return;
         break;
-        }
+    }
 
 if (!strcmp(F1->path,F2->path))
     return;
@@ -1082,12 +982,10 @@ for (i=0;i<F1->nbrfic;i++)
     if ((F->select)==1)
         {
         strcpy(inpath,F1->path);
-        if (inpath[strlen(inpath)-1]!='\\') strcat(inpath,"\\");
-        strcat(inpath,F->name);
+        Path2Abs(inpath,F->name);
 
         strcpy(outpath,F2->path);
-        if (outpath[strlen(outpath)-1]!='\\') strcat(outpath,"\\");
-        strcat(outpath,F->name);
+        Path2Abs(inpath,F->name);
 
         if (RemoveM(inpath,outpath,(F1->F[i]))==1)
             {
@@ -1107,6 +1005,116 @@ ChargeEcran();
 DFen=F2;
 CommandLine("#cd .");
 DFen=F1;
+CommandLine("#cd .");
 }
 
+/*-----------------------------*
+ - Fonction de COPY principale -
+ *-----------------------------*/
+void Copie(struct fenetre *F1,struct fenetre *F2)   // Copie Multiple
+{
+int i;
+int TailleTotale;
+int TailleRest;
 
+int j1,j2;                          // postion du compteur (read,write)
+
+char inpath[128],outpath[128];
+
+struct file *F;
+
+FicEcrase=0;
+
+if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') )
+    {
+    F1->F[F1->pcur]->select=1;
+    F1->nbrsel++;
+    F1->taillesel+=F1->F[F1->pcur]->size;
+    }
+
+switch(F1->system)
+    {
+    case 1:
+        RarCopie(F1,F2);
+        break;
+    case 2:
+        ArjCopie(F1,F2);
+        break;
+    case 3:
+        ZipCopie(F1,F2);
+        break;
+    case 0:
+        break;
+    default:
+        YouMad("Copie");
+        return;
+        break;
+    }
+
+switch(F2->system)
+    {
+    case 0:
+        break;
+    case 1:
+        CopieRar(F1,F2);
+        break;
+    default:
+        YouMad("Copie");
+        return;
+        break;
+    }
+
+if (!strcmp(F1->path,F2->path))
+    return;
+
+TailleTotale=F1->taillesel;
+TailleRest=0;
+
+if (FenCopie(F2->path)==0) return;
+
+F=F1->F[F1->pcur];
+
+SaveEcran();
+
+WinCadre(7,4,73,15,0);
+ColWin(8,5,72,14,10*16+1);
+ChrWin(8,5,72,14,32);
+
+WinCadre(9,8,71,10,1);
+WinCadre(9,11,71,13,2);
+
+
+j1=0;
+j2=0;
+
+for (i=0;i<F1->nbrfic;i++)
+    {
+    F=F1->F[i];
+    if ((F->select)==1)
+        {
+        strcpy(inpath,F1->path);
+        Path2Abs(inpath,F->name);
+
+        strcpy(outpath,F2->path);
+        Path2Abs(inpath,F->name);
+
+        if (recopy(inpath,outpath,(F1->F[i]))==1)
+            {
+            F1->F[i]->select=0;
+            F1->nbrsel--;
+            (F1->taillesel)-=F1->F[i]->size;
+            }
+        }
+    if (FicEcrase==2) break;
+    }
+
+// Fenˆtre 1 ne change pas
+
+
+ChargeEcran();
+
+DFen=F2;
+CommandLine("#cd .");
+DFen=F1;
+CommandLine("#cd .");
+}

@@ -25,5 +25,6 @@ char GetDrive(void);
 void SetDrive(char i);
 
 int FicSelect(int n,char q);
-char *getext(char *nom,char *ext);
+char *getext(const char *nom,char *ext);
 
+void SortFic(struct fenetre *Fen);

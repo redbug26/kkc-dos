@@ -30,6 +30,135 @@ void GetFreeMem(char *buffer);
 	"int 31h" \
 	parm [edi];
 
+
+/*-----------------------------------------------------*
+ -  Fonction utilis‚e pour le classement des fichiers  -
+ *-----------------------------------------------------*/
+int SortTest(void *P1,void *P2)
+{
+char *e1,*e2,e[4];
+short c1,c2,c3,c4;
+
+struct file **FF1,**FF2;
+struct file *F1,*F2;
+
+int c;
+
+char a,b;
+
+FF1=(struct file **)P1;
+FF2=(struct file **)P2;
+
+F1=*FF1;
+F2=*FF2;
+
+// Ne trie pas si il ne le faut pas
+//----------------------------------
+if (DFen->order==0)
+    return -1;
+
+// Place les .. et . en haut
+//---------------------------
+if (!strcmp(F1->name,"..")) return -1;
+if (!strcmp(F2->name,"..")) return 1;
+
+if (!strcmp(F1->name,".")) return -1;
+if (!strcmp(F2->name,".")) return 1;
+
+// Affiche les repertoires tout en haut
+//--------------------------------------
+a=((F1->attrib & RB_SUBDIR)==RB_SUBDIR);
+b=((F2->attrib & RB_SUBDIR)==RB_SUBDIR);
+
+if ( a ^ b )
+    if (b==0)
+        return -1;
+        else
+        return 1;
+
+
+// Place les extensions speciales toute en haut
+//----------------------------------------------
+e1=getext(F1->name,e1);
+e2=getext(F2->name,e2);
+
+if ((DFen->order&16)==16)
+    {
+    c1=c2=c3=c4=0;
+
+    do
+        {
+        c3++;
+
+        if ( (Cfg->extens[c3]==32) | (Cfg->extens[c3]==0) )
+            {
+            memcpy(e,Cfg->extens+c4,4);
+            e[3]=0;
+            if (!stricmp(e,e1)) c1=c3;
+            if (!stricmp(e,e2)) c2=c3;
+            c4=c3+1;
+            }
+        }
+    while(Cfg->extens[c3]!=0);
+
+    if (c1==0) c1=1000;
+    if (c2==0) c2=1000;
+
+    if ((c1<c2) & (c1!=1000)) return -1;
+    if ((c2<c1) & (c2!=1000)) return 1;
+    }
+
+// Trie les autres fichiers
+//--------------------------
+switch((DFen->order)&15)
+    {
+    case 1: 
+        c=stricmp(F1->name,F2->name);           //--- name ---
+        break;
+    case 2:
+        c=stricmp(e1,e2);                       //--- ext ----
+        if (c==0)
+            c=stricmp(F1->name,F2->name);
+        break;
+    case 3: 
+        c=(F1->date)-(F2->date);                //--- date ---
+        if (c==0) c=(F1->time)-(F2->time);
+        break;
+    case 4: 
+        c=(F1->size)-(F2->size);                //--- size ---
+        break;
+    }
+
+return c;
+
+}
+
+/*---------------------*
+ - Classe les fichiers -
+ *---------------------*/
+void SortFic(struct fenetre *Fen)
+{
+qsort(Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
+}
+
+/*------------------------------*
+ - Renvoit l'extension d'un nom -
+ *------------------------------*/
+char *getext(const char *nom,char *ext)
+{
+char *e;
+
+e=strchr(nom,'.');
+
+if (e==NULL)
+    ext=strchr(nom,0);
+    else
+    ext=e+1;
+
+return ext;
+}
+
+
 void PutInHistDir(void);
 
 // 1-> erreur
@@ -78,28 +207,11 @@ switch(q)
 return 0;
 }
 
-char *getext(char *nom,char *ext)
-{
-int j=0;
-
-ext[0]=0;
-j=0;
-
-if (nom[0]!='.')
-    while(nom[j]!=0)
-        {
-        if (nom[j]=='.')
-            {
-            memcpy(ext,nom+j+1,4);
-            ext[3]=0;
-            break;
-            }
-        j++;
-        }
-}
 
 
-// Comparaison entre un nom et un autre
+/*--------------------------------------*
+ - Comparaison entre un nom et un autre -
+ *--------------------------------------*/
 int Maskcmp(char *src,char *mask)
 {
 int n;
@@ -117,8 +229,11 @@ for (n=0;n<strlen(mask);n++)
 return 0;
 }
 
-// Envoie le nom du fichier src dans dest si le mask est bon
-// Renvoit 1 dans ce cas, sinon renvoie 0
+
+/*-----------------------------------------------------------*
+ - Envoie le nom du fichier src dans dest si le mask est bon -
+ - Renvoit 1 dans ce cas, sinon renvoie 0                    -
+ *-----------------------------------------------------------*/
 int find1st(char *src,char *dest,char *mask)
 {
 int i;
@@ -140,9 +255,9 @@ return 0;
 }
 
 
-// Comparaison avec WildCards
-//----------------------------
-
+/*----------------------------*
+ - Comparaison avec WildCards -
+ *----------------------------*/
 int WildCmp(char *a,char *b)
 {
 short p1=0,p2=0;
@@ -195,11 +310,12 @@ while (1)
 return ok;
 }
 
-// Give the name include in a path
-// E.G. c:\kkcom\kkc.c --> "kkc.c"
-//      c:\            --> ""
-//      c:\kkcom       --> "kkcom"
-
+/*---------------------------------*
+ - Give the name include in a path -
+ - E.G. c:\kkcom\kkc.c --> "kkc.c" -
+ -      c:\            --> ""      -
+ -      c:\kkcom       --> "kkcom" -
+ *---------------------------------*/
 char *FileinPath(char *p,char *Ficname)
 {
 int n;
@@ -214,8 +330,9 @@ strcpy(Ficname,s);
 return s;
 }
 
-// Make absolue path from old path and ficname
-//---------------------------------------------
+/*---------------------------------------------*
+ - Make absolue path from old path and ficname -
+ *---------------------------------------------*/
 void Path2Abs(char *p,char *Ficname)
 {
 int l,m,n;
@@ -287,7 +404,9 @@ if (p[strlen(p)-1]==':') strcat(p,"\\");
 }
 
 
-
+/*----------------------*
+ - Change de repertoire -
+ *----------------------*/
 void ChangeDir(char *Ficname)
 {
 static char nom[256];
@@ -295,6 +414,8 @@ static char old[256];     // Path avant changement
 int n;
 int err;
 char *p;
+
+PrintAt(0,0,"%-80s","Wait Please");
 
 p=DFen->path;
 memcpy(old,p,256);
@@ -374,20 +495,23 @@ if (err==0)
     if (!strcmp(Ficname,".."))
         {
         for (n=0;n<DFen->nbrfic;n++)
-            if (!stricmp(DFen->F[n]->name,nom)) {
+            if (!stricmp(DFen->F[n]->name,nom))
+                {
                 DFen->pcur=n;
-                DFen->scur=n;
+                DFen->scur=(DFen->yl)/2;   //n;
                 }
         }
     }
     else
     memcpy(p,old,256);
+
+PrintAt(0,0,"%-40s%40s","Ketchup Killers Commander","RedBug");
 }
 
 
-//--------------------------------------------------------------
-//                     Gestion history
-//--------------------------------------------------------------
+/*--------------------------------------------------------------*
+ -                     Gestion history                          -
+ *--------------------------------------------------------------*/
 
 // Give Last Directory in History
 char *GetLastHistDir(void)
@@ -520,34 +644,32 @@ switch(DFen->system)  {
 }
 
 
-/************************************************************************\
- *  Gestion ligne de commande                                           *
-\************************************************************************/
+/*-----------------------------*
+ -  Gestion ligne de commande  -
+ *-----------------------------*/
 
 // Commandes globales
 // ------------------
-int x0,py,xmax;       // position en X,Y ,X initial, Taille de X max.
-int x1;               // longueur de la path
-char str[256];        // commande interne
-int px;               // Chaipus
-char flag;            // direction flag pour plein de choses
+static int x0,py,xmax;       // position en X,Y ,X initial, Taille de X max.
+static int x1;               // longueur de la path
+static char str[256];        // commande interne
+static int px;               // Chaipus
+static char flag;            // direction flag pour plein de choses
 
 // Execution d'une commande
 // ------------------------
 int Run(char *chaine)
 {
-
 FILE *fic;
 time_t t;
-t=time(NULL);
 
 if ( (chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (Cfg->logfile==1) )
     {
+    t=time(NULL);
     fic=fopen(Fics->log,"at");
     fprintf(fic,"%-50s @ %s",chaine,ctime(&t));
     fclose(fic);
     }
-
 
 if (!strnicmp(chaine,"CD -",4)) {
    ChangeDir(GetLastHistDir());
@@ -783,7 +905,8 @@ Ligne_Traite:
 
 if (traite==1)
     {
-    switch (FctType)  {
+    switch (FctType)
+        {
         case 1:
             break;  // Commande Interne (Rien … faire)
         case 2:
@@ -797,7 +920,8 @@ if (traite==1)
     }
     else
     {
-    switch (FctType)  {
+    switch (FctType)
+        {
         case 1:
             break;  // Commande Interne (Rien … faire)
         case 2:

@@ -25,7 +25,7 @@ struct file {
 void Shell(char *string,...);
 
 void AffFen(struct fenetre *Fen);
-void SortFic(struct fenetre *Fen);
+
 
 void InfoSupport(void);
 

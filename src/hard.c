@@ -1449,4 +1449,61 @@ if (to==0)
 return j1;
 }
 
+void DefaultCfg(void)
+{
+char defcol[48]={43,37,30, 31,22,17,  0, 0, 0, 58,58,50,
+                 44,63,63, 63,63,21, 43,37,30,  0, 0, 0,
+                 63,63, 0, 63,63,63, 43,37,30, 63, 0, 0,
+                  0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0};
 
+Cfg->KeyAfterShell=0;
+
+memcpy(Cfg->palette,defcol,48);
+
+strcpy(Mask[0]->title,"C Style");
+strcpy(Mask[0]->chaine,"asm break case cdecl char const continue default do double else enum extern far float for goto huge if int interrupt long near pascal register short signed sizeof static struct switch typedef union unsigned void volatile while @");
+Mask[0]->Ignore_Case=0;
+Mask[0]->Other_Col=1;
+
+strcpy(Mask[1]->title,"Pascal Style");
+strcpy(Mask[1]->chaine,"absolute and array begin case const div do downto else end external file for forward function goto if implementation in inline interface interrupt label mod nil not of or packed procedure program record repeat ");
+strcat(Mask[1]->chaine,"set shl shr string then to type unit until uses var while with xor @");
+Mask[1]->Ignore_Case=1;
+Mask[1]->Other_Col=1;
+
+strcpy(Mask[2]->title,"Assembler Style");
+strcpy(Mask[2]->chaine,"aaa aad aam aas adc add and arpl bound bsf bsr bswap bt btc btr bts call cbw cdq clc cld cli clts cmc cmp cmps cmpxchg cwd cwde ");
+strcat(Mask[2]->chaine,"daa das dec div enter esc hlt idiv imul in inc ins int into invd invlpg iret iretd jcxz jecxz jmp ");
+strcat(Mask[2]->chaine,"ja jae jb jbe jc jcxz je jg jge jl jle jna jnae jnb jnbe jnc jne jng jnge jnl jnle jno jnp jns jnz jo jp jpe jpo js jz ");
+strcat(Mask[2]->chaine,"lahf lar lds lea leave les lfs lgdt lidt lgs lldt lmsw lock lods loop loope loopz loopnz loopne lsl lss ");
+strcat(Mask[2]->chaine,"ltr mov movs movsx movsz mul neg nop not or out outs pop popa popad push pusha pushad pushf pushfd ");
+strcat(Mask[2]->chaine,"rcl rcr rep repe repz repne repnz ret retf rol ror sahf sal shl sar sbb scas ");
+strcat(Mask[2]->chaine,"setae setnb setb setnae setbe setna sete setz setne setnz setl setng setge setnl setle setng setg setnle ");
+strcat(Mask[2]->chaine,"sets setns setc setnc seto setno setp setpe setnp setpo sgdt ");
+strcat(Mask[2]->chaine,"sidt shl shr shld shrd sldt smsw stc std sti stos str sub test verr verw wait fwait wbinvd xchg xlat xlatb xor @");
+strcat(Mask[2]->chaine,"db dw dd endp ends assume");
+Mask[1]->Ignore_Case=1;
+Mask[1]->Other_Col=1;
+
+strcpy(Mask[15]->title,"User Defined Style");
+strcpy(Mask[15]->chaine,"ketchup killers redbug access darkangel katana ecstasy cray magic fred cobra z @");
+Mask[15]->Ignore_Case=1;
+Mask[15]->Other_Col=1;
+
+strcpy(Cfg->extens,"RAR ARJ ZIP LHA DIZ EXE COM BAT BTM");
+
+Cfg->wmask=15;      // RedBug preference
+
+Cfg->TailleY=30;
+Cfg->font=1;
+Cfg->AnsiSpeed=133;
+Cfg->SaveSpeed=7200;
+
+Cfg->fentype=4;
+
+Cfg->mtrash=100000;
+
+Cfg->overflow=0;
+
+Cfg->crc=0x69;
+}

@@ -50,6 +50,8 @@ int WinMesg(char *,char *);
 
 int Gradue(int x,int y,int length,int from,int to,int total);
 
+void DefaultCfg(void);
+
 struct TmtWin {
      int x1,y1,x2,y2;
      char *name;
@@ -83,7 +85,7 @@ struct config {
 
      char palette[48];      // The PALETTE
 
-     unsigned char wmask;            // C'est quel masque kon emploie ?
+     unsigned char wmask;   // C'est quel masque kon emploie ?
 
      char pntrep;           // vaut 1 si on affiche le repertoire "."
      char hidfil;           // vaut 1 si on affiche les fichiers caches
@@ -93,12 +95,17 @@ struct config {
 
      char font;             // utilisation des fonts
 
+     long strash;           // taille actuelle de la trash
     // Pas touche
     //-----------
+     long mtrash;           // taille maximum de la trash
      long FenAct;           // Quelle fenˆtre est active ?
      int _4dos;             // equal 1 if 4DOS found
 
      char HistDir[256];     // History of disk
+     char overflow;         // Vaut tjs 0 (pour overflow)
+
+     char extens[39];       // extension qui viennent tout devant
 
      ENTIER colnor;
      ENTIER bkcol;
@@ -111,6 +118,7 @@ struct config {
 
      short key;             // code touche a reutiliser
      char FileName[256];    // Nom du dernier fichier selectionne for F3 on arc.
+     char crc;              // Vaut tjs 0x69 (genre de crc)
      };
 
 struct fichier {

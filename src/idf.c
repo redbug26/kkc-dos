@@ -50,7 +50,7 @@ struct key K[nbrkey]=	{
 {  {0,0},
 		0,
 		0,
-		"Module File",
+        "Module File", // 31 instruments: NoiseTracker
 		"MOD",
 		"",
 		1,1,1,1},
@@ -269,28 +269,28 @@ struct key K[nbrkey]=	{
 		0,
 		"Far. Sample Data Signed",
 		"FSM",
-		"",
+        "Digital Infinity",     // Daniel Potter / DI
 		22,0,1,2},
 {  {"USMþ"},
 		4,
 		0,
 		"Far. Sample Data Unsigned",
 		"USM",
-        "Digital Infinity",
+        "Digital Infinity",     // Daniel Potter / DI
 		26,0,1,2},
 {  {"FPTþ"},
 		4,
 		0,
 		"Farandole Pattern",
 		"FPT",
-        "Digital Infinity",
+        "Digital Infinity",     // Daniel Potter / DI
 		9,0,1,1},
 {  {"F2RFAR"},
 		6,
 		0,
 		"Far. Linear Module V2.0",
 		"F2R",
-        "Digital Infinity",
+        "Digital Infinity",     // Daniel Potter / DI
 		7,0,1,1},
 {  {"DMDL"},
 		4,
@@ -313,13 +313,6 @@ struct key K[nbrkey]=	{
 		"MS",
         "Microsoft",
 		61,0,0,6},
-{  {0x00,0x01,0x00,0x00},
-		4,
-		0,
-		"True Type Font",
-		"TTF",
-		"",
-		65,0,0,6},
 {  {"PMCC"},
 		4,
 		0,
@@ -460,13 +453,13 @@ struct key K[nbrkey]=	{
 		"DLZ",
 		"",
 		31,0,1,3},
-{  {0,0},
-		0,
-		0,
+{  {0x11,0xAF},
+        2,
+        4,
 		"FLI Animation",
 		"FLI",
         "Autodesk",
-		49,1,1,5},
+        49,0,1,5},
 {  {0x12,0xAF},
 		2,
 		4,
@@ -526,10 +519,10 @@ struct key K[nbrkey]=	{
 {  {"DMS!"},
 		4,
 		0,
-        "Disk Masker File (Amiga)",
+        "DISK-Masher archive",
 		"DMS",
-		"",
-		70,0,0,6},
+        "SDS Software",
+        70,0,0,3},
 {  {"SZDD"},
 		4,
 		0,
@@ -695,7 +688,7 @@ struct key K[nbrkey]=	{
 {  {0x50,0x53,0x31,0x36,0xFE},
 		5,
 		0,
-		"PS16 Module",
+        "PS16 Module",                // Protracker Studio 16
 		"P16",
         "Renaissance",100,0,0,1},     // Joshua C. Jensen aka CyberStrike/Renaissance
 
@@ -740,7 +733,7 @@ struct key K[nbrkey]=	{
     0,
     "DSMi Module",
     "AMF",
-    "Virtual Visions",106,0,1,1},
+    "Otto Chrons",106,0,1,1},       // Otto Chrons  (Virtual Visions ?)
 {  {0x00,0xC3,0x50,0x01,0xCE,0xED,0x66,0x66,
     0xCC,0x0D,0x00,0x0B,0x03,0x73,0x00,0x83,
     0x00,0x0C,0x00,0x0D,0x00,0x08,0x11,0x1F},
@@ -798,11 +791,35 @@ struct key K[nbrkey]=	{
     "Audio Manager Sample",
     "AMS",
     "?",115,0,1,2},
+{  {"FC14"},
+    4,
+    0,
+    "Futur Composer Music",
+    "FC4",
+    "?",116,0,0,1},
+{  {"PACG"},
+    4,
+    0,
+    "SBStudio Module",
+    "PAC",
+    "Henning Hellstr”m",117,0,0,1},
+{  {"ustar"},
+    5,
+    0x101,
+    "TAR Archive",
+    "TAR",
+    "?",118,0,0,3},
 
 /*******************************************
  - structures … traiter en dernier ressort -
  *******************************************/
-
+{  {0x00,0x01,0x00,0x00},
+        4,
+        0,
+        "True Type Font",
+        "TTF",
+        "",
+        65,0,0,6},
 {  {"PK"},
         2,
         0,
@@ -1291,8 +1308,8 @@ if (!memcmp(buf+1080,"M&K&",4)) { strcpy(Info->format,"Noisetracker"); chnl=4; i
 if (!memcmp(buf+1080,"FLT4",4)) { strcpy(Info->format,"StarTrekker"); chnl=4; instr=31; } // startrekker aussi
 if (!memcmp(buf+1080,"M!K!",4)) { strcpy(Info->format,"Protracker"); chnl=4; instr=31; }
 if (!memcmp(buf+1080,"4CHN",4)) { strcpy(Info->format,"Protracker"); chnl=4; instr=31; }
-if (!memcmp(buf+1080,"6CHN",4)) { strcpy(Info->format,"PC-FTracker"); chnl=6; instr=31; }
-if (!memcmp(buf+1080,"8CHN",4)) { strcpy(Info->format,"PC-FTracker"); chnl=8; instr=31; }
+if (!memcmp(buf+1080,"6CHN",4)) { strcpy(Info->format,"PC-FTracker"); chnl=6; instr=31; }   // 6CM
+if (!memcmp(buf+1080,"8CHN",4)) { strcpy(Info->format,"PC-FTracker"); chnl=8; instr=31; }   // 8CM
 if (!memcmp(buf+1080,"CD81",4)) { strcpy(Info->format,"Octalyser"); chnl=8; instr=31; } // octalyser on Atari Ste/falcon nombre de channel ?
 if (!memcmp(buf+1080,"OCTA",4)) { strcpy(Info->format,"Oktotracker"); chnl=8; instr=31; }
 if (!memcmp(buf+1080,"RASP",4)) { strcpy(Info->format,"StarTrekker"); chnl=4; instr=31; }
@@ -2251,62 +2268,114 @@ if (!memcmp(buf2,hqc,9))
         sprintf(Info->message[3]," Compiled with              QUICK C");
 
 
+if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"NE",2))
+    {
+    unsigned char os,lv,hv,n;
+    ULONG pos;
+
+    os=*(buf+(*(WORD*)(buf+0x3C)+0x36));
+    sprintf(Info->info,"Unknown OS");
+    if ((os&1)==1)
+        sprintf(Info->info,"OS2");
+    if ((os&2)==2)
+        {
+        sprintf(Info->info,"WIN ");
+        lv=*(buf+(*(WORD*)(buf+0x3C)+0x3E));
+        hv=*(buf+(*(WORD*)(buf+0x3C)+0x3F));
+        switch(hv)
+            {
+            case  4:        sprintf(buf2,"95"); break;
+            default:        sprintf(buf2,"%d.%02d",hv,lv); break;
+            }
+        strcat(Info->info,buf2);
+        }
+    if ((os&4)==4)
+        sprintf(Info->info,"WIN386");
+
+
+    pos=ReadLng(Info,*(WORD*)(buf+0x3C)+0x2C,1)+1;
+
+    ReadStr(Info,pos,buf2,32);
+    strcpy(Info->fullname,buf2);
+    for (n=0;n<strlen(buf2);n++)
+        if (buf2[n]==':')
+            {
+            ReadStr(Info,pos+n+1,Info->fullname,32);
+            break;
+            }
+
+    if ((ReadInt(Info,*(WORD*)(buf+0x3C)+0x0C,1)&0x8000)==0x8000)
+        {
+        strcpy(Info->ext,"DLL");
+        strcpy(Info->format,"Library File");
+        }
+    }
 
 
 
+if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"LE",2))
+    {
+    unsigned char os;
+    ULONG pos;
 
-if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"NE",2))   {
-		unsigned char os,lv,hv,n;
-		ULONG pos;
+    os=*(buf+(*(WORD*)(buf+0x3C)+0x0A));
+    sprintf(Info->info,"Unknow OS");
+    if (os==1) sprintf(Info->info,"OS/2");
+    if (os==2) sprintf(Info->info,"WINDOWS");
+    if (os==3) sprintf(Info->info,"European DOS 4.0");
+    if (os==4) sprintf(Info->info,"WIN386");
 
-		os=*(buf+(*(WORD*)(buf+0x3C)+0x36));
-        sprintf(Info->info,"Unknown OS");
-		if ((os&1)==1) sprintf(Info->info,"OS2");
-		if ((os&2)==2) {
-				sprintf(Info->info,"WIN ");
-				lv=*(buf+(*(WORD*)(buf+0x3C)+0x3E));
-				hv=*(buf+(*(WORD*)(buf+0x3C)+0x3F));
-				switch(hv) {
-						case  4:		sprintf(buf2,"95"); break;
-						default:		sprintf(buf2,"%d.%02d",hv,lv); break;
-						}
-				strcat(Info->info,buf2);
-				}
-		if ((os&4)==4) sprintf(Info->info,"WIN386");
+    pos=ReadLng(Info,*(WORD*)(buf+0x3C)+0x58,1);
+    pos+=*(WORD*)(buf+0x3C);
+    ReadStr(Info,pos+1,buf2,buf[pos]);
+    strcpy(Info->fullname,buf2);
+    }
+
+if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"PE",2))
+    {
+    sprintf(Info->info,"WIN32");
+    }
+
+if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"LX",2))
+    {
+    sprintf(Info->info,"OS/2");
+    }
+
+if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"W3",2))
+    {
+    sprintf(Info->info,"WIN386 file");
+    }
+
+if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"DL",2))
+    {
+    sprintf(Info->info,"HP 100LX/200LX");
+    }
+
+if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"MP",2))
+    {
+    sprintf(Info->info,"old PharLap .EXP");
+    }
+
+if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"P2",2))
+    {
+    sprintf(Info->info,"PharLap 286 .EXP");
+    }
+
+if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"P3",2))
+    {
+    sprintf(Info->info,"PharLap 386 .EXP");
+    }
+
+if (!memcmp(buf+0x1C,rdb,4))
+    {
+    short n=0;
+    memcpy(Info->fullname,buf+0x20,32);
+    while ( (Info->fullname[n]>=32) & (n<32) ) n++;
+    Info->fullname[n]=0;
+    ClearSpace(Info->fullname);
+    }
 
 
-		pos=ReadLng(Info,*(WORD*)(buf+0x3C)+0x2C,1)+1;
-
-		ReadStr(Info,pos,buf2,32);
-		strcpy(Info->fullname,buf2);
-		for (n=0;n<strlen(buf2);n++)
-				if (buf2[n]==':') {
-						ReadStr(Info,pos+n+1,Info->fullname,32);
-						break;
-						}
-
-		if ((ReadInt(Info,*(WORD*)(buf+0x3C)+0x0C,1)&0x8000)==0x8000) {
-				strcpy(Info->ext,"DLL");
-				strcpy(Info->format,"Library File");
-				}
-		}
-
-if (!memcmp(buf+(*(WORD*)(buf+0x3C)),"PE",2))   {
-		sprintf(Info->info,"WIN32");
-		}
-
-if (!memcmp(buf,"LE",2))   {
-		sprintf(Info->info,"WIN");
-		}
-
-if (!memcmp(buf+0x1C,rdb,4))	{
-		short n;
-		n=0;
-		memcpy(Info->fullname,buf+0x20,32);
-		while ( (Info->fullname[n]>=32) & (n<32) ) n++;
-		Info->fullname[n]=0;
-		ClearSpace(Info->fullname);
-		}
 
 
 Info->taille=(int)modulo+((int)file)*512-512;
@@ -2628,21 +2697,12 @@ return 0;
 
 short Infofli(struct info *Info)
 {
-char key[]={0x11,0xAF};
-char key2[]={0,0,0,0,0,0,0,0};
 short Lp,Hp,BP,frame;
 
-char *buf;
-
-buf=Info->buffer;
-
-if (memcmp(buf+4,key,2))		return 1;
-if (memcmp(buf+18,key2,8))		return 1;
-
-Lp=*(WORD*)(buf+8);
-Hp=*(WORD*)(buf+10);
-BP=*(WORD*)(buf+12);
-frame=*(WORD*)(buf+6);
+Lp=ReadInt(Info,8,1);
+Hp=ReadInt(Info,10,1);
+BP=ReadInt(Info,12,1);
+frame=ReadInt(Info,6,1);
 
 if (Lp>9999) Lp=9999;
 if (Hp>9999) Hp=9999;
@@ -2650,11 +2710,10 @@ if (BP>99) BP=99;
 if (BP==0) BP=8;
 
 
-sprintf(Info->message[0], "  Image is      %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0], " Image is       %4d * %4d / %2dBps",Lp,Hp,BP);
 sprintf(Info->message[1], "                      %7d frame",frame);
 
-Info->Btype=6;
-Info->taille=*(ULONG*)buf;
+Info->taille=ReadLng(Info,0,1);
 return 0;
 }
 
@@ -2662,14 +2721,10 @@ short Infoflc(struct info *Info)
 {
 short Lp,Hp,BP,frame;
 
-char *buf;
-
-buf=Info->buffer;
-
-Lp=*(WORD*)(buf+8);
-Hp=*(WORD*)(buf+10);
-BP=*(WORD*)(buf+12);
-frame=*(WORD*)(buf+0x6);
+Lp=ReadInt(Info,8,1);
+Hp=ReadInt(Info,10,1);
+BP=ReadInt(Info,12,1);
+frame=ReadInt(Info,6,1);
 
 if (BP==0) BP=8;
 if (Lp>9999) Lp=9999;
@@ -2679,8 +2734,7 @@ if (BP>99) BP=99;
 sprintf(Info->message[0], "  Image is      %4d * %4d / %2dBps",Lp,Hp,BP);
 sprintf(Info->message[1], "                      %7d frame",frame);
 
-Info->Btype=6;
-Info->taille=*(ULONG*)buf;
+Info->taille=ReadLng(Info,0,1);
 return 0;
 }
 

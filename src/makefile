@@ -35,19 +35,19 @@ ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
 #------------------------ En phase de debugging ------------------------#
 #-----------------------------------------------------------------------#
 
-#CCOPTS = -wx -5r -fpi -zdp -d__WC32__ -mf -d3 -zm -od
-#AOPTS = /d1
-#LOPTS = option stack=60000 debug all
-#LAOPTS = debug all
+CCOPTS = -wx -5r -fpi -zdp -d__WC32__ -mf -d3 -zm -od
+AOPTS = /d1
+LOPTS = option stack=60000 debug all
+LAOPTS = debug all
 
 #------------------------  En phase de release  ------------------------#
 #-----------------------------------------------------------------------#
-CCOPTS = -w5 -5r -fpi -zdp -d__WC32__ -mf -s
+#CCOPTS = -w5 -5r -fpi -zdp -d__WC32__ -mf -s
 # -oneatx
 # quand on mets les optimisations, on peux plus faire un shell, pq ?
-AOPTS =
-LOPTS = option stack=60000
-LAOPTS =
+#AOPTS =
+#LOPTS = option stack=60000
+#LAOPTS =
 
 
 #-----------------------------------------------------------------------#

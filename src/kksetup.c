@@ -534,48 +534,8 @@ if (LoadCfg()==-1)
     {
     struct fenetre *DFen;
     int t;
-    char defcol[48]={43,37,30, 31,22,17,  0, 0, 0, 58,58,50,
-                     44,63,63, 63,63,21, 43,37,30,  0, 0, 0,
-                     63,63, 0, 63,63,63, 43,37,30, 63, 0, 0,
-                      0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0};
 
-    memcpy(Cfg->palette,defcol,48);
-    Cfg->KeyAfterShell=0;
-    Cfg->wmask=0;
-
-    Cfg->TailleY=50;
-    Cfg->SaveSpeed=7200;
-    Cfg->fentype=4;
-
-    strcpy(Mask[0]->title,"C Style");
-    strcpy(Mask[0]->chaine,"asm break case cdecl char const continue default do double else enum extern far float for goto huge if int interrupt long near pascal register short signed sizeof static struct switch typedef union unsigned void volatile while @");
-    Mask[0]->Ignore_Case=0;
-    Mask[0]->Other_Col=1;
-
-    strcpy(Mask[1]->title,"Pascal Style");
-    strcpy(Mask[1]->chaine,"absolute and array begin case const div do downto else end external file for forward function goto if implementation in inline interface interrupt label mod nil not of or packed procedure program record repeat ");
-    strcat(Mask[1]->chaine,"set shl shr string then to type unit until uses var while with xor @");
-    Mask[1]->Ignore_Case=1;
-    Mask[1]->Other_Col=1;
-
-    strcpy(Mask[2]->title,"Assembler Style");
-    strcpy(Mask[2]->chaine,"aaa aad aam aas adc add and arpl bound bsf bsr bswap bt btc btr bts call cbw cdq clc cld cli clts cmc cmp cmps cmpxchg cwd cwde ");
-    strcat(Mask[2]->chaine,"daa das dec div enter esc hlt idiv imul in inc ins int into invd invlpg iret iretd jcxz jecxz jmp ");
-    strcat(Mask[2]->chaine,"ja jae jb jbe jc jcxz je jg jge jl jle jna jnae jnb jnbe jnc jne jng jnge jnl jnle jno jnp jns jnz jo jp jpe jpo js jz ");
-    strcat(Mask[2]->chaine,"lahf lar lds lea leave les lfs lgdt lidt lgs lldt lmsw lock lodsw lodsb lodsd loop loope loopz loopnz loopne lsl lss ");
-    strcat(Mask[2]->chaine,"ltr mov movs movsx movsz mul neg nop not or out outs pop popa popad push pusha pushad pushf pushfd ");
-    strcat(Mask[2]->chaine,"rcl rcr rep repe repz repne repnz ret retf rol ror sahf sal shl sar sbb scas ");
-    strcat(Mask[2]->chaine,"setae setnb setb setnae setbe setna sete setz setne setnz setl setng setge setnl setle setng setg setnle ");
-    strcat(Mask[2]->chaine,"sets setns setc setnc seto setno setp setpe setnp setpo sgdt ");
-    strcat(Mask[2]->chaine,"sidt shl shr shld shrd sldt smsw stc std sti stos str sub test verr verw wait fwait wbinvd xchg xlat xlatb xor @");
-    strcat(Mask[2]->chaine,"db dw dd endp ends assume");
-    Mask[1]->Ignore_Case=1;
-    Mask[1]->Other_Col=1;
-
-    strcpy(Mask[15]->title,"User Defined Style");
-    strcpy(Mask[15]->chaine,"ketchup killers redbug access darkangel katana ecstasy cray magic fred cobra z @");
-    Mask[15]->Ignore_Case=1;
-    Mask[15]->Other_Col=1;
+    DefaultCfg();
 
     for (t=0;t<2;t++)
         {
@@ -1265,13 +1225,14 @@ PutCur(32,0);
 
 while (fgets(chaine,128,fic)!=NULL)
 {
-ChrLin(0,0,80,32);
 erreur=1;
 ClearAllSpace(chaine);
 
 if (chaine[0]==';') erreur=0;
 
 if (chaine[0]=='\n') erreur=0;
+
+if (strlen(chaine)>2) chaine[strlen(chaine)-1]=0;
 
 valeur=Traite(chaine,var);
 
@@ -1335,6 +1296,11 @@ if (!stricmp(var,"debug"))
     erreur=0;
     }
 
+if (!stricmp(var,"sizetrash"))
+    {
+    Cfg->mtrash=valeur;
+    erreur=0;
+    }
 
 if (erreur==1)
     {

@@ -148,6 +148,7 @@ if (strlen(DFen->path)==strlen(DFen->VolName))
 
 n=find1st(Nomarch,Dest,nom);
 
+// ---fichier normal---
 if ( (n==1) & (Header.FType!=2) )
     {
     Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
@@ -174,15 +175,15 @@ if ( (n==1) & (Header.FType!=2) )
     DFen->nbrfic++;
     }
 
-
+// ---On fout un repertoire---
 if ( (!Maskcmp(Nomarch,nom)) & (Header.FType!=2) )
     {
     char cont;
 
     cont=0;
 
-    strcpy(Dest,Nomarch);
-    for (m=strlen(nom);m<strlen(Dest);m++)
+    strcpy(Dest,Nomarch+strlen(nom) );
+    for (m=0;m<strlen(Dest);m++)
         {
         if (Dest[m]=='/')
             {
@@ -231,7 +232,7 @@ close(handle);
 
 DFen->init=1;
 
-if (DFen->nbrfic==2)
+if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
     return 1;
@@ -353,7 +354,8 @@ if ( (read(handle,&Lt,32)!=32) |
 		break;
 		}
 
-if (Lt.TeteType==0x74) {
+if (Lt.TeteType==0x74)
+    {
     int n;
 
     lseek(handle,pos+32,SEEK_SET);
@@ -371,7 +373,8 @@ if (Lt.TeteType==0x74) {
 
     n=find1st(Nomarch,Dest,nom);
 
-    if (n==1) {
+    if (n==1)
+        {
         Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
         Fic[DFen->nbrfic]->name=GetMem(strlen(Dest)+1);
@@ -404,7 +407,7 @@ if (Lt.Flags & 0x8000) pos+=Lt.PackSize;		// LONG_BLOCK
 
 DFen->init=1;
 
-if (DFen->nbrfic==2)
+if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
     return 1;
@@ -538,6 +541,7 @@ if (strlen(DFen->path)==strlen(DFen->VolName))
 
 n=find1st(Nomarch,Dest,nom);
 
+// ---fichier normal---
 if ( (n==1) & (Header.Signature==0x04034B50) )
     {
     Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
@@ -564,15 +568,15 @@ if ( (n==1) & (Header.Signature==0x04034B50) )
     DFen->nbrfic++;
     }
 
-
+// ---On fout un repertoire---
 if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
     {
     char cont;
 
     cont=0;
 
-    strcpy(Dest,Nomarch);
-    for (m=strlen(nom);m<strlen(Dest);m++)
+    strcpy(Dest,Nomarch+strlen(nom) );
+    for (m=0;m<strlen(Dest);m++)
         {
         if (Dest[m]=='/')
             {
@@ -594,22 +598,14 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
             memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
 
             Fic[DFen->nbrfic]->size=0;
-
             Fic[DFen->nbrfic]->time=33;
-
             Fic[DFen->nbrfic]->date=33;
-
             Fic[DFen->nbrfic]->attrib=0x10;
-
             Fic[DFen->nbrfic]->select=0;
-
             DFen->nbrfic++;
-
             }
         }
     }
-
-
 
 pos=tell(handle)+Header.PackSize+Header.ExtraField;
 }
@@ -618,7 +614,7 @@ close(handle);
 
 DFen->init=1;
 
-if (DFen->nbrfic==2)
+if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
     return 1;
@@ -832,7 +828,7 @@ close(handle);
 
 DFen->init=1;
 
-if (DFen->nbrfic==2)
+if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic==1)) )
     {
     strcpy(DFen->path,DFen->VolName);
     return 1;
