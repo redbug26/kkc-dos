@@ -275,7 +275,7 @@ char *path;
  - Initialisation de l'ecran -
  *****************************/
 
-InitScreen();                   // Initialise toutes les donn‚es HARD
+InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 OldY=(*(char*)(0x484))+1;
 

@@ -13,14 +13,13 @@ void LitInfo(struct fenetre *Fen);
 int InfoIDF(struct fenetre *Fen);
 int NameIDF(char *buf);
 void AfficheTout(void);
-void MenuBar(char c);
 void ErrWin95(void);
 void ASCIItable(void);
 void YouMad(char *s);
 
 // void SetTaille(void);
 
-
+void MenuBar(char c);           // Bar de menu (tout en dessous) F1.. F2..
 
 void UseCfg(void);
 
@@ -35,17 +34,7 @@ extern int *TailleX;
 void WinInfo(struct fenetre **Fenetre);
 short windows(short *HVersion, short *NVersion );
 void FenInfo(struct fenetre *Fen);
+void PacNoe(void);
 
 
-/*-------------------------------------------*
- -       Gestion de la barre de menu         -
- *-------------------------------------------*/
 
-int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
-int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
-struct barmenu
-        {
-        char titre[20];
-        char help[80];
-        short fct;
-        };

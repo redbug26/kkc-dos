@@ -41,7 +41,7 @@ char *path;
  - Initialisation de l'ecran -
  *****************************/
 
-InitScreen();                   // Initialise toutes les donn‚es HARD
+InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 path=GetMem(256);
 

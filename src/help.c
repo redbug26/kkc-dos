@@ -129,8 +129,7 @@ SaveEcran();
 
 WinCadre(x1,y1,x2,y2,0);
 
-ColWin(x1+1,y1+1,x2-1,y2-1,10*16+1);
-ChrWin(x1+1,y1+1,x2-1,y2-1,32);
+Window(x1+1,y1+1,x2-1,y2-1,10*16+1);
 
 PrintAt(x1+2,y1,"Main Topic");
 ColLin(x1+2,y1,10,10*16+2);
@@ -222,8 +221,7 @@ SaveEcran();
 
 WinCadre(x1,y1,x2,y2,0);
 
-ColWin(x1+1,y1+1,x2-1,y2-1,10*16+1);
-ChrWin(x1+1,y1+1,x2-1,y2-1,32);
+Window(x1+1,y1+1,x2-1,y2-1,10*16+1);
 
 Hlp2Chaine(NdxMainTopic[z],chaine);
 PrintAt(x1+2,y1,"%s",chaine);
@@ -311,8 +309,7 @@ SaveEcran();
 PutCur(32,0);
 
 WinCadre(0,1,79,(Cfg->TailleY)-2,1);
-ColWin(1,2,78,(Cfg->TailleY)-3,10*16+1);
-ChrWin(1,2,78,(Cfg->TailleY)-3,SPACE);
+Window(1,2,78,(Cfg->TailleY)-3,10*16+1);
 
 pres=z;
 

@@ -41,6 +41,9 @@ char OldY,PosX,PosY;
 
 sig_atomic_t signal_count;
 
+char *SpecMessy=NULL;
+char SpecSortie[256];
+
 char Select_Chaine[16]="*.*";
 
 char *Screen_Buffer;
@@ -107,10 +110,7 @@ char *titre="Palette configuration";
 
 #define NBRS 3
 
-char defcol[NBRS][48]={ {43,37,30, 31,22,17,  0, 0, 0, 58,58,50,
-                      44,63,63, 63,63,21, 43,37,30,  0, 0, 0,
-                      63,63, 0, 63,63,63, 43,37,30, 63,20,20,
-                      20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0},
+char defcol[NBRS][48]={ RBPALDEF ,
                      { 0, 0, 0, 43,43,43,  0, 0, 0, 63,63,63,
                       63,63,63, 63,63,21, 50,58,55,  0, 0,43,
                       63,63, 0, 63,63,63,  0, 0,43, 63, 0, 0,
@@ -134,8 +134,7 @@ SaveEcran();
 PutCur(32,0);
 
 WinCadre(0,0,79,(Cfg->TailleY)-2,2);
-ColWin(1,1,78,(Cfg->TailleY)-3,10*16+1);
-ChrWin(1,1,78,(Cfg->TailleY)-3,32);
+Window(1,1,78,(Cfg->TailleY)-3,10*16+1);
 
 if (Cfg->TailleY==50)
     {
@@ -212,8 +211,7 @@ if (rec==1)
         y=(nt%ey)*5+y1;
 
         WinCadre(x-1,y-1,x+9,y+3,1);
-        ColWin(x,y,x+8,y+2,1*16+5);
-        ChrWin(x,y,x+8,y+2,32);
+        Window(x,y,x+8,y+2,1*16+5);
 
         WinCadre(x+10,y-1,x+14,y+3,1);
         ColWin(x+11,y,x+13,y+2,nt*16+nt);
@@ -342,16 +340,11 @@ void Signal_Handler(int sig_no)
 {
 signal_count++;
 
-WinCadre(29,9,48,14,0);
-ColWin(30,10,47,13,0*16+1);
-ChrWin(30,10,47,13,32);
+SpecMessy="You have pressed on Control Break :(";
 
-PrintAt(31,10,"Signal: %d",sig_no);
-PrintAt(31,12,"Press a key when");
-PrintAt(31,13,"  it is correct");
-Wait(0,0,0);
+memset(SpecSortie,0,256);
 
-exit(1);
+Fin();
 }
 
 /* Gestion de toutes les fonctions
@@ -414,6 +407,9 @@ exit(1);
  55: Derniere ligne
  56: Va dans la premiere fenˆtre
  57: Va dans la deuxieme fenˆtre
+ 58: Change la fenˆtre avec la path de l'autre fenˆtre
+ 59: Edit New File
+ 60: Switch Display Mode
 */
 
 void GestionFct(int fct)
@@ -458,7 +454,7 @@ switch(fct)
             }
         break;
     case 9:
-        CommandLine("#%s %s",Fics->edit,DFen->F[DFen->pcur]->name);
+        EditFile(DFen->F[DFen->pcur]->name);
         break;
     case 10:                                                     // Copy
         Copie(DFen,Fenetre[2],DFen->Fen2->path);   // Fen[2] non visible
@@ -524,7 +520,7 @@ switch(fct)
             DFen->FenTyp=2;
             Cfg->FenAct=0;
             DFen=Fenetre[Cfg->FenAct];
-            ChangeLine();      // Affichage Path
+            ChangeLine();                              // Affichage Path
             }
         break;
     case 16:                                      // Select current file
@@ -542,7 +538,7 @@ switch(fct)
         ChangePalette(0);
         break;
     case 18:                                                    // About
-        WinError(RBTitle);
+        WinMesg("About",RBTitle);
         break;
     case 19:                                    // Select temporary file
         for (i=0;i<DFen->nbrfic;i++)
@@ -775,12 +771,28 @@ switch(fct)
     case 56:
         Cfg->FenAct=0;
         DFen=Fenetre[Cfg->FenAct];
-        ChangeLine();                                    // Affichage Path
+        ChangeLine();                                  // Affichage Path
         break;
     case 57:
         Cfg->FenAct=1;
         DFen=Fenetre[Cfg->FenAct];
-        ChangeLine();                                    // Affichage Path
+        ChangeLine();                                  // Affichage Path
+        break;
+    case 58:        // Change la fenˆtre avec la path de l'autre fenˆtre
+        CommandLine("#CD %s",DFen->Fen2->path);
+        break;
+    case 59:
+        EditNewFile();
+        break;
+    case 60:
+        DesinitScreen();
+        do
+            {
+            Cfg->display++;
+            if (Cfg->display>16) Cfg->display=0;
+            }
+        while(!InitScreen(Cfg->display));
+        UseCfg();
         break;
     }
 
@@ -848,7 +860,10 @@ u=BarMenu(bar,7,&poscur,&x,&v);
                                // Renvoit t: position du machin surligne
             // Renvoit v: 0 si rien, autre si position dans sous fenetre
 if (u==0)
+    {
+    fin=0;
     break;
+    }
 
 switch (poscur)
  {
@@ -967,8 +982,7 @@ char fin;
 SaveEcran();
 
 WinCadre(29,6,51,11,0);
-ColWin(30,7,50,10,0*16+1);
-ChrWin(30,7,50,10,32);
+Window(30,7,50,10,0*16+1);
 
 WinCadre(30,8,50,10,1);
 
@@ -998,8 +1012,7 @@ char fin;
 SaveEcran();
 
 WinCadre(29,6,51,11,0);
-ColWin(30,7,50,10,0*16+1);
-ChrWin(30,7,50,10,32);
+Window(30,7,50,10,0*16+1);
 
 WinCadre(30,8,50,10,1);
 
@@ -1053,8 +1066,7 @@ if (i!=0)
     if (max>Cfg->TailleY-4) max=Cfg->TailleY-4;
 
     WinCadre(x-2,y-1,x+Mlen+1,y+max,0);
-    ColWin(x-1,y,x+Mlen,y+max-1,10*16+1);
-    ChrWin(x-1,y,x+Mlen,y+max-1,32);
+    Window(x-1,y,x+Mlen,y+max-1,10*16+1);
 
     prem=0;
 
@@ -1172,6 +1184,42 @@ if (n!=27)
 }
 
 /*--------------------------------------------------------------------*
+ -                            Edit File                               -
+ *--------------------------------------------------------------------*/
+void EditFile(char *s)
+{
+CommandLine("#%s %s",Fics->edit,s);
+}
+
+/*--------------------------------------------------------------------*
+ -                          Edit New File                             -
+ *--------------------------------------------------------------------*/
+
+void EditNewFile(void)
+{
+static char Dir[70];
+static int DirLength=70;
+static int CadreLength=71;
+
+struct Tmt T[5] =
+    { { 2,3,1,Dir,&DirLength},
+      {15,5,2,NULL,NULL},
+      {45,5,3,NULL,NULL},
+      { 5,2,0,"Name the file to be edited",NULL},
+      { 1,1,4,NULL,&CadreLength} };
+
+struct TmtWin F = { 3,10,76,17, "Edit New File" };
+
+int n;
+
+n=WinTraite(T,5,&F);
+
+if (n!=27)
+    if (T[n].type!=3)
+        EditFile(Dir);
+}
+
+/*--------------------------------------------------------------------*
  -                      Create KKD disk                               -
  *--------------------------------------------------------------------*/
 
@@ -1195,22 +1243,22 @@ int n;
 
 n=WinTraite(T,5,&F);
 
-strcpy(Name,DFen->Fen2->path);
-
-for (n=strlen(Dir);n>0;n--)
-    {
-    if (Dir[n]=='\\') break;
-    if (Dir[n]=='.')
-        {
-        Dir[n]=0;
-        break;
-        }
-    }
-strcat(Dir,".kkd");
-
 if (n!=27)
     if (T[n].type!=3)
         {
+        strcpy(Name,DFen->Fen2->path);
+
+        for (n=strlen(Dir);n>0;n--)
+            {
+            if (Dir[n]=='\\') break;
+            if (Dir[n]=='.')
+                {
+                Dir[n]=0;
+                break;
+                }
+            }
+        strcat(Dir,".kkd");
+
         Path2Abs(Name,Dir);
         MakeKKD(DFen,Name);
         }
@@ -1256,8 +1304,7 @@ SaveEcran();
 x1=DFen->x+1;
 
 WinCadre(x1,6,x1+37,21,3);
-ColWin(x1+1,7,x1+36,20,10*16+1);
-ChrWin(x1+1,7,x1+36,20,32);
+Window(x1+1,7,x1+36,20,10*16+1);
 WinCadre(x-1,8,x+l*nbr,10,1);
 
 WinCadre(x1+1,11,x1+36,20,3);
@@ -1313,8 +1360,7 @@ do  {
                 {
                 unsigned nbrdrive,ii;
 
-                ChrWin(x1+2,12,x1+35,19,32);
-                ColWin(x1+2,12,x1+35,19,10*16+1);
+                Window(x1+2,12,x1+35,19,10*16+1);
 
                 ii=i+1;
                 _dos_setdrive(ii,&nbrdrive);
@@ -1453,8 +1499,7 @@ x=(40-(l*nbr))/2+DFen->x;
 SaveEcran();
 
 WinCadre(x-2,6,x+l*nbr+1,11,0);
-ColWin(x-1,7,x+l*nbr,10,0*16+1);
-ChrWin(x-1,7,x+l*nbr,10,32);
+Window(x-1,7,x+l*nbr,10,0*16+1);
 
 WinCadre(x-1,8,x+l*nbr,10,1);
 
@@ -1705,23 +1750,17 @@ switch (i=NameIDF(buf))
 switch (i)
     {
     case 34:                                                      // RAR
-        DFen->system=1;
-        break;
+        DFen->system=1;        break;
     case 30:                                                      // ARJ
-        DFen->system=2;
-        break;
+        DFen->system=2;        break;
     case 35:                                                      // ZIP
-        DFen->system=3;
-        break;
+        DFen->system=3;        break;
     case 32:                                                      // LHA
-        DFen->system=4;
-        break;
+        DFen->system=4;        break;
     case 102:                                                     // KKD
-        DFen->system=5;
-        break;
+        DFen->system=5;        break;
     default:
-        return i;
-        break;
+        return i;              break;
     }
 
 CommandLine("#cd .");
@@ -1928,7 +1967,7 @@ do
         {
         c=0;
 
-        while ( (!kbhit()) & (c==0) )
+        while ( (!KbHit()) & (c==0) )
             {
             if ( ((clock()-Cl_Start)>DFen->IDFSpeed)  & (Cl_Start!=0))
                 {
@@ -1967,7 +2006,7 @@ do
             case 0x3D:  // F3
             case 0x3E:  // F4
             case 0x56:  // SHIFT-F3
-            case 0x57:  // SHIFT-F4
+//            case 0x57:  // SHIFT-F4
             case 0x8D:  // CTRL-UP
                 if (!strcmp(DFen->F[DFen->pcur]->name,".."))
                     {
@@ -2010,7 +2049,7 @@ do
             case 0x3D:                                             // F3
             case 0x3E:                                             // F4
             case 0x56:                                       // SHIFT-F3
-            case 0x57:                                       // SHIFT-F4
+//            case 0x57:                                       // SHIFT-F4
             case 0x8D:                                        // CTRL-UP
                 AccessFile();
                 break;
@@ -2036,9 +2075,23 @@ do
     car=LO(c);
     car2=HI(c);
 
+//-Quick search (CTRL-TAB)----------------------------------------------
     if (car2==0x94)
         QuickSearch(&car,&car2);
 
+//-Pour accelerer la vitesse d'affichage des fichiers ------------------
+    switch(car2)
+    {
+    case 72:
+    case 80:
+        break;
+    default:
+        DFen->oldscur=0;
+        DFen->oldpcur=-1;
+        DFen->Fen2->oldscur=0;
+        DFen->Fen2->oldpcur=-1;
+        break;
+    }
 
 //-Switch car3 (BIOS_KEYBOARD)------------------------------------------
     switch (car3)
@@ -2064,17 +2117,21 @@ do
     switch (car)
     {
     case 0x12:                                                 // CTRL-R
-        GestionFct(27);
-        break;
+        GestionFct(27);        break;
     case 1:                                                    // CTRL-A
-        GestionFct(28);
+        GestionFct(28);        break;
+    case 2:                                                    // CTRL-B
+        i=GestionBar(0);
+
+        if (i==20)
+            car2=0x44;                                            // F10
+            else
+            GestionFct(i);
         break;
     case 4:                                                    // CTRL-D
-        GestionFct(29);
-        break;
+        GestionFct(29);        break;
     case 6:                                                    // CTRL-F
-        GestionFct(32);
-        break;
+        GestionFct(32);        break;
     case 9:                                                       // TAB
         Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
         DFen=Fenetre[Cfg->FenAct];
@@ -2127,145 +2184,153 @@ do
     case 'ý':
         GestionFct(19);
         break;
+    case 0:
+        break;
     case 32:
         if (CommandLine(" ")==0)
             GestionFct(16);
         break;
-
-//-Switch car2----------------------------------------------------------
-    case 0:
-        switch(car2)
-        {                                           // Switch (car2)
-        case 72:                                                 // HAUT
-            GestionFct(37);           break;
-        case 0x52:                                             // Insert
-            GestionFct(16);           break;
-        case 80:                                                  // BAS
-            GestionFct(36);           break;
-        case 0x4B:                                               // LEFT
-            GestionFct(56);           break;
-        case 0x4D:                                              // RIGHT
-            GestionFct(57);           break;
-        case 0x49:                                            // PAGE UP
-            GestionFct(52);           break;
-        case 0x51:                                          // PAGE DOWN
-            GestionFct(53);           break;
-        case 0x47:                                               // HOME
-            GestionFct(54);           break;
-        case 0x4F:                                                // END
-            GestionFct(55);           break;
-        case 0x3B:                                                 // F1
-            GestionFct(1);            break;
-        case 0x3D:                                                 // F3
-            GestionFct(7);            break;
-        case 0x3E:                                                 // F4
-            GestionFct(9);            break;
-        case 0x3F:                                                 // F5
-            GestionFct(10);           break;
-        case 0x40:                                                 // F6
-            GestionFct(11);           break;
-        case 0x41:                                                 // F7
-            GestionFct(12);           break;
-        case 0x42:                                                 // F8
-            GestionFct(13);           break;
-        case 0x55:                                           // SHIFT-F2
-            GestionFct(39);           break;
-        case 0x56:                                           // SHIFT-F3
-            GestionFct(8);            break;
-        case 0x8D:                                            // CTRL-UP
-            GestionFct(8);            break;
-        case 0x57:                                           // SHIFT-F4
-            GestionFct(45);           break;
-        case 0x59:                                           // SHIFT-F6
-            GestionFct(44);           break;
-        case 0x5E:                                            // CTRL-F1
-            GestionFct(14);           break;
-        case 0x5F:                                            // CTRL-F2
-            GestionFct(15);           break;
-        case 0x60:                                            // CTRL-F3
-            GestionFct(22);           break;
-        case 0x61:                                            // CTRL-F4
-            GestionFct(23);           break;
-        case 0x62:                                            // CTRL-F5
-            GestionFct(24);           break;
-        case 0x63:                                            // CTRL-F6
-            GestionFct(25);           break;
-        case 0x64:                                            // CTRL-F7
-            GestionFct(26);           break;
-        case 0x65:                                            // CTRL-F8
-            GestionFct(33);           break;
-        case 0x68:                                             // ALT-F1
-            GestionFct(49);           break;
-        case 0x69:                                             // ALT-F2
-            GestionFct(50);           break;
-        case 0x6A:                                             // ALT-F3
-            GestionFct(21);           break;
-        case 0x6E:                                             // ALT-F7
-            GestionFct(5);            break;
-        case 0x6F:                                             // ALT-F8
-            GestionFct(48);           break;
-        case 0x70:                                             // ALT-F9
-            GestionFct(47);           break;
-        case 0x73:                                          // CTRL LEFT
-            GestionFct(41);           break;
-        case 0x74:                                         // CTRL RIGHT
-            GestionFct(46);           break;
-        case 0x76:                                          // CTRL PGDN
-            GestionFct(40);           break;
-        case 0x84:                                          // CTRL PGUP
-            GestionFct(41);           break;
-        case 0x86:                                                // F12
-            GestionFct(42);           break;
-        case 0x88:                                          // SHIFT-F12
-            GestionFct(6);            break;
-        case 0x8A:                                           // CTRL-F12
-            GestionFct(17);           break;
-        case 0x17:                                              // ALT-I
-            GestionFct(38);           break;
-        case 0xA1:                                           // ALT-PGDN
-            GestionFct(51);           break;
-
-        case 0x21:                                              // ALT-F
-        case 0x19:                                              // ALT-P
-        case 0x20:                                              // ALT-D
-        case 0x1F:                                              // ALT-S
-        case 0x14:                                              // ALT-T
-        case 0x18:                                              // ALT-O
-        case 0x23:                                              // ALT-H
-            i=GestionBar(car2);
-            if (i==20)
-                car2=0x44;                                        // F10
-                else
-                GestionFct(i);
-            break;
-
-        case 0xB6:                               //
-        case 0xB7:                               //  Windows 95 keyboard
-        case 0xB8:                               //
-            break;
-
-        case 0x2F:                                              // ALT-V
-            SpeedTest();               break;
-
-        case 0x43:                                                 // F9
-            i=GestionBar(0);
-            if (i==20)
-                car2=0x44;                                        // F10
-                else
-                GestionFct(i);
-            break;
-
-        default:
-            if (Cfg->debug==1)
-               PrintAt(78,0,"%02X",car2);
-            break;
-        }                                               // switch (car2)
-        break;
 //-Retour Switch car----------------------------------------------------
-    default:                                // default du switch car
+    default:                                    // default du switch car
         CommandLine("%c",car);
         break;
     }                                                     // switch(car)
+
+//-Switch car2----------------------------------------------------------
+    switch(car2)
+    {                                                   // Switch (car2)
+    case 0:
+        break;
+    case 0x1C:                                              // ALT-ENTER
+        GestionFct(58);           break;
+    case 72:                                                     // HAUT
+        GestionFct(37);           break;
+    case 0x52:                                                 // Insert
+        GestionFct(16);           break;
+    case 80:                                                      // BAS
+        GestionFct(36);           break;
+    case 0x4B:                                                   // LEFT
+        GestionFct(56);           break;
+    case 0x4D:                                                  // RIGHT
+        GestionFct(57);           break;
+    case 0x49:                                                // PAGE UP
+        GestionFct(52);           break;
+    case 0x51:                                              // PAGE DOWN
+        GestionFct(53);           break;
+    case 0x47:                                                   // HOME
+        GestionFct(54);           break;
+    case 0x4F:                                                    // END
+        GestionFct(55);           break;
+    case 0x3B:                                                     // F1
+        GestionFct(1);            break;
+    case 0x3D:                                                     // F3
+        GestionFct(7);            break;
+    case 0x3E:                                                     // F4
+        GestionFct(9);            break;
+    case 0x3F:                                                     // F5
+        GestionFct(10);           break;
+    case 0x40:                                                     // F6
+        GestionFct(11);           break;
+    case 0x41:                                                     // F7
+        GestionFct(12);           break;
+    case 0x42:                                                     // F8
+        GestionFct(13);           break;
+    case 0x55:                                               // SHIFT-F2
+        GestionFct(39);           break;
+    case 0x56:                                               // SHIFT-F3
+        GestionFct(8);            break;
+    case 0x8D:                                                // CTRL-UP
+        GestionFct(8);            break;
+    case 0x57:                                               // SHIFT-F4
+        GestionFct(59);           break;
+    case 0x59:                                               // SHIFT-F6
+        GestionFct(44);           break;
+    case 0x5E:                                                // CTRL-F1
+        GestionFct(14);           break;
+    case 0x5F:                                                // CTRL-F2
+        GestionFct(15);           break;
+    case 0x60:                                                // CTRL-F3
+        GestionFct(22);           break;
+    case 0x61:                                                // CTRL-F4
+        GestionFct(23);           break;
+    case 0x62:                                                // CTRL-F5
+        GestionFct(24);           break;
+    case 0x63:                                                // CTRL-F6
+        GestionFct(25);           break;
+    case 0x64:                                                // CTRL-F7
+        GestionFct(26);           break;
+    case 0x65:                                                // CTRL-F8
+        GestionFct(33);           break;
+    case 0x68:                                                 // ALT-F1
+        GestionFct(49);           break;
+    case 0x69:                                                 // ALT-F2
+        GestionFct(50);           break;
+    case 0x6A:                                                 // ALT-F3
+        GestionFct(21);           break;
+    case 0x6E:                                                 // ALT-F7
+        GestionFct(5);            break;
+    case 0x6F:                                                 // ALT-F8
+        GestionFct(48);           break;
+    case 0x70:                                                 // ALT-F9
+        GestionFct(47);           break;
+    case 0x71:                                                 // ALT-F9
+        GestionFct(60);           break;
+    case 0x73:                                              // CTRL LEFT
+        GestionFct(41);           break;
+    case 0x74:                                             // CTRL RIGHT
+        GestionFct(46);           break;
+    case 0x76:                                              // CTRL PGDN
+        GestionFct(40);           break;
+    case 0x84:                                              // CTRL PGUP
+        GestionFct(41);           break;
+    case 0x86:                                                    // F12
+        GestionFct(42);           break;
+    case 0x88:                                              // SHIFT-F12
+        GestionFct(6);            break;
+    case 0x8A:                                               // CTRL-F12
+        GestionFct(17);           break;
+    case 0x17:                                                  // ALT-I
+        GestionFct(38);           break;
+    case 0xA1:                                               // ALT-PGDN
+        GestionFct(51);           break;
+    case 0x21:                                                  // ALT-F
+    case 0x19:                                                  // ALT-P
+    case 0x20:                                                  // ALT-D
+    case 0x1F:                                                  // ALT-S
+    case 0x14:                                                  // ALT-T
+    case 0x18:                                                  // ALT-O
+    case 0x23:                                                  // ALT-H
+        i=GestionBar(car2);
+        if (i==20)
+            car2=0x44;                                            // F10
+            else
+            GestionFct(i);
+        break;
+    case 0xB6:                                   //
+    case 0xB7:                                   //  Windows 95 keyboard
+    case 0xB8:                                   //
+        PacNoe();
+        break;
+
+    case 0x2F:                                                  // ALT-V
+        SpeedTest();               break;
+
+    case 0x43:                                                     // F9
+        i=GestionBar(0);
+
+        if (i==20)
+            car2=0x44;                                            // F10
+            else
+            GestionFct(i);
+        break;
+
+    default:
+        if (Cfg->debug==1)
+               PrintAt(78,0,"%02X",car2);
+        break;
+    }                                                   // switch (car2)
+
+
 
 /*    switch(inp(0x60))
         {
@@ -2290,11 +2355,9 @@ while(car2!=0x44);      // F10
 
 void Shell(char *string,...)
 {
-char sortie[255];
+char sortie[256];
 va_list arglist;
 char *suite;
-
-TXTMode(OldY);                              // Anciennement Cfg->TailleY
 
 suite=sortie;
 
@@ -2305,7 +2368,7 @@ va_end(arglist);
 if (Cfg->KeyAfterShell==0)
     suite[0]='#';
 
-strcpy(ShellAdr,suite);
+memcpy(SpecSortie,suite,256);
 
 Fin();
 }
@@ -2334,6 +2397,8 @@ SaveCfg();
 
 PlaceDrive();
 
+TXTMode(OldY);                          // Retablit le mode texte normal
+
 for (n=0;n<8000;n++)
     Screen_Adr[n]=Screen_Buffer[n];
 
@@ -2345,6 +2410,13 @@ if (Cfg->_4dos==1)
 GotoXY(0,PosY);
 _settextcolor(OldCol);
 cprintf("%s\n\r",RBTitle);
+
+if (SpecMessy!=NULL)
+    cprintf("\n\r%s\n\r",SpecMessy);
+
+memcpy(ShellAdr,SpecSortie,256);
+
+DesinitScreen();
 
 exit(1);
 }
@@ -2359,7 +2431,7 @@ CommandLine("##INIT 0 %d 80\n",(Cfg->TailleY)-2);
 PrintAt(0,0,"%-40s%40s","Ketchup Killers Commander","RedBug");
 ColLin( 0,0,40,1*16+5);
 ColLin(40,0,40,1*16+3);
-ColLin(0,(Cfg->TailleY)-2,80,7);
+ColLin(0,(Cfg->TailleY)-2,80,5);
 
 
 DFen->init=1;
@@ -2482,8 +2554,8 @@ FILE *fic;
 struct fenetre *Fen;
 short taille;
 
-Cfg->FenTyp[0]=Fenetre[0]->FenTyp;
-Cfg->FenTyp[1]=Fenetre[1]->FenTyp;
+for (t=0;t<3;t++)
+    Cfg->FenTyp[t]=Fenetre[t]->FenTyp;
 
 fic=fopen(Fics->CfgFile,"wb");
 fwrite((void*)Cfg,sizeof(struct config),1,fic);
@@ -2505,11 +2577,11 @@ for(t=0;t<3;t++)
     {
     Fen=Fenetre[t];
 
-    fwrite(Fen->path,256,1,fic);
-    fwrite(&(Fen->order),sizeof(ENTIER),1,fic);
-    fwrite(&(Fen->sorting),sizeof(ENTIER),1,fic);
+    fwrite(Fen->path,256,1,fic);                   // Repertoire courant
+    fwrite(&(Fen->order),sizeof(short),1,fic);       // Ordre du sorting
+    fwrite(&(Fen->sorting),sizeof(short),1,fic);      // Type de sorting
 
-    fwrite(&(Fen->nbrsel),4,1,fic);
+    fwrite(&(Fen->nbrsel),4,1,fic);     // Nombre de fichier selectionne
     ns=Fen->nbrsel;
 
     for (n=0;n<Fen->nbrfic;n++)
@@ -2518,17 +2590,17 @@ for(t=0;t<3;t++)
             {
             ns--;
             m=strlen(Fen->F[n]->name);
-            fwrite(&m,4,1,fic);
-            fwrite(Fen->F[n]->name,1,m,fic);
+            fwrite(&m,4,1,fic);                       // Longueur du nom
+            fwrite(Fen->F[n]->name,1,m,fic);      // Fichier selectionn‚
             if (ns==0) break;
             }
         }
 
     m=strlen(Fen->F[Fen->pcur]->name);
-    fwrite(&m,4,1,fic);
-    fwrite(Fen->F[Fen->pcur]->name,1,m,fic);
+    fwrite(&m,4,1,fic);                               // Longueur du nom
+    fwrite(Fen->F[Fen->pcur]->name,1,m,fic);          // Fichier courant
 
-    fwrite(&(Fen->scur),sizeof(ENTIER),1,fic);
+    fwrite(&(Fen->scur),sizeof(short),1,fic);// Pos du fichier … l'ecran
     }
 
 fclose(fic);
@@ -2544,12 +2616,10 @@ fclose(fic);
 
 int LoadCfg(void)
 {
-int m,n,i,nbr;
-int t;
+int m,n,i,t,nbr;
 FILE *fic;
 char nom[256];
 short taille;
-
 
 fic=fopen(Fics->CfgFile,"rb");
 if (fic==NULL) return -1;
@@ -2590,9 +2660,9 @@ for (t=0;t<3;t++)
 
     DFen->FenTyp=Cfg->FenTyp[t];
 
-    fread(DFen->path,256,1,fic);
-    fread(&(DFen->order),sizeof(ENTIER),1,fic);
-    fread(&(DFen->sorting),sizeof(ENTIER),1,fic);
+    fread(DFen->path,256,1,fic);                   // Repertoire courant
+    fread(&(DFen->order),sizeof(short),1,fic);       // Ordre du sorting
+    fread(&(DFen->sorting),sizeof(short),1,fic);      // Type de sorting
 
     IOver=1;
     IOerr=0;
@@ -2601,14 +2671,14 @@ for (t=0;t<3;t++)
 
     IOver=0;
 
-    fread(&nbr,4,1,fic);
+    fread(&nbr,4,1,fic);                // Nombre de fichier selectionne
 
     DFen->nbrsel=0;
 
     for (i=0;i<nbr;i++)
         {
-        fread(&m,4,1,fic);
-        fread(nom,m,1,fic);
+        fread(&m,4,1,fic);                            // Longueur du nom
+        fread(nom,m,1,fic);                       // Fichier selectionn‚
         nom[m]=0;
 
         for (n=0;n<DFen->nbrfic;n++)
@@ -2616,11 +2686,11 @@ for (t=0;t<3;t++)
                 FicSelect(n,1);
         }
 
-    fread(&m,4,1,fic);
-    fread(nom,m,1,fic);
+    fread(&m,4,1,fic);                                // Longueur du nom
+    fread(nom,m,1,fic);                               // Fichier courant
     nom[m]=0;
 
-    fread(&(DFen->scur),sizeof(ENTIER),1,fic);
+    fread(&(DFen->scur),sizeof(short),1,fic); //Pos du fichier … l'ecran
 
     for (n=0;n<DFen->nbrfic;n++)
         if (!stricmp(nom,DFen->F[n]->name))
@@ -2704,7 +2774,7 @@ Info->temps=clock();
  -                    Initialisation de l'ecran                       -
  *--------------------------------------------------------------------*/
 
-InitScreen();                      // Initialise toutes les donn‚es HARD
+InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 OldY=(*(char*)(0x484))+1;
 WhereXY(&PosX,&PosY);
@@ -2773,6 +2843,7 @@ if (strncmp(LC,"6969",4))
 
 _harderr(Error_handler);
 
+signal(SIGBREAK,Signal_Handler);
 signal(SIGABRT,Signal_Handler);
 signal(SIGFPE,Signal_Handler);
 signal(SIGILL,Signal_Handler);
@@ -2790,38 +2861,38 @@ getcwd(Fics->LastDir,256);
 
 Fics->FicIdfFile=GetMem(256);
 strcpy(Fics->FicIdfFile,path);
-strcat(Fics->FicIdfFile,"\\idfext.rb");
+Path2Abs(Fics->FicIdfFile,"idfext.rb");
 
 Fics->CfgFile=GetMem(256);
 strcpy(Fics->CfgFile,path);
-strcat(Fics->CfgFile,"\\kkrb.cfg");
+Path2Abs(Fics->CfgFile,"kkrb.cfg");
 
 Fics->view=GetMem(256);
 strcpy(Fics->view,path);
-strcat(Fics->view,"\\view");
+Path2Abs(Fics->view,"view");
 
 Fics->edit=GetMem(256);
 strcpy(Fics->edit,path);
-strcat(Fics->edit,"\\edit");
+Path2Abs(Fics->edit,"edit");
 
 Fics->path=GetMem(256);
 strcpy(Fics->path,path);
 
 Fics->help=GetMem(256);
 strcpy(Fics->help,path);
-strcat(Fics->help,"\\kkc.hlp");
+Path2Abs(Fics->help,"kkc.hlp");
 
 Fics->temp=GetMem(256);
 strcpy(Fics->temp,path);
-strcat(Fics->temp,"\\temp.tmp");
+Path2Abs(Fics->temp,"temp.tmp");
 
 Fics->trash=GetMem(256);
 strcpy(Fics->trash,path);
-strcat(Fics->trash,"\\trash");                       // repertoire trash
+Path2Abs(Fics->trash,"trash");                       // repertoire trash
 
 Fics->log=GetMem(256);
 strcpy(Fics->log,path);
-strcat(Fics->log,"\\trash\\logfile");                   // logfile trash
+Path2Abs(Fics->log,"trash\\logfile");                   // logfile trash
 
 
 
@@ -2829,10 +2900,7 @@ strcat(Fics->log,"\\trash\\logfile");                   // logfile trash
  -  Default  -
  *************/
 
-// Cfg->TailleY=30;
-
 ChangeType(4);
-// Cfg->SaveSpeed=7200;
 
 /*
 Cfg->_4dos=0;
@@ -2863,7 +2931,7 @@ Fenetre[0]->scur=0;
 Fenetre[0]->FenTyp=0;
 
 Fenetre[0]->Fen2=Fenetre[1];
-Fenetre[0]->order=1;
+Fenetre[0]->order=17;
 
 
 Fenetre[1]->x=40;
@@ -2879,12 +2947,12 @@ Fenetre[1]->scur=0;
 Fenetre[1]->FenTyp=0;
 
 Fenetre[1]->Fen2=Fenetre[0];
-Fenetre[1]->order=1;
+Fenetre[1]->order=17;
 
 
 Fenetre[2]->x=40;
 Fenetre[2]->y=1;
-Fenetre[2]->yl=20;                               // Toute petite fenˆtre
+Fenetre[2]->yl=(Cfg->TailleY)-4;                 // Toute petite fenˆtre
 Fenetre[2]->xl=39;
 Fenetre[2]->actif=0;
 Fenetre[2]->nfen=2;
@@ -2895,12 +2963,14 @@ Fenetre[2]->scur=0;
 Fenetre[2]->FenTyp=2;                      // Fenˆtre ferm‚e par default
 
 Fenetre[2]->Fen2=Fenetre[2];
-Fenetre[2]->order=1;
+Fenetre[2]->order=17;
 
 
 /*--------------------------------------------------------------------*
  -               Chargement du fichier config (s'il existe)           -
  *--------------------------------------------------------------------*/
+
+// AfficheTout();
 
 if (LoadCfg()==-1)
     {
@@ -2915,11 +2985,14 @@ if (LoadCfg()==-1)
 if ( (Cfg->currentdir==1) & (LC[4]!='0') )
     {
     DFen=Fenetre[(Cfg->FenAct)&1];
-    CommandLine("#CD %s",Fics->LastDir);
+
+    if (strcmp(Fics->LastDir,DFen->path)!=0)
+        CommandLine("#CD %s",Fics->LastDir);
     }
 
+UseCfg();                      // Emploi les parametres de configuration
 
-UseCfg();
+InitScreen(Cfg->display);
 
 Fenetre[0]->yl=(Cfg->TailleY)-4;
 Fenetre[1]->yl=(Cfg->TailleY)-4;
@@ -2934,9 +3007,8 @@ Gestion();
  -                                 FIN                                -
  *--------------------------------------------------------------------*/
 
-TXTMode(OldY);                          // Retablit le mode texte normal
+memset(SpecSortie,0,256);
 
-ShellAdr[0]=0;
 Fin();
 }
 

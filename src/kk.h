@@ -1,4 +1,4 @@
-#define VERSION "0.31"
+#define VERSION "0.4"
 
 #define ENTIER short
 
@@ -30,38 +30,41 @@ int LoadCfg(void);
 void AffFen(struct fenetre *Fen);
 
 
-struct fenetre {
-     ENTIER IDFSpeed;   // Nombre de clock avant de lire la description
+struct fenetre
+     {
+     ENTIER IDFSpeed;    // Nombre de clock avant de lire la description
      long nbrfic;
      long taillefic;
      long nbrsel;
      long taillesel;
      char actif;
      struct file **F;
-     ENTIER x,y;        // position haut droite de la fenˆtre
-     ENTIER xl,yl;      // taille de la fenˆtre
-     ENTIER x2,y2;      // position calculee
-     ENTIER xl2,yl2;    // taille calculee
-     ENTIER x3,y3;      // position de l'infoselect
-     ENTIER pcur,paff;  // positon dans le tableau
-     ENTIER scur,saff;  // positon du curseur … l'‚cran
-     char path[256];    // path complete (disk et repertoire)
-                        // La lettre du disque ne peut prendre que 1 caractere
-                        //                  et doit etre en majuscule
-                        // Le repertoire ne doit pas finir par '/' sauf le ROOT
-     ENTIER FenTyp;     // Type de fenetre: 0:norm, 1:diz
-     ENTIER init;       // si =1 --> r‚initialise fenˆtre (bordure ...)
+     ENTIER x,y;                   // position haut droite de la fenˆtre
+     ENTIER xl,yl;                               // taille de la fenˆtre
+     ENTIER x2,y2;                                  // position calculee
+     ENTIER xl2,yl2;                                  // taille calculee
+     ENTIER x3,y3;                           // position de l'infoselect
+     ENTIER pcur;                             // positon dans le tableau
+     ENTIER scur;                        // positon du curseur … l'‚cran
+     ENTIER oldscur;                             // dernier scur affiche
+     ENTIER oldpcur;                             // dernier pcur affiche
+     char path[256];               // path complete (disk et repertoire)
+                  // La lettre du disque ne peut prendre que 1 caractere
+                           //                  et doit etre en majuscule
+                 // Le repertoire ne doit pas finir par '/' sauf le ROOT
+     ENTIER FenTyp;                    // Type de fenetre: 0:norm, 1:diz
+     ENTIER init;        // si =1 --> r‚initialise fenˆtre (bordure ...)
      struct fenetre *Fen2;
 
      // Affichage
-     ENTIER order;        // 1: normal, 2: inverse
-     ENTIER sorting;      // 1: Name, 2: ext, 3: date, 4: size, 0: unsort
+     ENTIER order;                              // 1: normal, 2: inverse
+     ENTIER sorting;     // 1: Name, 2: ext, 3: date, 4: size, 0: unsort
 
      // Systeme
-     ENTIER system;      // 0: DOS, 1: RAR, 2: ARJ, 3: ZIP, 4: LHA, 5: KKD
+     ENTIER system;    // 0: DOS, 1: RAR, 2: ARJ, 3: ZIP, 4: LHA, 5: KKD
 
-     char VolName[255];  // Nom du volume
-     char nfen;          // Numero de la fenetre
+     char VolName[255];                                 // Nom du volume
+     char nfen;                                  // Numero de la fenetre
 
 };
 
@@ -69,7 +72,7 @@ extern struct fenetre *DFen;
 
 extern char *Screen_Buffer;
 
-extern int IOver;       // Vaut 1 si on veut pas faire de verifications
+extern int IOver;        // Vaut 1 si on veut pas faire de verifications
 extern int IOerr;
 
 #include "ficidf.h"

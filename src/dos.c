@@ -23,7 +23,6 @@ struct find_t ff;
 struct file **Fic;
 unsigned error;
 char rech[256];
-union REGS R;
 
 char drive;
 

@@ -28,29 +28,6 @@ int *TailleX;
 
 void ClearSpace(char *name);              // efface les espaces inutiles
 
-void ErrWin95(void)
-{
-int x,y;
-char c=0;
-
-while (c!=27)
-    {
-    for (x=0;x<(*TailleX);x++)
-        for (y=0;y<Cfg->TailleY;y++)
-            {
-            AffChr(x,y,rand()&255);
-            AffCol(x,y,26 + (rand()&1));
-            }
-    PrintAt(26,11,"*************************");
-    PrintAt(26,12,"* WINDOWS 95 KEYBOARD ! *");
-    PrintAt(26,13,"*************************");
-    if (kbhit()) c=getch();
-    }
-
-AfficheTout();
-}
-
-
 int NameIDF(char *name)
 {
 RB_IDF Info;
@@ -98,6 +75,10 @@ PrintAt(0,0,"%-40s%-40s",Info.format,Info.fullname);
 return Info.numero;
 }
 
+//--------------------------------------//
+// Efface la fenˆtre gestion de fichier //
+//--------------------------------------//
+
 void ClearNor(struct fenetre *Fen)
 {
 int i;
@@ -107,6 +88,9 @@ int yl;
 char a;
 
 a=Cfg->Tfont;
+
+Fen->oldscur=0;
+Fen->oldpcur=-1;
 
 ColWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,7*16+6);
 
@@ -216,6 +200,8 @@ char ch1[13],ch2[11],ch3[9],ch4[6];
 char temp[16],temp2[20];
 char nom[13],ext[4];
 
+char dispall;
+
 char col;
 
 short i;
@@ -257,128 +243,127 @@ n=(Fen->pcur)-(Fen->scur);                                    // premier
 
 InfoSelect(Fen);
 
+dispall=((Fen->oldpcur-Fen->oldscur)!=(Fen->pcur-Fen->scur));
+
 for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
     {
-    date=Fen->F[n]->date;
-    time=Fen->F[n]->time;
+    if ( (n==Fen->oldpcur) | (n==Fen->pcur) | (dispall) )
+        {
+        date=Fen->F[n]->date;
+        time=Fen->F[n]->time;
 
-    strcpy(nom,Fen->F[n]->name);
+        strcpy(nom,Fen->F[n]->name);
 
-    if ((Fen->F[n]->attrib& _A_SUBDIR)!=_A_SUBDIR)
-        strlwr(nom);
+        if ((Fen->F[n]->attrib& _A_SUBDIR)!=_A_SUBDIR)
+            strlwr(nom);
 
-    ext[0]=0;
-    j=0;
+        ext[0]=0;
+        j=0;
 
-    if (nom[0]!='.')
-        while(nom[j]!=0)
-            {
-            if (nom[j]=='.')
+        if (nom[0]!='.')
+            while(nom[j]!=0)
                 {
-                memcpy(ext,nom+j+1,4);
-                ext[3]=0;
-                nom[j]=0;
-                break;
+                if (nom[j]=='.')
+                    {
+                    memcpy(ext,nom+j+1,4);
+                    ext[3]=0;
+                    nom[j]=0;
+                    break;
+                    }
+                j++;
                 }
-            j++;
+        nom[8]=0;                    // Dans le cas o— on aurait un nom long
+
+
+        Int2Char((date>>9)+80,temp,2);
+
+        sprintf(ch1,"%-8s %-3s",nom,ext);
+        sprintf(ch2,"%10s",Long2Str(Fen->F[n]->size,temp2));
+        sprintf(ch3,"%02d/%02d/%2s",(date&31),(date>>5)&15,temp);
+        sprintf(ch4,"%02d:%02d",(time>>11)&31,(time>>5)&63);
+
+        if ((Fen->F[n]->attrib & _A_SUBDIR)==_A_SUBDIR)
+            memcpy(ch2,"SUB--DIR",10);
+
+        if ((Fen->F[n]->attrib & _A_VOLID)==_A_VOLID)
+            memcpy(ch2,"##Vol-ID##",10);
+
+        if (nom[1]==':')
+            {
+            memcpy(ch2,"##Reload##",10);
+            strcpy(ch3,"        ");
+            strcpy(ch4,"     ");
             }
-    nom[8]=0;                    // Dans le cas o— on aurait un nom long
 
+        if (Fen->F[n]->select!=0)
+            memcpy(ch4,"<SEL>",5);
 
-    Int2Char((date>>9)+80,temp,2);
+        if ((Fen->F[n]->attrib & _A_HIDDEN)==_A_HIDDEN)
+            ch1[8]=176;  // 176,177,178
 
-    sprintf(ch1,"%-8s %-3s",nom,ext);
-    sprintf(ch2,"%10s",Long2Str(Fen->F[n]->size,temp2));
-    sprintf(ch3,"%02d/%02d/%2s",(date&31),(date>>5)&15,temp);
-    sprintf(ch4,"%02d:%02d",(time>>11)&31,(time>>5)&63);
-
-    if ((Fen->F[n]->attrib & _A_SUBDIR)==_A_SUBDIR)
-        memcpy(ch2,"SUB--DIR",10);
-
-    if ((Fen->F[n]->attrib & _A_VOLID)==_A_VOLID)
-        memcpy(ch2,"##Vol-ID##",10);
-
-    if (nom[1]==':')
-        {
-        memcpy(ch2,"##Reload##",10);
-        strcpy(ch3,"        ");
-        strcpy(ch4,"     ");
-        }
-
-    if (Fen->F[n]->select!=0)
-        memcpy(ch4,"<SEL>",5);
-
-    if ((Fen->F[n]->attrib & _A_HIDDEN)==_A_HIDDEN)
-        ch1[8]=176;  // 176,177,178
-
-    if (nom[0]=='.')
-        {
-        if (nom[1]!='.')
-            memcpy(ch2," RELOAD ",10);
-            else
-        memcpy(ch2," UP-DIR ",10);
-        }
+        if (nom[0]=='.')
+            {
+            if (nom[1]!='.')
+                memcpy(ch2," RELOAD ",10);
+                else
+            memcpy(ch2," UP-DIR ",10);
+            }
 
 // ------------------ Line Activity ------------------------------------
-    if ((Fen->actif==1) & (n==(Fen->pcur)) )
-        {
-        if (Fen->F[n]->select==0)
-            col=1*16+6;
-            else
-            col=1*16+5;
-        }
-        else
-        {
-        if (Fen->F[n]->select==0)
+        if ((Fen->actif==1) & (n==(Fen->pcur)) )
             {
-            col=7*16+6;
-
-            if (Cfg->dispcolor==1)
-                {
-                if (FoundExt(ext,EXTEXE)) col=7*16+13;     // Executable
+            if (Fen->F[n]->select==0)
+                col=1*16+6;
                 else
-                if (FoundExt(ext,EXTARC)) col=7*16+8;         // Archive
-                else
-                if (FoundExt(ext,EXTSND)) col=7*16+12;            // Son
-                else
-                if (FoundExt(ext,EXTBMP)) col=7*16+11;          // Image
-                       else
-                if (FoundExt(ext,EXTTXT)) col=7*16+4;           // Texte
-                }
+                col=1*16+5;
             }
             else
-            col=7*16+5;
-        }
+            {
+            if (Fen->F[n]->select==0)
+                {
+                col=7*16+6;
+
+                if (Cfg->dispcolor==1)
+                    {
+                    if (FoundExt(ext,EXTEXE)) col=7*16+13; // Executable
+                    else
+                    if (FoundExt(ext,EXTARC)) col=7*16+8;     // Archive
+                    else
+                    if (FoundExt(ext,EXTSND)) col=7*16+12;        // Son
+                    else
+                    if (FoundExt(ext,EXTBMP)) col=7*16+11;      // Image
+                    else
+                    if (FoundExt(ext,EXTTXT)) col=7*16+4;       // Texte
+                    }
+                }
+                else
+                col=7*16+5;
+            }
 
 
 // ---------------------------------------------------------------------
 
-    ColLin(x1,y1,12,col);      PrintAt(x1,y1,"%s",ch1);
-
-    AffCol(x1+12,y1,7*16+6);   AffChr(x1+12,y1,a);
-
-    ColLin(x1+13,y1,10,col);   PrintAt(x1+13,y1,"%s",ch2);
-
-    AffCol(x1+23,y1,7*16+6);   AffChr(x1+23,y1,a);
-
-    ColLin(x1+24,y1,8,col);    PrintAt(x1+24,y1,"%s",ch3);
-
-    AffCol(x1+32,y1,7*16+6);   AffChr(x1+32,y1,a);
-
-    ColLin(x1+33,y1,5,col);    PrintAt(x1+33,y1,"%s",ch4);
+        ColLin(x1,y1,12,col);      PrintAt(x1,y1,"%s",ch1);
+        AffCol(x1+12,y1,7*16+6);   AffChr(x1+12,y1,a);
+        ColLin(x1+13,y1,10,col);   PrintAt(x1+13,y1,"%s",ch2);
+        AffCol(x1+23,y1,7*16+6);   AffChr(x1+23,y1,a);
+        ColLin(x1+24,y1,8,col);    PrintAt(x1+24,y1,"%s",ch3);
+        AffCol(x1+32,y1,7*16+6);   AffChr(x1+32,y1,a);
+        ColLin(x1+33,y1,5,col);    PrintAt(x1+33,y1,"%s",ch4);
+        }
     }
 
 // ------------------- Remplis le reste de la fenˆtre ------------------
 
-for (;(i<Fen->yl2);i++,y1++)
-    {
-    PrintAt(x1,y1,"            %c          %c        %c     ",a,a,a);
-    ColLin(x1,y1,38,7*16+6);
-    }
+if (dispall)
+    for (;(i<Fen->yl2);i++,y1++)
+        {
+        PrintAt(x1,y1,"            %c          %c        %c     ",a,a,a);
+        ColLin(x1,y1,38,7*16+6);
+        }
 
-
-Fen->paff=Fen->pcur;
-Fen->saff=Fen->scur;
+Fen->oldscur=Fen->scur;
+Fen->oldpcur=Fen->pcur;
 
 if (Fen->FenTyp==3)
     FenInfo(Fen);       //  Affiche les infos sur les fichiers si type=3
@@ -472,7 +457,9 @@ int x,y,i;
 
 Fen2=Fen->Fen2;
 F=Fen2->F[Fen2->pcur];
+
 if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR) return;
+if (Fen2->system!=0) return;
 
 WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
 
@@ -485,8 +472,8 @@ Buf=malloc(4000);
 
 Makediz(&Info,Buf);
 
-ChrWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+4,' ');
-ColWin(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+4,170);
+Window(Fen->x+1,Fen->y+1,Fen->x+Fen->xl-1,Fen->y+4,170);
+
 
 x=Fen->x+2;
 y=Fen->y+6;
@@ -506,8 +493,9 @@ while (Buf[i]!=0)
 WinCadre(Fen->x+1,Fen->y+5,Fen->x+Fen->xl-1,y,2);
 ColWin(Fen->x+2,Fen->y+6,Fen->x+Fen->xl-2,y-1,10*16+1);
 
-ChrWin(Fen->x+1,y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,' ');
-ColWin(Fen->x+1,y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,170);
+Window(Fen->x+1,y+1,Fen->x+Fen->xl-1,Fen->y+Fen->yl-1,170);
+
+
 
 free (Buf);
 
@@ -527,11 +515,14 @@ struct fenetre *Fen2;
 
 SaveEcran();
 
+Fen->oldscur=0;
+Fen->oldpcur=-1;
+
 Fen2=Fen->Fen2;
 
 WinCadre(19,9,61,11,0);
-ColWin(20,10,60,10,10*16+4);
-ChrWin(20,10,60,10,32);
+Window(20,10,60,10,10*16+4);
+
 
 PrintAt(23,10,"Wait Please");
 
@@ -561,8 +552,7 @@ ChargeEcran();
 
 WinCadre(Fen2->x,Fen2->y,Fen2->x+Fen2->xl,Fen2->y+Fen2->yl,1);
 
-ChrWin(Fen2->x+1,Fen2->y+1,Fen2->x+Fen2->xl-1,Fen2->y+Fen2->yl-1,' ');
-ColWin(Fen2->x+1,Fen2->y+1,Fen2->x+Fen2->xl-1,Fen2->y+Fen2->yl-1,118);
+Window(Fen2->x+1,Fen2->y+1,Fen2->x+Fen2->xl-1,Fen2->y+Fen2->yl-1,118);
                                                                // 7*16+6
 
 ChrLin(Fen2->x+1,Fen2->y+Fen2->yl-2,Fen2->xl-1,196);
@@ -649,9 +639,9 @@ void MenuBar(char c)
 {
 static char bar[4][60]=
  {" Help  ----  View  Edit  Copy  Move  MDir Delete Menu  Quit ",  //NOR
-  " ---- Attrib View  ----  ---- Rename ----  ----  ----  ---- ",//SHIFT
+  " ---- Attrib View  Edit  ---- Rename ----  ----  ----  ---- ",//SHIFT
   "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ", //CTRL
-  " Drv1  Drv2  FDiz  ----  ----  ---- Search Type  Line  ---- "}; //ALT
+  " Drv1  Drv2  FDiz  ----  ----  ---- Search Type  Line  Disp "}; //ALT
 
 char i,j,n;
 static signed char d=-1;
@@ -681,13 +671,16 @@ switch(c) {
     }
 
 n=0;
-for (i=0;i<10;i++)	{
+for (i=0;i<10;i++)
+    {
 	PrintAt(n,TY-1,"F%d",(i+1)%10);
-    for(j=0;j<2;j++,n++) AffCol(n,TY-1,1*16+8);
-	for(j=0;j<6;j++,n++) {
-       AffCol(n,TY-1,1*16+2);
-	   AffChr(n,TY-1,*(bar[c]+i*6+j));
-	   }
+    for(j=0;j<2;j++,n++)
+        AffCol(n,TY-1,1*16+8);
+    for(j=0;j<6;j++,n++)
+        {
+        AffCol(n,TY-1,1*16+2);
+        AffChr(n,TY-1,*(bar[c]+i*6+j));
+        }
 	}
 
 }
@@ -732,8 +725,8 @@ int x,l;
 static char Buffer[70];
 static int CadreLength=71;
 
-struct Tmt T[5] = {
-      {15,5,2,NULL,NULL},
+struct Tmt T[5] =
+    { {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 2,2,0,"You are MAD!",NULL},
       { 1,1,4,NULL,&CadreLength},
@@ -763,195 +756,6 @@ strcpy(Buffer,s);
 WinTraite(T,5,&F);
 }
 
-/*-------------------------------------------------------------*
- -   Gestion de la barre de menu                               -
- - Renvoie 0 pour ESC                                          -
- - Sinon numero du titre;                                      -
- - xp: au depart, c'est le numero du titre                     -
- -     a l'arrivee ,c'est la position du titre                 -
- *-------------------------------------------------------------*/
-
-int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp)
-{
-int c,i,j,n,x;
-char let[32];
-int car=0;
-
-for (n=0;n<nbr;n++)
-    let[n]=toupper(bar[n].titre[0]);
-
-ColLin(0,0,80,1*16+7);
-ChrLin(0,0,80,32);
-
-
-x=0;
-for(n=0;n<nbr;n++)
-    x+=strlen(bar[n].titre);
-
-i=(80-x)/nbr;
-x=(80-(nbr-1)*i-x)/2;
-
-c=*poscur;
-
-do
-{
-if (c<0) c=nbr-1;
-if (c>=nbr) c=0;
-
-j=0;
-for (n=0;n<nbr;n++)
-    {
-    if (n==c)
-        {
-        AffCol(x+j+n*i-1,0,7*16+4);
-        AffCol(x+j+n*i,0,7*16+5);
-        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),7*16+4);
-        *xp=x+j+n*i;
-        }
-        else
-        {
-        AffCol(x+j+n*i-1,0,1*16+7);
-        AffCol(x+j+n*i,0,1*16+5);
-        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),1*16+7);
-        }
-
-    PrintAt(x+j+n*i,0,"%s",bar[n].titre);
-    j+=strlen(bar[n].titre);
-    }
-
-if (*yp==0)
-    break;
-
-car=Wait(0,0,0);
-
-switch(HI(car))
-    {
-    case 0x4B:
-        c--;
-        break;
-    case 0x4D:
-        c++;
-        break;
-    case 80:
-        *yp=1;
-        car=13;
-        break;
-    }
-if (LO(car)!=0)
-    for (n=0;n<nbr;n++)
-        if (toupper(car)==let[n])
-            c=n;
-}
-while ( (car!=13) & (car!=27) );
-
-*poscur=c;
-
-if (car==27)
-    return 0;
-    else
-    return 1;
-}
-
-// 1: [RIGHT]   -1: [LEFT]
-// 0: [ESC]      2: [ENTER]
-int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp)
-{
-int max,n,m,car,fin;
-int i,col;
-char couleur;
-char let[32];
-
-for (n=0;n<nbr;n++)
-    {
-    i=0;
-
-    do
-        {
-        let[n]=toupper(bar[n].titre[i]);
-        fin=1;
-        for (m=0;m<n;m++)
-            if (let[m]==let[n]) fin=0,i++;
-        }
-    while(fin==0);
-
-    }
-
-max=0;
-
-for (n=0;n<nbr;n++)
-    if (max<strlen(bar[n].titre))
-        max=strlen(bar[n].titre);
-
-SaveEcran();
-
-if ((*xp)<1) (*xp)=1;
-
-WinCadre(*xp-1,*yp-1,*xp+max,*yp+nbr,3);
-ColWin(*xp,*yp,*xp+max-1,*yp+nbr-1,10*16+4);
-ChrWin(*xp,*yp,*xp+max-1,*yp+nbr-1,32);
-
-fin=0;
-
-do
-{
-if ((*c)<0)   (*c)=nbr-1;
-if ((*c)>=nbr) (*c)=0;
-
-for (n=0;n<nbr;n++)
-    {
-    if (bar[n].fct==0)
-        {
-        ChrLin(*xp,(*yp)+n,max,196);
-        ColLin(*xp,(*yp)+n,max,10*16+1);
-        }
-        else
-        {
-        PrintAt(*xp,(*yp)+n,"%s",bar[n].titre);
-        col=1;
-        if (n==*c)
-            couleur=7*16+1;
-            else
-            couleur=10*16+4;
-
-        for (i=0;i<strlen(bar[n].titre);i++)
-            {
-            if ( (col==1) & (toupper(bar[n].titre[i])==let[n]) )
-                AffCol((*xp)+i,(*yp)+n,(couleur&240)+5),col=0;
-                else
-                AffCol((*xp)+i,(*yp)+n,couleur);
-            }
-        }
-    }
-
-car=Wait(0,0,0);
-
-do
-{
-switch(HI(car))
-    {
-    case 0x48:  (*c)--; break;
-    case 0x4B:  fin=-1; car=27;  break;
-    case 0x4D:  fin=1;  car=27;  break;
-    case 0x50:  (*c)++; break;
-    }
-
-if (LO(car)!=0)
-    for (n=0;n<nbr;n++)
-        if (toupper(car)==let[n])
-            (*c)=n;
-}
-while (bar[*c].fct==0);
-
-}
-while ( (car!=13) & (car!=27) );
-
-ChargeEcran();
-
-if (car==27)
-    return fin;
-    else
-    return 2;
-}
 
 /*--------------------------------------------------------------------*/
 
@@ -993,9 +797,9 @@ LoadPal();
 
 
 
-/*-------*
- - Setup -
- *-------*/
+/*--------------------------------------------------------------------*
+ -                             Setup                                  -
+ *--------------------------------------------------------------------*/
 void Setup(void)
 {
 static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14;
@@ -1003,7 +807,10 @@ static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12,l13,l14;
 static char x1=32,x2=32,x3=32;
 static int y1=8,y2=3,y3=15;
 
-struct Tmt T[19] = {
+struct Tmt T[21] = {
+      {6,17,2,NULL,NULL},                                       // le OK
+      {21,17,3,NULL,NULL},                                  // le CANCEL
+
       {5,3,7, "Size Trash   ",&l1},
       {5,4,7, "Ansi Speed   ",&l2},
       {5,5,7, "Screen Saver ",&l7},
@@ -1025,8 +832,8 @@ struct Tmt T[19] = {
       {3,2,9,&x2,&y2},
       {37,2,9,&x3,&y3},
 
-      {6,17,2,NULL,NULL},                                       // le OK
-      {21,17,3,NULL,NULL}                                   // le CANCEL
+      {40, 7,5," Serial Port ",NULL},        // la gestion du port serie
+      {55, 7,5," Mask Setup  ",NULL}           // la gestion des masques
       };
 
 struct TmtWin F = {3,3,76,22,"Setup"};
@@ -1048,9 +855,21 @@ l12=Cfg->dispcolor;
 l13=Cfg->insdown;
 l14=Cfg->seldir;
 
-n=WinTraite(T,19,&F);
+do
+{
+n=WinTraite(T,21,&F);
 
-if (n==27) return;
+if (n==27) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+if (T[n].type==5)
+    {
+    if (n==19)  SerialSetup();
+    if (n==20)  MasqueSetup();
+    }
+}
+while(T[n].type==5);
+
 
 Cfg->mtrash=l1;
 Cfg->AnsiSpeed=l2;
@@ -1069,6 +888,13 @@ Cfg->seldir=l14;
 
 SaveCfg();
 
+DesinitScreen();
+while(!InitScreen(Cfg->display));
+    {
+    Cfg->display++;
+    if (Cfg->display>16) Cfg->display=0;
+    }
+
 DFen=DFen->Fen2;
 CommandLine("#cd .");
 DFen=DFen->Fen2;
@@ -1079,6 +905,181 @@ LoadCfg();
 UseCfg();
 
 }
+
+void SerialSetup(void)
+{
+static char Dir[3];
+static int DirLength=2;
+
+static int l1,l2,l3,l5;
+
+struct Tmt T[8] = {
+      { 5,3,7, "Port COM ",&l1},
+      { 5,4,7, "Speed    ",&l2},
+      { 5,5,7, "Data_bit ",&l3},
+      { 5,6,0, "Parity   ",NULL},
+      {16,6,1,Dir,&DirLength},
+      { 5,7,7, "Stop_bit ",&l5},
+
+      {3,10,2,NULL,NULL},                                       // le OK
+      {18,10,3,NULL,NULL}                                   // le CANCEL
+      };
+
+struct TmtWin F = {23,5,56,18,"Serial Setup"};
+
+int n;
+
+l1=Cfg->comport;
+l2=Cfg->comspeed;
+l3=Cfg->combit;
+sprintf(Dir,"%c",Cfg->comparity);
+l5=Cfg->comstop;
+
+n=WinTraite(T,8,&F);
+
+if (n==27) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+Cfg->comport=l1;
+Cfg->comspeed=l2;
+Cfg->combit=l3;
+sscanf(Dir,"%c",&(Cfg->comparity));
+Cfg->comstop=l5;
+}
+
+void MasqueSetup(void)
+{
+static char buffer[8][80];
+
+static int DirLength=78;
+
+static int l1,l2,l3,l4;
+
+struct Tmt T[18] = {
+      {2,14,2,NULL,NULL},                                       // le OK
+      {16,14,3,NULL,NULL},                                  // le CANCEL
+
+      { 1, 1,0, "User config 1",NULL},
+      {40, 1,8, "Ignore Case",&l1},
+      { 1, 2,1,buffer[0],&DirLength},
+      { 1, 3,1,buffer[1],&DirLength},
+
+      { 1, 4,0, "User config 2",NULL},
+      {40, 4,8, "Ignore Case",&l2},
+      { 1, 5,1,buffer[2],&DirLength},
+      { 1, 6,1,buffer[3],&DirLength},
+
+      { 1, 7,0, "User config 3",NULL},
+      {40, 7,8, "Ignore Case",&l3},
+      { 1, 8,1,buffer[4],&DirLength},
+      { 1, 9,1,buffer[5],&DirLength},
+
+      { 1,10,0, "User config 4",NULL},
+      {40,10,8, "Ignore Case",&l4},
+      { 1,11,1,buffer[6],&DirLength},
+      { 1,12,1,buffer[7],&DirLength}
+      };
+
+struct TmtWin F = {0,5,79,22,"Serial Setup"};
+
+int n;
+
+l1=Mask[11]->Ignore_Case;
+l2=Mask[12]->Ignore_Case;
+l3=Mask[13]->Ignore_Case;
+l4=Mask[14]->Ignore_Case;
+
+SplitMasque(Mask[11]->chaine,buffer[0],buffer[1]);
+SplitMasque(Mask[12]->chaine,buffer[2],buffer[3]);
+SplitMasque(Mask[13]->chaine,buffer[4],buffer[5]);
+SplitMasque(Mask[14]->chaine,buffer[6],buffer[7]);
+
+n=WinTraite(T,18,&F);
+
+if (n==27) return;                                             // ESCape
+if (T[n].type==3) return;                                      // Cancel
+
+Mask[11]->Ignore_Case=l1;
+Mask[12]->Ignore_Case=l2;
+Mask[13]->Ignore_Case=l3;
+Mask[14]->Ignore_Case=l4;
+
+JointMasque(Mask[11]->chaine,buffer[0],buffer[1]);
+if (strlen(Mask[11]->chaine)>2)
+    strcpy(Mask[11]->title,"User config 1");
+    else
+    strcpy(Mask[11]->title,"");
+JointMasque(Mask[12]->chaine,buffer[2],buffer[3]);
+if (strlen(Mask[12]->chaine)>2)
+    strcpy(Mask[12]->title,"User config 2");
+    else
+    strcpy(Mask[12]->title,"");
+JointMasque(Mask[13]->chaine,buffer[4],buffer[5]);
+if (strlen(Mask[13]->chaine)>2)
+    strcpy(Mask[13]->title,"User config 3");
+    else
+    strcpy(Mask[13]->title,"");
+JointMasque(Mask[14]->chaine,buffer[6],buffer[7]);
+if (strlen(Mask[14]->chaine)>2)
+    strcpy(Mask[14]->title,"User config 4");
+    else
+    strcpy(Mask[14]->title,"");
+
+}
+
+void SplitMasque(char *chaine,char *buf1,char *buf2)
+{
+int n,m;
+
+m=strlen(chaine);
+if (m<3)
+    {
+    strcpy(chaine," @");
+    strcpy(buf1,"");
+    strcpy(buf2,"");
+    return;
+    }
+
+if (m<=80)
+    {
+    memcpy(buf1,chaine,m-2);
+    buf1[m-2]=0;
+    strcpy(buf2,"");
+    return;
+    }
+n=78;
+while ( (n!=0) & (chaine[n]!=32) )
+    n--;
+
+memcpy(buf1,chaine,n);
+buf1[n]=0;
+memcpy(buf2,chaine+n+1,m-n-3);
+buf2[m-n-3]=0;
+}
+
+void JointMasque(char *chaine,char *buf1,char *buf2)
+{
+int n,m;
+
+strcpy(chaine,buf1);
+strcat(chaine," ");
+strcat(chaine,buf2);
+strcat(chaine," @");
+
+n=0;
+
+while(chaine[n]!=0)
+    {
+    if ( (chaine[n]==32) & ((chaine[n+1]==32) | (n==0) | (chaine[n+1]==0)) )
+        {
+        for (m=n+1;m<strlen(chaine)+1;m++)
+            chaine[m-1]=chaine[m];
+        }
+        else
+        n++;
+    }
+}
+
 
 /*-------------------------------------*
  - Utilise les donnees dans la         -
@@ -1121,7 +1122,8 @@ void SpeedTest(void)
 static char vit1[64],vit2[64];
 
 int x,y;
-clock_t Cl,Cl1,Cl2;
+clock_t Cl;
+long Cl1,Cl2;
 char c;
 int n,m;
 double fvit1,fvit2;
@@ -1138,45 +1140,53 @@ struct Tmt T[6] =  {
 
 struct TmtWin F = {3,3,76,22,"Speed Test"};
 
-
 SaveEcran();
 
-Cl=clock();
-
 c=(rand()*80)/RAND_MAX+32;
+m=0;
+n=0;
 
-for (m=0,n=0;n<2000000;n++,m++)
+Cl=clock();
+while(clock()==Cl);            //  met l'horloge au debut
+
+while((clock()-Cl)<270)
     {
     x=(rand()*80)/RAND_MAX;
     y=(rand()*Cfg->TailleY)/RAND_MAX;
 
     AffChr(x,y,c);
     if (m>10000) m=0,c=(rand()*80)/RAND_MAX+32;
+    n++;
+    m++;
     }
-Cl1=clock()-Cl;
-
-Cl=clock();
+Cl1=n;
 
 c=(rand()*80)/RAND_MAX+32;
+n=0;
 
-for (n=0;n<2000000;n++)
+Cl=clock();
+while(clock()==Cl);                           //  met l'horloge au debut
+
+while((clock()-Cl)<270)
     {
     x=(rand()*80)/RAND_MAX;
     y=(rand()*Cfg->TailleY)/RAND_MAX;
 
     AffChr(x,y,c);
     c++;
+    n++;
     }
-Cl2=clock()-Cl;
+Cl2=n;
+
 ChargeEcran();
 
 SaveEcran();
          
-fvit1=(2000000./Cl1)*CLOCKS_PER_SEC;
-fvit2=(2000000./Cl2)*CLOCKS_PER_SEC;
+fvit1=(Cl1*CLOCKS_PER_SEC)/270;
+fvit2=(Cl2*CLOCKS_PER_SEC)/270;
 
-sprintf(vit1,"%f",fvit1);
-sprintf(vit2,"%f",fvit2);
+sprintf(vit1,"%f characters/seconds",fvit1);
+sprintf(vit2,"%f characters/seconds",fvit2);
 
 n=WinTraite(T,6,&F);
 
@@ -1189,9 +1199,9 @@ ChargeEcran();
  - S E C R E T                                                P A R T -
  *--------------------------------------------------------------------*/
 
-/*----------------------------------*
- - Affiche les infos sur le systeme -
- *----------------------------------*/
+//----------------------------------//
+// Affiche les infos sur le systeme //
+//----------------------------------//
 
 void WinInfo(struct fenetre **Fenetre)
 {
@@ -1206,8 +1216,7 @@ int386(0x16,&R,&R);
 SaveEcran();
 
 WinCadre(19,9,61,18,0);
-ColWin(20,10,60,17,10*16+4);
-ChrWin(20,10,60,17,32);
+Window(20,10,60,17,10*16+4);
 
 PrintAt(23,10,"System Information");
 
@@ -1240,9 +1249,9 @@ Wait(0,0,0);
 ChargeEcran();
 }
 
-/*---------------------------------*
- - Recherche des infos sur Windows -
- *---------------------------------*/
+//---------------------------------//
+// Recherche des infos sur Windows //
+//---------------------------------//
 
 short windows(short *HVersion, short *NVersion )
 {
@@ -1297,9 +1306,9 @@ switch ( regs.h.al )
     }
 }
 
-/*----------------------------------------------------*
- - Fenˆtre avec les infos sur fichiers d'apres header -
- *----------------------------------------------------*/
+//----------------------------------------------------//
+// Fenˆtre avec les infos sur fichiers d'apres header //
+//----------------------------------------------------//
 
 void FenInfo(struct fenetre *Fen)
 {
@@ -1349,5 +1358,203 @@ for (i=0;(i<Fen2->yl2) & (n<Fen->nbrfic);i++,n++,y++)
 
     if (Fen->F[n]->info!=NULL)
         PrintAt(x+x1,y+y1,"%-38s",Fen->F[n]->info+1);
+    }
+}
+
+
+void PacNoe(void)
+{
+char pac [] = {
+    ' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x10,' ',0x11,' ',0x11,
+    ' ',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x10,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    '°',0x10,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    '°',0x10,'°',0x10,'°',0x11,'°',0x11,' ',0x11,' ',0x11,' ',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x10,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,'°',0x10,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x10,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x10,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x10,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,
+    '°',0x11,'°',0x11,'°',0x11,' ',0x11,' ',0x11,' ',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,' ',0x11,' ',0x11,' ',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x10,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,
+    ' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    ' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,' ',0x11,' ',0x11,' ',0x11,'°',0x11,'°',0x11,'°',0x7F,
+    '²',0x7F,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x7F,'²',0x7F,'°',0x11,' ',0x07,' ',0x07,' ',0x07,
+    '°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x7F,'²',0x7F,'°',0x11,' ',0x07,
+    ' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    ' ',0x11,' ',0x11,' ',0x11,'°',0x11,'°',0x11,'²',0x7F,'°',0x00,
+    '°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '²',0x7F,'°',0x00,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'²',0x7F,'°',0x00,'°',0x11,' ',0x07,' ',0x07,
+    ' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x11,
+    ' ',0x11,' ',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    ' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x11,' ',0x11,
+    ' ',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,
+    ' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,'°',0x10,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'²',0x7F,'°',0x78,
+    ' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,
+    ' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'²',0x7F,
+    '°',0x78,'°',0x11,'°',0x00,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    ' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
+    '²',0x7F,'°',0x78,'°',0x11,'°',0x11,'°',0x00,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x78,'²',0x7F,'°',0x11,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x78,'²',0x7F,
+    '°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,'°',0x11,'°',0x11,'°',0x11,'°',0x78,
+    '²',0x7F,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    ' ',0x07,'°',0x04,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    '°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x04,'°',0x40,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,'°',0x04,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    '°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,'°',0x10,'°',0x10,
+    '°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x10,'°',0x10,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x10,
+    '°',0x10,'°',0x10,'°',0x11,'°',0x11,'°',0x11,'°',0x11,'°',0x10,
+    '°',0x10,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,'°',0x10,'°',0x10,'°',0x10,'°',0x11,'°',0x11,'°',0x11,
+    '°',0x11,'°',0x10,'°',0x10,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,'²',0x7F,'°',0x78,'°',0x10,'°',0x10,
+    '°',0x10,'°',0x10,'°',0x10,'°',0x70,'±',0x0F,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    '°',0x10,'°',0x10,'°',0x10,'°',0x10,'°',0x10,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    '±',0x0F,'°',0x70,'°',0x10,'°',0x10,'°',0x10,'°',0x10,'°',0x10,
+    '°',0x78,'²',0x7F,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,'°',0x78,'²',0x7F,'°',0x00,'°',0x00,'°',0x00,
+    '°',0x00,'°',0x00,'±',0x0F,'°',0x70,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x7F,
+    '²',0x7F,'²',0x7F,'±',0x0F,'±',0x0F,'°',0x70,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,'°',0x70,
+    '±',0x0F,'°',0x00,'°',0x00,'°',0x00,'°',0x00,'°',0x00,'²',0x7F,
+    '°',0x78,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07,
+    ' ',0x07,' ',0x07,' ',0x07,' ',0x07,' ',0x07};
+
+int x,y,z,n,deb,fin,nl;
+int chr,col,h,l;
+
+char buffer[80*16*2];
+
+for (x=0;x<80;x++)
+    for(y=0;y<16;y++)
+        {
+        buffer[x*2+y*160]=GetChr(x,y);
+        buffer[x*2+y*160+1]=GetCol(x,y);
+        }
+
+n=0;
+for (z=-16;z<80;z++,n++)
+    {
+    if (n==3) n=0;
+    deb=0;
+    fin=16;
+
+    if (z>80-16) fin=80-z;
+    if (z<0) deb=-z;
+
+    for(x=deb;x<fin;x++)
+        for(y=0;y<16;y++)
+            {
+            nl=x*2+y*96;      // 15*3*2
+
+            nl+=n*32;
+
+            chr=pac[nl];
+            col=pac[nl+1];
+
+            h=col/16;
+            l=col&15;
+
+            switch(h)
+                {
+                case 0:  col=0      ; break;
+                case 1:  col=13*16  ; break;
+                case 4:  col=11*16  ; break;
+                case 7:  col=7*16   ; break;
+                }
+            switch(l)
+                {
+                case 0:  col+=0    ; break;
+                case 1:  col+=13  ; break;
+                case 4:  col+=11  ; break;
+                case 7:  col+=7   ; break;
+                }
+
+            if ((chr==32) & (col==7)) col=0;
+
+            if (col!=0)
+                {
+                AffCol(x+z,y,col);
+                AffChr(x+z,y,chr);
+                }
+                else
+                {
+                AffChr(x+z,y,buffer[(x+z)*2+y*160]);
+                AffCol(x+z,y,buffer[(x+z)*2+y*160+1]);
+                }
+            }
+
+    while ((inp(0x3DA) & 8)==8);
+    while ((inp(0x3DA) & 8)!=8);
+    while ((inp(0x3DA) & 1)==1);
+    while ((inp(0x3DA) & 1)!=1);
+
+    while ((inp(0x3DA) & 8)==8);
+    while ((inp(0x3DA) & 8)!=8);
+    while ((inp(0x3DA) & 1)==1);
+    while ((inp(0x3DA) & 1)!=1);
+
+    if (z>=0)
+        for (y=0;y<16;y++)
+            {
+            AffChr(z,y,buffer[z*2+y*160]);
+            AffCol(z,y,buffer[z*2+y*160+1]);
+            }
     }
 }

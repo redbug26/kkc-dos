@@ -1,5 +1,3 @@
-#define VERSION "KKDESC V0.3"
-
 #include <dos.h>
 #include <direct.h>
 #include <io.h>
@@ -11,11 +9,12 @@
 
 #include <time.h>
 
-#include "hard.h"
-
 #include "idf.h"
+#include "kk.h"
 
-#include "help.h"
+
+
+char *RBTitle="Ketchup Killers Descriptor V"VERSION" / RedBug";
 
 extern struct key K[nbrkey];
 
@@ -43,7 +42,7 @@ char *path;
  - Initialisation de l'ecran -
  *****************************/
 
-InitScreen();                   // Initialise toutes les donn‚es HARD
+InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 OldY=(*(char*)(0x484))+1;
 
@@ -153,7 +152,7 @@ Sauve();
 
 TXTMode(OldY);
 
-puts(VERSION);
+puts(RBTitle);
 }
 
 
@@ -417,7 +416,7 @@ if (stricmp(e1,e2)>0)
 return c;
 }
 
-void SortFic(struct find_t **fic,int n)
+void Desc_SortFic(struct find_t **fic,int n)
 {
 int i,j;
 struct find_t *F1,*F2;
@@ -550,7 +549,7 @@ while(!fini)
         pos=0;  /* fic[pos] est selectionn‚ */
 
 
-        SortFic(fic,nbr);
+        Desc_SortFic(fic,nbr);
         }
 
     /* Affiche les fichiers a l'ecran */

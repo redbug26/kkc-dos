@@ -68,9 +68,9 @@ LAOPTS =
 
 all : kk.exe kkmain.exe kksetup.exe kkdesc.exe kkkkrgr.exe kkfont.exe idf.lib
 
-kkmain.exe  : kkmain.obj    idf.lib   hard.obj   win.obj gestion.obj &
-                 dos.obj driver.obj ficidf.obj copie.obj  delete.obj &
-              search.obj   help.obj   view.obj  util.obj reddies.obj &
+kkmain.exe  : kkmain.obj     idf.lib   hard.obj   win.obj gestion.obj &
+                 dos.obj  driver.obj ficidf.obj copie.obj  delete.obj &
+              search.obj    help.obj   view.obj  util.obj reddies.obj &
                 edit.obj
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 

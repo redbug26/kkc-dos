@@ -38,14 +38,14 @@ struct key K[nbrkey]=   {
 		0,
         "Windows Vectorial Image",
 		"WMF",
-		"",
+        "Microsoft Corp.",
 		74,0,0,4},
 {  {"mhwanh"},
 		6,
 		0,
-		"RAW bitmap",
+        "HSI raw bitmap",
 		"RAW",
-		"",
+        "Handmade Software, Inc",   // HSI (Creator of alchemy)
         73,0,1,4},
 {  {0,0},
 		0,
@@ -129,7 +129,7 @@ struct key K[nbrkey]=   {
 		0,
 		"Windows Bitmap",
 		"BMP",
-        "Microsoft",
+        "Microsoft Corp.",
 		36,0,1,4},
 {  {"OKTASONG"},
 		8,
@@ -248,7 +248,7 @@ struct key K[nbrkey]=   {
 		0,
 		"Windows Help File",
 		"HLP",
-        "Microsoft",
+        "Microsoft Corp.",
 		59,0,1,6},
 {  {"!Scream!"},
 		8,
@@ -311,14 +311,14 @@ struct key K[nbrkey]=   {
 		0,
 		"Microsoft File Format",
 		"MS",
-        "Microsoft",
+        "Microsoft Corp.",
 		61,0,0,6},
 {  {"PMCC"},
 		4,
 		0,
 		"Windows Group File",
 		"GRP",
-        "Microsoft",
+        "Microsoft Corp.",
 		58,0,1,6},
 {  {0xFF,0x57,0x50,0x43},
 		4,
@@ -355,13 +355,13 @@ struct key K[nbrkey]=   {
 		"JMS",
         "Ultra Force",
 		11,0,0,1},
-{  {0x00,0x00,0x01,0xB3,0x0A,0x00,0x78},
+{   "",
 		7,
 		0,
 		"MPEG Movie",
 		"MPG",
 		"",
-		52,0,0,5},
+        52,1,0,5},
 {  {"mdat"},
 		4,
 		4,
@@ -388,21 +388,21 @@ struct key K[nbrkey]=   {
 		8,
 		"Windows Animated Cursor",
 		"ANI",
-        "Microsoft",
+        "Microsoft Corp.",
 		47,0,0,5},
 {  {"WAVE"},
 		4,
 		8,
 		"Windows Wave",
 		"WAV",
-        "Microsoft",
+        "Microsoft Corp.",
 		28,0,0,2},
 {  {"AVI LIST"},
 		8,
 		8,
 		"AVI Animation",
 		"AVI",
-        "Microsoft",
+        "Microsoft Corp.",
 		48,0,0,5},
 {  {0x0A,0x05,0x01},
 		3,
@@ -522,7 +522,7 @@ struct key K[nbrkey]=   {
 		0,
 		"EXPAND compressed file",
 		"___",
-        "Microsoft",
+        "Microsoft Corp.",
 		71,0,0,3},
 {  {0x1F,0x8B,0x08,0x08},
         3,
@@ -536,21 +536,21 @@ struct key K[nbrkey]=   {
    0x171,
    "Pif File",
    "PIF",
-   "Microsoft",
+   "Microsoft Corp.",
    77,0,0,6},
 {  {0xBE,0,0,0,0xAB,0,0,0},
    8,
    1,
    "WRI Text",
    "WRI",
-   "Microsoft",
+   "Microsoft Corp.",
    78,0,0,6},
 {  {0x4C,0,0,0,1,0x14,2,0},
    8,
    0,
    "Link Windows 95",
    "LNK",
-   "Microsoft",
+   "Microsoft Corp.",
    79,0,0,6},
 {  {0x00,0x00,0x01,0x00,0x01,0x00,0x20,0x20,
 		0x10,0x00,0x00,0x00,0x00,0x00,0xE8,0x02,
@@ -558,7 +558,7 @@ struct key K[nbrkey]=   {
 		24,
 		0,
 		"Windows Icon",
-		"ICO","Microsoft",80,0,0,4},
+        "ICO","Microsoft Corp.",80,0,0,4},
 {  {0x00,0x00,0x02,0x00,0x00,0x00,0x08,0x00    },
 		8,
 		1044,
@@ -573,7 +573,7 @@ struct key K[nbrkey]=   {
 		9,
 		"OS2 Icon",
 		"ICO",
-		"",82,0,0,4},
+        "IBM Corp.",82,0,0,4},
 {  {0x43,0x36,0x34,0x46,0x69,0x6C,0x65},
 		7,
 		0,
@@ -619,7 +619,7 @@ struct key K[nbrkey]=   {
 		138,
 		"FS4 Mode",
 		"MOD",
-        "Microsoft",89,0,0,6},
+        "Microsoft Corp.",89,0,0,6},
 {  {0x80},
 		1,
 		0,
@@ -806,9 +806,15 @@ struct key K[nbrkey]=   {
 {  {"JCH"},
     3,
     0,
-    "JCH module",
+    "EdLib compressed module",   // Edlib Compresse
     "D00",
-    "Jens Christian Huus",119,0,0,1},   // Jean Christian Huus
+    "Jens Christian Huus",119,0,0,1},   // Jean Christian Huus / Vibrants
+{ {0x00,0x06,0xFE,0xFD    }, // תתתת
+    4,
+    0x0,
+    "EdLib module",   // Edlib Non Compresse
+    "EDL",
+    "Jens Christian Huus",132,0,0,1},   // Jean Christian Huus / Vibrants
 {  {"AST 0001"},
     8,
     1,
@@ -833,14 +839,14 @@ struct key K[nbrkey]=   {
     0xd,
     "Win95 Cursor",
     "CUR",
-    "Microsoft",123,0,0,4},
+    "Microsoft Corp.",123,0,0,4},
 {  {0xFF,0xFF,0x00,0x01,0x64,0x00,0x00,0x00,// תתתתdתתת 
     0x03,0x00    }, // תת 
     10,
     0x0,
     "Alpha Microsystems BMP",   // No information (conversion from Alchemy)
     "BMP",
-    "?",124,0,0,4},
+    "Alpha Microsystems",124,0,0,4},
 {  {0x00,0x11,0x02,0xFF,0x0C,0x00,0xFF,0xFE,// תתתתתתתת
     0x00,0x00,0x00,0x48,0x00,0x00,0x00,0x48,// תתתHתתתH 
     0x00,0x00,0x00,0x00,0x00,0x00,0x01    }, // תתתתתתת 
@@ -868,10 +874,23 @@ struct key K[nbrkey]=   {
     0x0,
     "QuickBasic Listing",
     "BAS",
-    "Microsoft",131,0,0,6},
+    "Microsoft Corp.",131,0,0,6},
+{  {"DISPTNL"},
+    7,
+    0,
+    "Thumbnail Picture",
+    "TNL",
+    "Jih-Shin Ho",133,0,1,4},      // Shayde/Reality (?)
+{  {"hsi"},
+     3,
+     0,
+     "HSI Jpeg bitmap",
+     "HSI",
+     "Handmade Software, Inc",   // HSI (Creator of alchemy)
+     134,0,1,4},
 
 
-// Dernier employe: 131
+// Dernier employe: 134
 
 /*******************************************
  - structures … traiter en dernier ressort -
@@ -881,7 +900,7 @@ struct key K[nbrkey]=   {
     0,
     "PCPaint/Pictor file",
     "PIC",
-    "?",
+    "John Bridges",
     129,0,0,4},
 {  {0x00,0x95},
     2,
@@ -902,7 +921,7 @@ struct key K[nbrkey]=   {
     0,
     "Targa Picture",
     "TGA",
-    "",
+    "Truevision, Inc.",
     43,1,1,4},
 {  {0x00,0x01,0x00,0x00},
     4,
@@ -1025,6 +1044,7 @@ short Infospl(RB_IDF *Info);
 short Infottf(RB_IDF *Info);
 short Infogrp(RB_IDF *Info);
 short Infotga(RB_IDF *Info);
+short Infompg(RB_IDF *Info);
 short Infodlz(RB_IDF *Info);
 short Infofli(RB_IDF *Info);
 short Infolza(RB_IDF *Info);
@@ -1048,6 +1068,8 @@ short Infoams2(RB_IDF *Info);
 short Infoast(RB_IDF *Info);
 short Infodsm(RB_IDF *Info);
 short Infodat(RB_IDF *Info);
+short Infotnl(RB_IDF *Info);
+short Infohsi(RB_IDF *Info);
 
 
 void ClearSpace(char *name);    // efface les espaces inutiles
@@ -1300,6 +1322,7 @@ for (n=0;n<nbrkey-6;n++)    // Il faut ignorer les 6 derniers clefs
             case 25: err=Infospl(Info); break;
             case 58: err=Infogrp(Info); break;
             case 43: err=Infotga(Info); break;
+            case 52: err=Infompg(Info); break;
             case 31: err=Infodlz(Info); break;
             case 49: err=Infofli(Info); break;
             case 50: err=Infoflc(Info); break;
@@ -1322,6 +1345,8 @@ for (n=0;n<nbrkey-6;n++)    // Il faut ignorer les 6 derniers clefs
             case 122:err=Infodat(Info); break;
             case 24:err=Infopat(Info); break;
             case 126:err=Infolza(Info); break;
+            case 133:err=Infotnl(Info); break;
+            case 134:err=Infohsi(Info); break;
             default:        // Ca serait une erreur de ma part alors
                 sprintf(Info->format,"Pingouin %d",K[n].numero);
                 trv=1;
@@ -1763,7 +1788,7 @@ if (Hp>9999) Hp=9999;
 if (BP>99) BP=99;
 
 
-sprintf(Info->message[0], "  Image is      %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0], "  Picture is    %4d * %4d / %2dBps",Lp,Hp,BP);
 
 
 
@@ -1868,14 +1893,31 @@ Hp=ReadInt(Info,10,1)+1;
 
 BP=Info->buffer[3];
 
-sprintf(Info->message[0]," Image is      %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0]," Picture is    %4d * %4d / %2dBps",Lp,Hp,BP);
 
 // Info->taille=(tell(Info->handle)-Info->posfic);
 
 return 0;
 }
 
+short Infotnl(RB_IDF *Info)
+{
+long Lp,Hp;
 
+Lp=ReadLng(Info,8,1);
+Hp=ReadLng(Info,12,1);
+
+sprintf(Info->message[0]," Picture is             %4d * %4d",Lp,Hp);
+
+Lp=ReadLng(Info,16,1);
+Hp=ReadLng(Info,20,1);
+
+sprintf(Info->message[1]," Original picture is    %4d * %4d",Lp,Hp);
+
+// Info->taille=(tell(Info->handle)-Info->posfic);
+
+return 0;
+}
 
 short Infobmp(RB_IDF *Info)
 {
@@ -1896,7 +1938,7 @@ short Lp,Hp;
 Lp=ReadInt(Info,6,1);
 Hp=ReadInt(Info,8,1);
 
-sprintf(Info->message[0]," Image is      %4d * %4d / 8Bps",Lp,Hp);
+sprintf(Info->message[0]," Picture is    %4d * %4d / 8Bps",Lp,Hp);
 
 return 0;
 }
@@ -1904,13 +1946,34 @@ return 0;
 short Inforaw(RB_IDF *Info)
 {
 WORD Lp,Hp,Bp;
-
-Bp=8;
+char ok=0;
 
 Lp=ReadInt(Info,8,2);
 Hp=ReadInt(Info,10,2);
+Bp=ReadInt(Info,12,2);
 
-sprintf(Info->message[0]," Image is      %4d * %4d / %2dBps",Lp,Hp,Bp);
+if ((Bp==0) | (Bp==-24))    Bp=24;
+    else
+    if (Bp==256)  Bp=8;
+        else
+        ok=1;
+
+if (ok==0)
+    sprintf(Info->message[0]," Picture is    %4d * %4d / %2d Bps",Lp,Hp,Bp);
+    else
+    sprintf(Info->message[0]," Picture is %4d * %4d  (%3d col.)",Lp,Hp,Bp);
+
+return 0;
+}
+
+short Infohsi(RB_IDF *Info)
+{
+WORD Lp,Hp;
+
+Lp=ReadInt(Info,6,2);       // Motorola mode
+Hp=ReadInt(Info,8,2);
+
+sprintf(Info->message[0]," Picture is    %4d * %4d / 24 Bps",Lp,Hp);
 
 return 0;
 }
@@ -2122,7 +2185,7 @@ if (!memcmp(chunk,"BMHD",4))
 		if (Hp>9999) Hp=9999;
 		if (BP>99) BP=99;
 
-		sprintf(Info->message[0], "  Image is      %4d * %4d / %2dBps",Lp,Hp,BP);
+        sprintf(Info->message[0], "  Picture is    %4d * %4d / %2dBps",Lp,Hp,BP);
 		break;
 		}
 
@@ -2827,6 +2890,21 @@ if (!memcmp(buf,key2,4))		sprintf(Info->format,"Targa Picture True Col.");
 return 0;
 }
 
+short Infompg(RB_IDF *Info)
+{
+char key[]={0x00,0x00,0x01,0xBA,0x21,0x00};
+char key2[]={0x00,0x00,0x01,0xB3,0x0A,0x00,0x78};
+
+char *buf;
+
+buf=Info->buffer;
+
+if ( (memcmp(buf,key,6)) &
+     (memcmp(buf,key2,7)) )  return 1;
+
+return 0;
+}
+
 
 short Infodlz(RB_IDF *Info)
 {
@@ -2851,7 +2929,7 @@ if (Hp>9999) Hp=9999;
 if (BP>99) BP=99;
 if (BP==0) BP=8;
 
-sprintf(Info->message[0], " Image is       %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0], " Picture is     %4d * %4d / %2dBps",Lp,Hp,BP);
 sprintf(Info->message[1], "                     %7d frames",frame);
 
 // Info->taille=ReadLng(Info,0,1);
@@ -2873,7 +2951,7 @@ if (BP>99) BP=99;
 if (BP==0) BP=8;
 
 
-sprintf(Info->message[0], " Image is       %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0], " Picture is     %4d * %4d / %2dBps",Lp,Hp,BP);
 sprintf(Info->message[1], "                      %7d frame",frame);
 
 Info->taille=ReadLng(Info,0,1);
@@ -2894,7 +2972,7 @@ if (Lp>9999) Lp=9999;
 if (Hp>9999) Hp=9999;
 if (BP>99) BP=99;
 
-sprintf(Info->message[0], "  Image is      %4d * %4d / %2dBps",Lp,Hp,BP);
+sprintf(Info->message[0], "  Picture is    %4d * %4d / %2dBps",Lp,Hp,BP);
 sprintf(Info->message[1], "                      %7d frame",frame);
 
 Info->taille=ReadLng(Info,0,1);
@@ -3105,3 +3183,5 @@ strcpy(Ficname,s);
 
 return Ficname;
 }
+
+

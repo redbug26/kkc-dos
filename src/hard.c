@@ -30,21 +30,109 @@ struct PourMask **Mask;
 struct fichier *Fics;
 
 
-char *scrseg=(char*)0xB8000;
-
 char _RB_screen[256*128*2];
 
 void (*AffChr)(char x,char y,char c);
 void (*AffCol)(char x,char y,char c);
+int (*Wait)(int x,int y,char c);
+int (*KbHit)(void);
+void (*GotoXY)(char x,char y);
+void (*WhereXY)(char *x,char *y);
+void (*Clr)(void);
+void (*Window)(int left,int top,int right,int bottom,short color);
 
-/*------------------*
- - Fonction interne -
- *------------------*/
 
+/*--------------------------------------------------------------------*\
+ ------------------------- Fonction interne ---------------------------
+\*--------------------------------------------------------------------*/
+void Norm_Clr(void);
+
+void Norm_Clr(void)
+{
+char i,j;
+
+for(j=0;j<Cfg->TailleY;j++)
+    for (i=0;i<80;i++)
+      AffCol(i,j,7);
+
+for(j=0;j<Cfg->TailleY;j++)
+    for (i=0;i<80;i++)
+      AffChr(i,j,32);
+}
+
+void Norm_Window(int left,int top,int right,int bottom,short color)
+{
+int i,j;
+
+for(j=top;j<=bottom;j++)
+    for (i=left;i<=right;i++)
+        AffCol(i,j,color);
+
+
+for(j=top;j<=bottom;j++)
+    for (i=left;i<=right;i++)
+        AffChr(i,j,32);
+}
+
+
+
+/*--------------------------------------------------------------------*\
+ -           Affiche des caractŠres directement … l'‚cran             -
+\*--------------------------------------------------------------------*/
 void Cache_AffChr(char x,char y,char c);
 void Cache_AffCol(char x,char y,char c);
 
-void GotoXY(char x,char y)
+char *scrseg=(char*)0xB8000;
+
+void Cache_AffChr(char x,char y,char c)
+{
+if (*(_RB_screen+(y*256+x))!=c)
+    {
+    *(scrseg+((y*80+x)<<1))=c;
+    *(_RB_screen+(y*256+x))=c;
+    }
+}
+
+void Cache_AffCol(char x,char y,char c)
+{
+if (*(_RB_screen+(y*256+x)+256*128)!=c)
+    {
+    *(scrseg+((y*80+x)<<1)+1)=c;
+    *(_RB_screen+(y*256+x)+256*128)=c;
+    }
+}
+
+int Cache_Wait(int x,int y,char c)
+{
+char a;
+int b;
+clock_t Cl;
+
+if ((x!=0) | (y!=0))
+    GotoXY(x,y);
+
+Cl=clock();
+
+a=0;
+b=0;
+
+while ( (!kbhit()) & (b==0) )
+    {
+    if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) )
+        b=ScreenSaver();
+    }
+
+if (b==0)
+    {
+    a=getch();
+    if (a==0)
+        return getch()*256+a;
+    return a;
+    }
+return b;
+}
+
+void Cache_GotoXY(char x,char y)
 {
 union REGS regs;
 
@@ -56,7 +144,7 @@ regs.h.ah=2;
 int386(0x10,&regs,&regs);
 }
 
-void WhereXY(char *x,char *y)
+void Cache_WhereXY(char *x,char *y)
 {
 union REGS regs;
 
@@ -68,6 +156,598 @@ int386(0x10,&regs,&regs);
 *x=regs.h.dl;
 *y=regs.h.dh;
 }
+
+
+
+
+
+
+/*--------------------------------------------------------------------*
+ -                      Affichage par code Ansi                       -
+ *--------------------------------------------------------------------*/
+void Ansi_AffChr(char x,char y,char c);
+void Ansi_AffCol(char x,char y,char c);
+void Ansi_GenCol(char x,char y);
+void Ansi_GenChr(char x,char y,char c);
+void Ansi_Clr(void);
+void Ansi_Window(int left,int top,int right,int bottom,short color);
+
+int _Ansi_col1,_Ansi_col2;               // Couleur que l'on doit mettre
+int _Ansi_tcol;                 // Couleur que l'on a demand‚ par affcol
+int _Ansi_x=0,_Ansi_y=0;                          // precedente position
+
+char _Ansi_cnv[]={0,5,0,2,3,7,6,4,3,1,6,1,2,0,0,0};
+
+
+void Ansi_AffCol(char x,char y,char c)
+{
+if (*(_RB_screen+(y*256+x)+256*128)!=c)
+    {
+    *(_RB_screen+(y*256+x)+256*128)=c;
+
+    Ansi_GenCol(x,y);
+    Ansi_GenChr(x,y,GetChr(x,y));
+    }
+
+}
+
+void Ansi_AffChr(char x,char y,char c)
+{
+Ansi_GenCol(x,y);
+
+if (*(_RB_screen+(y*256+x))!=c)
+        Ansi_GenChr(x,y,c);
+}
+
+void Ansi_GenCol(char x,char y)
+{
+if (*(_RB_screen+(y*256+x)+256*128)!=_Ansi_tcol)
+    {
+    _Ansi_tcol=*(_RB_screen+(y*256+x)+256*128);
+
+    _Ansi_col1=_Ansi_cnv[_Ansi_tcol/16]+40;
+    _Ansi_col2=_Ansi_cnv[_Ansi_tcol&15]+30;
+
+    cprintf("\x1b[%d;%dm",_Ansi_col1,_Ansi_col2);
+    }
+}
+
+void Ansi_GenChr(char x,char y,char c)
+{
+if (y<Cfg->TailleY-2)
+    {
+    *(_RB_screen+(y*256+x))=c;
+
+    switch(c)
+        {
+        case 0:
+        case 8:
+        case 10:
+        case 13:    c=32;   break;
+        case 16:    c='>';  break;
+        case 17:    c='<';  break;
+        case 127:   c='^';  break;
+        case 7:     c='.';  break;
+        }
+
+    _Ansi_x++;
+//    if (_Ansi_x==80) _Ansi_x=0, _Ansi_y=y+1;
+
+    if ( (x!=_Ansi_x) | (y!=_Ansi_y) )
+        cprintf("\x1b[%d;%dH",y+1,x+1), _Ansi_x=x,  _Ansi_y=y;
+
+    cprintf("%c",c);
+    }
+}
+
+void Ansi_GotoXY(char x,char y)
+{
+cprintf("\x1b[%d;%dH",y+1,x+1);
+_Ansi_x=x;
+_Ansi_y=y;
+}
+
+void Ansi_Clr(void)
+{
+memset(_RB_screen+256*128,7,256*128);
+memset(_RB_screen,32,256*128);
+
+cprintf("\x1b[0m\n\n\x1b[2J");
+}
+
+void Ansi_Window(int left,int top,int right,int bottom,short color)
+{
+int i,j;
+
+for(j=top;j<=bottom;j++)
+    for (i=left;i<=right;i++)
+        {
+        *(_RB_screen+(j*256+i)+256*128)=color;
+        *(_RB_screen+(j*256+i))=0;             // Pour le remettre apres
+        }
+
+for(j=top;j<=bottom;j++)
+    for (i=left;i<=right;i++)
+        AffChr(i,j,32);
+}
+
+
+
+/*--------------------------------------------------------------------*
+ -                      Affichage par COM  Ansi                       -
+ *--------------------------------------------------------------------*/
+void Com_AffChr(char x,char y,char c);
+void Com_AffCol(char x,char y,char c);
+void Com_GenCol(char x,char y);
+void Com_GenChr(char x,char y,char c);
+int Com_KbHit(void);
+void Com_Clr(void);
+void Com_Window(int left,int top,int right,int bottom,short color);
+
+int _Com_col1,_Com_col2;                 // Couleur que l'on doit mettre
+int _Com_tcol;                  // Couleur que l'on a demand‚ par affcol
+int _Com_x=0,_Com_y=0;                            // precedente position
+
+char _Com_cnv[]={0,5,0,2,3,7,6,4,3,1,6,1,2,0,0,0};
+
+long modem_buffer_count;
+
+void Com_AffCol(char x,char y,char c)
+{
+if (y>=Cfg->TailleY-1) return;
+
+if (*(_RB_screen+(y*256+x)+256*128)!=c)
+    {
+    *(_RB_screen+(y*256+x)+256*128)=c;
+
+    *(scrseg+((y*80+x)<<1)+1)=c;            // --------- Echo console --
+
+    Com_GenCol(x,y);
+    Com_GenChr(x,y,GetChr(x,y));
+    }
+
+}
+
+void Com_AffChr(char x,char y,char c)
+{
+if (y>=Cfg->TailleY-1) return;
+
+if (*(_RB_screen+(y*256+x))!=c)
+    {
+    Com_GenCol(x,y);
+
+    *(scrseg+((y*80+x)<<1))=c;              // --------- Echo console --
+
+    Com_GenChr(x,y,c);
+    }
+}
+
+void Com_GenCol(char x,char y)
+{
+char buffer[32];
+int n;
+
+if (*(_RB_screen+(y*256+x)+256*128)!=_Com_tcol)
+    {
+    _Com_tcol=*(_RB_screen+(y*256+x)+256*128);
+
+    _Com_col1=_Com_cnv[_Com_tcol/16]+40;
+    _Com_col2=_Com_cnv[_Com_tcol&15]+30;
+
+    sprintf(buffer,"\x1b[%d;%dm",_Com_col1,_Com_col2);
+    for (n=0;n<strlen(buffer);n++)
+        com_send_ch(buffer[n]);
+    }
+}
+
+void Com_GenChr(char x,char y,char c)
+{
+*(_RB_screen+(y*256+x))=c;
+
+switch(c)
+    {
+    case 0:
+    case 8:
+    case 10:
+    case 13:    c=32;   break;
+    case 16:    c='>';  break;
+    case 17:    c='<';  break;
+    case 127:   c='^';  break;
+    case 7:     c='.';  break;
+    }
+
+_Com_x++;
+
+if ( (x!=_Com_x) | (y!=_Com_y) )
+    Com_GotoXY(x,y);
+
+com_send_ch(c);
+}
+
+int Com_Wait(int x,int y,char c)
+{
+char buf[32];
+char n;
+char cont;
+
+cont=1;
+n=0;
+
+while(cont==1)
+    {
+    while (1)
+        {
+        if (com_ch_ready())
+            {
+            buf[n]=com_read_ch();
+            break;
+            }
+        if (kbhit())
+            {
+            buf[n]=getch();
+            break;
+            }
+        }
+
+    if ( (buf[0]!=27)  & (n==0) ) cont=0;
+    if ( (buf[1]!='[') & (n==1) ) cont=0;
+
+    if (buf[n]==0) cont=1;
+    n++;
+    if (n==3) break;
+    }
+
+// cprintf("**");
+// for (m=0;m<n;m++)
+//    cprintf("%02X",buf[m]);
+
+
+buf[n]=0;
+
+if (buf[0]==0) return buf[1]*256;
+
+if (n==3)
+    {
+    switch (buf[2])
+        {
+        case 'A': return 72*256;
+        case 'B': return 80*256;
+        case 'C': return 77*256;
+        case 'D': return 75*256;
+        }
+    }
+
+return buf[0];
+}
+
+void Com_GotoXY(char x,char y)
+{
+char buffer[32];
+int n;
+
+sprintf(buffer,"\x1b[%d;%dH",y+1,x+1);
+for (n=0;n<strlen(buffer);n++)
+    com_send_ch(buffer[n]);
+
+_Com_x=x;
+_Com_y=y;
+}
+
+int Com_KbHit(void)
+{
+if (kbhit()) return 1;
+if (com_ch_ready()) return 1;
+
+return 0;
+}
+
+void Com_Clr(void)
+{
+char buffer[32];
+int n;
+
+memset(_RB_screen+256*128,7,256*128);
+memset(_RB_screen,32,256*128);
+
+sprintf(buffer,"\x1b[0m\n\n\x1b[2J");
+for (n=0;n<strlen(buffer);n++)
+    com_send_ch(buffer[n]);
+}
+
+void Com_Window(int left,int top,int right,int bottom,short color)
+{
+int i,j;
+
+for(j=top;j<=bottom;j++)
+    for (i=left;i<=right;i++)
+        {
+        *(_RB_screen+(j*256+i)+256*128)=color;
+        *(_RB_screen+(j*256+i))=0;             // Pour le remettre apres
+
+        *(scrseg+((j*80+i)<<1)+1)=color;    // --------- Echo console --
+        }
+
+for(j=top;j<=bottom;j++)
+    for (i=left;i<=right;i++)
+        AffChr(i,j,32);
+}
+
+
+/*--------------------------------------------------------------------*
+ -                      Gestion du port s‚rie                         -
+ *--------------------------------------------------------------------*/
+#define XON 1
+#define XOFF 0
+#define MAX_BUFFER 1024
+
+#define INT_OFF() _disable()
+#define INT_ON() _enable()
+
+#define SETVECT _dos_setvect
+#define GETVECT _dos_getvect
+
+char modem_buffer[MAX_BUFFER];
+
+
+short modem_pause;
+short modem_base;
+short modem_port;
+short modem_buffer_head;
+short modem_buffer_tail;
+short modem_overflow;
+short modem_irq;
+short modem_open=0;
+short modem_xon_xoff=0;
+short modem_rts_cts;
+
+char old_modem_imr;
+char old_modem_ier;
+
+void (_interrupt *old_modem_isr)(void);
+
+/*--------------------------------------------------------------------*/
+void interrupt modem_isr(void)
+{
+unsigned char c;
+
+INT_ON();
+
+if (modem_buffer_count<1024)
+    {
+    c=inp(modem_base);
+    if ( ((c==XON) | (c==XOFF)) & (modem_xon_xoff) )
+        {
+        switch(c)
+            {
+            case XON :modem_pause=0; break;
+            case XOFF:modem_pause=1; break;
+            }
+        }
+    else
+        {
+        modem_pause=0;
+        modem_buffer[modem_buffer_head++]=c;
+        if (modem_buffer_head>=MAX_BUFFER)
+            modem_buffer_head=0;
+        modem_buffer_count++;
+        }
+    modem_overflow=0;
+    }
+else
+    {
+    modem_overflow=1;
+    }
+
+INT_OFF();
+outp(0x20,0x20);
+}
+
+short com_carrier(void)
+{
+short x;
+
+if (!modem_open) return(0);
+if ((inp(modem_base+6) & 0x80)==128) return(1);
+
+for (x=0; x<500; x++)
+    {
+    if ((inp(modem_base+6) & 0x80)==128) return(1);
+    }
+return(0);
+}
+
+short com_ch_ready(void)
+{
+if (!modem_open) return(0);
+if (modem_buffer_count!=0) return(1);
+return(0);
+}
+
+/*--------------------------------------------------------------------*
+ - This will return 0 is there is no character waiting.  Please check -
+ - the port with com_ch_ready(); first so that if they DID send a 0x00-
+ -     that you will know it's a true 0, not a no character return!   -
+ *--------------------------------------------------------------------*/
+unsigned char com_read_ch(void)
+{
+unsigned char ch;
+
+if (!modem_open) return(0);
+
+if (!com_ch_ready()) return(0);
+
+ch=modem_buffer[modem_buffer_tail];
+modem_buffer[modem_buffer_tail]=0;
+modem_buffer_count--;
+if (++modem_buffer_tail>=MAX_BUFFER)
+    modem_buffer_tail=0;
+
+return(ch);
+}
+
+void com_send_ch(unsigned char ch)
+{
+if (!modem_open) return;
+
+outp(modem_base+4,0x0B);
+
+if (modem_rts_cts)
+    {
+    while((inp(modem_base+6) & 0x10)!=0x10) ;  // Wait for Clear to Send
+    }
+while((inp(modem_base+5) & 0x20)!=0x20) ;
+
+if (modem_xon_xoff)
+    {
+    while((modem_pause) && (com_carrier())) ;
+    }
+outp(modem_base,ch);
+}
+
+
+short com_open(short comport,long speed,short bit,BYTE parity,BYTE stop)
+{
+short x,  newb=0;
+char l, m;
+short d;
+
+INT_OFF();
+
+if (modem_open)
+    com_close();
+
+modem_port=comport;
+
+switch(modem_port)
+    {
+    case 2: modem_base=0x2F8; modem_irq=3; break;
+    case 3: modem_base=0x3E8; modem_irq=4; break;
+    case 4: modem_base=0x2E8; modem_irq=3; break;
+    case 1:
+    default:modem_base=0x3F8; modem_irq=4; break;
+    }
+
+outp(modem_base+1,0x00);                     // turn off comm interrupts
+
+if (inp(modem_base+1)!=0)
+    {
+    INT_ON();
+    return(0);
+    }
+
+/* Set up the Interupt Info */
+old_modem_ier=inp(modem_base+1);
+outp(modem_base+1,0x01);
+
+old_modem_isr=(void (_interrupt *)(void))GETVECT(modem_irq+8);
+SETVECT(modem_irq+8,modem_isr);
+
+if (modem_rts_cts)
+    {
+    outp(modem_base+4,0x0B);
+    }
+else
+    {
+    outp(modem_base+4,0x09);
+    }
+
+old_modem_imr=inp(0x21);
+outp(0x21,old_modem_imr & ((1 << modem_irq) ^ 0x00FF));
+
+for (x=1; x<=5; x++)
+    inp(modem_base+x);
+
+modem_open=1;
+
+modem_buffer_count=0;
+modem_buffer_head=0;
+modem_buffer_tail=0;
+
+//--- Speed ------------------------------------------------------------
+
+x=inp(modem_base+3);                                // Read In Old Stats
+
+if ((x & 0x80)!=0x80) outp(modem_base+3,x+0x80);          // Set DLab On
+
+d=(short)(115200/speed);
+l=d & 0xFF;
+m=(d >> 8) & 0xFF;
+
+outp(modem_base+0,l);
+outp(modem_base+1,m);
+
+outp(modem_base+3,x);                            // Restore the DLAB bit
+
+//--- Data-bit ---------------------------------------------------------
+newb=0;
+
+x=inp(modem_base+3);
+
+newb=(x>>2<<2);                          // Get rid of the old Data Bits
+
+switch(bit)
+    {
+    case 5 : newb+=0x00; break;
+    case 6 : newb+=0x01; break;
+    case 7 : newb+=0x02; break;
+    default: newb+=0x03; break;
+    }
+
+outp(modem_base+3,newb);
+
+//--- Parity -----------------------------------------------------------
+newb=0;
+
+x=inp(modem_base+3);
+
+newb=(x>>6<<6)+(x<<5>>5);                       // Get rid of old parity
+
+switch(toupper(parity))
+    {
+    case 'N':newb+=0x00; break;                                 //  None
+    case 'O':newb+=0x08;break;                                  //   Odd
+    case 'E':newb+=0x18; break;                                 //  Even
+    case 'M':newb+=0x28;break;                                  //  Mark
+    case 'S':newb+=0x38;break;                                  // Space
+    }
+
+outp(modem_base+3,newb);
+
+//--- Stop bits --------------------------------------------------------
+newb=0;
+
+x=inp(modem_base+3);
+
+newb=(x<<6>>6)+(x>>5<<5);                      // Kill the old Stop Bits
+
+if (stop==2) newb+=0x04;         // Only check for 2, assume 1 otherwise
+
+outp(modem_base+3,newb);
+
+//--- fin de l'initialisation ------------------------------------------
+
+INT_ON();
+return(1);
+}
+
+void com_close(void)
+{
+if (!modem_open) return;
+
+outp(modem_base+1,old_modem_ier);
+outp(0x21, old_modem_imr);
+
+SETVECT(modem_irq+8, old_modem_isr);
+outp(0x20,0x20);
+modem_open=0;
+}
+
+/*--------------------------------------------------------------------*
+ *--------------------------------------------------------------------*/
+
+
+
+
 
 void GetCur(char *x,char *y)
 {
@@ -91,7 +771,6 @@ regs.h.ch=x;
 regs.h.cl=y;
 
 int386(0x10,&regs,&regs);
-
 }
 
 char GetChr(char x,char y)
@@ -104,23 +783,8 @@ char GetCol(char x,char y)
 return *(_RB_screen+(y*256+x)+256*128);
 }
 
-void Cache_AffChr(char x,char y,char c)
-{
-if (*(_RB_screen+(y*256+x))!=c)
-    {
-    *(scrseg+((y*80+x)<<1))=c;
-    *(_RB_screen+(y*256+x))=c;
-    }
-}
 
-void Cache_AffCol(char x,char y,char c)
-{
-if (*(_RB_screen+(y*256+x)+256*128)!=c)
-    {
-    *(scrseg+((y*80+x)<<1)+1)=c;
-    *(_RB_screen+(y*256+x)+256*128)=c;
-    }
-}
+
 
 void ColLin(int left,int top,int length,char color)
 {
@@ -159,32 +823,20 @@ void ColWin(int left,int top,int right,int bottom,short color)
 {
 int i,j;
 
-for (i=left;i<=right;i++)
-   for(j=top;j<=bottom;j++)
-	  AffCol(i,j,color);
+for(j=top;j<=bottom;j++)
+    for (i=left;i<=right;i++)
+        AffCol(i,j,color);
 }
 
 void ChrWin(int left,int top,int right,int bottom,short car)
 {
 int i,j;
 
-for (i=left;i<=right;i++)
-   for(j=top;j<=bottom;j++)
-      AffChr(i,j,car);
+for(j=top;j<=bottom;j++)
+    for (i=left;i<=right;i++)
+        AffChr(i,j,car);
 }
 
-
-void Clr()
-{
-char i,j;
-
-for (i=0;i<80;i++)
-   for(j=0;j<Cfg->TailleY;j++)
-	  {
-	  AffChr(i,j,32);
-	  AffCol(i,j,7);
-	  }
-}
 
 
 void ScrollUp(void)
@@ -238,12 +890,13 @@ int x,y;
 if (_Ecran[_WhichEcran]==NULL)
     _Ecran[_WhichEcran]=GetMem(8000);
 
-for (x=0;x<80;x++)
-    for (y=0;y<50;y++)
-        {
-        _Ecran[_WhichEcran][(x+y*80)*2]=GetChr(x,y);
+for (y=0;y<50;y++)
+    for (x=0;x<80;x++)
         _Ecran[_WhichEcran][(x+y*80)*2+1]=GetCol(x,y);
-        }
+
+for (y=0;y<50;y++)
+    for (x=0;x<80;x++)
+        _Ecran[_WhichEcran][(x+y*80)*2]=GetChr(x,y);
 
 WhereXY(&(_EcranX[_WhichEcran]),&(_EcranY[_WhichEcran]));
 GetCur(&(_EcranD[_WhichEcran]),&(_EcranF[_WhichEcran]));
@@ -261,15 +914,17 @@ if ( (_Ecran[_WhichEcran]==NULL) | (_WhichEcran<0) )
     {
     Clr();
     PrintAt(0,0,"Internal Error: ChargeEcran");
+    getch();
     return;
     }
 
-for (x=0;x<80;x++)
-    for (y=0;y<50;y++)
-        {
-        AffChr(x,y,_Ecran[_WhichEcran][(x+y*80)*2]);
+for (y=0;y<50;y++)
+    for (x=0;x<80;x++)
         AffCol(x,y,_Ecran[_WhichEcran][(x+y*80)*2+1]);
-        }
+
+for (y=0;y<50;y++)
+    for (x=0;x<80;x++)
+        AffChr(x,y,_Ecran[_WhichEcran][(x+y*80)*2]);
 
 GotoXY(_EcranX[_WhichEcran],_EcranY[_WhichEcran]);
 PutCur(_EcranD[_WhichEcran],_EcranF[_WhichEcran]);
@@ -310,12 +965,10 @@ while (*suite!=0)
 
 void Delay(long ms)
 {
-union REGS R;
+clock_t Cl;
 
-R.h.ah=0x86;
-R.w.cx=ms/0x10000;
-R.w.dx=ms&0xFFFF;
-int386(0x15,&R,&R);
+Cl=clock();
+while((clock()-Cl)<ms);
 }
 
 /*----------------------*
@@ -555,36 +1208,6 @@ return b;
 }
 
 
-int Wait(int x,int y,char c)
-{
-char a;
-int b;
-clock_t Cl;
-
-if ((x!=0) | (y!=0))
-    GotoXY(x,y);
-
-Cl=clock();
-
-a=0;
-b=0;
-
-while ( (!kbhit()) & (b==0) )
-    {
-    if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) )
-        b=ScreenSaver();
-    }
-
-if (b==0)
-    {
-    a=getch();
-    if (a==0)
-        return getch()*256+a;
-    return a;
-    }
-return b;
-}
-
 void Pause(int n)
 {
 int m;
@@ -633,15 +1256,11 @@ if (Cfg->UseFont==0)
         AffChr(x1,y2,'À');
         AffChr(x2,y2,'Ù');
 
-        for(x=x1+1;x<x2;x++) {
-            AffChr(x,y1,196);
-            AffChr(x,y2,196);
-            }
+        for(x=x1+1;x<x2;x++)    AffChr(x,y1,196);
+        for(x=x1+1;x<x2;x++)    AffChr(x,y2,196);
         
-        for(y=y1+1;y<y2;y++) {
-            AffChr(x1,y,179);
-            AffChr(x2,y,179);
-            }
+        for(y=y1+1;y<y2;y++)    AffChr(x1,y,179);
+        for(y=y1+1;y<y2;y++)    AffChr(x2,y,179);
         break;
     case 1:
         AffChr(x1,y1,'É');
@@ -649,15 +1268,11 @@ if (Cfg->UseFont==0)
         AffChr(x1,y2,'È');
         AffChr(x2,y2,'¼');
 
-        for(x=x1+1;x<x2;x++) {
-            AffChr(x,y1,'Í');
-            AffChr(x,y2,'Í');
-            }
+        for(x=x1+1;x<x2;x++)    AffChr(x,y1,'Í');
+        for(x=x1+1;x<x2;x++)    AffChr(x,y2,'Í');
 
-        for(y=y1+1;y<y2;y++) {
-            AffChr(x1,y,'º');
-            AffChr(x2,y,'º');
-            }
+        for(y=y1+1;y<y2;y++)    AffChr(x1,y,'º');
+        for(y=y1+1;y<y2;y++)    AffChr(x2,y,'º');
         break;
     }
     else
@@ -668,15 +1283,11 @@ if (Cfg->UseFont==0)
         AffChr(x1,y2,147);
         AffChr(x2,y2,149);
 
-        for(x=x1+1;x<x2;x++) {
-            AffChr(x,y1,143);
-            AffChr(x,y2,148);
-            }
+        for(x=x1+1;x<x2;x++)    AffChr(x,y1,143);
+        for(x=x1+1;x<x2;x++)    AffChr(x,y2,148);
         
-        for(y=y1+1;y<y2;y++) {
-            AffChr(x1,y,145);
-            AffChr(x2,y,146);
-            }
+        for(y=y1+1;y<y2;y++)    AffChr(x1,y,145);
+        for(y=y1+1;y<y2;y++)    AffChr(x2,y,146);
         break;
     case 1:
         AffChr(x1,y1,153);
@@ -684,15 +1295,11 @@ if (Cfg->UseFont==0)
         AffChr(x1,y2,151);
         AffChr(x2,y2,150);
 
-        for(x=x1+1;x<x2;x++) {
-            AffChr(x,y1,148);
-            AffChr(x,y2,143);
-            }
+        for(x=x1+1;x<x2;x++)    AffChr(x,y1,148);
+        for(x=x1+1;x<x2;x++)    AffChr(x,y2,143);
         
-        for(y=y1+1;y<y2;y++) {
-            AffChr(x1,y,146);
-            AffChr(x2,y,145);
-            }
+        for(y=y1+1;y<y2;y++)    AffChr(x1,y,146);
+        for(y=y1+1;y<y2;y++)    AffChr(x2,y,145);
         break;
     }
 return;
@@ -700,15 +1307,11 @@ return;
 else
 {
 // Relief (surtout pour type==1)
-for(x=x1;x<=x2;x++)
-    AffCol(x,y1,10*16+3);
-for(y=y1;y<=y2;y++)
-    AffCol(x1,y,10*16+3);
+for(x=x1;x<=x2;x++)    AffCol(x,y1,10*16+3);
+for(y=y1;y<=y2;y++)    AffCol(x1,y,10*16+3);
 
-for(x=x1+1;x<=x2;x++)
-    AffCol(x,y2,10*16+1);
-for(y=y1+1;y<y2;y++)
-    AffCol(x2,y,10*16+1);
+for(x=x1+1;x<=x2;x++)    AffCol(x,y2,10*16+1);
+for(y=y1+1;y<y2;y++)     AffCol(x2,y,10*16+1);
 
 
 if (Cfg->UseFont==0)
@@ -720,15 +1323,11 @@ if (Cfg->UseFont==0)
         AffChr(x1,y2,'À');
         AffChr(x2,y2,'Ù');
 
-        for(x=x1+1;x<x2;x++) {
-            AffChr(x,y1,196);
-            AffChr(x,y2,196);
-            }
+        for(x=x1+1;x<x2;x++)    AffChr(x,y1,196);
+        for(x=x1+1;x<x2;x++)    AffChr(x,y2,196);
         
-        for(y=y1+1;y<y2;y++) {
-            AffChr(x1,y,179);
-            AffChr(x2,y,179);
-            }
+        for(y=y1+1;y<y2;y++)    AffChr(x1,y,179);
+        for(y=y1+1;y<y2;y++)    AffChr(x2,y,179);
         break;
     }
     else
@@ -739,15 +1338,11 @@ if (Cfg->UseFont==0)
         AffChr(x1,y2,137);
         AffChr(x2,y2,136);
 
-        for(x=x1+1;x<x2;x++) {
-            AffChr(x,y1,134);
-            AffChr(x,y2,129);
-            }
+        for(x=x1+1;x<x2;x++)    AffChr(x,y1,134);
+        for(x=x1+1;x<x2;x++)    AffChr(x,y2,129);
         
-        for(y=y1+1;y<y2;y++) {
-            AffChr(x1,y,132);
-            AffChr(x2,y,131);
-            }
+        for(y=y1+1;y<y2;y++)    AffChr(x1,y,132);
+        for(y=y1+1;y<y2;y++)    AffChr(x2,y,131);
         break;
     case 3:
         AffChr(x1,y1,128);
@@ -755,15 +1350,11 @@ if (Cfg->UseFont==0)
         AffChr(x1,y2,133);
         AffChr(x2,y2,135);
 
-        for(x=x1+1;x<x2;x++) {
-            AffChr(x,y1,129);
-            AffChr(x,y2,134);
-            }
+        for(x=x1+1;x<x2;x++)    AffChr(x,y1,129);
+        for(x=x1+1;x<x2;x++)    AffChr(x,y2,134);
         
-        for(y=y1+1;y<y2;y++) {
-            AffChr(x1,y,131);
-            AffChr(x2,y,132);
-            }
+        for(y=y1+1;y<y2;y++)    AffChr(x1,y,131);
+        for(y=y1+1;y<y2;y++)    AffChr(x2,y,132);
         break;
     }
 return;
@@ -783,23 +1374,19 @@ int x;
 if (Cfg->UseFont==0)
     switch(type) {
     case 0:
-        for(x=x1;x<x1+xl;x++)
-            AffChr(x,y1,196);
+        for(x=x1;x<x1+xl;x++)       AffChr(x,y1,196);
         break;
     case 1:
-        for(x=x1;x<x1+xl;x++)
-            AffChr(x,y1,196);
+        for(x=x1;x<x1+xl;x++)       AffChr(x,y1,196);
         break;
     }
     else
     switch(type) {
     case 0:
-        for(x=x1;x<x1+xl;x++)
-            AffChr(x,y1,143);
+        for(x=x1;x<x1+xl;x++)       AffChr(x,y1,143);
         break;
     case 1:
-        for(x=x1;x<x1+xl;x++)
-            AffChr(x,y1,143);
+        for(x=x1;x<x1+xl;x++)       AffChr(x,y1,143);
         break;
     }
 }
@@ -1394,10 +1981,8 @@ static char chaine[80];
 
 SaveEcran();
 
-
 WinCadre(F->x1,F->y1,F->x2,F->y2,0);
-ColWin(F->x1+1,F->y1+1,F->x2-1,F->y2-1,10*16+1);
-ChrWin(F->x1+1,F->y1+1,F->x2-1,F->y2-1,32);
+Window(F->x1+1,F->y1+1,F->x2-1,F->y2-1,10*16+1);
 
 PrintAt(F->x1+((F->x2-F->x1)-(strlen(F->name)))/2,F->y1,F->name);
 
@@ -1730,10 +2315,7 @@ return j1;
 
 void DefaultCfg(void)
 {
-char defcol[48]={43,37,30, 31,22,17,  0, 0, 0, 58,58,50,
-                 44,63,63, 63,63,21, 43,37,30,  0, 0, 0,
-                 63,63, 0, 63,63,63, 43,37,30, 63, 0, 0,
-                  0,63, 0,  0, 0,63,  0, 0, 0,  0, 0, 0};
+char defcol[48]=RBPALDEF;
 
 Cfg->KeyAfterShell=0;
 
@@ -1805,6 +2387,14 @@ Cfg->speedkey=1;
 Cfg->insdown=1;
 Cfg->seldir=1;
 
+Cfg->display=0;
+
+Cfg->comport=2;
+Cfg->comspeed=19200;
+Cfg->combit=8;
+Cfg->comparity='N';
+Cfg->comstop=1;
+
 strcpy(Cfg->HistDir,"C:\\");
 }
 
@@ -1836,8 +2426,7 @@ if (IOver==1)
 SaveEcran();
 
 WinCadre(19,9,61,16,0);
-ColWin(20,10,60,15,10*16+4);
-ChrWin(20,10,60,15,32);
+Window(20,10,60,15,10*16+4);
 
 PrintAt(23,10,"Disk Error: %s",((deverr&32768)==32768) ? "No":"Yes");
 
@@ -1921,10 +2510,275 @@ _dos_setdrive(cdrv,&nbrdrive);
 return IOerr;
 }
 
-void InitScreen(void)
+int InitScreen(int a)
 {
+char buf[31];
+int nr;
+
+// --- Console ---------------------------------------------------------
+
 AffChr=Cache_AffChr;
 AffCol=Cache_AffCol;
+Wait=Cache_Wait;
+KbHit=kbhit;
+GotoXY=Cache_GotoXY;
+WhereXY=Cache_WhereXY;
+
+Clr=Norm_Clr;
+Window=Norm_Window;
+
+while(1)
+    switch (a)
+    {
+    case 0:
+        return 1;
+    case 1:
+        Clr();
+        PrintAt(0,0,"Try Ansi Mode");
+
+        nr=0;
+        cprintf("\x1b[6n\r      \r");      // ask for ansi device report
+        while ((0 !=kbhit()) && (nr<30))//read whatever input is present
+            buf[nr++] = getch();
+
+        buf[nr]=0;                              // zero terminate string
+        if (strncmp(buf,"\x1b[",2)!=0) //check precense of device report
+            return 0;
+
+        AffChr=Ansi_AffChr;
+        AffCol=Ansi_AffCol;
+        Wait=Cache_Wait;
+        KbHit=kbhit;
+        GotoXY=Ansi_GotoXY;
+        WhereXY=Cache_WhereXY;
+        Clr=Ansi_Clr;
+        Window=Ansi_Window;
+        return 1;
+    case 2:
+        Clr();
+        PrintAt(0,0,"Try Doorway Mode");
+
+        com_open(Cfg->comport,Cfg->comspeed,Cfg->combit,
+                 Cfg->comparity,Cfg->comstop);
+
+        AffChr=Com_AffChr;
+        AffCol=Com_AffCol;
+        Wait=Com_Wait;
+        KbHit=Com_KbHit;
+        GotoXY=Com_GotoXY;
+        WhereXY=Cache_WhereXY;
+        Clr=Com_Clr;
+        Window=Com_Window;
+        return 1;
+    default:
+        return 0;
+    }
 }
+
+void DesinitScreen(void)
+{
+switch (Cfg->display)
+    {
+    case 0:
+        break;
+    case 1:
+        cprintf("\x1b[0m\n\n\x1b[2J");
+        break;
+    case 2:
+        com_close();
+        break;
+    }
+}
+
+/*-------------------------------------------------------------*
+ -   Gestion de la barre de menu                               -
+ - Renvoie 0 pour ESC                                          -
+ - Sinon numero du titre;                                      -
+ - xp: au depart, c'est le numero du titre                     -
+ -     a l'arrivee ,c'est la position du titre                 -
+ *-------------------------------------------------------------*/
+
+int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp)
+{
+int c,i,j,n,x;
+char let[32];
+int car=0;
+
+for (n=0;n<nbr;n++)
+    let[n]=toupper(bar[n].titre[0]);
+
+ColLin(0,0,80,1*16+7);
+ChrLin(0,0,80,32);
+
+
+x=0;
+for(n=0;n<nbr;n++)
+    x+=strlen(bar[n].titre);
+
+i=(80-x)/nbr;
+x=(80-(nbr-1)*i-x)/2;
+
+c=*poscur;
+
+do
+{
+if (c<0) c=nbr-1;
+if (c>=nbr) c=0;
+
+j=0;
+for (n=0;n<nbr;n++)
+    {
+    if (n==c)
+        {
+        AffCol(x+j+n*i-1,0,7*16+4);
+        AffCol(x+j+n*i,0,7*16+5);
+        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),7*16+4);
+        *xp=x+j+n*i;
+        }
+        else
+        {
+        AffCol(x+j+n*i-1,0,1*16+7);
+        AffCol(x+j+n*i,0,1*16+5);
+        ColLin(x+j+n*i+1,0,strlen(bar[n].titre),1*16+7);
+        }
+
+    PrintAt(x+j+n*i,0,"%s",bar[n].titre);
+    j+=strlen(bar[n].titre);
+    }
+
+if (*yp==0)
+    break;
+
+car=Wait(0,0,0);
+
+switch(HI(car))
+    {
+    case 0x4B:
+        c--;
+        break;
+    case 0x4D:
+        c++;
+        break;
+    case 80:
+        *yp=1;
+        car=13;
+        break;
+    }
+if (LO(car)!=0)
+    for (n=0;n<nbr;n++)
+        if (toupper(car)==let[n])
+            c=n;
+}
+while ( (car!=13) & (car!=27) );
+
+*poscur=c;
+
+if (car==27)
+    return 0;
+    else
+    return 1;
+}
+
+// 1: [RIGHT]   -1: [LEFT]
+// 0: [ESC]      2: [ENTER]
+int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp)
+{
+int max,n,m,car,fin;
+int i,col;
+char couleur;
+char let[32];
+
+for (n=0;n<nbr;n++)
+    {
+    i=0;
+
+    do
+        {
+        let[n]=toupper(bar[n].titre[i]);
+        fin=1;
+        for (m=0;m<n;m++)
+            if (let[m]==let[n]) fin=0,i++;
+        }
+    while(fin==0);
+
+    }
+
+max=0;
+
+for (n=0;n<nbr;n++)
+    if (max<strlen(bar[n].titre))
+        max=strlen(bar[n].titre);
+
+SaveEcran();
+
+if ((*xp)<1) (*xp)=1;
+
+WinCadre(*xp-1,*yp-1,*xp+max,*yp+nbr,3);
+Window(*xp,*yp,*xp+max-1,*yp+nbr-1,10*16+4);
+
+fin=0;
+
+do
+{
+if ((*c)<0)   (*c)=nbr-1;
+if ((*c)>=nbr) (*c)=0;
+
+for (n=0;n<nbr;n++)
+    {
+    if (bar[n].fct==0)
+        {
+        ChrLin(*xp,(*yp)+n,max,196);
+        ColLin(*xp,(*yp)+n,max,10*16+1);
+        }
+        else
+        {
+        PrintAt(*xp,(*yp)+n,"%s",bar[n].titre);
+        col=1;
+        if (n==*c)
+            couleur=7*16+1;
+            else
+            couleur=10*16+4;
+
+        for (i=0;i<strlen(bar[n].titre);i++)
+            {
+            if ( (col==1) & (toupper(bar[n].titre[i])==let[n]) )
+                AffCol((*xp)+i,(*yp)+n,(couleur&240)+5),col=0;
+                else
+                AffCol((*xp)+i,(*yp)+n,couleur);
+            }
+        }
+    }
+
+car=Wait(0,0,0);
+
+do
+{
+switch(HI(car))
+    {
+    case 0x48:  (*c)--; break;
+    case 0x4B:  fin=-1; car=27;  break;
+    case 0x4D:  fin=1;  car=27;  break;
+    case 0x50:  (*c)++; break;
+    }
+
+if (LO(car)!=0)
+    for (n=0;n<nbr;n++)
+        if (toupper(car)==let[n])
+            (*c)=n;
+}
+while (bar[*c].fct==0);
+
+}
+while ( (car!=13) & (car!=27) );
+
+ChargeEcran();
+
+if (car==27)
+    return fin;
+    else
+    return 2;
+}
+
+
 
 

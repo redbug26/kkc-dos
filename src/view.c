@@ -520,7 +520,7 @@ while (*b)
 
     if (touche!=1)
         {
-        if (kbhit()) touche=Wait(0,0,0);
+        if (KbHit()) touche=Wait(0,0,0);
         if ( (touche==27) | (touche==0x8D00) ) touche=1; else touche=0;
         }
         else
@@ -551,8 +551,8 @@ while (*b)
                     if (cury > maxy - 1)
                         {
                         ScrollUp();
-                        ChrWin(0,maxy-1,maxx-1,maxy,32);
                         ColWin(0,maxy-1,maxx-1,maxy,curattr);
+                        ChrWin(0,maxy-1,maxx-1,maxy,32);
                         cury--;
                         }
                     break;
@@ -729,8 +729,8 @@ SaveEcran();
 maxx=80;
 maxy=Cfg->TailleY;
 
-ChrWin(0,0,79,(Cfg->TailleY)-2,32);
 ColWin(0,0,79,(Cfg->TailleY)-2,0*16+7);
+ChrWin(0,0,79,(Cfg->TailleY)-2,32);
 
 TXTMode(Cfg->TailleY);
 
@@ -873,14 +873,13 @@ if ( (x>0) & (y>0) & (x+xl<80) & (y+yl<Cfg->TailleY) )
         {
         ColWin(x-1,0,x-1,Cfg->TailleY-2,10*16+1);
         ChrWin(x-1,0,x-1,Cfg->TailleY-2,0xB3);
-        ChrWin(x+xl,0,x+xl,Cfg->TailleY-2,0xB3);
         ColWin(x+xl,0,x+xl,Cfg->TailleY-2,10*16+1);
+        ChrWin(x+xl,0,x+xl,Cfg->TailleY-2,0xB3);
         }
     }
 
-
-ChrWin(x,y,x+xl-1,y+yl-1,32);
 ColWin(x,y,x+xl-1,y+yl-1,10*16+1);
+ChrWin(x,y,x+xl-1,y+yl-1,32);
 
 //-------------------------------------------------------------------------//
 
@@ -1004,7 +1003,7 @@ if (shift==0)
 
 
 
-while (!kbhit())
+while (!KbHit())
 {
 car=*Keyboard_Flag1;
 
@@ -1227,7 +1226,7 @@ struct Tmt T[5] =
     { { 2,3,1,Dir,&DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
-      { 5,2,0,"Change to which directory",NULL},
+      { 5,2,0,"Search for:",NULL},
       { 1,1,4,NULL,&CadreLength} };
 
 struct TmtWin F =
@@ -1412,8 +1411,8 @@ yl=(Cfg->TailleY)-2;
 
 WinCadre(x-1,y-1,xl+1,yl,2);
 
-ChrWin(x,y,xl,yl-1,32);
 ColWin(x,y,xl,yl-1,10*16+1);
+ChrWin(x,y,xl,yl-1,32);
 
 ColLin(0,yl+1,80,1*16+8);
 ChrLin(0,yl+1,80,32);
@@ -1762,9 +1761,7 @@ for (k=0;k<lentit;k++)
         }
 
     if (nbrcol<0)
-        {
         nbrcol=0;
-        }
 
     col=tabcol[nbrcol];
 
@@ -1871,10 +1868,11 @@ aff=0;
 
 for (i=y;i<yl;i++)
     for(j=x;j<=xl;j++)
-        {
-        AffChr(j,i,ChrTxt[(j-x)+(i-y+ye)*xpage]);
         AffCol(j,i,ColTxt[(j-x)+(i-y+ye)*xpage]);
-        }
+
+for (i=y;i<yl;i++)
+    for(j=x;j<=xl;j++)
+        AffChr(j,i,ChrTxt[(j-x)+(i-y+ye)*xpage]);
 
 if ( (suiv->next!=NULL) & (suiv!=NULL) )
     {
@@ -1904,7 +1902,7 @@ posd=ye;
 posn=(ye+yl-y);
 taille2=yp;
 
-while (!kbhit())
+while (!KbHit())
 {
 car=*Keyboard_Flag1;
 
@@ -2140,11 +2138,14 @@ n=0;
 for (i=0;i<10;i++)
     {
     PrintAt(n,TY-1,"F%d",(i+1)%10);
-    for(j=0;j<2;j++,n++) AffCol(n,TY-1,1*16+8);
-    for(j=0;j<6;j++,n++) {
-       AffCol(n,TY-1,1*16+2);
-       AffChr(n,TY-1,*(bar+i*6+j));
-       }
+    for(j=0;j<2;j++,n++)
+        AffCol(n,TY-1,1*16+8);
+    
+    for(j=0;j<6;j++,n++)
+        {
+        AffCol(n,TY-1,1*16+2);
+        AffChr(n,TY-1,*(bar+i*6+j));
+        }
     }
 }
 
@@ -2387,16 +2388,15 @@ if (y2>Cfg->TailleY) y2=Cfg->TailleY-3;
 
 WinCadre(x1,y1,x2,y2,0);
 
-ColWin(x1+1,y1+1,x2-1,y2-1,10*16+1);
-ChrWin(x1+1,y1+1,x2-1,y2-1,32);
+Window(x1+1,y1+1,x2-1,y2-1,10*16+1);
 
 PrintAt(x1+1,y1+1,"Select Mask:");
 ColWin(x1+1,y1+1,x2-1,y1+1,10*16+5);
 
 prem=0;
 
-ChrLin(0,(Cfg->TailleY)-1,80,32);
 ColLin(0,(Cfg->TailleY)-1,80,1*16+8);
+ChrLin(0,(Cfg->TailleY)-1,80,32);
 
 
 do

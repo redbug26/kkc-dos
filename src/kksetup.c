@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <dos.h>
 #include <direct.h>
 #include <io.h>
@@ -22,6 +23,8 @@ extern int IOerr;
 
 char PathOfKK[256];
 char ActualPath[256];
+
+char *RBTitle="Setup of Ketchup Killers Commander V"VERSION" / RedBug";
 
 // Pour Statistique;
 int St_App;
@@ -50,7 +53,304 @@ void SSearch(char *nom);
 void ApplSearch(void);
 void ClearAllSpace(char *name);
 
+void GestionFct(int i);
+int GestionBar(void);
+
+char ShowYourPlayer(void);
+
 int posy;
+
+/*-----------------*
+ - Gestion Message -
+ *-----------------*/
+
+int MesgY;
+
+/*-------------------------*
+ - Initialise les messages -
+ *-------------------------*/
+void InitMessage(void)
+{
+MesgY=3;
+}
+
+/*--------------------*
+ - Affiche un message -
+ *--------------------*/
+void DispMessage(char *string,...)
+{
+static char sortie[256];
+va_list arglist;
+char *suite;
+int a;
+
+suite=sortie;
+
+va_start(arglist,string);
+vsprintf(sortie,string,arglist);
+va_end(arglist);
+
+a=2;
+while (*suite!=0)
+	{
+/*
+    AffChr(a,MesgY,'Û');
+    while ((inp(0x3DA) & 8)==8);
+    while ((inp(0x3DA) & 8)!=8);
+    while ((inp(0x3DA) & 1)==1);
+    while ((inp(0x3DA) & 1)!=1);
+*/
+    AffChr(a,MesgY,*suite);
+	a++;
+	suite++;
+    GotoXY(a,MesgY);
+    PutCur(7,7);
+	}
+
+MesgY++;
+if (MesgY>(Cfg->TailleY-2))
+    {
+    MoveText(1,3,78,(Cfg->TailleY-2),1,2);
+    MesgY--;
+    ChrLin(1,(Cfg->TailleY-2),78,32);
+    }
+}
+
+/*-----------------*
+ - Gestion profile -
+ *-----------------*/
+
+#define MAX_LINE_LENGTH    80
+
+int get_private_profile_int(char *, char *, int,    char *);
+int get_private_profile_string(char *, char *, char *, char *, int, char *);
+int write_private_profile_string(char *, char *, char *, char *);
+int write_private_profile_int(char *, char *, int, char *);
+
+/*****************************************************************
+* Function:     read_line()
+* Arguments:    <FILE *> fp - a pointer to the file to be read from
+*               <char *> bp - a pointer to the copy buffer
+* Returns:      TRUE if successful FALSE otherwise
+******************************************************************/
+int read_line(FILE *fp, char *bp)
+{
+int cc;
+int i = 0;
+/* Read one line from the source file */
+
+while( (cc = getc(fp)) != '\n' )
+    {
+    if (cc==-1) return 0;       /* return FALSE on unexpected EOF */
+    bp[i++] = cc;
+    }
+bp[i] = '\0';
+return(1);
+}
+/**************************************************************************
+* Function:     get_private_profile_int()
+* Arguments:    <char *> section - the name of the section to search for
+*               <char *> entry - the name of the entry to find the value of
+*               <int> def - the default value in the event of a failed read
+*               <char *> file_name - the name of the .ini file to read from
+* Returns:      the value located at entry
+***************************************************************************/
+int get_private_profile_int(char *section,char *entry, int def, char *file_name)
+{
+FILE *fp = fopen(file_name,"r");
+char buff[MAX_LINE_LENGTH];
+char *ep;
+char t_section[MAX_LINE_LENGTH];
+char value[6];
+int len = strlen(entry);
+int i;
+if( !fp ) return(0);
+    sprintf(t_section,"[%s]",section); /* Format the section name */
+    /*  Move through file 1 line at a time until a section is matched or EOF */
+    do
+    {   if( !read_line(fp,buff) )
+        {   fclose(fp);
+            return(def);
+        }
+    } while( strcmp(buff,t_section) );
+    /* Now that the section has been found, find the entry.
+     * Stop searching upon leaving the section's area. */
+    do
+    {   if( !read_line(fp,buff) || buff[0] == '[' )
+        {   fclose(fp);
+            return(def);
+        }
+    }  while( strncmp(buff,entry,len) );
+    ep = strrchr(buff,'=');    /* Parse out the equal sign */
+    ep++;
+    if( !strlen(ep) )          /* No setting? */
+        return(def);
+    /* Copy only numbers fail on characters */
+
+    for(i = 0; isdigit(ep[i]); i++ )
+        value[i] = ep[i];
+    value[i] = '\0';
+    fclose(fp);                /* Clean up and return the value */
+    return(atoi(value));
+}
+/**************************************************************************
+* Function:     get_private_profile_string()
+* Arguments:    <char *> section - the name of the section to search for
+*               <char *> entry - the name of the entry to find the value of
+*               <char *> def - default string in the event of a failed read
+*               <char *> buffer - a pointer to the buffer to copy into
+*               <int> buffer_len - the max number of characters to copy
+*               <char *> file_name - the name of the .ini file to read from
+* Returns:      the number of characters copied into the supplied buffer
+***************************************************************************/
+int get_private_profile_string(char *section, char *entry, char *def, 
+    char *buffer, int buffer_len, char *file_name)
+{   FILE *fp = fopen(file_name,"r");
+    char buff[MAX_LINE_LENGTH];
+    char *ep;
+    char t_section[MAX_LINE_LENGTH];
+    int len = strlen(entry);
+    if( !fp ) return(0);
+    sprintf(t_section,"[%s]",section);    /* Format the section name */
+    /*  Move through file 1 line at a time until a section is matched or EOF */
+    do
+    {   if( !read_line(fp,buff) )
+        {   fclose(fp);
+            strncpy(buffer,def,buffer_len);     
+            return(strlen(buffer));
+        }
+    }
+    while( strcmp(buff,t_section) );
+    /* Now that the section has been found, find the entry.
+     * Stop searching upon leaving the section's area. */
+    do
+    {   if( !read_line(fp,buff) || buff[0] == '[' )
+        {   fclose(fp);
+            strncpy(buffer,def,buffer_len);     
+            return(strlen(buffer));
+        }
+    }  while( strncmp(buff,entry,len) );
+    ep = strrchr(buff,'=');    /* Parse out the equal sign */
+    ep++;
+    /* Copy up to buffer_len chars to buffer */
+    strncpy(buffer,ep,buffer_len - 1);
+
+    buffer[buffer_len] = '\0';
+    fclose(fp);               /* Clean up and return the amount copied */
+    return(strlen(buffer));
+}
+
+
+/***************************************************************************
+ * Function:    write_private_profile_string()
+ * Arguments:   <char *> section - the name of the section to search for
+ *              <char *> entry - the name of the entry to find the value of
+ *              <char *> buffer - pointer to the buffer that holds the string
+ *              <char *> file_name - the name of the .ini file to read from
+ * Returns:     TRUE if successful, otherwise FALSE
+ ***************************************************************************/
+int write_private_profile_string(char *section, char *entry, char *buffer, char *file_name)
+{
+FILE *rfp, *wfp;
+char tmp_name[15];
+char buff[MAX_LINE_LENGTH];
+char t_section[MAX_LINE_LENGTH];
+int len = strlen(entry);
+tmpnam(tmp_name); /* Get a temporary file name to copy to */
+sprintf(t_section,"[%s]",section);/* Format the section name */
+if( !(rfp = fopen(file_name,"r")) )  /* If the .ini file doesn't exist */
+    {
+    if( !(wfp = fopen(file_name,"w")) ) /*  then make one */
+        {
+        return(0);
+        }
+    fprintf(wfp,"%s\n",t_section);
+    fprintf(wfp,"%s=%s\n",entry,buffer);
+    fclose(wfp);
+    return(1);
+    }
+
+if( !(wfp = fopen(tmp_name,"w")) )
+    {
+    fclose(rfp);
+    return(0);
+    }
+    /* Move through the file one line at a time until a section is 
+     * matched or until EOF. Copy to temp file as it is read. */
+do
+    {
+    if( !read_line(rfp,buff) )
+        {   /* Failed to find section, so add one to the end */
+        fprintf(wfp,"\n%s\n",t_section);
+        fprintf(wfp,"%s=%s\n",entry,buffer);
+            /* Clean up and rename */
+        fclose(rfp);
+        fclose(wfp);
+        unlink(file_name);
+        rename(tmp_name,file_name);
+        return(1);
+        }
+    fprintf(wfp,"%s\n",buff);
+    } while( strcmp(buff,t_section) );
+
+    /* Now that the section has been found, find the entry. Stop searching
+     * upon leaving the section's area. Copy the file as it is read
+     * and create an entry if one is not found.  */
+
+while( 1 )
+    {
+    if( !read_line(rfp,buff) )
+        {   /* EOF without an entry so make one */
+        fprintf(wfp,"%s=%s\n",entry,buffer);
+            /* Clean up and rename */
+        fclose(rfp);
+        fclose(wfp);
+        unlink(file_name);
+        rename(tmp_name,file_name);
+        return(1);
+        }
+
+    if( !strncmp(buff,entry,len) || buff[0] == '\0' )
+        break;
+    fprintf(wfp,"%s\n",buff);
+    }
+
+if( buff[0] == '\0' )
+    {
+    fprintf(wfp,"%s=%s\n",entry,buffer);
+    do
+        {
+        fprintf(wfp,"%s\n",buff);
+        }
+    while( read_line(rfp,buff) );
+    }
+    else
+    {
+    fprintf(wfp,"%s=%s\n",entry,buffer);
+    while( read_line(rfp,buff) )
+        {
+        fprintf(wfp,"%s\n",buff);
+        }
+    }
+
+/* Clean up and rename */
+fclose(wfp);
+fclose(rfp);
+unlink(file_name);
+rename(tmp_name,file_name);
+return(1);
+}
+
+
+int write_private_profile_int(char *section, char *entry, int entier, char *file_name)
+{
+char buffer[32];
+
+sprintf(buffer,"%d",entier);
+
+return write_private_profile_string(section,entry,buffer,file_name);
+}
+
 
 /*-------------------------*
  * Procedure en Assembleur *
@@ -109,7 +409,7 @@ qsort((void*)K,nbrkey,sizeof(struct key),sort_function);
 
 y=3;
 
-PrintAt(2,1,"%-77s","List of the format");
+PrintAt(2,0,"%-77s","List of the format");
 
 prem=0;
 
@@ -428,7 +728,8 @@ do	{
     for(n=0;n<26;n++)
         if (lstdrv[n]!=0)
             {
-            PrintAt(xx,yy,"Search in %c: (%9s)",n+'A',etat[n]==1 ? "Ready" : "Not Ready");
+            PrintAt(xx,yy,"Search in %c: (%9s)",
+                    n+'A',etat[n]==1 ? "Ready" : "Not Ready");
             yy++;
             if (yy>=Cfg->TailleY-4) yy=13,xx+=39;
             }
@@ -472,18 +773,13 @@ FILE *fic;
 int i,j,k;
 static char **dir;
 
-SaveEcran();
-
 
 
 k=Cfg->TailleY-5;
 
-WinCadre(9,k-1,71,k+3,3);
-ChrWin(10,k,70,k+2,32);
-ColWin(10,k,70,k+2,10*16+1);
-PrintAt(10,k,"Select the directory where you will that KKSETUP copy the");
-PrintAt(10,k+1,"batch files for the execution of KK and KKDESC.");
-PrintAt(10,k+2,"ESC for cancel.");
+DispMessage("Select the directory where you will that KKSETUP copy the batch files for");
+DispMessage("the execution of KK and KKDESC. (ESC for cancel)");
+DispMessage("");
 
 erreur=1;
 
@@ -511,38 +807,46 @@ for (i=0;i<50;i++)
 
 if (i!=0)
     {
-    int x=2,y=5;
-    int pos;
-    int car;
+    int x=2,y,pos,car,max,prem;
 
     pos=0;
+
+    y=MesgY;
 
     SaveEcran();
     PutCur(32,0);
 
-    WinCadre(x-2,y-1,x+Mlen+1,y+i,0);
-    ColWin(x-1,y,x+Mlen,y+i-1,10*16+1);
-    ChrWin(x-1,y,x+Mlen,y+i-1,32);
+    max=i;
+    if (max>Cfg->TailleY-(y+1)) max=Cfg->TailleY-(y+1);
 
-    for (j=0;j<i;j++)
-        PrintAt(x,y+j,dir[j]);
+    WinCadre(x-2,y-1,x+Mlen+1,y+max,0);
+    ColWin(x-1,y,x+Mlen,y+max-1,10*16+1);
+    ChrWin(x-1,y,x+Mlen,y+max-1,32);
+
+    prem=0;
 
     do {
+    while((pos-prem)>=max) prem++;
+    while((pos-prem)<0) prem--;
 
-    ColLin(x-1,y+pos,Mlen+2,7*16+5);
+    for (j=0;j<max;j++)
+        PrintAt(x,y+j,"%-*s",Mlen,dir[j+prem]);
+
+    ColLin(x-1,y+(pos-prem),Mlen+2,7*16+5);
 
     car=Wait(0,0,0);
 
-    ColLin(x-1,y+pos,Mlen+2,0*16+1);
+    ColLin(x-1,y+(pos-prem),Mlen+2,0*16+1);
 
-    switch(HI(car))  {
+    switch(HI(car))
+        {
         case 72:        // UP
             pos--;
-            if (pos==-1) pos=i-1;
+            if (pos==-1) pos=0;  // i-1;
             break;
         case 80:        // DOWN
             pos++;
-            if (pos==i) pos=0;
+            if (pos==i) pos=i-1; // 0;
             break;
         case 0x47:      // HOME
             pos=0;
@@ -564,6 +868,8 @@ if (i!=0)
 
     ChargeEcran();
 
+
+
     if (car==13)
         {
         strcpy(path,dir[pos]);
@@ -574,6 +880,9 @@ if (i!=0)
             fprintf(fic,"@%s\\kk.exe\n",ActualPath);
             fprintf(fic,"@REM This file was making by KKSETUP\n");
             fclose(fic);
+
+            DispMessage("%s is done",path);
+            DispMessage("");
 
             strcpy(path,dir[pos]);
             Path2Abs(path,"kkdesc.bat");
@@ -586,8 +895,12 @@ if (i!=0)
                 erreur=0;
 
                 strcpy(PathOfKK,dir[pos]);
+
+                DispMessage("%s is done",path);
+                DispMessage("");
                 }
             }
+        
         }
     }
 free(dir);
@@ -595,15 +908,14 @@ free(dir);
 if (erreur==1)
     strcpy(PathOfKK,"");
 
-ChargeEcran();
 }
 
 void main(short argc,char **argv)
 {
-char buffer[256];
-char chaine[256];
+char buffer[256],chaine[256];
 short n;
-int car;
+int i;
+FILE *fic;
 
 char *path;
 
@@ -613,7 +925,7 @@ IOerr=1;
  - Initialisation de l'ecran -
  *****************************/
 
-InitScreen();                   // Initialise toutes les donn‚es HARD
+InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 /***********************
  - Gestion des erreurs -
@@ -706,7 +1018,7 @@ if (LoadCfg()==-1)
 
         DFen->scur=0;
         }
-    ConfigFile();
+    LoadConfigFile();
     }
 
 TXTMode(Cfg->TailleY);
@@ -735,39 +1047,59 @@ SetPal(7,  0,  0,  0);
 SetPal(10, 43, 37, 30);
 SetPal(15, 47, 41, 34);
 
-WinCadre(0,0,79,(Cfg->TailleY-1),1);
-ChrWin(1,1,78,(Cfg->TailleY-2),32);
-ColWin(1,1,78,(Cfg->TailleY-2),10*16+1);
-ColLin(1,1,78,10*16+5);
-WinLine(1,2,78,0);
+WinCadre(0,1,79,(Cfg->TailleY-1),1);
+ChrWin(1,2,78,(Cfg->TailleY-2),32);
+ColWin(1,2,78,(Cfg->TailleY-2),10*16+1);
+ColLin(1,0,78,10*16+5);
+ChrLin(1,0,78,32);
 
-PrintAt(21,1,"Setup of Ketchup Killers Commander");
+PrintAt(21,0,"Setup of Ketchup Killers Commander");
 
+/*-----------------*
+ - Gestion Message -
+ *-----------------*/
+
+InitMessage();
+
+// DispMessage("RedBug for King");
+// DispMessage("");
 
 posy=3;
 
-
-
 strcpy(chaine,Fics->path);
 strcat(chaine,"\\trash");
-mkdir(chaine);
+if (mkdir(chaine)==0)
+    {
+    DispMessage("Creation of the trash directory '%s': OK",chaine);
+    DispMessage("");
+    }
+    
+    else
+    {
+    char path[256];
+    getcwd(path,256);
+
+    if (chdir(chaine)==0)
+        {
+        DispMessage("Trash directory exist: %s",chaine);
+        DispMessage("");
+        }
+        else
+        {
+        DispMessage("You must uncompress archive on your disk");
+        DispMessage("");
+        }
+    chdir(path);
+    }
 
 
-PrintAt(10, 5,"F1: Help");
-
-PrintAt(10, 9,"F2: Search Application");
-
-PrintAt(10,13,"F3: Load KKSETUP.INI");
-
-PrintAt(10,17,"F4: List all the format");
-
-PutCur(32,0);
 
 
-/********************************
+/*------------------------------*
  - Insertion de KK dans la path -
  - Si pas d‚ja pr‚sent !        -
- ********************************/
+ *------------------------------*/
+
 strcpy(ActualPath,path);
 
 _searchenv("KK.BAT","PATH",buffer);
@@ -792,60 +1124,48 @@ if (strlen(buffer)!=0)
     PutInPath();
 
 
-/*****************************
- - Gestion du menu principal -
- *****************************/
+
+fic=fopen(Fics->FicIdfFile,"rb");
+if (fic==NULL)
+    {
+    DispMessage("It's the first time that you run KKSETUP");
+    DispMessage("  -> Go to menu 'Player'");
+    DispMessage("  -> Select 'Search Player'");
+    DispMessage("");
+    }
+    else
+    fclose(fic);
+
 
 do
-{
-
-car=Wait(0,0,0);
-
-switch(HI(car))
     {
-    case 0x3B:  // F1
-        SaveEcran();
-        PutCur(32,0);
-        ChrWin(0,0,79,49,32);
-        Help();
-        ChargeEcran();
-        break;
-    case 0x3C:  // F2
-        ApplSearch();
-        break;
-    case 0x3D:  // F3
-        ConfigFile();
-        break;
-    case 0x3E:  // F4
-        IdfListe();
-        break;
-    case 0x3F:
-        PutInPath();
-        break;
+    i=GestionBar();
+    if ((i==7) | (i==0)) break;
+    GestionFct(i);
     }
-
-} while ( (HI(car)!=0x44) & (LO(car)!=27) );
+while(1);
 
 if (strlen(PathOfKK)!=0)
     {
-    PrintAt(10,(Cfg->TailleY-6),"KK.BAT & KKDESC.BAT are now in PATH (%s)",PathOfKK);
-    PrintAt(20,(Cfg->TailleY-5),"-> You could run KK from everywhere");
-    PrintAt(10,(Cfg->TailleY-4),"%s is done",chaine);
+    DispMessage("KK.BAT & KKDESC.BAT are now in PATH (%s)",PathOfKK);
+    DispMessage("  -> You could run KK from everywhere");
     }
     else
     {
-    PrintAt(10,(Cfg->TailleY-5),"WARNING: You couldn't run KK from everywhere (Reload KKSETUP)");
-    PrintAt(10,(Cfg->TailleY-4),"%s is done",chaine);
+    DispMessage("WARNING: You couldn't run KK from everywhere (Reload KKSETUP)");
     }
 
+DispMessage("");
 
-PrintAt(29,(Cfg->TailleY-2),"Press a key to continue");
-ColLin(1,(Cfg->TailleY-2),78,0*16+2);
+
+DispMessage("Press a key to continue");
 
 Wait(0,0,0);
 TXTMode(OldY);
 
 SaveCfg();
+
+puts(RBTitle);
 }
 
 
@@ -889,67 +1209,75 @@ for (n=0;n<26;n++)
             SSearch(ch);
     }
 
-fic=fopen("idfext.rb","wb");
-if (fic!=NULL) {
-	fwrite("RedBLEXU",1,8,fic);
+if (nbr>0)
+    {
+    fic=fopen("idfext.rb","wb");
+    if (fic!=NULL)
+        {
+        fwrite("RedBLEXU",1,8,fic);
 
-    fputc(_getdrive()-1,fic);
+        fputc(_getdrive()-1,fic);
 
-	t=0;
+        t=0;
 
-	for(n=0;n<nbr;n++)
-        if (app[n]->pres!=0) t++;
+        for(n=0;n<nbr;n++)
+            if (app[n]->pres!=0) t++;
 
-	fwrite(&t,1,2,fic);
+        fwrite(&t,1,2,fic);
 
-	for(n=0;n<nbr;n++)
-        if (app[n]->pres!=0)  {
-            char sn;
-            char *a;
+        for(n=0;n<nbr;n++)
+            if (app[n]->pres!=0)
+                {
+                char sn;
+                char *a;
 
-            a=app[n]->Filename;
-            sn=strlen(a);
-            fwrite(&sn,1,1,fic);
-            fwrite(a,sn,1,fic);
+                a=app[n]->Filename;
+                sn=strlen(a);
+                fwrite(&sn,1,1,fic);
+                fwrite(a,sn,1,fic);
 
-            a=app[n]->Titre;
-            sn=strlen(a);
-            fwrite(&sn,1,1,fic);
-            fwrite(a,sn,1,fic);
+                a=app[n]->Titre;
+                sn=strlen(a);
+                fwrite(&sn,1,1,fic);
+                fwrite(a,sn,1,fic);
 
-            a=app[n]->Meneur;
-            sn=strlen(a);
-            fwrite(&sn,1,1,fic);
-            fwrite(a,sn,1,fic);
+                a=app[n]->Meneur;
+                sn=strlen(a);
+                fwrite(&sn,1,1,fic);
+                fwrite(a,sn,1,fic);
 
-            fwrite(&(app[n]->ext),2,1,fic);    // Numero de format
-            fwrite(&(app[n]->pres),2,1,fic);   // Numero directory
+                fwrite(&(app[n]->ext),2,1,fic);    // Numero de format
+                fwrite(&(app[n]->pres),2,1,fic);   // Numero directory
 
-            fwrite(&(app[n]->type),1,1,fic);   // Numero directory
-            }
+                fwrite(&(app[n]->type),1,1,fic);   // Numero directory
+                }
 
-	fwrite(&nbrdir,1,2,fic);
+        fwrite(&nbrdir,1,2,fic);
 
-	for(n=0;n<nbrdir;n++)
-		fwrite(dir[n],1,128,fic);
+        for(n=0;n<nbrdir;n++)
+            fwrite(dir[n],1,128,fic);
 
-	fclose(fic);
-	}
+        fclose(fic);
+        }
 
-PrintAt(29,(Cfg->TailleY-2),"Press a key to continue");
-ColLin(1,(Cfg->TailleY-2),78,0*16+2);
+    PrintAt(29,(Cfg->TailleY-2),"Press a key to continue");
+    ColLin(1,(Cfg->TailleY-2),78,0*16+2);
 
-Wait(0,0,0);
-ColWin(1,1,78,(Cfg->TailleY-2),0*16+1);
-ChrWin(1,1,78,(Cfg->TailleY-2),32);  // '±'
+    Wait(0,0,0);
+    ColWin(1,2,78,(Cfg->TailleY-2),0*16+1);
+    ChrWin(1,2,78,(Cfg->TailleY-2),32);  // '±'
 
-PrintAt(10,10,"Stat.");
-PrintAt(10,12,"I have found %3d applications",St_App);
-PrintAt(10,13,"            in %3d directories",St_Dir);
+    ChargeEcran();
 
-Wait(0,0,0);
-
-ChargeEcran();
+    DispMessage("Statistics");
+    DispMessage("I have found %3d applications",St_App);
+    DispMessage("          in %3d directories",St_Dir);
+    DispMessage("");
+    }
+    else
+    {
+    ChargeEcran();
+    }
 }
 
 char KKR_Read(FILE *Fic)
@@ -1074,7 +1402,7 @@ do
 {
 strcpy(nom,TabRec[NbrRec-1]);
 
-PrintAt(1,1,"%-78s",nom);
+PrintAt(1,2,"%-78s",nom);
 
 strcpy(moi,nom);
 strcat(moi,"*.KKR");
@@ -1087,7 +1415,8 @@ do
         strcpy(moi,nom);
         strcat(moi,fic.name);
         Fic=fopen(moi,"rb");
-        if (Fic==NULL)  {
+        if (Fic==NULL)
+            {
             PrintAt(0,0,"KKR_Read (1)");
             exit(1);
             }
@@ -1159,12 +1488,12 @@ do
 {
 o=nbrdir+1;
 
-PrintAt(1,1,"%-78s",nom);
+PrintAt(1,2,"%-78s",nom);
 St_Dir++;
 
 strcpy(nom,TabRec[NbrRec-1]);
 
-PrintAt(1,1,"%-78s",nom);
+PrintAt(1,2,"%-78s",nom);
 
 if (_dos_findfirst(nom,63-_A_SUBDIR,&fic)==0)
 do
@@ -1386,109 +1715,558 @@ return 0;
 
 
 
-void ConfigFile(void)
+void LoadConfigFile(void)
 {
+char buf[3][82];
+char buffer[32];
+char section[32];
+char filename[32];
+int n;
+
+strcpy(section,"redbug");
+strcpy(filename,"kksetup.ini");
+
+Cfg->wmask=get_private_profile_int(section,"mask",Cfg->wmask,filename);
+Cfg->TailleY=get_private_profile_int(section,"vsize",Cfg->TailleY,filename);
+Cfg->fentype=get_private_profile_int(section,"wintype",Cfg->fentype,filename);
+Cfg->AnsiSpeed=get_private_profile_int(section,"ansispeed",Cfg->AnsiSpeed,filename);
+Cfg->SaveSpeed=get_private_profile_int(section,"ssaverspeed",Cfg->SaveSpeed,filename);
+Cfg->pntrep=get_private_profile_int(section,"directpoint",Cfg->pntrep,filename);
+Cfg->hidfil=get_private_profile_int(section,"hiddenfile",Cfg->hidfil,filename);
+Cfg->logfile=get_private_profile_int(section,"logfile",Cfg->logfile,filename);
+Cfg->font=get_private_profile_int(section,"font",Cfg->font,filename);
+Cfg->debug=get_private_profile_int(section,"debug",Cfg->debug,filename);
+Cfg->mtrash=get_private_profile_int(section,"sizetrash",Cfg->mtrash,filename);
+Cfg->display=get_private_profile_int(section,"display",Cfg->display,filename);
+
+Cfg->comport=get_private_profile_int(section,"serial_port",Cfg->comport,filename);
+Cfg->comspeed=get_private_profile_int(section,"serial_speed",Cfg->comspeed,filename);
+Cfg->combit=get_private_profile_int(section,"serial_databit",Cfg->combit,filename);
+get_private_profile_string(section,"serial_parity","N",buffer,16,filename);
+switch(toupper(buffer[0]))
+    {
+    default:
+    case 'N': Cfg->comparity='N'; break;
+    case 'O': Cfg->comparity='O'; break;
+    case 'E': Cfg->comparity='E'; break;
+    case 'M': Cfg->comparity='M'; break;
+    case 'S': Cfg->comparity='S'; break;
+    }
+
+Cfg->comstop=get_private_profile_int(section,"serial_stopbit",Cfg->comstop,filename);
+
+for (n=11;n<=15;n++)
+    {
+    sprintf(buffer,"usermask%d-1",n-10);
+    get_private_profile_string(section,buffer," ",buf[0],80,filename);
+
+    sprintf(buffer,"usermask%d-2",n-10);
+    get_private_profile_string(section,buffer," ",buf[1],80,filename);
+
+    sprintf(buffer,"usermask%d-3",n-10);
+    get_private_profile_string(section,buffer," ",buf[2],80,filename);
+
+    JoinMask(Mask[n]->chaine,buf[0],buf[1],buf[2]);
+
+    if (strlen(Mask[n]->chaine)>2)
+        sprintf(Mask[n]->title,"User config %d",n-10);
+        else
+        sprintf(Mask[n]->title,"");
+    }
+
+
+
+DispMessage("Loading of KKSETUP.INI: OK");
+DispMessage("");
+}
+
+void SplitMask(char *chaine,char *buf1,char *buf2,char *buf3)
+{
+int n,m;
+char *str;
+
+str=chaine;
+
+m=strlen(str)-2;
+if (m==0)
+    {
+    strcpy(chaine," @");
+    strcpy(buf1,"");
+    strcpy(buf2,"");
+    strcpy(buf3,"");
+    return;
+    }
+
+if (m<=54)
+    {
+    memcpy(buf1,str,m);
+    buf1[m]=0;
+    strcpy(buf2,"");
+    strcpy(buf3,"");
+    return;
+    }
+n=54;
+while ( (n!=0) & (chaine[n]!=32) )
+    n--;
+memcpy(buf1,chaine,n);
+buf1[n]=0;
+
+str=chaine+n+1;
+m=strlen(str)-2;
+
+if (m<=54)
+    {
+    memcpy(buf2,str,m);
+    buf2[m]=0;
+    strcpy(buf3,"");
+    return;
+    }
+n=54;
+while ( (n!=0) & (chaine[n]!=32) )
+    n--;
+memcpy(buf2,chaine,n);
+buf2[n]=0;
+
+memcpy(buf3,chaine+n+1,m-n-3);
+buf3[m-n-3]=0;
+}
+
+void JoinMask(char *chaine,char *buf1,char *buf2,char *buf3)
+{
+int n,m;
+
+strcpy(chaine,buf1);
+strcat(chaine," ");
+strcat(chaine,buf2);
+strcat(chaine," ");
+strcat(chaine,buf3);
+strcat(chaine," @");
+
+n=0;
+
+while(chaine[n]!=0)
+    {
+    if ( (chaine[n]==32) & ((chaine[n+1]==32) | (n==0) | (chaine[n+1]==0)) )
+        {
+        for (m=n+1;m<strlen(chaine)+1;m++)
+            chaine[m-1]=chaine[m];
+        }
+        else
+        n++;
+    }
+}
+
+void SaveConfigFile(void)
+{
+int n;
+char buf1[80],buf2[80],buf3[80];
+char buffer[32];
+char section[32];
+char filename[32];
+
+strcpy(section,"current");
+strcpy(filename,"kksetup.ini");
+
+write_private_profile_int(section,"mask",Cfg->wmask,filename);
+write_private_profile_int(section,"vsize",Cfg->TailleY,filename);
+write_private_profile_int(section,"wintype",Cfg->fentype,filename);
+write_private_profile_int(section,"ansispeed",Cfg->AnsiSpeed,filename);
+write_private_profile_int(section,"ssaverspeed",Cfg->SaveSpeed,filename);
+write_private_profile_int(section,"directpoint",Cfg->pntrep,filename);
+write_private_profile_int(section,"hiddenfile",Cfg->hidfil,filename);
+write_private_profile_int(section,"logfile",Cfg->logfile,filename);
+write_private_profile_int(section,"font",Cfg->font,filename);
+write_private_profile_int(section,"debug",Cfg->debug,filename);
+write_private_profile_int(section,"sizetrash",Cfg->mtrash,filename);
+write_private_profile_int(section,"display",Cfg->display,filename);
+
+write_private_profile_int(section,"serial_port",Cfg->comport,filename);
+write_private_profile_int(section,"serial_speed",Cfg->comspeed,filename);
+write_private_profile_int(section,"serial_databit",Cfg->combit,filename);
+sprintf(buffer,"%c",Cfg->comparity);
+write_private_profile_string(section,"serial_parity",buffer,filename);
+write_private_profile_int(section,"serial_stopbit",Cfg->comstop,filename);
+
+for (n=11;n<=15;n++)
+    {
+    SplitMask(Mask[n]->chaine,buf1,buf2,buf3);
+
+    sprintf(buffer,"usermask%d-1",n-10);
+    write_private_profile_string(section,buffer,buf1,filename);
+
+    sprintf(buffer,"usermask%d-2",n-10);
+    write_private_profile_string(section,buffer,buf2,filename);
+
+    sprintf(buffer,"usermask%d-3",n-10);
+    write_private_profile_string(section,buffer,buf3,filename);
+    }
+
+DispMessage("Saving [current] section in KKSETUP.INI: OK");
+DispMessage("");
+}
+
+struct {
+    char *Filename;
+    char *Titre;
+    char *Meneur;
+    short ext;
+    short NoDir;
+    char type;  // 0: Rien de particulier
+                // 1: Decompacteur
+                // 2: Compacteur
+    char dir[128];
+    } IDF_app;
+
+/*-------------------------------------------*
+ - Montre tous les players que vous possedez -
+ *-------------------------------------------*/
+char ShowYourPlayer(void)
+{
+char key[9];
 FILE *fic;
-char chaine[128];
+short prem,paff,j,k,nbr;
+int car,y;
+char di;    // Ne sert … rien
 
-char var[128];
-int valeur;
+int ndir;
+char name[256],dir[129];
 
-char erreur;
+fic=fopen(Fics->FicIdfFile,"rb");
 
-fic=fopen("kksetup.ini","rt");
-if (fic==NULL) return;
+
+if (fic==NULL)
+    {
+	PUTSERR("IDFEXT.RB missing");
+    return 0;
+	}
+
+fread(key,1,8,fic);
+if (memcmp(key,"RedBLEXU",8))
+    {
+	PUTSERR("File IDFEXT.RB is bad");
+    return 0;
+	}
+di=fgetc(fic);
+
+if (fread(&nbr,1,2,fic)==0) return 0;
+
+if (nbr==0) return 0;
+
 
 SaveEcran();
 PutCur(32,0);
 
+ChrWin(1,3,78,(Cfg->TailleY-2),32);
+ColWin(1,3,78,(Cfg->TailleY-2),10*16+1);
 
-while (fgets(chaine,128,fic)!=NULL)
-{
-erreur=1;
-ClearAllSpace(chaine);
 
-if (chaine[0]==';') erreur=0;
+prem=0;
+paff=0;
 
-if (chaine[0]=='\n') erreur=0;
-
-if (strlen(chaine)>2) chaine[strlen(chaine)-1]=0;
-
-valeur=Traite(chaine,var);
-
-if (!stricmp(var,"mask"))
+do
     {
-    Cfg->wmask=valeur;
-    erreur=0;
-    }
+    fseek(fic,11,SEEK_SET);
+    y=3;
 
-if (!stricmp(var,"vsize"))
-    {
-    Cfg->TailleY=valeur;
-    erreur=0;
-    }
+    for (j=0;j<paff;j++)
+        {
+        char n;
 
-if (!stricmp(var,"wintype"))
-    {
-    Cfg->fentype=valeur;
-    erreur=0;
-    }
+        fread(&n,1,1,fic);
+        fseek(fic,n,SEEK_CUR);
 
-if (!stricmp(var,"ansispeed"))
-    {
-    Cfg->AnsiSpeed=valeur;
-    erreur=0;
-    }
+        fread(&n,1,1,fic);
+        fseek(fic,n,SEEK_CUR);
 
-if (!stricmp(var,"ssaverspeed"))
-    {
-    Cfg->SaveSpeed=valeur;
-    erreur=0;
-    }
+        fread(&n,1,1,fic);
+        fseek(fic,n,SEEK_CUR);
 
-if (!stricmp(var,"directpoint"))
-    {
-    Cfg->pntrep=valeur;
-    erreur=0;
-    }
+        fseek(fic,2,SEEK_CUR);      // Numero de format
+        fseek(fic,2,SEEK_CUR);      // Numero directory
+        fseek(fic,1,SEEK_CUR);
+        }
 
-if (!stricmp(var,"hiddenfile"))
-    {
-    Cfg->hidfil=valeur;
-    erreur=0;
-    }
+    for (j=paff;j<nbr;j++)
+        {
+        char n;
+        char *a;
 
-if (!stricmp(var,"logfile"))
-    {
-    Cfg->logfile=valeur;
-    erreur=0;
-    }
+        fread(&n,1,1,fic);
+        IDF_app.Filename=malloc(n+1);
+        a=IDF_app.Filename;
+        a[n]=0;
+        fread(a,n,1,fic);
 
-if (!stricmp(var,"font"))
-    {
-    Cfg->font=valeur;
-    erreur=0;
-    }
+        fread(&n,1,1,fic);
+        IDF_app.Titre=malloc(n+1);
+        a=IDF_app.Titre;
+        a[n]=0;
+        fread(a,n,1,fic);
 
-if (!stricmp(var,"debug"))
-    {
-    Cfg->debug=valeur;
-    erreur=0;
-    }
+        fread(&n,1,1,fic);
+        IDF_app.Meneur=malloc(n+1);
+        a=IDF_app.Meneur;
+        a[n]=0;
+        fread(a,n,1,fic);
 
-if (!stricmp(var,"sizetrash"))
-    {
-    Cfg->mtrash=valeur;
-    erreur=0;
-    }
+        fread(&(IDF_app.ext),2,1,fic);    // Numero de format
 
-if (erreur==1)
-    {
-    WinError(chaine);
+        fread(&(IDF_app.NoDir),2,1,fic);  // Numero directory
+
+        fread(&(IDF_app.type),1,1,fic);   // Numero directory
+
+        for(k=0;k<nbrkey;k++)
+            if (K[k].numero == IDF_app.ext) break;
+
+        if (prem==j)
+            {
+            ColLin(1,y,1,  13*16+3);
+            ColLin(2,y,3,  13*16+4);
+            ColLin(5,y,1,  13*16+3);
+            ColLin(6,y,35, 13*16+4);
+            ColLin(41,y,6, 13*16+3);
+            ColLin(47,y,30,13*16+5);
+            ColLin(77,y,1, 13*16+3);
+
+            ndir=IDF_app.NoDir;
+            strcpy(name,IDF_app.Filename);
+            }
+        else
+        if (y&1==1)
+            {
+            ColLin(1,y,1,  10*16+3);
+            ColLin(2,y,3,  10*16+4);
+            ColLin(5,y,1,  10*16+3);
+            ColLin(6,y,35, 10*16+4);
+            ColLin(41,y,6, 10*16+3);
+            ColLin(47,y,30,10*16+5);
+            ColLin(77,y,1, 10*16+3);
+            }
+        else
+            {
+            ColLin(1,y,1,  15*16+3);
+            ColLin(2,y,3,  15*16+4);
+            ColLin(5,y,1,  15*16+3);
+            ColLin(6,y,35, 15*16+4);
+            ColLin(41,y,6, 15*16+3);
+            ColLin(47,y,30,15*16+5);
+            ColLin(77,y,1, 15*16+3);
+            }
+
+        PrintAt(1,y," %3s %-35s from %30s ",K[k].ext,IDF_app.Titre,IDF_app.Meneur);
+        y++;
+
+        if ( (y==(Cfg->TailleY-2)) | (j==nbr-1) ) break;
+        }
+
+    while(j<nbr-1)
+        {
+        char n;
+
+        fread(&n,1,1,fic);
+        fseek(fic,n,SEEK_CUR);
+
+        fread(&n,1,1,fic);
+        fseek(fic,n,SEEK_CUR);
+
+        fread(&n,1,1,fic);
+        fseek(fic,n,SEEK_CUR);
+
+        fseek(fic,2,SEEK_CUR);      // Numero de format
+        fseek(fic,2,SEEK_CUR);      // Numero directory
+        fseek(fic,1,SEEK_CUR);
+
+        j++;
+        }
+
+    car=Wait(0,0,0);
+    switch(HI(car))
+        {
+        case 72:        // UP
+            prem--;            break;
+        case 80:        // DOWN
+            prem++;            break;
+        case 0x49:      // PGUP
+            prem-=10;          break;
+        case 0x51:      // PGDN
+            prem+=10;          break;
+        case 0x47:      // HOME
+            prem=0;            break;
+        case 0X4F:      // END
+            prem=nbr-1;        break;
+        }
+
+    if (car==13)
+        {
+        fseek(fic,2,SEEK_CUR);
+        fseek(fic,(ndir-1)*128,SEEK_CUR);
+        fread(dir,1,128,fic);
+        dir[128]=0;
+
+        WinMesg(name,dir);
+        }
+
+    if (prem<0) prem=0;
+    if (prem>=nbr) prem=nbr-1;
+
+    while (paff<prem-(Cfg->TailleY-6)) paff++;
+    while (paff>prem) paff--;
     }
-}
+while(car!=27);
+
 
 ChargeEcran();
+
+return 1;
 }
 
 
+
+/*--------------------------------------------------------------------*
+ - Gestion de la barre de menu du haut                                -
+ *--------------------------------------------------------------------*/
+
+int GestionBar(void)
+{
+int retour,nbmenu;
+int u,v,s,x;
+
+struct barmenu bar[20];
+
+short fin;
+
+static int cpos[20],poscur;
+
+SaveEcran();
+PutCur(32,0);
+
+retour=0;
+
+do
+{
+strcpy(bar[0].titre,"Player");
+strcpy(bar[1].titre,"Information");
+strcpy(bar[2].titre,"Disk");
+strcpy(bar[3].titre,"Help");
+
+strcpy(bar[0].help,"Various");
+strcpy(bar[1].help,"File");
+strcpy(bar[2].help,"Disk");
+strcpy(bar[3].help,"Options");
+
+if (retour==0)                             // Navigation sur bar de menu
+    v=1;
+    else
+    v=0;
+
+u=BarMenu(bar,4,&poscur,&x,&v);
+                               // Renvoit t: position du machin surligne
+            // Renvoit v: 0 si rien, autre si position dans sous fenetre
+if (u==0)
+    {
+    fin=0;
+    break;
+    }
+
+switch (poscur)
+ {
+ case 0:
+    strcpy(bar[0].titre,"Search player");     bar[0].fct=4;
+    nbmenu=1;
+    break;
+ case 1:
+    strcpy(bar[0].titre,"Show all format");  bar[0].fct=3;
+    strcpy(bar[1].titre,"Show your player");  bar[1].fct=8;
+    nbmenu=2;
+    break;
+ case 2:
+    strcpy(bar[0].titre,"Load KKSETUP.INI");  bar[0].fct=5;
+    strcpy(bar[1].titre,"Write Profile");     bar[1].fct=9;
+    nbmenu=2;
+    break;
+ case 3:
+    strcpy(bar[0].titre,"Help ");         bar[0].fct=1;
+    strcpy(bar[1].titre,"About");         bar[1].fct=2;
+    strcpy(bar[2].titre,"");              bar[2].fct=0;
+    strcpy(bar[3].titre,"Exit");          bar[3].fct=7;
+    nbmenu=4;
+    break;
+    }
+
+s=2;
+retour=PannelMenu(bar,nbmenu,&(cpos[poscur]),&x,&s);      // (x,y)=(t,s)
+
+if (retour==2)
+    {
+    fin=bar[cpos[poscur]].fct;
+    break;
+    }
+    else
+    {
+    poscur+=retour;
+    fin=0;
+    }
+
+}
+while(1);
+
+ChargeEcran();
+
+return fin;
+}
+
+/*--------------------------------------------------------------------*/
+// 0: Quit
+// 1: Help
+// 2: About
+// 3: list all the format
+// 4: search application
+// 5: load kksetup.ini
+// 6: Putinpath
+// 7: Exit
+// 8: Show all player
+
+void GestionFct(int i)
+{
+switch(i)
+    {
+    case 0:
+        break;  // Quit
+    case 1:
+        SaveEcran();
+        PutCur(32,0);
+        ChrWin(0,0,79,49,32);
+        Help();
+        ChargeEcran();
+        break;
+    case 2:
+        WinMesg("About",RBTitle);
+        break;
+    case 3:
+        IdfListe();
+        break;
+    case 4:
+        ApplSearch();
+        break;
+    case 5:
+        LoadConfigFile();
+        break;
+    case 6:
+        PutInPath();
+        break;
+    case 7:
+        break;
+    case 8:
+        if (ShowYourPlayer()==0)
+            {
+            DispMessage("KKSETUP must search application");
+            DispMessage("  -> Go to menu 'Player'");
+            DispMessage("  -> Select 'Search Player'");
+            DispMessage("");
+            }
+        break;
+    case 9:
+        SaveConfigFile();
+        break;
+    }
+}

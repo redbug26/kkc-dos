@@ -147,7 +147,6 @@ qsort(Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
 }
 
 
-
 // 1-> erreur
 // 0-> OK
 int FicSelect(int n,char q)
@@ -234,6 +233,7 @@ if (DFen->system==0)
     static char buf[256];
     int i;
 
+//    PrintAt(0,0,"Enter in directory: %-60s",DFen->path);
     if (chdir(DFen->path)!=0)
         {
         strcpy(nom2,DFen->path);
@@ -372,6 +372,7 @@ if (err==0)
     memcpy(p,old,256);
 
 // PrintAt(0,0,"%-40s%40s","Ketchup Killers Commander","RedBug");
+
 }
 
 
@@ -400,7 +401,9 @@ while(1)
 return dir2;
 }
 
-// Verify history
+//----------------//
+// Verify history //
+//----------------//
 void VerifHistDir(void)
 {
 char *dir;
@@ -417,6 +420,7 @@ while(1) {
     IOver=1;
     IOerr=0;
 
+    PrintAt(0,0,"Verify history dir. %-60s",dir);
     if (chdir(dir)!=0)
         RemoveHistDir(j,j+strlen(dir)+1);
         else
@@ -598,14 +602,14 @@ m=strlen(str);
 if ( ((x1+m)>75) & (x1>40) )
     {
     n= (m>=(78-x0)) ? m-(78-x0) : 0;
-    GotoXY(x0+m-n+1,py);
     PrintAt(x0,py,">%-*s",78-x0,str+n);
+    GotoXY(x0+m-n+1,py);
     }
     else
     {
     n= (m>=(79-(x0+x1))) ? m-(79-(x0+x1)) : 0;
-    GotoXY(x1+x0+m-n,py);
     PrintAt(x0,py,"%s>%-*s",DFen->path,79-x0-x1,str+n);
+    GotoXY(x1+x0+m-n,py);
     }
 
 }

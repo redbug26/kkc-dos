@@ -147,15 +147,15 @@ char inpath[128];
 
 struct file *F;
 
-
-
-if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') ) {
+if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') )
+    {
     F1->F[F1->pcur]->select=1;
     F1->nbrsel++;
     F1->taillesel+=F1->F[F1->pcur]->size;
     }
 
 test=1;
+fin=0;
 
 for (i=0;i<F1->nbrfic;i++)
     {
@@ -164,8 +164,7 @@ for (i=0;i<F1->nbrfic;i++)
     if ((F->select)==1)
         {
         strcpy(inpath,F1->path);
-        if (inpath[strlen(inpath)-1]!='\\') strcat(inpath,"\\");
-        strcat(inpath,F->name);
+        Path2Abs(inpath,F->name);
 
         fin=0;
 
@@ -174,7 +173,8 @@ for (i=0;i<F1->nbrfic;i++)
             else
             car=0;
 
-        switch(car) {
+        switch(car)
+            {
             case 27:    // Touche ESCape
             case 3:
                 fin=1;
@@ -182,7 +182,8 @@ for (i=0;i<F1->nbrfic;i++)
             case 1:     // Delete ALL
                 test=0;
             case 0:     // Delete
-                switch(DFen->system)  {
+                switch(F1->system)
+                    {
                     case 0:
                         if (Erase(inpath,(F1->F[i]))==0) {
                             F1->F[i]->select=0;

@@ -1,13 +1,26 @@
-#define ENTIER short
+#define BYTE unsigned char
+#define WORD unsigned short
+#define ULONG unsigned long
+
+
+#define RBPALDEF   {43,37,30, 31,22,17,  0, 0, 0, 58,58,50, \
+                    44,63,63, 63,63,21, 43,37,30,  0, 0, 0, \
+                    63,63, 0, 63,63,63, 43,37,30, 63,20,20, \
+                    20,40,20,  0,40,40,  0, 0, 0,  0, 0, 0}
 
 // Header of hard-function
 
 extern void (*AffChr)(short x,short y,short c);
 extern void (*AffCol)(short x,short y,short c);
+extern int (*Wait)(int x,int y,char c);
+extern int (*KbHit)(void);
+extern void (*GotoXY)(char x,char y);
+extern void (*WhereXY)(char *x,char *y);
+extern void (*Window)(int left,int top,int right,int bottom,short color);
 
 
 
-void TXTMode(char lig);         // Nombre de ligne
+void TXTMode(char lig);    // Nombre de ligne
 
 void LoadPal(void);
 void NoFlash(void);
@@ -21,20 +34,17 @@ void ScrollUp(void);
 char GetChr(short x,short y);
 char GetCol(short x,short y);
 
-void Clr(void);
 void ColLin(int left,int top,int length,short color);
 void ChrLin(int left,int top,int length,short color);
 void ChrCol(int left,int top,int length,short color);
 void ColCol(int left,int top,int length,short color);
 void ColWin(int right,int top,int left,int bottom,short color);
 void ChrWin(int right,int top,int left,int bottom,short color);
-void GotoXY(char,char);
-void WhereXY(char*,char*);
 void Pause(int n);
 void MoveText(int x1,int y1,int x2,int y2,int x3,int y4);
 void PrintAt(int x,int y,char *string,...);
 char InputAt(char colonne,char ligne,char *chaine, int longueur);
-int Wait(int x,int y,char c);
+
 
 void Delay(long ms);
 
@@ -61,13 +71,28 @@ int Gradue(int x,int y,int length,int from,int to,int total);
 
 void DefaultCfg(void);
 
+
+/*-------------------------------------------*
+ -       Gestion de la barre de menu         -
+ *-------------------------------------------*/
+
+int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
+int PannelMenu(struct barmenu *bar,int nbr,int *c,int *xp,int *yp);
+struct barmenu
+        {
+        char titre[20];
+        char help[80];
+        short fct;
+        };
+
+
 struct TmtWin {
      int x1,y1,x2,y2;
      char *name;
      };
 
 struct Tmt {
-     int x,y;       // position
+     int x,y;              // position
      char type;
      char *str;
      int *entier;
@@ -89,91 +114,103 @@ struct Tmt {
 */
 
 
-struct config {
+struct config
+     {
     // Selon user
     //-----------
-     long SaveSpeed;        // Temps a attendre avant d'activer le screen saver
+     long SaveSpeed;       // Temps a attendre avant d'activer le screen saver
      long AnsiSpeed;
 
-     ENTIER fentype;        // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
-     ENTIER TailleY;        // Nombre de caratctere verticalement
+     short fentype;       // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
+     short TailleY;       // Nombre de caratctere verticalement
 
-     char palette[48];      // The PALETTE
+     char palette[48];     // The PALETTE
 
-     unsigned char wmask;   // C'est quel masque kon emploie ?
+     unsigned char wmask;  // C'est quel masque kon emploie ?
 
-     char pntrep;           // vaut 1 si on affiche le repertoire "."
-     char hidfil;           // vaut 1 si on affiche les fichiers caches
+     char pntrep;          // vaut 1 si on affiche le repertoire "."
+     char hidfil;          // vaut 1 si on affiche les fichiers caches
 
-     char logfile;          // vaut 1 si on utilise un logfile
-     char debug;            // vaut 1 si on est en mode DEBUG
+     char logfile;         // vaut 1 si on utilise un logfile
+     char debug;           // vaut 1 si on est en mode DEBUG
 
-     char autoreload;       // Reload automatiquement lorsque les deux fenˆtres sont les mˆmes
-     char verifhist;        // Verify history at any loading of KK (CTRL-PGDN)
-     char palafter;         // Load the palette only when configuration is ok
-     char noprompt;         // Si x&1 vaut 1 alors on ne prompte pdt la copie
-     char currentdir;       // Va dans le repertoire courant
+     char autoreload;      // Reload automatiquement lorsque les deux fenˆtres sont les mˆmes
+     char verifhist;       // Verify history at any loading of KK (CTRL-PGDN)
+     char palafter;        // Load the palette only when configuration is ok
+     char noprompt;        // Si x&1 vaut 1 alors on ne prompte pdt la copie
+     char currentdir;      // Va dans le repertoire courant
 
-     char font;             // utilisation des fonts
-     char dispcolor;        // Highlight les fichiers suivant les extensions
-     char speedkey;         // vaut 1 si on veut accelerer les touches
+     char font;            // utilisation des fonts
+     char dispcolor;       // Highlight les fichiers suivant les extensions
+     char speedkey;        // vaut 1 si on veut accelerer les touches
 
-     char insdown;          // vaut 1 si on descent quand on appuie sur insert
-     char seldir;           // vaut 1 si on selectionne les repertoires avec +
+     char insdown;         // vaut 1 si on descent quand on appuie sur insert
+     char seldir;          // vaut 1 si on selectionne les repertoires avec +
 
-     long strash;           // taille actuelle de la trash
+     long strash;          // taille actuelle de la trash
+
+     char display;         // type d'affichage
+
+     char comport;         // Numero du port serie (ex: 2)
+     int comspeed;         // Vitesse              (ex:19200)
+     char combit;          // bit                  (ex:8)
+     char comparity;       // parity               (ex:'N')
+     char comstop;         // Bit de stop          (ex=1)
+
     // Pas touche
     //-----------
-     long mtrash;           // taille maximum de la trash
-     long FenAct;           // Quelle fenˆtre est active ?
-     int _4dos;             // equal 1 if 4DOS found
+     long mtrash;          // taille maximum de la trash
+     long FenAct;          // Quelle fenˆtre est active ?
+     int _4dos;            // equal 1 if 4DOS found
 
-     char HistDir[256];     // History of disk
-     char overflow;         // Vaut tjs 0 (pour overflow)
+     char HistDir[256];    // History of disk
+     char overflow;        // Vaut tjs 0 (pour overflow)
 
-     char extens[39];       // extension qui viennent tout devant
+     char extens[39];      // extension qui viennent tout devant
 
-     ENTIER colnor;
-     ENTIER bkcol;
-     ENTIER inscol;
+     short colnor;
+     short bkcol;
+     short inscol;
 
-     ENTIER FenTyp[2];      // Type des fenˆtres SHELL
-     ENTIER KeyAfterShell;  // Vaut 1 si wait key after dosshell
-     ENTIER UseFont;        // Type de Font (0:normal, 1:8x8)
-     char Tfont;            // Caracteres employ‚s pour la ligne verticale
+     short FenTyp[3];     // Type des fenˆtres SHELL
+     short KeyAfterShell; // Vaut 1 si wait key after dosshell
+     short UseFont;       // Type de Font (0:normal, 1:8x8)
+     char Tfont;           // Caracteres employ‚s pour la ligne verticale
 
-     short key;             // code touche a reutiliser
-     char FileName[256];    // Nom du dernier fichier selectionne for F3 on arc.
-     char crc;              // Vaut tjs 0x69 (genre de crc)
+     short key;            // code touche a reutiliser
+     char FileName[256];   // Nom du dernier fichier selectionne for F3 on arc.
+     char crc;             // Vaut tjs 0x69 (genre de crc)
      };
 
 struct RB_info
-    {
-    clock_t temps;              // Temps entre le main() et l'appel utilisateur
-    };
+     {
+     clock_t temps;        // Temps entre le main() et l'appel utilisateur
+     };
 
-struct fichier {
-    char *FicIdfFile;      // idfext.rb
-    char *CfgFile;         // kkrb.cfg
-    char *view;            // view
-    char *edit;            // edit
-    char *path;            // path
-    char *help;            // kkc.hlp
-    char *temp;            // temp.tmp
-    char *trash;           // repertoire trash
-    char *log;             // logfile
-    char *LastDir;         // lastdir
-    };
+struct fichier
+     {
+     char *FicIdfFile;     // idfext.rb
+     char *CfgFile;        // kkrb.cfg
+     char *view;           // view
+     char *edit;           // edit
+     char *path;           // path
+     char *help;           // kkc.hlp
+     char *temp;           // temp.tmp
+     char *trash;          // repertoire trash
+     char *log;            // logfile
+     char *LastDir;        // lastdir
+     };
 
 struct PourMask
-    {
-    char Ignore_Case;    // 1 si on ignore la case
-    char Other_Col;      // 1 si on colorie les autres noms
-    char chaine[1024];   // chaine de comparaison EX: "asm break case @"
-    char title[40];      // nom de ce masque
-    };
+     {
+     char Ignore_Case;                         // 1 si on ignore la case
+     char Other_Col;                  // 1 si on colorie les autres noms
+     char chaine[1024];  // chaine de comparaison EX: "asm break case @"
+     char title[40];                                 // nom de ce masque
+     };
 
-void InitScreen(void);
+int InitScreen(int a);                      // Renvoit 1 si tout va bien
+void DesinitScreen(void);
 
 extern struct config *Cfg;
 extern struct RB_info *Info;
@@ -183,6 +220,23 @@ extern struct PourMask **Mask;
 #define HI(qsd) (qsd/256)
 #define LO(qsd) (qsd%256)
 
-// Retourne 0 si tout va bene
+//--- Retourne 0 si tout va bene ---------------------------------------
 int VerifyDisk(char c);  // 1='A'
-int __far Error_handler(unsigned deverr,unsigned errcode,unsigned far *devhdr);
+int __far Error_handler(unsigned deverr,unsigned errcode,
+                                                  unsigned far *devhdr);
+
+
+/*--------------------------------------------------------------------*
+ -                       Gestion du port s‚rie                        -
+ *--------------------------------------------------------------------*/
+
+void interrupt modem_isr(void);
+short com_carrier(void);
+short com_ch_ready(void);
+unsigned char com_read_ch(void);
+void com_send_ch(unsigned char ch);
+short com_open(short port,long speed,short bit,BYTE parity,BYTE stop);
+void com_close(void);
+
+/*--------------------------------------------------------------------*
+ *--------------------------------------------------------------------*/
