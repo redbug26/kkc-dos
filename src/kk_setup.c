@@ -135,7 +135,7 @@ for (n=strlen(chaine);n>0;n--) {
         }
     }
 
-fprintf(fic,"@%s\\kk_desc.exe\n",chaine);
+fprintf(fic,"@%s\\kk_desc.exe %1\n",chaine);
 fprintf(fic,"@REM This file was making by KK_SETUP\n");
 
 fclose(fic);

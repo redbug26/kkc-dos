@@ -19,6 +19,10 @@ static char *nomtemp;
 static int nbrmax;
 static int nbr;
 
+static char SearchName[70]="*.*";
+
+#define BreakESC  if (kbhit()) touche=_bios_keybrd(0)/256; else if (touche==1) break;
+
 void SchAffLine(int pos,int n)
 {
 char chaine[256];
@@ -68,7 +72,7 @@ error=_dos_findfirst(nomtemp,63,&ff);
 while (error==0) {
     error=ff.attrib;
 
-    if (ff.name[0]!='.')
+    if ( (ff.name[0]!='.') & (!WildCmp(ff.name,SearchName)) )
         {
         if ((error&0x10)!=0x10)    // Not Subdir
             {
@@ -110,14 +114,7 @@ while (error==0) {
             }
         }
 
-
-    if (touche!=1)
-        {
-        touche=_bios_keybrd(0x1);
-        touche=touche/256;
-        }
-        else
-        break;
+    BreakESC
 
     error=_dos_findnext(&ff);
     }
@@ -146,25 +143,12 @@ while (error==0) {
             }
         }
 
-    if (touche!=1)
-        {
-        touche=_bios_keybrd(0x1);
-        touche=touche/256;
-        }
-        else
-        break;
+    BreakESC
 
     error=_dos_findnext(&ff);
     }
 
-if (touche!=1)
-    {
-    touche=_bios_keybrd(0x1);
-    touche=touche/256;
-    }
-    else
-    break;
-
+BreakESC
 
 
 }
@@ -174,6 +158,36 @@ free(TabRec);
 
 }
 
+int WinSearch(void)
+{
+static int DirLength=70;
+static int CadreLength=71;
+
+char SearchOld[80];
+
+struct Tmt T[5] = {
+      { 2,3,1,SearchName,&DirLength},    // 0
+      {15,5,2,NULL,NULL},                // 1:Ok
+      {45,5,3,NULL,NULL},
+      { 5,2,0,"Filename",NULL},
+      { 1,1,4,NULL,&CadreLength}
+      };
+
+struct TmtWin F = {
+    3,10,76,17,
+    "Search file(s)"};
+
+int n;
+
+strcpy(SearchOld,SearchName);
+
+n=WinTraite(T,5,&F);
+
+if ( (n==0) | (n==1) )
+    return 0;
+    else
+    return 1;
+}
 
 
 void Search(void)
@@ -189,11 +203,15 @@ int d,fin;      // debut et fin de la ligne
 
 int prem;       // premier visible
 
+if (WinSearch()==1) return;
+
 nbr=0;
 nbrmax=200;
 
 SaveEcran();
+PutCur(32,0);
 
+ColLin(0,0,80,1*16+4);
 
 // Allocate Memory
 
@@ -214,19 +232,22 @@ tabdate=GetMem(sizeof(int *)*nbrmax);
 // Setup of all
 
 WinCadre(0,1,79,(Cfg->TailleY)-2,1);
-ColWin(1,2,78,(Cfg->TailleY)-3,0*16+1);
+ColWin(1,2,78,(Cfg->TailleY)-3,10*16+1);
 ChrWin(1,2,78,(Cfg->TailleY)-3,32);
 
 sprintf(nom,"%c:",DFen->path[0]);
-
-
 
 touche=0;
 
 cherdate(nom);
 
-if ((_bios_keybrd(0x11)/256)==1)
-    getch();
+if (nbr==0)
+    {
+    WinError("Not file found");
+    ChargeEcran();
+    }
+    else
+    {
 
 m=2;
 
@@ -258,7 +279,7 @@ do
     a=getch();
 
     for (n=d;n<=fin;n++)
-        AffCol(n,pos+m-prem,0*16+1);
+        AffCol(n,pos+m-prem,10*16+1);
 
 
     if (a==0)   {
@@ -273,6 +294,7 @@ do
     }
 while ( (a!=27) & (a!=13) );
 
+
 ChargeEcran();
 
 if (a==13)
@@ -283,6 +305,7 @@ for (n=0;n<DFen->nbrfic;n++)
         DFen->pcur=n;
         DFen->scur=n;
         }
+    }
 
 // Free Memory
 

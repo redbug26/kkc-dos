@@ -1,0 +1,87 @@
+@echo off
+50
+echo Packing of Ketchup Killers Commander
+
+
+set file=
+
+set fname=kk.exe
+    gosub zip16
+
+set fname=kkmain.exe
+    gosub zip32
+
+set fname=kkc.hlp
+    gosub enplus
+
+REM *************************************
+
+set fname=view.bat
+    gosub enplus
+
+set fname=edit.bat
+    gosub enplus
+
+set fname=font.cfg
+    gosub enplus
+
+REM *************************************
+
+set fname=kk_setup.exe
+    gosub zip32
+
+REM *************************************
+
+set fname=kk_desc.exe
+    gosub zip32
+
+set fname=kk_desc.hlp
+    gosub enplus
+
+set fname=iar_desc.kkr
+    gosub enplus
+
+REM *************************************
+
+set fname=file_id.diz
+    gosub enplus
+
+set fname=use.qwk
+    gosub enplus
+
+set fname=utilise.vit
+    gosub enplus
+
+REM *************************************
+
+
+
+if exist iar_desc.kkr del iar_desc.kkr
+kk_kkrgr.exe
+
+del kkc.zip
+
+pkzip -P kkc %file
+pkzip kkc -z <kk.diz
+
+del iar_desc.kkr
+
+goto end
+
+:zip32
+pmwlite %fname
+gosub enplus
+return
+
+:zip16
+lzexe %fname
+gosub enplus
+return
+
+:enplus
+set file=%file %fname
+touch %fname
+return
+
+:end
+

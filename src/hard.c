@@ -8,6 +8,7 @@
 #include <malloc.h>
 
 #include <i86.h>
+#include <time.h>
 
 #include "hard.h"
 
@@ -26,6 +27,45 @@ regs.h.bh=0;
 regs.h.ah=2;
 
 int386(0x10,&regs,&regs);
+}
+
+void WhereXY(char *x,char *y)
+{
+union REGS regs;
+
+regs.h.bh=0;
+regs.h.ah=3;
+
+int386(0x10,&regs,&regs);
+
+*x=regs.h.dl;
+*y=regs.h.dh;
+
+}
+
+void GetCur(char *x,char *y)
+{
+union REGS regs;
+
+regs.h.bh=0;
+regs.h.ah=3;
+
+int386(0x10,&regs,&regs);
+
+*x=regs.h.ch;
+*y=regs.h.cl;
+}
+
+void PutCur(char x,char y)
+{
+union REGS regs;
+
+regs.h.ah=1;
+regs.h.ch=x;
+regs.h.cl=y;
+
+int386(0x10,&regs,&regs);
+
 }
 
 char GetChr(char x,char y)
@@ -104,6 +144,13 @@ for (i=0;i<80;i++)
 	  }
 }
 
+void ScrollUp(void)
+{
+int n;
+for (n=0;n<49*160;n++)
+    scrseg[n]=scrseg[n+160];
+}
+
 
 char MEcran[8000];
 
@@ -121,19 +168,23 @@ for (y=y3;y<=y3+(y2-y1);y++)
 }
 
 char *Ecran[10];
-int EcranX[10],EcranY[10];
+char EcranX[10],EcranY[10];
+char EcranD[10],EcranF[10];
 signed short WhichEcran=0;
 
 void SaveEcran(void)
 {
 int n;
-GotoXY(0,0);
 
 if (Ecran[WhichEcran]==NULL)
     Ecran[WhichEcran]=GetMem(8000);
 
 for (n=0;n<8000;n++)
     Ecran[WhichEcran][n]=*(scrseg+n);
+
+WhereXY(&(EcranX[WhichEcran]),&(EcranY[WhichEcran]));
+
+GetCur(&(EcranD[WhichEcran]),&(EcranF[WhichEcran]));
 
 WhichEcran++;
 }
@@ -153,6 +204,10 @@ if ( (Ecran[WhichEcran]==NULL) | (WhichEcran<0) )
 
 for (n=0;n<8000;n++)
     *(scrseg+n)=Ecran[WhichEcran][n];
+
+GotoXY(EcranX[WhichEcran],EcranY[WhichEcran]);
+
+PutCur(EcranD[WhichEcran],EcranF[WhichEcran]);
 
 free(Ecran[WhichEcran]);
 Ecran[WhichEcran]=NULL;
@@ -226,6 +281,11 @@ if (fin==0)
 		AffChr(colonne+n,ligne,' ');
 
 do  {
+
+if (ins==0)
+    PutCur(7,7);
+    else
+    PutCur(2,7);
 
 caractere=Wait(colonne+i,ligne,ins);
 
@@ -398,8 +458,34 @@ return retour;
 int Wait(int x,int y,char c)
 {
 char a;
+clock_t Cl;
 
-GotoXY(x,y);
+if ((x!=0) | (y!=0))
+    GotoXY(x,y);
+
+Cl=clock();
+
+a=0;
+
+while(!kbhit())
+    {
+//    PrintAt(0,0,"%10d %10d %10d %10d",clock(),Cl,clock()-Cl,Cfg->SaveSpeed);
+    if ( ((clock()-Cl)>Cfg->SaveSpeed) & (Cfg->SaveSpeed!=0) & (a==0) )
+        {
+        inp(0x3DA);
+        inp(0x3BA);
+        outp(0x3C0,0);
+        a=1;
+        }
+    }
+
+if (a==1)
+    {
+    inp(0x3DA);
+    inp(0x3BA);
+    outp(0x3C0,0x20);
+    }
+
 
 a=getch();
 if (a==0)

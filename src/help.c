@@ -100,6 +100,7 @@ short x1,y1,x2,y2,max;
 
 char chaine[256];
 char car,car2;
+int c;
 
 short n;
 
@@ -126,11 +127,11 @@ SaveEcran();
 
 WinCadre(x1,y1,x2,y2,0);
 
-ColWin(x1+1,y1+1,x2-1,y2-1,0*16+1);
+ColWin(x1+1,y1+1,x2-1,y2-1,10*16+1);
 ChrWin(x1+1,y1+1,x2-1,y2-1,32);
 
 PrintAt(x1+2,y1,"Main Topic");
-ColLin(x1+2,y1,10,0*16+2);
+ColLin(x1+2,y1,10,10*16+2);
 
 pos=0;
 
@@ -142,16 +143,14 @@ do
         if (pos==n)
             ColLin(x1+2,y1+3+n*3,strlen(chaine),1*16+5);
             else
-            ColLin(x1+2,y1+3+n*3,strlen(chaine),0*16+1);
+            ColLin(x1+2,y1+3+n*3,strlen(chaine),10*16+1);
 
         PrintAt(x1+2,y1+3+n*3,chaine);
         }
 
-    car=getch();
-    if (car==0)
-        car2=getch();
-        else
-        car2=0;
+    c=Wait(0,0,0);
+    car=LO(c);
+    car2=HI(c);
 
     switch(car2)    {
        case 0x47:
@@ -172,7 +171,7 @@ do
     switch(car) {
         case 13:
             Hlp2Chaine(NdxMainTopic[pos],chaine);
-            ColLin(x1+2,y1+3+pos*3,strlen(chaine),0*16+1);
+            ColLin(x1+2,y1+3+pos*3,strlen(chaine),10*16+1);
             SubTopic(pos);
             break;
         }
@@ -188,6 +187,7 @@ void SubTopic(long z)
 {
 char chaine[256];
 char car,car2;
+int c;
 
 int x1,x2,y1,y2,max;
 
@@ -220,12 +220,12 @@ SaveEcran();
 
 WinCadre(x1,y1,x2,y2,0);
 
-ColWin(x1+1,y1+1,x2-1,y2-1,0*16+1);
+ColWin(x1+1,y1+1,x2-1,y2-1,10*16+1);
 ChrWin(x1+1,y1+1,x2-1,y2-1,32);
 
 Hlp2Chaine(NdxMainTopic[z],chaine);
 PrintAt(x1+2,y1,"%s",chaine);
-ColLin(x1+2,y1,strlen(chaine),0*16+2);
+ColLin(x1+2,y1,strlen(chaine),10*16+2);
 
 pos=0;
 prem=0;
@@ -238,7 +238,7 @@ do
         if (pos==n)
             ColLin(x1+2,y1+3+(n-prem)*2,max,1*16+5);
             else
-            ColLin(x1+2,y1+3+(n-prem)*2,max,0*16+1);
+            ColLin(x1+2,y1+3+(n-prem)*2,max,10*16+1);
 
         PrintAt(x1+2,y1+3+(n-prem)*2,"%-*s",max,chaine);
 
@@ -249,11 +249,9 @@ do
             }
         }
 
-    car=getch();
-    if (car==0)
-        car2=getch();
-        else
-        car2=0;
+    c=Wait(0,0,0);
+    car=LO(c);
+    car2=HI(c);
 
     switch(car2)    {
         case 0x47:
@@ -292,6 +290,7 @@ ChargeEcran();
 void Page(long z)
 {
 char car,car2;
+int c;
 
 long n;
 
@@ -307,9 +306,10 @@ char chaine[256];
 long avant,apres,pres;
 
 SaveEcran();
+PutCur(32,0);
 
 WinCadre(0,1,79,(Cfg->TailleY)-2,1);
-ColWin(1,2,78,(Cfg->TailleY)-3,0*16+1);
+ColWin(1,2,78,(Cfg->TailleY)-3,10*16+1);
 ChrWin(1,2,78,(Cfg->TailleY)-3,32);
 
 pres=z;
@@ -393,9 +393,9 @@ while(1)
             default:
                 AffChr(x,y,hlp[n]);
                 if (type!=0)
-                    AffCol(x,y,0*16+5);
+                    AffCol(x,y,10*16+5);
                     else
-                    AffCol(x,y,0*16+1);
+                    AffCol(x,y,10*16+1);
                 x++;
                 break;
                 }
@@ -418,11 +418,9 @@ while(1)
 
 if (nbrkey==0)
     {
-    car=getch();
-    if (car==0)
-        car2=getch();
-        else
-        car2=0;
+    c=Wait(0,0,0);
+    car=LO(c);
+    car2=HI(c);
     }
     else
     nbrkey--;

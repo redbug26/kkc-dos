@@ -6,7 +6,10 @@ void TXTMode(char lig);         // Nombre de ligne
 void LoadPal(void);
 void NoFlash(void);
 
+void GetCur(char *x,char *y);
+void PutCur(char x,char y);
 
+void ScrollUp(void);
 char GetChr(short x,short y);
 char GetCol(short x,short y);
 void AffChr(short x,short y,short c);
@@ -18,6 +21,7 @@ void ChrCol(int left,int top,int length,short color);
 void ColWin(int right,int top,int left,int bottom,short color);
 void ChrWin(int right,int top,int left,int bottom,short color);
 void GotoXY(char,char);
+void WhereXY(char*,char*);
 void Pause(int n);
 void MoveText(int x1,int y1,int x2,int y2,int x3,int y4);
 void PrintAt(int x,int y,char *string,...);
@@ -39,11 +43,22 @@ int crc32file(char *name,unsigned long *crc);   // Compute CRC-32 of file
 
 
 struct config {
-     int _4dos;           // equal 1 if 4DOS found
+    // Selon user
+    //-----------
+     long SaveSpeed;        // Temps a attendre avant d'activer le screen saver
+     long AnsiSpeed;
 
-     char HistDir[256];   // History of disk
      ENTIER fentype;        // Type de fenˆtre, 1=NC, 2=WATCOM, 3=KKC, 4=Font
      ENTIER TailleY;        // Nombre de caratctere verticalement
+
+     char palette[48];      // The PALETTE
+
+    // Pas touche
+    //-----------
+     long FenAct;           // Quelle fenˆtre est active ?
+     int _4dos;             // equal 1 if 4DOS found
+
+     char HistDir[256];     // History of disk
 
      ENTIER colnor;
      ENTIER bkcol;
@@ -52,9 +67,10 @@ struct config {
      ENTIER FenTyp[2];      // Type des fenˆtres SHELL
      ENTIER KeyAfterShell;  // Vaut 1 si wait key after dosshell
      ENTIER UseFont;        // Type de Font (0:normal, 1:8x8)
-     char Tfont[33];          // Caracteres employ‚s pour les fenˆtres
+     char Tfont[33];        // Caracteres employ‚s pour les fenˆtres
 
-     char palette[48];      // The PALETTE
+     short key;             // code touche a reutiliser
+     char FileName[256];    // Nom du dernier fichier selectionne for F3 on arc.
      };
 
 struct fichier {

@@ -240,9 +240,11 @@ int n;
 int err;
 char *p;
 
-
 p=DFen->path;
 memcpy(old,p,256);
+
+for(n=0;n<strlen(Ficname);n++)
+    if (Ficname[n]=='/') Ficname[n]='\\';
 
 if (!strcmp(Ficname,"..")) {
     for (n=strlen(p);n>0;n--)
@@ -261,7 +263,6 @@ if (DFen->system!=0)
 // PrintAt(0,0,"(System:%d)",DFen->system);
 // PrintAt(0,1,"(%s)",DFen->path);
 // PrintAt(0,2,"(%s)",DFen->VolName);
-// getch();
 
 switch(DFen->system)  {
     case 0:
@@ -296,6 +297,12 @@ switch(DFen->system)  {
         err=LHAlitfic();
         if (err==1)
             err=LHAlitfic();
+        strupr(DFen->path);
+        break;
+    case 5:
+        err=KKDlitfic();
+        if (err==1)
+            err=KKDlitfic();
         strupr(DFen->path);
         break;
     default:
@@ -454,26 +461,6 @@ switch(DFen->system)  {
         YouMad("Makedir");
         break;
         }
-}
-
-void NCAltKey(char *chaine)
-{
-int i,j;
-char *nom;
-
-i=0;
-for (j=0;j<strlen(chaine);j++)
-	if ( (chaine[j]==' ') | (chaine[j]=='='))  i=j+1;
-
-nom=chaine+i;
-
-if (nom[0]!=0)
-   for (i=DFen->pcur;i<DFen->nbrfic;i++)
-	   if (!strncmp(nom,DFen->F[i]->name,strlen(nom)))	{
-		   DFen->pcur=i;
-		   DFen->scur=i;
-		   break;
-		   }
 }
 
 

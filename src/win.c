@@ -117,7 +117,8 @@ return j1;
 int Puce(int x,int y,int lng,char p)
 {
 int r=0;
-char a;
+
+int car;
 
 AffChr(x,y,16);
 AffChr(x+lng-1,y,17);
@@ -129,17 +130,35 @@ ColLin(x,y,lng,2*16+5);        // Couleur
 
 if (p==1)
     while (r==0)  {
-        a=getch();
-        if (a==13) return 0;
-        if (a==27) r=1;
-        if (a==9) r=2;
-        if (a==0) {
-            a=getch();
-            if (a==0x0F) r=3;
-            if (a==0x4D) r=2;
-            if (a==0x4B) r=3;
+        car=Wait(0,0,0);
+
+        switch(car%256)
+            {
+            case 13:
+                return 0;
+            case 27:
+                r=1;
+                break;
+            case 9:
+                r=2;
+                break;
+            case 0:
+                switch(car/256)
+                    {
+                    case 0x0F:
+                        r=3;
+                        break;
+                    case 0x4D:
+                        r=2;
+                        break;
+                    case 0x4B:
+                        r=3;
+                        break;
+                    }
+                break;
             }
         }
+
 
 AffChr(x,y,32);
 AffChr(x+lng-1,y,32);
@@ -257,7 +276,7 @@ while (c!=27) {
 	  PrintAt(26,11,"*************************");
 	  PrintAt(26,12,"* WINDOWS 95 KEYBOARD ! *");
 	  PrintAt(26,13,"*************************");
-	  if (kbhit()) c=getch();
+      if (kbhit()) c=LO(Wait(0,0,0));
 	  }
 
 AfficheTout();
@@ -415,7 +434,7 @@ int x=2,y=3;
 if (Fen->init==1)
     ClearNor(Fen);
 
-if (Fen->scur>Fen->pcur) Fen->pcur=Fen->scur;
+if (Fen->scur>Fen->pcur) Fen->scur=Fen->pcur;
 
 while (Fen->pcur<0)
     {
@@ -730,7 +749,7 @@ PrintAt(DFen->x3,DFen->y3,"[ Hello World !!!                  ]");
 void MenuBar(char c)
 {
 static char bar[4][60]=
-   { " Help  ----  View  Edit  Copy  ----  MDir Delete ----  Quit ",      // NORMAL
+   { " Help  ----  View  Edit  Copy  Move  MDir Delete ----  Quit ",      // NORMAL
      " ----  ----  View  ----  ----  ----  ----  ----  ----  ---- ",      // SHIFT
      "On-OffOn-Off Name  .Ext  Date  Size Unsort ----  ----  ---- ",      // CONTROL
      " Drv1  Drv2  FDiz  ----  ----  ---- Search Type  Line  ---- "       // ALT
@@ -825,26 +844,6 @@ if ((n=strlen(chaine2))<9)
 return chaine;
 }
 
-void AfficheTout(void)
-{
-PrintAt(0,0,"%-40s%40s","Ketchup Killers Commander","RedBug");
-ColLin( 0,0,40,1*16+5);
-ColLin(40,0,40,1*16+3);
-ColLin(0,(Cfg->TailleY)-2,80,7);
-
-CommandLine("##INIT 0 %d 80\n",(Cfg->TailleY)-2);
-
-DFen->init=1;
-DFen->Fen2->init=1;
-
-ChangeLine();
-
-MenuBar(3);
-
-AffFen(DFen);
-AffFen(DFen->Fen2);
-}
-
 //--------------
 // ASCII Table -
 //--------------
@@ -865,7 +864,7 @@ for (n=0;n<256;n++) {
 WinCadre(0,5,79,22,0);
 ColWin(1,6,78,21,10*16+5);
 
-getch();
+Wait(0,0,0);
 
 ChargeEcran();
 }

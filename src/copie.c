@@ -1,5 +1,7 @@
 // Copy-function
 
+#include <ctype.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
@@ -356,23 +358,22 @@ for(i=0;i<F1->nbrfic;i++)
 // inserer path from
 
     if ((F->select)==1)
-        if (F->name[0]!='.')
-            {
-            if (((F->attrib)&0x10)==0x10)
-                fprintf(fic,"%s%s\\*.*\n",nom,F->name);
-                else
-                fprintf(fic,"%s%s\n",nom,F->name);
-            }
+        {
+        F->select=0;
+        F1->nbrsel--;
+        F1->taillesel-=F->size;
+
+        if (((F->attrib)&0x10)==0x10)
+            fprintf(fic,"%s%s\\*.*\n",nom,F->name);
+            else
+            fprintf(fic,"%s%s\n",nom,F->name);
+        }
     }
 fclose(fic);
 
 strcpy(nom,F2->path+strlen(F2->VolName));
 
-strcpy(F2->path,F2->VolName);
-Path2Abs(F2->path,"..");
-
-
-CommandLine("#RAR a -ep1 %s @%s %s",F2->VolName,Fics->temp,nom);
+CommandLine("#RAR a -ep1 -std %s @%s %s",F2->VolName,Fics->temp,nom);
 }
 
 void RarCopie(struct fenetre *F1,struct fenetre *F2)
@@ -403,23 +404,23 @@ for(i=0;i<F1->nbrfic;i++)
     F=F1->F[i];
 
     if ((F->select)==1)
-        if (F->name[0]!='.')
+        {
+        F->select=0;
+        F1->nbrsel--;
+        F1->taillesel-=F->size;
+
+        if (((F->attrib)&0x10)==0x10)
             {
-            if (((F->attrib)&0x10)==0x10)
-                {
-                fprintf(fic,"%s%s\\*.*\n",nom,F->name);
-                option='X';
-                }
-                else
-                fprintf(fic,"%s%s\n",nom,F->name);
+            fprintf(fic,"%s%s\\*.*\n",nom,F->name);
+            option='X';
             }
+            else
+            fprintf(fic,"%s%s\n",nom,F->name);
+        }
     }
 fclose(fic);
 
-strcpy(DFen->path,DFen->VolName);
-Path2Abs(DFen->path,"..");
-
-CommandLine("#RAR %c %s @%s %s",option,F1->VolName,Fics->temp,F2->path);
+CommandLine("#RAR %c -std %s @%s %s",option,F1->VolName,Fics->temp,F2->path);
 }
 
 void ZipCopie(struct fenetre *F1,struct fenetre *F2)
@@ -436,11 +437,11 @@ option='e';
 
 fic=fopen(Fics->temp,"wt");
 
-if (strlen(DFen->path)==strlen(DFen->VolName))
+if (strlen(F1->path)==strlen(F1->VolName))
     strcpy(nom,"");
     else
     {
-    strcpy(nom,(DFen->path)+strlen(DFen->VolName)+1);
+    strcpy(nom,(F1->path)+strlen(F1->VolName)+1);
     strcat(nom,"\\");
 
     }
@@ -450,31 +451,21 @@ for(i=0;i<F1->nbrfic;i++)
     F=F1->F[i];
 
     if ((F->select)==1)
-        if (F->name[0]!='.')
+        {
+        F->select=0;
+        F1->nbrsel--;
+        F1->taillesel-=F->size;
+
+        if (((F->attrib)&0x10)==0x10)
             {
-            if (((F->attrib)&0x10)==0x10)
-                {
-                fprintf(fic,"%s%s\\*.*\n",nom,F->name);
-                option='d';
-                }
-                else
-                fprintf(fic,"%s%s\n",nom,F->name);
+            fprintf(fic,"%s%s\\*.*\n",nom,F->name);
+            option='d';
             }
+        else
+            fprintf(fic,"%s%s\n",nom,F->name);
+        }
     }
 fclose(fic);
-
-// Selection of current archive
-
-DFen=F1;
-
-do
-    {
-    CommandLine("#CD ..");
-    }
-while(DFen->system!=0);
-
-strcpy(F1->path,F1->VolName);
-Path2Abs(F1->path,"..");
 
 // Execution of uncompressor
 
@@ -495,11 +486,11 @@ option='E';
 
 fic=fopen(Fics->temp,"wt");
 
-if (strlen(DFen->path)==strlen(DFen->VolName))
+if (strlen(F1->path)==strlen(F1->VolName))
     strcpy(nom,"");
     else
     {
-    strcpy(nom,(DFen->path)+strlen(DFen->VolName)+1);
+    strcpy(nom,(F1->path)+strlen(F1->VolName)+1);
     strcat(nom,"\\");
 
     }
@@ -509,21 +500,22 @@ for(i=0;i<F1->nbrfic;i++)
     F=F1->F[i];
 
     if ((F->select)==1)
-        if (F->name[0]!='.')
+        {
+        F->select=0;
+        F1->nbrsel--;
+        F1->taillesel-=F->size;
+
+        if (((F->attrib)&0x10)==0x10)
             {
-            if (((F->attrib)&0x10)==0x10)
-                {
-                fprintf(fic,"%s%s\\*.*\n",nom,F->name);
-                option='X';
-                }
-                else
-                fprintf(fic,"%s%s\n",nom,F->name);
+            fprintf(fic,"%s%s\\*.*\n",nom,F->name);
+            option='X';
             }
+            else
+            fprintf(fic,"%s%s\n",nom,F->name);
+        }
     }
 fclose(fic);
 
-strcpy(DFen->path,DFen->VolName);
-Path2Abs(DFen->path,"..");
 CommandLine("#ARJ %c -P %s %s !%s",option,F1->VolName,F2->path,Fics->temp);
 }
 
@@ -632,6 +624,5 @@ ChargeEcran();
 DFen=F2;
 CommandLine("#cd .");
 DFen=F1;
-
 }
 

@@ -27,4 +27,8 @@ int ZIPlitfic(void);
 void InstallLHA(void);
 int LHAlitfic(void);
 
+void InstallKKD(void);
+int KKDlitfic(void);
+void MakeKKD(struct fenetre *Fen,char *ficname);
+
 

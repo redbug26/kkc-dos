@@ -1,15 +1,18 @@
 #include <errno.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <malloc.h>
 #include <dos.h>
 #include <string.h>
 #include <direct.h>
 
+#include <bios.h>
 
 #include <fcntl.h>
 #include <io.h>
 
+#include "win.h"
 #include "kk.h"
 
 /******************************************************************************
@@ -229,8 +232,7 @@ if (DFen->nbrfic==2)
     return 1;
     }
 
-InfoSupport();
-ChangeLine();
+InfoSupport();  // Selection vitesse du support
 
 return 0;
 }
@@ -400,10 +402,7 @@ if (DFen->nbrfic==2)
     return 1;
     }
 
-SortFic(DFen);
-AffFen(DFen);
 InfoSupport();
-ChangeLine();
 
 return 0;
 }
@@ -615,7 +614,6 @@ if (DFen->nbrfic==2)
     }
 
 InfoSupport();
-ChangeLine();
 
 return 0;
 }
@@ -827,7 +825,6 @@ if (DFen->nbrfic==2)
     }
 
 InfoSupport();
-ChangeLine();
 
 return 0;
 }
@@ -843,3 +840,361 @@ strcpy(DFen->path,DFen->VolName);
 
 DFen->system=4;
 }
+
+/******************************************************************************
+                               FICHIER .KKD
+ *****************************************************************************/
+
+int KKDlitfic(void)
+{
+char nom[256];
+
+char Nomarch[256];
+char fin;
+int handle;
+
+int nbrdir;
+
+int n;
+
+char info;
+
+short tai;  // taille des noms
+long t;     // position dans archive
+
+struct file **Fic;
+
+
+DFen->pcur=0;
+DFen->scur=0;
+
+DFen->taillefic=0;
+DFen->nbrfic=2;
+
+DFen->taillesel=0;
+DFen->nbrsel=0;
+
+Fic=DFen->F;
+
+Fic[0]->name=GetMem(2);
+strcpy(Fic[0]->name,".");
+
+Fic[0]->size=0;
+Fic[0]->time=0;
+Fic[0]->date=33;
+Fic[0]->attrib=0x10;
+Fic[0]->select=0;
+
+Fic[1]->name=GetMem(3);
+strcpy(Fic[1]->name,"..");
+
+Fic[1]->size=0;
+Fic[1]->time=0;
+Fic[1]->date=33;
+Fic[1]->attrib=0x10;
+Fic[1]->select=0;
+
+DFen->nbrfic=2;
+
+handle=open(DFen->VolName,O_RDONLY | O_BINARY);
+
+// Okay.
+
+fin=0;
+
+if (strlen(DFen->path)==strlen(DFen->VolName))
+    strcpy(nom,"\\");
+    else
+    {
+    strcpy(nom,"\\");
+    strcat(nom,(DFen->path)+strlen(DFen->VolName)+1);
+    }
+
+lseek(handle,4,SEEK_SET);   // Passe la cle
+
+read(handle,&nbrdir,4);
+
+for (n=0;n<nbrdir;n++)
+    {
+    read(handle,&tai,2);
+    read(handle,Nomarch,tai);
+    Nomarch[tai]=0;
+    read(handle,&t,4);
+    if (!stricmp(nom,Nomarch))
+        break;
+    }
+
+lseek(handle,t,SEEK_SET);
+
+while(!fin)
+{
+read(handle,&info,1);
+if (info==0)
+    {
+    fin=1;
+    break;
+    }
+
+if (info==1)
+    {
+    read(handle,&tai,2);
+
+    Fic[DFen->nbrfic]=malloc(sizeof(struct file));
+
+    Fic[DFen->nbrfic]->name=malloc(tai+1);
+
+    read(handle,Fic[DFen->nbrfic]->name,tai);
+    Fic[DFen->nbrfic]->name[tai]=0;
+
+    read(handle,&(Fic[DFen->nbrfic]->size),4);
+
+    DFen->taillefic+=Fic[DFen->nbrfic]->size;
+
+    read(handle,&(Fic[DFen->nbrfic]->time),2);
+    read(handle,&(Fic[DFen->nbrfic]->date),2);
+
+    read(handle,&(Fic[DFen->nbrfic]->attrib),1);
+
+    Fic[DFen->nbrfic]->select=0;
+
+    DFen->nbrfic++;
+    }
+}
+
+close(handle);
+
+DFen->init=1;
+
+if (DFen->nbrfic==2)
+    {
+    strcpy(DFen->path,DFen->VolName);
+    return 1;
+    }
+
+InfoSupport();
+
+return 0;
+}
+
+void InstallKKD(void)
+{
+strcpy(DFen->Tpath,DFen->path);
+
+strcpy(DFen->VolName,DFen->path);
+Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
+
+strcpy(DFen->path,DFen->VolName);
+
+DFen->system=5;
+}
+
+
+struct HeaderKKD
+    {
+    char *nom;
+    long size;
+    short time;
+    short date;
+    char attrib;
+    };
+
+void MakeKKD(struct fenetre *Fen,char *ficname)
+{
+struct find_t ff;
+char error;
+char **TabRec;
+long NbrRec;
+
+
+long n;
+long Nbfic;
+long Nbdir;
+long Posfic;
+FILE *fic;
+
+struct HeaderKKD **Fichier;
+char **Repert;
+long *PosRepert;
+
+char moi[256],nom[256],nomtemp[256];
+
+char nom2[256];
+
+
+fic=fopen(ficname,"wb");
+if (fic==NULL)
+    {
+    WinError("Protection Error");
+    return;
+    }
+
+strcpy(nom2,Fen->path);
+
+
+Fichier=GetMem(10000*sizeof(void*));
+Repert=GetMem(5000*sizeof(void*));
+PosRepert=GetMem(5000*sizeof(long));
+
+
+TabRec=malloc(500*sizeof(char*));
+TabRec[0]=malloc(strlen(nom2)+1);
+memcpy(TabRec[0],nom2,strlen(nom2)+1);
+NbrRec=1;
+
+Nbdir=0;
+Nbfic=0;
+Posfic=0;
+
+
+do
+{
+Repert[Nbdir]=GetMem(strlen(TabRec[NbrRec-1])-1);
+PosRepert[Nbdir]=Posfic;
+memcpy(Repert[Nbdir],(TabRec[NbrRec-1])+2,strlen(TabRec[NbrRec-1])-1);
+
+Nbdir++;
+
+PrintAt(0,0,"Go in  %-73s",TabRec[NbrRec-1]);
+
+strcpy(nomtemp,TabRec[NbrRec-1]);
+Path2Abs(nomtemp,"*.*");
+
+strcpy(nom,TabRec[NbrRec-1]);
+
+// The files
+
+error=_dos_findfirst(nomtemp,63,&ff);
+
+while (error==0) {
+
+    if (ff.name[0]!='.')
+        {
+        Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
+
+        Fichier[Nbfic]->nom=GetMem(strlen(ff.name)+1);
+        memcpy(Fichier[Nbfic]->nom,ff.name,strlen(ff.name)+1);
+        Fichier[Nbfic]->size=ff.size;
+        Fichier[Nbfic]->time=ff.wr_time;
+        Fichier[Nbfic]->date=ff.wr_date;
+        Fichier[Nbfic]->attrib=ff.attrib;
+
+        Nbfic++;
+
+        Posfic+=(1+2+2+4+strlen(ff.name)+2+1);
+        }
+
+    error=_dos_findnext(&ff);
+    }
+
+free(TabRec[NbrRec-1]);
+NbrRec--;
+
+// The directories
+
+error=_dos_findfirst(nomtemp,63,&ff);
+
+while (error==0) {
+    error=ff.attrib;
+
+    if (ff.name[0]!='.')
+        {
+        if ((error&0x10)==0x10)    // Subdir
+            {
+            strcpy(moi,nom);
+            Path2Abs(moi,ff.name);
+
+            TabRec[NbrRec]=malloc(strlen(moi)+1);
+            memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
+            NbrRec++;
+            }
+        }
+
+    error=_dos_findnext(&ff);
+    }
+
+
+Fichier[Nbfic]=GetMem(sizeof(struct HeaderKKD));
+Fichier[Nbfic]->nom=GetMem(1);
+memcpy(Fichier[Nbfic]->nom,".",1);
+
+Nbfic++;
+Posfic++;
+
+}
+while (NbrRec>0);
+
+
+
+
+fprintf(fic,"KKDR");
+
+fwrite(&Nbdir,1,4,fic);
+
+Posfic=8;       // 4(cle) + 4(nbdir)
+
+for(n=0;n<Nbdir;n++)
+    {
+    Posfic+=strlen(Repert[n])+2+4;
+    }
+
+for(n=0;n<Nbdir;n++)
+    {
+    short t;
+    long tn;
+
+    t=strlen(Repert[n]);
+
+    fwrite(&t,1,2,fic);
+    fwrite(Repert[n],t,1,fic);
+
+    tn=PosRepert[n]+Posfic;
+
+    fwrite(&tn,1,4,fic);
+
+    free(Repert[n]);
+    }
+
+for(n=0;n<Nbfic;n++)
+    {
+    char info;
+    short t;
+
+    if (Fichier[n]->nom[0]=='.')
+        {
+        info=0;
+        fwrite(&info,1,1,fic);
+        }
+        else
+        {
+        info=1;
+        fwrite(&info,1,1,fic);                  // 1
+
+        t=strlen(Fichier[n]->nom);
+        fwrite(&t,1,2,fic);                     // 2
+        fwrite(Fichier[n]->nom,t,1,fic);       // t
+
+        fwrite(&Fichier[n]->size,4,1,fic);      // 4
+
+        fwrite(&Fichier[n]->time,2,1,fic);      // 2
+        fwrite(&Fichier[n]->date,2,1,fic);      // 2
+
+        fwrite(&Fichier[n]->attrib,1,1,fic);    // 1
+        }
+
+    free(Fichier[n]->nom);
+    free(Fichier[n]);
+    }
+
+
+free(Fichier);
+free(Repert);
+free(PosRepert);
+free(TabRec);
+
+fclose(fic);
+
+DFen=Fen->Fen2;
+CommandLine("#cd .");
+DFen=Fen->Fen2;
+}
+

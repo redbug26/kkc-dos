@@ -64,6 +64,7 @@ struct fenetre {
 };
 
 extern struct fenetre *DFen;
+
 extern char *Screen_Buffer;
 
 extern int IOver;

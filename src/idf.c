@@ -697,12 +697,7 @@ struct key K[nbrkey]=	{
 		"PS16 Module",
 		"P16",
 		"",100,0,0,1},
-{  {0,0},
-		2,
-		0,
-		"Text File",
-		"TXT",      // Extension ?
-		"",91,1,0,6},
+
 {  {"PK"},
 		2,
 		0,
@@ -719,7 +714,40 @@ struct key K[nbrkey]=	{
         101,                          // Numero du format (unique)
         0,                            // vaut la clef doit ˆtre verifie par proc
         0,                            // vaut 1 si il existe un lien vers une proc
-        6},                           // type de fichier (1: module, 4: image, 3:executable, 4:other, 5:sample, 6:anim)
+        6},                           // type de fichier (1: module, 4: image, 3:executable, 6:other, 2:sample, 5:anim)
+{  {"KKDR"},                          // Clef
+        4,                            // Longueur de la clef
+        0,                            // Position de la clef dans le fichier
+        "Description of disk",        // Nom du format
+        "KKR",                        // Extension du format
+        "RedBug",                     // Createur du format
+        102,                          // Numero du format (unique)
+        0,                            // vaut la clef doit ˆtre verifie par proc
+        0,                            // vaut 1 si il existe un lien vers une proc
+        6},                           // type de fichier (1: module, 4: image, 3:executable, 6:other, 2:sample, 5:anim)
+{  {"SMK"},                           // Clef
+        3,                            // Longueur de la clef
+        0,                            // Position de la clef dans le fichier
+        "Smacker animation",          // Nom du format
+        "SMK",                        // Extension du format
+        "",                           // Createur du format
+        103,                          // Numero du format (unique)
+        0,                            // vaut la clef doit ˆtre verifie par proc
+        0,                            // vaut 1 si il existe un lien vers une proc
+        5},                           // type de fichier (1: module, 4: image, 3:executable, 6:other, 2:sample, 5:anim)
+
+
+/*******************************************
+ - structures … traiter en dernier ressort -
+ *******************************************/
+
+{  {0,0},
+        2,
+        0,
+        "Text File",
+        "TXT",      // Extension ?
+        "",91,1,0,6}    // Laissez celui-ci dernier
+
 };
 
 
@@ -951,11 +979,15 @@ void Traitefic(char *nomfic,struct info *Info)
 short n;
 short handle;
 short err;
-
+short txt;
 
 char path[256];
 
-short trv=-1;	  // vaut -1 tant que l'on a rien trouv‚
+
+
+short trv=-1;     // vaut -1 tant que l'on a rien trouv‚
+
+txt=0;
 
 // buffer=malloc(32768);
 
@@ -1040,7 +1072,7 @@ if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) ) {
 				case 63: err=Infoswg(Info); break;
 				case 68: err=Infoams(Info); break;
 				case 76: err=Infot64(Info); break;
-				case 91: err=Infotxt(Info); break;
+                case 91: err=Infotxt(Info); break;
 				default:
 						sprintf(Info->format,"Pingouin %d",K[n].numero);
 						trv=1;
@@ -1074,7 +1106,6 @@ Info->numero=n;
 close(handle);
 
 }
-
 
 
 void ClearSpace(char *name)

@@ -11,7 +11,7 @@ CL = wlink
 
 # -oneatx        pour optimization
 
-CCOPTS = -w5 -fpi -s -zdp -oneatx -d3
+CCOPTS = -s -osln -ms -d3 -ze -v -zld -zc
 
 all : kk.exe
 
