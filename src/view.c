@@ -1319,6 +1319,7 @@ int HtmlView(char *fichier,char *liaison)
 FILE *fic;
 char titre[256];
 short lentit;
+long posd,taille2;
 
 char chaine[256];
 
@@ -1365,6 +1366,9 @@ struct Href *prem,*suiv,*rete;
 
 int ix,iy;
 
+int shift=0; // Vaut -1 si reaffichage de l'ecran
+             //       0 si pas de shift
+             //       1 si touche shiftee
 
 char *ColTxt;
 char *ChrTxt;
@@ -1408,7 +1412,8 @@ WinCadre(x-1,y-1,xl+1,yl,2);
 ChrWin(x,y,xl,yl-1,32);
 ColWin(x,y,xl,yl-1,10*16+1);
 
-ColLin(0,yl+1,80,2*16+5);
+ColLin(0,yl+1,80,1*16+8);
+ChrLin(0,yl+1,80,32);
 
 
 
@@ -1838,7 +1843,6 @@ for (k=0;k<lentit;k++)
     aff=0;
 
     if (yp>3998) break;
-
     }
 
 lentit=0;
@@ -1859,6 +1863,8 @@ if (ye>yp-yl+y) ye=yp-yl+y;
 if (ye<0) ye=0;
 
 aff=0;
+
+
 
 for (i=y;i<yl;i++)
     for(j=x;j<=xl;j++)
@@ -1891,8 +1897,72 @@ if ( (suiv->next!=NULL) & (suiv!=NULL) )
     PrintAt(0,yl+1,"%-80s",suiv->link);
     }
 
+posd=ye;
+posn=(ye+yl-y);
+taille2=yp;
 
+while (!kbhit())
+{
+car=*Keyboard_Flag1;
 
+if ( ((car&1)==1) | ((car&2)==2) )
+    {
+    long cur1,cur2;
+    int prc;
+    char temp[80];
+
+    if (shift==0)
+        SaveEcran();
+
+    if (posn>taille2) posn=taille2;
+
+    if (taille2<1024*1024)
+        {
+        cur1=(posd)*(Cfg->TailleY-2);
+        cur1=cur1/taille2+1;
+
+        cur2=(posn-1)*(Cfg->TailleY-2);
+        cur2=cur2/taille2+1;
+
+        prc=(posn*100)/taille2;
+        }
+        else
+        {
+        cur1=(posd/1024)*(Cfg->TailleY-2);
+        cur1=cur1/(taille2/1024)+1;
+
+        cur2=((posn-1)/1024)*(Cfg->TailleY-2);
+        cur2=cur2/(taille2/1024)+1;
+
+        prc=(posn/taille2)*100;
+        }
+
+    ColLin(0,0,80,1*16+2);
+
+    strncpy(temp,fichier,78);
+
+    temp[45]=0;
+
+    PrintAt(0,0,"View: %-52s %9d bytes %3d%% ",temp,taille,prc);
+
+    ColCol(79,1,Cfg->TailleY-2,1*16+2);
+    ChrCol(79,1,cur1-1,32);
+    ChrCol(79,cur1,cur2-cur1+1,219);
+    ChrCol(79,cur2+1,Cfg->TailleY-1-cur2,32);
+
+    shift=1;
+    }
+    else
+    if (shift==1)
+        {
+        shift=-1;
+        break;
+        }
+
+}
+
+if (shift!=-1)
+{
 code=Wait(0,0,0);
 
 switch(LO(code))   {
@@ -2022,6 +2092,13 @@ switch(LO(code))   {
         break;
     }
 }
+else
+{
+shift=0;
+ChargeEcran();
+}
+
+}
 while ((code!=27) & (code!=0x8D00) & (code!=13) );
 
 
@@ -2099,7 +2176,6 @@ if (fic==NULL)
     }
     else
     {
-
     taille=filelength(fileno(fic));
 
     if (taille==0) i=-1;

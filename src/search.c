@@ -134,7 +134,10 @@ for (m=0;m<DFen->nbrfic;m++)
         if ((error&0x10)==0x10) cont=0; // Not Subdir
         if ((error&0x08)==0x08) cont=0; // Not Subdir
 
-        if ( ((SearchString[0])!=0) & (cont==1) )
+
+
+
+        if ( ((SearchString[0])!=0) & (cont==1) & (DFen->system==0) )
             {
             if (strfic(nom,ff->name)!=0) cont=0;
             }
@@ -273,6 +276,7 @@ if (n!=27)  // pas escape
     }
 
 strcpy(SearchName,SearchOld);
+
 return 1;       // Erreur
 }
 

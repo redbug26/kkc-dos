@@ -1706,6 +1706,8 @@ Cfg->mtrash=100000;
 Cfg->overflow=0;
 
 Cfg->autoreload=1;
+Cfg->verifhist=1;
+Cfg->palafter=0;
 
 Cfg->crc=0x69;
 

@@ -9,7 +9,7 @@ void FenDIZ(struct fenetre *Fen);
 void FenInfo(struct fenetre *Fen);
 void LitInfo(struct fenetre *Fen);
 
-void WinInfo(void);
+void WinInfo(struct fenetre **);
 
 int InfoIDF(struct fenetre *Fen);
 int NameIDF(char *buf);

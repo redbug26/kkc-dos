@@ -1367,17 +1367,19 @@ if (!memcmp(buf+1080,"TDZ2",4)) { strcpy(Info->format,"TakeTracker"); chnl=2; in
 if (!memcmp(buf+1080,"TDZ3",4)) { strcpy(Info->format,"TakeTracker"); chnl=3; instr=31; }
 if (!memcmp(buf+1080,"M.K.",4)) { strcpy(Info->format,"Protracker"); chnl=4; instr=31; }
 if (!memcmp(buf+1080,"M&K&",4)) { strcpy(Info->format,"Noisetracker"); chnl=4; instr=31; }
-if (!memcmp(buf+1080,"FLT4",4)) { strcpy(Info->format,"StarTrekker"); chnl=4; instr=31; } // startrekker aussi
 if (!memcmp(buf+1080,"M!K!",4)) { strcpy(Info->format,"Protracker"); chnl=4; instr=31; }
 if (!memcmp(buf+1080,"4CHN",4)) { strcpy(Info->format,"Protracker"); chnl=4; instr=31; }
 if (!memcmp(buf+1080,"6CHN",4)) { strcpy(Info->format,"PC-FTracker"); chnl=6; instr=31; }   // 6CM
 if (!memcmp(buf+1080,"8CHN",4)) { strcpy(Info->format,"PC-FTracker"); chnl=8; instr=31; }   // 8CM
 if (!memcmp(buf+1080,"CD81",4)) { strcpy(Info->format,"Octalyser"); chnl=8; instr=31; } // octalyser on Atari Ste/falcon nombre de channel ?
 if (!memcmp(buf+1080,"OCTA",4)) { strcpy(Info->format,"Oktotracker"); chnl=8; instr=31; }
+if (!memcmp(buf+1080,"FLT4",4)) { strcpy(Info->format,"StarTrekker"); chnl=4; instr=31; } // startrekker aussi
 if (!memcmp(buf+1080,"RASP",4)) { strcpy(Info->format,"StarTrekker"); chnl=4; instr=31; }
 if (!memcmp(buf+1080,"FLT8",4)) { strcpy(Info->format,"StarTrekker"); chnl=8; instr=31; }
 if (!memcmp(buf+1080,"EXO4",4)) { strcpy(Info->format,"StarTrekker"); chnl=8; instr=31; } // EXO OU EX0 ?
 if (!memcmp(buf+1080,"EXO8",4)) { strcpy(Info->format,"StarTrekker"); chnl=8; instr=31; }
+if (!memcmp(buf+1080,"FA04",4)) { strcpy(Info->format,"Digital Tracker F030"); chnl=4; instr=31; }
+if (!memcmp(buf+1080,"FA08",4)) { strcpy(Info->format,"Digital Tracker F030"); chnl=8; instr=31; }
 
 if (chnl==0)  return 1;
 

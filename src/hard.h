@@ -101,8 +101,12 @@ struct config {
      char debug;            // vaut 1 si on est en mode DEBUG
 
      char autoreload;       // Reload automatiquement lorsque les deux fenˆtres sont les mˆmes
+     char verifhist;        // Verify history at any loading of KK (CTRL-PGDN)
+     char palafter;         // Load the palette only when configuration is ok
 
      char font;             // utilisation des fonts
+
+     
 
      long strash;           // taille actuelle de la trash
     // Pas touche

@@ -638,7 +638,7 @@ switch(fct)
         Cfg->strash=0;
         break;
     case 35:
-        WinInfo();
+        WinInfo(Fenetre);
         break;
     case 36:
         DFen->scur++;
@@ -2457,7 +2457,8 @@ R.h.bh=0;
 
 int386(0x2F,&R,&R);
 
-if (R.w.ax==0x44DD)  {
+if (R.w.ax==0x44DD)
+    {
     Cfg->_4dos=1;
 
     seg=R.w.cx;
@@ -2566,13 +2567,17 @@ if (fread((void*)Cfg,sizeof(struct config),1,fic)==0)
     return -1;
     }
 
-if ( (Cfg->overflow!=0) |
-     (Cfg->crc!=0x69) )
+if ( (Cfg->overflow!=0) | (Cfg->crc!=0x69) )
     {
     fclose(fic);
     return -1;
     }
 
+if (Cfg->palafter!=1)
+    {
+    NoFlash();
+    LoadPal();
+    }
 
 for(n=0;n<16;n++)
     {
@@ -2631,10 +2636,8 @@ for (t=0;t<3;t++)
     fread(&(DFen->scur),sizeof(ENTIER),1,fic);
 
     for (n=0;n<DFen->nbrfic;n++)
-        {
         if (!stricmp(nom,DFen->F[n]->name))
             DFen->pcur=n;
-        }
     }
 
 fclose(fic);
@@ -2783,11 +2786,12 @@ strcat(Fics->log,"\\trash\\logfile");      // logfile trash
  -  Default  -
  *************/
 
-Cfg->TailleY=30;
+// Cfg->TailleY=30;
 
 ChangeType(4);
-Cfg->SaveSpeed=7200;
+// Cfg->SaveSpeed=7200;
 
+/*
 Cfg->_4dos=0;
 _4DOSverif();
 
@@ -2795,7 +2799,7 @@ if (Cfg->_4dos==1)
     {
     _4DOSLhistdir();
     }
-    else
+    else */
     memset(Cfg->HistDir,0,256);
 
 
@@ -2874,7 +2878,8 @@ if (LC[4]=='0')
 */
 
 
-VerifHistDir();                 // Verifie l'history pour les repertoires
+if (Cfg->verifhist==1)
+    VerifHistDir();             // Verifie l'history pour les repertoires
 
 ChangeTaille(Cfg->TailleY);     // Change de taille et affiche tout
 Fenetre[0]->yl=(Cfg->TailleY)-4;

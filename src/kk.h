@@ -48,8 +48,8 @@ struct fenetre {
                         // La lettre du disque ne peut prendre que 1 caractere
                         //                  et doit etre en majuscule
                         // Le repertoire ne doit pas finir par '/' sauf le ROOT
-     ENTIER FenTyp;    // Type de fenetre: 0:norm, 1:diz
-     ENTIER init;      // si =1 --> r‚initialise fenˆtre (bordure ...)
+     ENTIER FenTyp;     // Type de fenetre: 0:norm, 1:diz
+     ENTIER init;       // si =1 --> r‚initialise fenˆtre (bordure ...)
      struct fenetre *Fen2;
 
      // Affichage

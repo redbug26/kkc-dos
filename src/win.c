@@ -19,23 +19,26 @@
 
 int *TailleX;
 
+void ClearSpace(char *name);    // efface les espaces inutiles
 
 void ErrWin95(void)
 {
 int x,y;
 char c=0;
 
-while (c!=27) {
-	  for (x=0;x<(*TailleX);x++)
-          for (y=0;y<Cfg->TailleY;y++)  {
-			  AffChr(x,y,rand()&255);
-			  AffCol(x,y,26 + (rand()&1));
-			  }
-	  PrintAt(26,11,"*************************");
-	  PrintAt(26,12,"* WINDOWS 95 KEYBOARD ! *");
-	  PrintAt(26,13,"*************************");
-      if (kbhit()) c=getch();
-	  }
+while (c!=27)
+    {
+    for (x=0;x<(*TailleX);x++)
+        for (y=0;y<Cfg->TailleY;y++)
+            {
+            AffChr(x,y,rand()&255);
+            AffCol(x,y,26 + (rand()&1));
+            }
+    PrintAt(26,11,"*************************");
+    PrintAt(26,12,"* WINDOWS 95 KEYBOARD ! *");
+    PrintAt(26,13,"*************************");
+    if (kbhit()) c=getch();
+    }
 
 AfficheTout();
 }
@@ -60,22 +63,25 @@ RB_IDF Info;
 
 F=Fen->F[Fen->pcur];
 
-if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)    {
-   PrintAt(0,0,"%-40s%-40s","Directory",F->name);
-   return 0;
-   }
+if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
+    {
+    PrintAt(0,0,"%-40s%-40s","Directory",F->name);
+    return 0;
+    }
+
+if (Fen->system!=0)
+    {
+    PrintAt(0,0,"%-40s%-40s","Internal File",F->name);
+    return 0;
+    }
 
 strcpy(Info.path,DFen->path);
 Path2Abs(Info.path,F->name);
 
 Traitefic(&Info);
 
-
-// sprintf(Info.path,"%s%s",drive,dir);
-
 Info.fullname[40]=0;
 Info.format[40]=0;
-
 
 PrintAt(0,0,"%-40s%-40s",Info.format,Info.fullname);
 
@@ -94,8 +100,8 @@ a=Cfg->Tfont[0];
 
 ColWin(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,7*16+6);
 
-
 // Couleur uniquement pour fentype=1,2 ou 3 (le 4 le fait 2 fois !)
+
 for(x=Fen->x;x<=Fen->x+Fen->xl;x++)
     AffCol(x,Fen->y,10*16+1);
 for(y=Fen->y;y<=Fen->y+Fen->yl;y++)
@@ -112,7 +118,8 @@ y=Fen->y;
 
 yl=(Fen->yl)+(Fen->y);
 
-switch (Cfg->fentype)  {
+switch (Cfg->fentype)
+    {
     case 1:
         Cfg->Tfont[0]=179;
         Fen->x2=Fen->x-1;
@@ -178,13 +185,12 @@ switch (Cfg->fentype)  {
         ColLin(x+34,y+1,4,7*16+5);
         ChrLin(x+1,y+yl-2,38,32);
 
-        PrintAt(x+1,y+1,   "    Name    %c    Size  %c  Date  %cTime ",a,a,a);
+        PrintAt(x+1,y+1,"    Name    %c    Size  %c  Date  %cTime ",a,a,a);
         for (i=2;i<yl-3;i++)
-           PrintAt(x+1,y+i,   "            %c          %c        %c     ",a,a,a);
+           PrintAt(x+1,y+i,"            %c          %c        %c     ",a,a,a);
 
         WinLine(x+1,y+yl-3,38,1);
         WinCadre(x,y,x+39,y+yl-1,1);
-
         break;
     }
 }
@@ -670,10 +676,11 @@ for (i=0;i<10;i++)	{
 
 void Int2Char(int n,char *s,char length)
 {
-if ((length>=3) & (n==1)) {
-   strcpy(s,"One");
-   return;
-   }
+if ((length>=3) & (n==1))
+    {
+    strcpy(s,"One");
+    return;
+    }
 
 ltoa(n,s,10);
 
@@ -726,7 +733,8 @@ int n,x,y;
 
 SaveEcran();
 
-for (n=0;n<256;n++) {
+for (n=0;n<256;n++)
+    {
     x=(n/16)*5;
     y=(n%16)+6;
 
@@ -754,12 +762,9 @@ struct Tmt T[5] = {
       {45,5,3,NULL,NULL},
       { 2,2,0,"You are MAD!",NULL},
       { 1,1,4,NULL,&CadreLength},
-      { 2,3,0,Buffer,NULL}
-      };
+      { 2,3,0,Buffer,NULL}  };
 
-struct TmtWin F = {
-    3,10,76,17,
-    "Error!"};
+struct TmtWin F = { 3,10,76,17,"Error!"};
 
 l=strlen(s);
 
@@ -781,16 +786,15 @@ T[1].x=(3*l/4)-6;
 strcpy(Buffer,s);
 
 WinTraite(T,5,&F);
-
 }
 
-/*-------------------------------------------------------------*\
- *   Gestion de la barre de menu                               *
- * Renvoie 0 pour ESC                                          *
- * Sinon numero du titre;                                      *
- * xp: au depart, c'est le numero du titre                     *
- *     a l'arrivee ,c'est la position du titre                 *
-\*-------------------------------------------------------------*/
+/*-------------------------------------------------------------*
+ -   Gestion de la barre de menu                               -
+ - Renvoie 0 pour ESC                                          -
+ - Sinon numero du titre;                                      -
+ - xp: au depart, c'est le numero du titre                     -
+ -     a l'arrivee ,c'est la position du titre                 -
+ *-------------------------------------------------------------*/
 
 int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp)
 {
@@ -1077,7 +1081,7 @@ LoadPal();
 /*----------------------------------*
  - Affiche les infos sur le systeme -
  *----------------------------------*/
-void WinInfo(void)
+void WinInfo(struct fenetre **Fenetre)
 {
 static char chaine[80];
 short WindowsActif,HVer,NVer;
@@ -1112,6 +1116,8 @@ switch ( WindowsActif )
     }
 PrintAt(21,12," %s",chaine);
 
+PrintAt(21,14," %s",Fenetre[2]->path);
+
 Wait(0,0,0);
 ChargeEcran();
 }
@@ -1125,12 +1131,12 @@ ChargeEcran();
  *-------*/
 void Setup(void)
 {
-static int l1,l2,l3,l4,l5,l6,l7,l8;
+static int l1,l2,l3,l4,l5,l6,l7,l8,l9,l10,l11,l12;
 
-static char x1=30,x2=30,x3=32;
-static int y1=5,y2=3,y3=15;
+static char x1=32,x2=32,x3=32;
+static int y1=8,y2=3,y3=15;
 
-struct Tmt T[14] = {
+struct Tmt T[16] = {
       {5,3,7, "Size Trash   ",&l1},
       {5,4,7, "Ansi Speed   ",&l2},
       {5,5,7, "Screen Saver ",&l7},
@@ -1139,16 +1145,21 @@ struct Tmt T[14] = {
       {5,9,8, "Point SubDir",&l4},
       {5,10,8,"LogFile",&l5},
       {5,11,8,"Use Font",&l6},
-      {5,12,8,"Hidden File",&l8},
+      {5,12,8,"Display Hidden File",&l8},
+      {5,13,8,"Auto Reload Directory",&l9},
+      {5,14,8,"Verify History Directory",&l10},
+      {5,15,8,"Quick Palette",&l11},
+
+//      {39,6,8,"Hidden File",&l12},
 
       {3,7,9,&x1,&y1},
       {3,2,9,&x2,&y2},
-      {36,2,9,&x3,&y3},
+      {37,2,9,&x3,&y3},
 
-      {5,14,0,"Under Construction",NULL},
+//      {5,14,0,"Under Construction",NULL},
 
-      {5,17,2,NULL,NULL},           // le OK
-      {20,17,3,NULL,NULL}            // le CANCEL
+      {6,17,2,NULL,NULL},           // le OK
+      {21,17,3,NULL,NULL}            // le CANCEL
       };
 
 struct TmtWin F = {3,3,76,22,"Setup"};
@@ -1163,8 +1174,11 @@ l5=Cfg->logfile;
 l6=Cfg->font;
 l7=Cfg->SaveSpeed;
 l8=Cfg->hidfil;
+l9=Cfg->autoreload;
+l10=Cfg->verifhist;
+l11=Cfg->palafter;
 
-n=WinTraite(T,14,&F);
+n=WinTraite(T,16,&F);
 
 if (n==27) return;
 
@@ -1176,6 +1190,9 @@ Cfg->logfile=l5;
 Cfg->font=l6;
 Cfg->SaveSpeed=l7;
 Cfg->hidfil=l8;
+Cfg->autoreload=l9;
+Cfg->verifhist=l10;
+Cfg->palafter=l11;
 
 SaveCfg();
 

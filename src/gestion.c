@@ -154,7 +154,6 @@ int FicSelect(int n,char q)
 {
 if (DFen->F[n]->name[0]=='.') return 1;
 if (DFen->F[n]->name[1]==':') return 1;
-
 if ((DFen->F[n]->attrib & _A_VOLID)==_A_VOLID) return 1;
 
 switch(q)
@@ -254,7 +253,7 @@ if (DFen->system==0)
 
         if (n==0)
             {
-            WinError("Invalid Path");
+            WinError("Drive Not Ready");
             memcpy(DFen->path,"C:\\",4);
             }
             else
@@ -382,7 +381,8 @@ int j;
 
 j=0;
 
-while(1) {
+while(1)
+    {
     dir=&(Cfg->HistDir[j]);
     if (strlen(dir)==0) break;
 
@@ -477,9 +477,7 @@ do
     // Retire celui qui se trouve en a-1
 
     if (a!=0)
-        {
         RemoveHistDir(TabDir[a-1],TabDir[a]);
-        }
     }
 while (a!=0);
 
@@ -491,9 +489,11 @@ void MakeDir(char *Ficname)
 {
 Path2Abs(DFen->path,Ficname);
 
-switch(DFen->system)  {
+switch(DFen->system)
+    {
     case 0:
-        if (mkdir(DFen->path)!=0) {
+        if (mkdir(DFen->path)!=0)
+            {
             WinError("This directory couldn't be created");
             strcpy(DFen->path,GetLastHistDir());
             }
@@ -531,39 +531,46 @@ if ( (chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (Cfg->logfile==1) )
     fclose(fic);
     }
 
-if (!strnicmp(chaine,"CD -",4)) {
-   ChangeDir(GetLastHistDir());
-   ChangeLine();      // Affichage Path
-   return 1;
-   }
-if (!strnicmp(chaine,"CD ",3)) {
-   ChangeDir(chaine+3);
-   ChangeLine();      // Affichage Path
-   return 1;
-   }
-if (!strnicmp(chaine,"CD..",4)) {
-   ChangeDir(chaine+2);
-   ChangeLine();      // Affichage Path
-   return 1;
-   }
-if (!strnicmp(chaine,"MD ",3)) {
-   MakeDir(chaine+3);
-   ChangeLine();      // Affichage Path
-   return 1;
-   }
-if (!strnicmp(chaine,"#INIT",5)) {
+if (!strnicmp(chaine,"CD -",4))
+    {
+    ChangeDir(GetLastHistDir());
+    ChangeLine();      // Affichage Path
+    return 1;
+    }
+if (!strnicmp(chaine,"CD ",3))
+    {
+    ChangeDir(chaine+3);
+    ChangeLine();      // Affichage Path
+    return 1;
+    }
+if (!strnicmp(chaine,"CD..",4))
+    {
+    ChangeDir(chaine+2);
+    ChangeLine();      // Affichage Path
+    return 1;
+    }
+if (!strnicmp(chaine,"MD ",3))
+    {
+    MakeDir(chaine+3);
+    ChangeLine();      // Affichage Path
+    return 1;
+    }
+if (!strnicmp(chaine,"#INIT",5))
+    {
     sscanf(chaine+5,"%d %d %d",&x0,&py,&xmax);
     ChangeLine();
     return 1;
     }
-if (!strnicmp(chaine,"#MEM",4)) {
+if (!strnicmp(chaine,"#MEM",4))
+    {
     int tail[12];
     GetFreeMem((void*)tail);  // inconsistent ?
     PrintAt(0,0,"Memory: %d octets",tail[0]);
     getch();
     return 1;
     }
-if (!strnicmp(chaine,"#DF",4)) {
+if (!strnicmp(chaine,"#DF",4))
+    {
     sscanf(chaine+3,"%d",&flag);
     return 1;
     }
@@ -669,17 +676,19 @@ if ( (suite[0]=='\n') & (px==0)) return 0;
 if ( (suite[0]==32) & (px==0)) return 0;
 
 do {
-   a=suite[n];
+    a=suite[n];
 
-   switch (a) {
+    switch (a)
+        {
 		case '\r':
-             while (pos!=0)  pos--;
-			 break;
+            while (pos!=0)  pos--;
+            break;
 		case 8: 			// delete
 			if (pos>0) pos--;
 			break;
         case 0X7F:  // CTRL-DEL
-			while (pos!=0) {
+            while (pos!=0)
+                {
 				pos--;
                 if ((chaine[pos]==32) | (chaine[pos]=='.')) break;
 				chaine[pos]=0;
