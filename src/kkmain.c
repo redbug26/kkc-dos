@@ -396,6 +396,10 @@ exit(1);
  36: Ligne suivante
  37: Ligne precedente
  38: Fenˆtre information
+ 39: Changement d'attribut
+ 40: Fenetre history des directories
+ 41: Va dans le r‚p‚rtoire pere
+ 42: Va dans le r‚p‚rtoire trash
 */
 
 void GestionFct(int fct)
@@ -422,7 +426,7 @@ switch(fct)
         SelectMoins();
         break;
     case 5:
-        Search();
+        Search(Fenetre[2],DFen);
         break;
     case 6:
         CreateKKD();
@@ -431,6 +435,7 @@ switch(fct)
         CommandLine("#%s %s",Fics->view,DFen->F[DFen->pcur]->name);
         break;
     case 8:
+        
         switch(DFen->system)
             {
             case 0:
@@ -443,9 +448,21 @@ switch(fct)
         break;
     case 10:    // Copy
         Copie(DFen,DFen->Fen2);
+        if (Cfg->autoreload==1)
+            {
+            GestionFct(27);
+            DFen=DFen->Fen2;
+            GestionFct(27);
+            }
         break;
     case 11:    // Move
         Move(DFen,DFen->Fen2);
+        if (Cfg->autoreload==1)
+            {
+            GestionFct(27);
+            DFen=DFen->Fen2;
+            GestionFct(27);
+            }
         break;
     case 12:    // Create Directory
         CreateDirectory();
@@ -455,6 +472,11 @@ switch(fct)
         Delete(DFen);
         CommandLine("#cd .");
         LoadSel(DFen,0);
+        if (Cfg->autoreload==1)
+            {
+            DFen=DFen->Fen2;
+            GestionFct(27);
+            }
         break;
     case 14:    // Close left window
         DFen=Fenetre[0];
@@ -563,7 +585,9 @@ switch(fct)
         SortFic(DFen);
         break;
     case 27:    // Reload
-        CommandLine("#CD .");
+        SaveSel(DFen);
+        CommandLine("#cd .");
+        LoadSel(DFen,0);
         break;
     case 28:    // Table ASCII
         ASCIItable();
@@ -576,15 +600,12 @@ switch(fct)
         break;
     case 31:    // Configuration
         Setup();
-        /*
-        strcpy(buffer,Fics->path);
-        Path2Abs(buffer,"kksetup.ini");
-        CommandLine("#%s %s",Fics->edit,buffer);
-        */
         break;
     case 32:    // Switch les fontes
         Cfg->font^=1;
         ChangeTaille(Cfg->TailleY); // Rafraichit l'ecran
+        Fenetre[0]->yl=(Cfg->TailleY)-4;
+        Fenetre[1]->yl=(Cfg->TailleY)-4;
         ChangeLine();
         break;
     case 33:    // Switch Special Sort
@@ -600,8 +621,6 @@ switch(fct)
             {
             buffer[strlen(buffer)-1]=0; // Retire le caractere ENTER
             remove(buffer);
-
-//          if (nanana!=0) WinError(buffer);
             }
         fclose(fic);
 
@@ -609,12 +628,12 @@ switch(fct)
         Path2Abs(buffer,"kktrash.sav");
         remove(buffer);
 
-        DFen=DFen->Fen2;
-        if (!stricmp(DFen->path,Fics->trash))
-            CommandLine("#cd .");
-        DFen=DFen->Fen2;
-        if (!stricmp(DFen->path,Fics->trash))
-            CommandLine("#cd .");
+        if (Cfg->autoreload==1)
+            {
+            GestionFct(27);
+            DFen=DFen->Fen2;
+            GestionFct(27);
+            }
 
         Cfg->strash=0;
         break;
@@ -643,6 +662,24 @@ switch(fct)
             DFen->FenTyp=3;
             DFen->Fen2->FenTyp=2;
             }
+        break;
+    case 39:
+        if (Cfg->autoreload==1)
+            {
+            GestionFct(27);
+            DFen=DFen->Fen2;
+            GestionFct(27);
+            }
+        WinAttrib();
+        break;
+    case 40:
+        HistDir();
+        break;
+    case 41:
+        CommandLine("#CD ..");
+        break;
+    case 42:
+        CommandLine("#CD %s",Fics->trash);
         break;
     }
 
@@ -881,11 +918,12 @@ int Mlen;
 int i,j;
 static char **dir;
 
-dir=GetMem(25*sizeof(char *));
+dir=GetMem(100*sizeof(char *));
 
 j=0;
 Mlen=0;
-for (i=0;i<25;i++)  {
+for (i=0;i<100;i++)
+    {
     dir[i]=Cfg->HistDir+j;
     dir[i]=strupr(dir[i]);
     if (strlen(dir[i])>Mlen) Mlen=strlen(dir[i]);
@@ -896,29 +934,37 @@ for (i=0;i<25;i++)  {
 
 if (i!=0)
     {
-    int x=2,y=2;
-    int pos=i-1;
-    int car;
+    int x=2,y=2,pos=i-1,car,max,prem;
 
     SaveEcran();
     PutCur(32,0);
 
-    WinCadre(x-2,y-1,x+Mlen+1,y+i,0);
-    ColWin(x-1,y,x+Mlen,y+i-1,10*16+1);
-    ChrWin(x-1,y,x+Mlen,y+i-1,32);
+    max=i;
+    if (max>Cfg->TailleY-4) max=Cfg->TailleY-4;
 
-    for (j=0;j<i;j++)
-        PrintAt(x,y+j,dir[j]);
+    WinCadre(x-2,y-1,x+Mlen+1,y+max,0);
+    ColWin(x-1,y,x+Mlen,y+max-1,10*16+1);
+    ChrWin(x-1,y,x+Mlen,y+max-1,32);
+
+    prem=0;
 
     do {
 
-    ColLin(x-1,y+pos,Mlen+2,7*16+5);
+    while((pos-prem)>=max) prem++;
+    while((pos-prem)<0) prem--;
+
+
+    for (j=0;j<max;j++)
+        PrintAt(x,y+j,"%-*s",Mlen,dir[j+prem]);
+
+    ColLin(x-1,y+(pos-prem),Mlen+2,7*16+5);
 
     car=Wait(0,0,0);
 
-    ColLin(x-1,y+pos,Mlen+2,0*16+1);
+    ColLin(x-1,y+(pos-prem),Mlen+2,0*16+1);
 
-    switch(HI(car))  {
+    switch(HI(car))
+        {
         case 72:        // UP
             pos--;
             if (pos==-1) pos=i-1;
@@ -942,6 +988,9 @@ if (i!=0)
             if (pos>=i) pos=i-1;
             break;
         }
+
+
+
     }
     while ( (car!=13) & (car!=27) & (HI(car)!=0x8D) );
 
@@ -1432,6 +1481,7 @@ ChargeEcran();
 
 char *AccessFile(void)
 {
+struct fenetre *FenOld;
 FILE *fic;
 static char nom[256];
 static char tnom[256];
@@ -1441,15 +1491,12 @@ char ChangePos=0;
 
 int i;
 
+FenOld=DFen;
+
 strcpy(tnom,DFen->F[DFen->pcur]->name);
 
-if (!strcmp(DFen->F[DFen->pcur]->name,".."))
+switch (DFen->system)
     {
-    strcpy(tnom,"FILE_ID.DIZ");
-    ChangePos=1;
-    }
-
-switch (DFen->system)   {
     case 0: // DOS
         strcpy(nom,DFen->path);
         Path2Abs(nom,tnom);
@@ -1458,16 +1505,12 @@ switch (DFen->system)   {
     case 2: // ARJ
     case 3: // ZIP
     case 4: // LHA
-        DFen=DFen->Fen2;
-
+        DFen=Fenetre[2];        // Copie de l'autre c“t‚ (t'es content Phil ?)
         CommandLine("#cd %s",Fics->trash);
 
-        Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
-        DFen=Fenetre[Cfg->FenAct];
-        ChangeLine();      // Affichage Path
+        Cfg->FenAct= (Cfg->FenAct)+2;
 
-        DFen=DFen->Fen2;
-
+        DFen=FenOld;
         for (i=0;i<DFen->nbrfic;i++)
             if (!strncmp(tnom,DFen->F[i]->name,strlen(tnom)))
                 {
@@ -1491,8 +1534,7 @@ switch (DFen->system)   {
         Cfg->strash+=DFen->F[DFen->pcur]->size;
 
         // Copie les fichiers dans la trash
-        DFen=DFen->Fen2;
-        Copie(DFen->Fen2,DFen);         // Quitte aprŠs
+        Copie(DFen,Fenetre[2]);    // Quitte aprŠs
 
         break;
     case 5: // KKD
@@ -1504,14 +1546,16 @@ switch (DFen->system)   {
             strcat(nom,(DFen->path)+strlen(DFen->VolName)+1);
             }
 
-        DFen=DFen->Fen2;
+//        DFen=DFen->Fen2;
+        DFen=Fenetre[2];                //
+        Cfg->FenAct= (Cfg->FenAct)+2;   //
 
         ChangeToKKD();
         CommandLine("#cd %s",nom);
 
-        Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
-        DFen=Fenetre[Cfg->FenAct];
-        ChangeLine();      // Affichage Path
+//        Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
+//        DFen=Fenetre[Cfg->FenAct];
+//        ChangeLine();      // Affichage Path
 
         ChangePos=1;
         break;
@@ -1524,7 +1568,8 @@ if (ChangePos)
     strcpy(nom,DFen->path);
     Path2Abs(nom,tnom);
     for (i=0;i<DFen->nbrfic;i++)
-        if (!strncmp(tnom,DFen->F[i]->name,strlen(tnom)))  {
+        if (!strncmp(tnom,DFen->F[i]->name,strlen(tnom)))
+            {
             DFen->pcur=i;
             DFen->scur=i;
             break;
@@ -1542,22 +1587,41 @@ int EnterArchive(void)
 {
 int i;
 
-switch (i=InfoIDF(DFen))
+static char buf[256];
+
+strcpy(buf,DFen->path);
+Path2Abs(buf,DFen->F[DFen->pcur]->name);
+
+switch (i=NameIDF(buf))
     {
-    case 34:       // RAR
-        InstallRAR();
+    case 30:    // ARJ
+    case 34:    // RAR
+    case 35:    // ZIP
+    case 32:    // LHA
+    case 102:   // KKD
+        strcpy(DFen->VolName,DFen->path);
+        Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
+
+        strcpy(DFen->path,DFen->VolName);
         break;
-    case 30:       // ARJ
-        InstallARJ();
+    }
+
+switch (i)
+    {
+    case 34:    // RAR
+        DFen->system=1;
         break;
-    case 35:       // ZIP
-        InstallZIP();
+    case 30:    // ARJ
+        DFen->system=2;
         break;
-    case 32:       // LHA
-        InstallLHA();
+    case 35:    // ZIP
+        DFen->system=3;
         break;
-    case 102:       // KKD
-        InstallKKD();
+    case 32:    // LHA
+        DFen->system=4;
+        break;
+    case 102:   // KKD
+        DFen->system=5;
         break;
     default:
         return i;
@@ -1567,6 +1631,10 @@ switch (i=InfoIDF(DFen))
 CommandLine("#cd .");
 return 0;               // OK
 }
+
+
+
+
 
 void SaveSel(struct fenetre *F1)
 {
@@ -1578,7 +1646,7 @@ fic=fopen(Fics->temp,"wt");
 
 fprintf(fic,"%s\n",F1->F[F1->pcur]->name);
 
-fprintf(fic,"%d\n",F1->pcur);   // position a l'ecran
+fprintf(fic,"%d %d\n",F1->pcur,F1->scur);   // position a l'ecran
 
 
 
@@ -1606,7 +1674,7 @@ if (fic==NULL) return;
 fgets(nom,256,fic);
 nom[strlen(nom)-1]=0;
 
-fscanf(fic,"%d",&(F1->scur));
+fscanf(fic,"%d%d",&(F1->pcur),&(F1->scur));
 
 j=1;
 for (i=0;i<F1->nbrfic;i++)
@@ -1723,26 +1791,43 @@ do
     if ( (Cfg->key==0) & (Cfg->strash>=Cfg->mtrash) & (Cfg->mtrash!=0) )
         GestionFct(34);  // Efface la trash si trop plein
 
-    DFen=Fenetre[Cfg->FenAct];
-
-    switch(DFen->FenTyp)
+    if ( (Cfg->key==0) & (Cfg->FenAct>1) )
         {
-        case 1:
-        case 2:
-            if ( ((DFen->Fen2->FenTyp)==1) | ((DFen->Fen2->FenTyp)==2) ) break;
-            Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
-            DFen=Fenetre[Cfg->FenAct];
+        Cfg->FenAct=(Cfg->FenAct)&1;
+        DFen=Fenetre[Cfg->FenAct];
+        ChangeLine();      // Affichage Path
+        }
+        else
+        {
+        if (Cfg->FenAct>1)
+            {
+            DFen=Fenetre[2];
             ChangeLine();      // Affichage Path
-            break;
+            }
+            else
+            DFen=Fenetre[Cfg->FenAct];
+        }
+
+    if (Cfg->key==0)    // Switch si le buffer clavier est vide
+        {
+        switch(DFen->FenTyp)
+            {
+            case 1:
+            case 2:
+                if ( ((DFen->Fen2->FenTyp)==1) | ((DFen->Fen2->FenTyp)==2) ) break;
+                Cfg->FenAct= (Cfg->FenAct==1) ? 0:1;
+                DFen=Fenetre[Cfg->FenAct];
+                ChangeLine();      // Affichage Path
+                break;
+            }
         }
 
     DFen->actif=1;
     DFen->Fen2->actif=0;
 
-    if (DFen->Fen2->FenTyp!=3)
-        AffFen(DFen);
-    if (DFen->FenTyp!=3)
-        AffFen(DFen->Fen2);
+    for (i=0;i<2;i++)
+        if (Fenetre[i]->FenTyp!=3)
+            AffFen(Fenetre[i]);
 
     Cl_Start=clock();
     Cl=clock();
@@ -1784,6 +1869,24 @@ do
             c=Wait(0,0,0);
 
         Cfg->key=c;
+
+        switch(HI(c))   {
+            case 0x3D:  // F3
+            case 0x3E:  // F4
+            case 0x56:  // SHIFT-F3
+            case 0x8D:  // CTRL-UP
+                if (!strcmp(DFen->F[DFen->pcur]->name,".."))
+                    {
+                    for (i=0;i<DFen->nbrfic;i++)
+                        if (!strnicmp("FILE_ID.DIZ",DFen->F[i]->name,13))
+                            {
+                            DFen->pcur=i;
+                            DFen->scur=i;
+                            break;
+                            }
+                    }
+                break;
+            }
 
         strcpy(Cfg->FileName,DFen->F[DFen->pcur]->name);
 
@@ -1897,7 +2000,7 @@ do
                     break;
                 default:
 
-                    switch(FicIdf(DFen->F[DFen->pcur]->name,i)) {
+                    switch(FicIdf(DFen->F[DFen->pcur]->name,i,0)) {
                         case 0:
                             CommandLine("\n");
                             break;
@@ -1998,6 +2101,9 @@ do
                 else
                 GestionFct(i);
             break;
+        case 0x55:      // SHIFT-F2
+            GestionFct(39);
+            break;
         case 0x56:      // SHIFT-F3
         case 0x8D:      // CTRL-UP
             GestionFct(8);            break;
@@ -2050,6 +2156,8 @@ do
             break;
         case 0x70:       // ALT-F9
             ChangeTaille(0);
+            Fenetre[0]->yl=(Cfg->TailleY)-4;
+            Fenetre[1]->yl=(Cfg->TailleY)-4;
             ChangeLine();
             break;
         case 0x73:       // CTRL LEFT
@@ -2060,22 +2168,19 @@ do
                 CommandLine("#cd %s",DFen->F[DFen->pcur]->name);
             break;
         case 0x76:       // CTRL PGDN
-            HistDir();
+            GestionFct(40);
             break;
         case 0x84:       // CTRL PGUP
-            CommandLine("#CD ..");
+            GestionFct(41);
             break;
         case 0x86:       // F12
-            CommandLine("#CD %s",Fics->trash);
+            GestionFct(42);
             break;
         case 0x88:       // SHIFT-F12
             GestionFct(6);
             break;
         case 0x8A:       // CTRL-F12
             GestionFct(17);
-            break;
-        case 0xA1:
-            CommandLine("#CD %s",Fics->LastDir);
             break;
 
         case 0x21:       // ALT-F
@@ -2098,6 +2203,10 @@ do
         case 0xB7:  //  Windows 95 keyboard
         case 0xB8:  //
 			   break;
+
+        case 0xA1:  //
+            CommandLine("#CD %s",Fics->LastDir);
+            break;
 
         default:
             if (Cfg->debug==1)
@@ -2197,14 +2306,16 @@ exit(1);
 
 void AfficheTout(void)
 {
+DFen=Fenetre[(Cfg->FenAct)&1];
+
+CommandLine("##INIT 0 %d 80\n",(Cfg->TailleY)-2);
+
+
 PrintAt(0,0,"%-40s%40s","Ketchup Killers Commander","RedBug");
 ColLin( 0,0,40,1*16+5);
 ColLin(40,0,40,1*16+3);
 ColLin(0,(Cfg->TailleY)-2,80,7);
 
-DFen=Fenetre[Cfg->FenAct];
-
-CommandLine("##INIT 0 %d 80\n",(Cfg->TailleY)-2);
 
 DFen->init=1;
 DFen->Fen2->init=1;
@@ -2396,7 +2507,7 @@ for(n=0;n<16;n++)
     }
 
 
-for(t=0;t<2;t++)
+for(t=0;t<3;t++)
 {
 Fen=Fenetre[t];
 
@@ -2442,7 +2553,7 @@ int LoadCfg(void)
 int m,n,i,nbr;
 int t;
 FILE *fic;
-char nom[256],tnom[256];
+char nom[256];
 short taille;
 
 
@@ -2475,7 +2586,7 @@ for(n=0;n<16;n++)
     Mask[n]->title[taille]=0;
     }
 
-for (t=0;t<2;t++)
+for (t=0;t<3;t++)
     {
     DFen=Fenetre[t];
 
@@ -2488,52 +2599,7 @@ for (t=0;t<2;t++)
     IOver=1;
     IOerr=0;
 
-    if (chdir(DFen->path)!=0)
-        {
-        strcpy(nom,DFen->path);
-        strcpy(tnom,"");
-        do
-            {
-            n=0;
-            for (i=0;i<strlen(DFen->path);i++)
-                if (DFen->path[i]=='\\') n=i;
-
-            if (n==0) break;
-
-            strcpy(tnom,DFen->path+n+1);
-            DFen->path[n]=0;
-            if (chdir(DFen->path)==0) break;
-            }
-        while(1);
-
-        if (n==0)
-            {
-            memcpy(DFen->path,"C:\\",4);
-            CommandLine("#cd .");
-            }
-            else
-            {
-            CommandLine("#cd .");
-            for (i=0;i<DFen->nbrfic;i++)
-                if (!strncmp(tnom,DFen->F[i]->name,strlen(tnom)))  {
-                    DFen->pcur=i;
-                    DFen->scur=i;
-                    n=0;
-                    break;
-                    }
-            if (n==0)
-                {
-                EnterArchive();
-                if (strlen(nom)!=strlen(DFen->VolName))
-                    CommandLine("#cd %s",nom+strlen(DFen->VolName)+1);
-                }
-            }
-        }
-        else
-        {
-        CommandLine("#cd .");
-        }
-
+    CommandLine("#cd .");
 
     IOver=0;
 
@@ -2717,7 +2783,7 @@ strcat(Fics->log,"\\trash\\logfile");      // logfile trash
  -  Default  -
  *************/
 
-Cfg->TailleY=50;
+Cfg->TailleY=30;
 
 ChangeType(4);
 Cfg->SaveSpeed=7200;
@@ -2725,7 +2791,8 @@ Cfg->SaveSpeed=7200;
 Cfg->_4dos=0;
 _4DOSverif();
 
-if (Cfg->_4dos==1)  {
+if (Cfg->_4dos==1)
+    {
     _4DOSLhistdir();
     }
     else
@@ -2741,6 +2808,7 @@ Fenetre[0]->y=1;
 Fenetre[0]->yl=(Cfg->TailleY)-4;
 Fenetre[0]->xl=39;
 Fenetre[0]->actif=1;
+Fenetre[0]->nfen=0;
 
 Fenetre[0]->pcur=0;
 Fenetre[0]->scur=0;
@@ -2756,6 +2824,7 @@ Fenetre[1]->y=1;
 Fenetre[1]->yl=(Cfg->TailleY)-4;
 Fenetre[1]->xl=39;
 Fenetre[1]->actif=0;
+Fenetre[1]->nfen=1;
 
 Fenetre[1]->pcur=0;
 Fenetre[1]->scur=0;
@@ -2766,17 +2835,33 @@ Fenetre[1]->Fen2=Fenetre[0];
 Fenetre[1]->order=1;
 
 
+Fenetre[2]->x=40;
+Fenetre[2]->y=1;
+Fenetre[2]->yl=20;      // Toute petite fenˆtre
+Fenetre[2]->xl=39;
+Fenetre[2]->actif=0;
+Fenetre[2]->nfen=2;
+
+Fenetre[2]->pcur=0;
+Fenetre[2]->scur=0;
+
+Fenetre[2]->FenTyp=2;   // Fenˆtre ferm‚e par default
+
+Fenetre[2]->Fen2=Fenetre[2];
+Fenetre[2]->order=1;
+
+
 /**********************************************
  - Chargement du fichier config (s'il existe) -
  **********************************************/
 
 if (LoadCfg()==-1)
     {
-    DFen=Fenetre[0];
-    CommandLine("#c:");
-    DFen=Fenetre[1];
-    CommandLine("#c:");
-
+    for (n=0;n<3;n++)
+        {
+        DFen=Fenetre[n];
+        CommandLine("#c:");
+        }
     DefaultCfg();
     }
 
@@ -2792,6 +2877,8 @@ if (LC[4]=='0')
 VerifHistDir();                 // Verifie l'history pour les repertoires
 
 ChangeTaille(Cfg->TailleY);     // Change de taille et affiche tout
+Fenetre[0]->yl=(Cfg->TailleY)-4;
+Fenetre[1]->yl=(Cfg->TailleY)-4;
 
 Gestion();
 

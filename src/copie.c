@@ -16,6 +16,8 @@
 #include "win.h"
 #include "kk.h"
 
+int LongGradue(int x,int y,int length,int from,int to,int total);
+
 int recopy(char *inpath,char *outpath,struct file *F);
 int Copytree(char *inpath,char *outpath);
 int truecopy(char *inpath,char *outpath);
@@ -32,8 +34,8 @@ static int FicEcrase;
 static char Dir[256];
 static char temp[256];
 
-int FenCopie(struct fenetre *F2);
-int FenMove(struct fenetre *F2);
+int FenCopie(struct fenetre *F1,struct fenetre *F2);
+int FenMove(struct fenetre *F1,struct fenetre *F2);
 
 // Convertit un masque en ce qui faut ;)
 //---------------------------------------
@@ -233,7 +235,9 @@ if (inhand==NULL)
 
     Taille=(d.bytes_per_sector);
 
-    if (Taille<=0) Taille=32*1024;
+    // if (Taille<=0)
+
+    Taille=32*1024;
 
     if (tfree<size)
         {
@@ -285,7 +289,7 @@ if (ok==1)
 
     TailleRest=0;
 
-    j3=Gradue(10,12,60,0,TailleRest,size);
+    j3=LongGradue(10,12,60,0,TailleRest,size);
 
     while (Taille>0)
         {
@@ -299,10 +303,10 @@ if (ok==1)
         TailleRest+=TailleEnreg;
         PrintAt(12,9,"Copying %9d of %9d",TailleRest,size);
 
-        j3=Gradue(10,12,60,j3,TailleRest,size);
+        j3=LongGradue(10,12,60,j3,TailleRest,size);
         }
 
-    Gradue(10,12,60,j3,size,size);
+    LongGradue(10,12,60,j3,size,size);
 
     free(buffer);
 
@@ -336,11 +340,11 @@ return ok;
 // retourne 0 si pas copie
 //-------------------------
 
-int FenCopie(struct fenetre *F2)
+int FenCopie(struct fenetre *F1,struct fenetre *F2)
 {
 static int DirLength=70;
 static int CadreLength=71;
-static int n;
+static int n,m,o;
 
 struct Tmt T[5] = {
       { 2,3,1,Dir,&DirLength},
@@ -358,6 +362,17 @@ n=WinTraite(T,5,&F);
 
 if (n!=27)  // pas escape
     {
+    o=-1;
+    for (m=0;m<strlen(Dir);m++)
+        if ( (Dir[m]=='\\') | (Dir[m]=='/') ) o++;
+
+    if (o==-1)
+        {
+        strcpy(temp,F1->path);
+        Path2Abs(temp,Dir);
+        strcpy(Dir,temp);
+        }
+
     strcpy(temp,"*.*");
 
     if (T[n].type!=3) // Pas cancel
@@ -390,12 +405,12 @@ return 0;       // Erreur
 // retourne 0 si pas move
 //-------------------------
 
-int FenMove(struct fenetre *F2)
+int FenMove(struct fenetre *F1,struct fenetre *F2)
 {
 static int DirLength=70;
 static int CadreLength=71;
 static char Dir[256];
-static int n;
+static int n,m,o;
 
 struct Tmt T[5] = {
       { 5,3,1,Dir,&DirLength},
@@ -413,6 +428,17 @@ n=WinTraite(T,5,&F);
 
 if (n!=27)  // pas escape
     {
+    o=-1;
+    for (m=0;m<strlen(Dir);m++)
+        if ( (Dir[m]=='\\') | (Dir[m]=='/') ) o++;
+
+    if (o==-1)
+        {
+        strcpy(temp,F1->path);
+        Path2Abs(temp,Dir);
+        strcpy(Dir,temp);
+        }
+
     strcpy(temp,"*.*");
 
     if (T[n].type!=3) // Pas cancel
@@ -531,7 +557,7 @@ fclose(fic);
 
 if (PlayerIdf(player,34)==0)
     {
-    CommandLine("#%s %c -std %s @%s %s",player,option,F1->VolName,Fics->temp,F2->path);
+    CommandLine("#%s %c -std -y %s @%s %s",player,option,F1->VolName,Fics->temp,F2->path);
     }
 }
 
@@ -584,8 +610,8 @@ fclose(fic);
 
 if (PlayerIdf(player,35)==0)
     {
-    CommandLine("#%s -%c %s @%s %s",player,option,F1->VolName,Fics->temp,F2->path);
-    }
+    CommandLine("#%s -%c -o %s @%s %s",player,option,F1->VolName,Fics->temp,F2->path);
+    }                    // Overwrite newer file
 }
 
 void ArjCopie(struct fenetre *F1,struct fenetre *F2)
@@ -634,7 +660,7 @@ for(i=0;i<F1->nbrfic;i++)
 fclose(fic);
 if (PlayerIdf(player,30)==0)
     {
-    CommandLine("#%s %c -P %s %s !%s",player,option,F1->VolName,F2->path,Fics->temp);
+    CommandLine("#%s %c -P -y %s %s !%s",player,option,F1->VolName,F2->path,Fics->temp);
     }
 }
 
@@ -927,7 +953,7 @@ if (ok==1)
 
     TailleRest=0;
 
-    j3=Gradue(10,12,60,0,TailleRest,size);
+    j3=LongGradue(10,12,60,0,TailleRest,size);
 
     while (Taille>0)
         {
@@ -941,10 +967,10 @@ if (ok==1)
         TailleRest+=TailleEnreg;
         PrintAt(12,9,"Moving %9d of %9d",TailleRest,size);
 
-        j3=Gradue(10,12,60,j3,TailleRest,size);
+        j3=LongGradue(10,12,60,j3,TailleRest,size);
         }
 
-    Gradue(10,12,60,j3,size,size);
+    LongGradue(10,12,60,j3,size,size);
 
     free(buffer);
 
@@ -1024,7 +1050,7 @@ if (!strcmp(F1->path,F2->path))
 TailleTotale=F1->taillesel;
 TailleRest=0;
 
-if (FenMove(F2)==0) return;
+if (FenMove(F1,F2)==0) return;
 
 F=F1->F[F1->pcur];
 
@@ -1066,11 +1092,6 @@ for (i=0;i<F1->nbrfic;i++)
 
 
 ChargeEcran();
-
-DFen=F2;
-CommandLine("#cd .");
-DFen=F1;
-CommandLine("#cd .");
 }
 
 /*-----------------------------*
@@ -1135,7 +1156,7 @@ if (!strcmp(F1->path,F2->path))
 TailleTotale=F1->taillesel;
 TailleRest=0;
 
-if (FenCopie(F2)==0) return;
+if (FenCopie(F1,F2)==0) return;
 
 
 F=F1->F[F1->pcur];
@@ -1176,11 +1197,35 @@ for (i=0;i<F1->nbrfic;i++)
 
 // Fenˆtre 1 ne change pas
 
-
 ChargeEcran();
+}
 
-DFen=F2;
-CommandLine("#cd .");
-DFen=F1;
-CommandLine("#cd .");
+// Avancement de graduation
+// Renvoit le prochain
+int LongGradue(int x,int y,int length,int from,int to,int total)
+{
+short j1;
+int j3;
+
+if (total==0) return 0;
+
+if ( (to>1000) & (total>1000) )
+    {
+    j3=(to/1000);
+    j3=(j3*length)/(total/1000);
+    }
+    else
+    j3=(to*length)/total;
+
+if (j3>=(length)) j3=length+1;
+
+j1=from;
+
+for (;j1<j3;j1++)
+    AffChr(j1+x,y,0xB2);
+
+if (to==0)
+    ChrLin(x,y,length+1,32);
+
+return j1;
 }

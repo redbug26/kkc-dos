@@ -40,10 +40,23 @@ while (c!=27) {
 AfficheTout();
 }
 
+
+int NameIDF(char *name)
+{
+RB_IDF Info;
+
+strcpy(Info.path,name);
+
+Traitefic(&Info);
+
+return Info.numero;
+}
+
+
 int InfoIDF(struct fenetre *Fen)
 {
 struct file *F;
-struct info Info;
+RB_IDF Info;
 
 F=Fen->F[Fen->pcur];
 
@@ -53,10 +66,9 @@ if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)    {
    }
 
 strcpy(Info.path,DFen->path);
-if (Info.path[strlen(Info.path)-1]!='\\') strcat(Info.path,"\\");
-strcat(Info.path,F->name);
+Path2Abs(Info.path,F->name);
 
-Traitefic(F->name,&Info);
+Traitefic(&Info);
 
 
 // sprintf(Info.path,"%s%s",drive,dir);
@@ -318,7 +330,7 @@ Fen->init=0;
              For the FILE_ID.DIZ
  ********************************************/
 
-void Makediz(struct info *Info,char *Buf)
+void Makediz(RB_IDF *Info,char *Buf)
 {
 struct dosdate_t Date;
 char ligne[256];
@@ -381,7 +393,7 @@ return;
 void FenDIZ(struct fenetre *Fen)
 {
 char *Buf;
-struct info Info;
+RB_IDF Info;
 struct fenetre *Fen2;
 struct file *F;
 int x,y,i;
@@ -393,10 +405,9 @@ if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR) return;
 WinCadre(Fen->x,Fen->y,Fen->x+Fen->xl,Fen->y+Fen->yl,1);
 
 strcpy(Info.path,Fen2->path);
-if (Info.path[strlen(Info.path)-1]!='\\') strcat(Info.path,"\\");
-strcat(Info.path,F->name);
+Path2Abs(Info.path,F->name);
 
-Traitefic(F->name,&Info);
+Traitefic(&Info);
 
 Buf=malloc(4000);
 
@@ -437,7 +448,7 @@ void ClearInfo(struct fenetre *Fen)
 {
 int i;
 struct file *F;
-struct info Info;
+RB_IDF Info;
 struct fenetre *Fen2;
 
 SaveEcran();
@@ -464,10 +475,9 @@ for (i=0;i<Fen->nbrfic;i++)
         else
         {
         strcpy(Info.path,Fen->path);
-        if (Info.path[strlen(Info.path)-1]!='\\') strcat(Info.path,"\\");
-        strcat(Info.path,F->name);
+        Path2Abs(Info.path,F->name);
 
-        Traitefic(F->name,&Info);
+        Traitefic(&Info);
         strcpy(F->info+1,Info.format);
         F->info[0]=Info.Btype;
         }
@@ -582,6 +592,7 @@ if (Fen->nbrsel==0)  {
 //-----------------------------------------------------------------------------
 void CtrlMenu(void)
 {
+if (DFen->y3==0) return;
 if (DFen->nbrfic==1)
     PrintAt(DFen->x3,DFen->y3,"%-10s bytes in one file         ",Long2Str(DFen->taillefic));
     else
@@ -591,6 +602,8 @@ if (DFen->nbrfic==1)
 void ShiftMenu(void)
 {
 char chaine[37];
+
+if (DFen->y3==0) return;
 memcpy(chaine,DFen->path,37);
 chaine[36]=0;
 PrintAt(DFen->x3,DFen->y3,"%-36s",chaine);
@@ -602,6 +615,7 @@ PrintAt(DFen->x3,DFen->y3,"%-36s",chaine);
 
 void AltMenu(void)
 {
+if (DFen->y3==0) return;
 PrintAt(DFen->x3,DFen->y3,"[ Hello World !!!                  ]");
 }
 
@@ -609,7 +623,7 @@ void MenuBar(char c)
 {
 static char bar[4][60]=
    { " Help  ----  View  Edit  Copy  Move  MDir Delete Menu  Quit ",      // NORMAL
-     " ----  ----  View  ----  ---- Rename ----  ----  ----  ---- ",      // SHIFT
+     " ---- Attrib View  ----  ---- Rename ----  ----  ----  ---- ",      // SHIFT
      "On-OffOn-Off Name  .Ext  Date  Size Unsort Spec  ----  ---- ",      // CONTROL
      " Drv1  Drv2  FDiz  ----  ----  ---- Search Type  Line  ---- "       // ALT
    };
@@ -1053,9 +1067,6 @@ switch (Cfg->TailleY)
         Font8x16();
         break;
    }
-
-DFen->yl=(Cfg->TailleY)-4;
-DFen->Fen2->yl=(Cfg->TailleY)-4;
 
 AfficheTout();
 

@@ -18,6 +18,9 @@
 extern struct key K[nbrkey];
 extern int IOerr;
 
+char PathOfKK[256];
+char ActualPath[256];
+
 // Pour Statistique;
 int St_App;
 int St_Dir;
@@ -39,7 +42,7 @@ short nbrdir; //
 
 char OldY;
 
-struct fenetre *Fenetre[2];
+struct fenetre *Fenetre[3];
 
 void SSearch(char *nom);
 void ApplSearch(void);
@@ -221,7 +224,7 @@ for(n=0;n<16;n++)
     fwrite(Mask[n]->title,taille,1,fic);
     }
 
-for(t=0;t<2;t++)
+for(t=0;t<3;t++)
 {
 Fen=Fenetre[t];
 
@@ -275,7 +278,7 @@ for(n=0;n<16;n++)
     Mask[n]->title[taille]=0;
     }
 
-for (t=0;t<2;t++)
+for (t=0;t<3;t++)
     {
     DFen=Fenetre[t];
 
@@ -454,12 +457,148 @@ ChargeEcran();
 if (car==27)
     for (n=0;n<26;n++)
         lstdrv[n]=0;
+}
 
+void PutInPath(void)
+{
+char *TPath;
+char path[2048];
+int Mlen;
+char erreur;
+FILE *fic;
+
+int i,j,k;
+static char **dir;
+
+SaveEcran();
+
+
+
+k=Cfg->TailleY-5;
+
+WinCadre(9,k-1,71,k+3,3);
+ChrWin(10,k,70,k+2,32);
+ColWin(10,k,70,k+2,10*16+1);
+PrintAt(10,k,"Select the directory where you will that KKSETUP copy the");
+PrintAt(10,k+1,"batch files for the execution of KK and KKDESC.");
+PrintAt(10,k+2,"ESC for cancel.");
+
+erreur=1;
+
+TPath=getenv("PATH");
+strcpy(path,TPath);
+k=strlen(path);
+
+for(i=0;i<k;i++)
+    if (path[i]==';')
+        path[i]=0;
+
+dir=GetMem(50*sizeof(char *));
+
+j=0;
+Mlen=0;
+for (i=0;i<50;i++)
+    {
+    dir[i]=path+j;
+    dir[i]=strupr(dir[i]);
+    if (strlen(dir[i])>Mlen) Mlen=strlen(dir[i]);
+    if (strlen(dir[i])==0) break;
+    while ( (j!=k) & (path[j]!=0) ) j++;
+    j++;
+    }
+
+if (i!=0)
+    {
+    int x=2,y=5;
+    int pos;
+    int car;
+
+    pos=0;
+
+    SaveEcran();
+    PutCur(32,0);
+
+    WinCadre(x-2,y-1,x+Mlen+1,y+i,0);
+    ColWin(x-1,y,x+Mlen,y+i-1,10*16+1);
+    ChrWin(x-1,y,x+Mlen,y+i-1,32);
+
+    for (j=0;j<i;j++)
+        PrintAt(x,y+j,dir[j]);
+
+    do {
+
+    ColLin(x-1,y+pos,Mlen+2,7*16+5);
+
+    car=Wait(0,0,0);
+
+    ColLin(x-1,y+pos,Mlen+2,0*16+1);
+
+    switch(HI(car))  {
+        case 72:        // UP
+            pos--;
+            if (pos==-1) pos=i-1;
+            break;
+        case 80:        // DOWN
+            pos++;
+            if (pos==i) pos=0;
+            break;
+        case 0x47:      // HOME
+            pos=0;
+            break;
+        case 0x4F:      // END
+            pos=i-1;
+            break;
+        case 0x49:      // PGUP
+            pos-=5;
+            if (pos<0) pos=0;
+            break;
+        case 0x51:      // PGDN
+            pos+=5;
+            if (pos>=i) pos=i-1;
+            break;
+        }
+    }
+    while ( (car!=13) & (car!=27) & (HI(car)!=0x8D) );
+
+    ChargeEcran();
+
+    if (car==13)
+        {
+        strcpy(path,dir[pos]);
+        Path2Abs(path,"kk.bat");
+        fic=fopen(path,"wt");
+        if (fic!=NULL)
+            {
+            fprintf(fic,"@%s\\kk.exe\n",ActualPath);
+            fprintf(fic,"@REM This file was making by KKSETUP\n");
+            fclose(fic);
+
+            strcpy(path,dir[pos]);
+            Path2Abs(path,"kkdesc.bat");
+            fic=fopen(path,"wt");
+            if (fic!=NULL)
+                {
+                fprintf(fic,"@%s\\kkdesc.exe %%1 \n",ActualPath);
+                fprintf(fic,"@REM This file was making by KKSETUP\n");
+                fclose(fic);
+                erreur=0;
+
+                strcpy(PathOfKK,dir[pos]);
+                }
+            }
+        }
+    }
+free(dir);
+
+if (erreur==1)
+    strcpy(PathOfKK,"");
+
+ChargeEcran();
 }
 
 void main(short argc,char **argv)
 {
-FILE *fic;
+char buffer[256];
 char chaine[256];
 short n;
 int car;
@@ -467,7 +606,6 @@ int car;
 char *path;
 
 IOerr=1;
-
 
 /***********************
  - Gestion des erreurs -
@@ -487,11 +625,21 @@ for (n=strlen(path);n>0;n--) {
         }
     }
 
+
+
+
+/********************************
+ - Initialisation des variables -
+ ********************************/
+
 Fenetre[0]=GetMem(sizeof(struct fenetre));
 Fenetre[0]->F=GetMem(TOTFIC*sizeof(void *));        // allocation des pointeurs
 
 Fenetre[1]=GetMem(sizeof(struct fenetre));
 Fenetre[1]->F=GetMem(TOTFIC*sizeof(void *));        // allocation des pointeurs
+
+Fenetre[2]=GetMem(sizeof(struct fenetre));
+Fenetre[2]->F=GetMem(TOTFIC*sizeof(void *));        // allocation des pointeurs
 
 Cfg=GetMem(sizeof(struct config));
 Fics=GetMem(sizeof(struct fichier));
@@ -523,9 +671,6 @@ Fics->help=GetMem(256);
 strcpy(Fics->help,path);
 strcat(Fics->help,"\\kksetup.hlp");
 
-Fics->LastDir=GetMem(256);
-strcpy(Fics->LastDir,path);
-
 if (LoadCfg()==-1)
     {
     struct fenetre *DFen;
@@ -533,7 +678,7 @@ if (LoadCfg()==-1)
 
     DefaultCfg();
 
-    for (t=0;t<2;t++)
+    for (t=0;t<3;t++)
         {
         DFen=Fenetre[t];
 
@@ -593,21 +738,7 @@ PrintAt(21,1,"Setup of Ketchup Killers Commander");
 
 posy=3;
 
-strcpy(chaine,"c:\\dos\\kk.bat");
-fic=fopen(chaine,"wt");
 
-fprintf(fic,"@%s\\kk.exe\n",path);
-fprintf(fic,"@REM This file was making by KKSETUP\n");
-
-fclose(fic);
-
-strcpy(chaine,"c:\\dos\\kkdesc.bat");
-fic=fopen(chaine,"wt");
-
-fprintf(fic,"@%s\\kkdesc.exe %%1 \n",path);
-fprintf(fic,"@REM This file was making by KKSETUP\n");
-
-fclose(fic);
 
 strcpy(chaine,Fics->path);
 strcat(chaine,"\\trash");
@@ -623,6 +754,39 @@ PrintAt(10,13,"F3: Load KKSETUP.INI");
 PrintAt(10,17,"F4: List all the format");
 
 PutCur(32,0);
+
+
+/********************************
+ - Insertion de KK dans la path -
+ - Si pas d‚ja pr‚sent !        -
+ ********************************/
+strcpy(ActualPath,path);
+
+_searchenv("KK.BAT","PATH",buffer);
+if (strlen(buffer)!=0)
+    {
+    FILE *fic;
+    static char toto[256];
+    static char tata[256];
+
+    fic=fopen(buffer,"rt");
+    fgets(toto,256,fic);
+
+    sprintf(tata,"@%s\\kk.exe\n",ActualPath);
+
+    if (stricmp(tata,toto)!=0)
+        PutInPath();
+
+    Path2Abs(buffer,"..");
+    strcpy(PathOfKK,buffer);
+    }
+    else
+    PutInPath();
+
+
+/*****************************
+ - Gestion du menu principal -
+ *****************************/
 
 do
 {
@@ -647,11 +811,14 @@ switch(HI(car))
     case 0x3E:  // F4
         IdfListe();
         break;
+    case 0x3F:
+        PutInPath();
+        break;
     }
 
 } while ( (HI(car)!=0x44) & (LO(car)!=27) );
 
-PrintAt(10,(Cfg->TailleY-6),"KK.BAT & KKDESC.BAT are now in PATH");
+PrintAt(10,(Cfg->TailleY-6),"KK.BAT & KKDESC.BAT are now in PATH (%s)",PathOfKK);
 PrintAt(20,(Cfg->TailleY-5),"-> You could run KK from everywhere");
 PrintAt(10,(Cfg->TailleY-4),"%s is done",chaine);
 

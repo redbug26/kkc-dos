@@ -120,9 +120,7 @@ struct Tmt T[5] = {
       { 1,1,4,NULL,&CadreLength}
       };
 
-struct TmtWin F = {
-    3,10,76,17,
-    "Error"};
+struct TmtWin F = { 3,10,76,17, "Error" };
 
 int n;
 

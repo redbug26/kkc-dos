@@ -90,7 +90,7 @@ return *(scrseg+(y*80+x)*2+1);
 
 void AffChr(char x,char y,char c)
 {
-*(scrseg+(y*80+x)*2)=c;
+*(scrseg+((y*80+x)<<1))=c;
 }
 
 void AffCol(char x,char y,char c)
@@ -1248,6 +1248,8 @@ return r;
 // 2 si -->
 // 3 si <--
 // 4 si pas bouger
+// 5 si HAUT
+// 6 si BAT
 int MSwitch(int x,int y,int *Val,int i)
 {
 int r=0;
@@ -1271,17 +1273,23 @@ while (r==0)
             (*Val)=i;
             r=4;
             break;
-        case 9:
+        case 9: // TAB
             r=2;
             break;
         case 0:
             switch(car/256)
                 {
-                case 15:
-                case 72:
+                case 0x4B:  // LEFT
+                case 15:    // SHIFT-TAB
                     r=3;
                     break;
-                case 80:
+                case 72:    // BAS
+                    r=6;
+                    break;
+                case 80:    // HAUT
+                    r=5;
+                    break;
+                case 0x4D:  // RIGHT
                     r=2;
                     break;
                 }
@@ -1302,6 +1310,7 @@ int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F)
 char fin;       // si =0 continue
 char direct;    // direction du tab
 int i,i2,j;
+int *adr;
 static char chaine[80];
 
 SaveEcran();
@@ -1355,6 +1364,10 @@ switch(T[i].type) {
     case 10:
         PrintAt(F->x1+T[i].x,F->y1+T[i].y,"(%c) %s",(*(T[i].entier)==i) ? 'X' : ' ',T[i].str);
         break;
+    case 11:
+        ChrLin(F->x1+T[i].x,F->y1+T[i].y,*(T[i].entier),32);
+        PrintAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str);
+        break;
     }
 
 fin=0;
@@ -1376,6 +1389,7 @@ switch(T[i].type) {
     case 4:
     case 9:
         break;
+    case 11:
     case 1:
         direct=InputAt(F->x1+T[i].x,F->y1+T[i].y,T[i].str,*(T[i].entier));
         break;
@@ -1405,19 +1419,36 @@ switch(T[i].type) {
 switch(direct)
     {
     case 0:
-        fin=1;   // ENTER
+        fin=1;  // SELECTION
         break;
     case 1:
-        fin=2;   // ESC
+        fin=2;  // ABORT
         break;
-    case 2:
+    case 2:     // Next Case
         i++;
         break;
-    case 3:
+    case 3:     // Previous Case
         i--;
         break;
-    case 4:
+    case 4:     // Rien du tout
         break;
+    case 5:     // Type suivant
+        adr=T[i].entier;
+        while (adr==T[i].entier)
+            {
+            i++;
+            if (i==nbr) i=0;
+            }
+        break;
+    case 6:     // Type precedent
+        adr=T[i].entier;
+        while (adr==T[i].entier)
+            {
+            i--;
+            if (i==-1) i=nbr-1;
+            }
+        break;
+
     default:
         // Pas normal
         break;
@@ -1478,7 +1509,6 @@ if (WinTraite(T,4,&F)==0)
     return 0;
     else
     return 1;
-
 }
 
 // 1 -> Cancel
@@ -1675,7 +1705,15 @@ Cfg->mtrash=100000;
 
 Cfg->overflow=0;
 
+Cfg->autoreload=1;
+
 Cfg->crc=0x69;
+
+Cfg->debug=0;
+
+Cfg->key=0;
+
+strcpy(Cfg->HistDir,"C:\\");
 }
 
 //---------------- Error and Signal Handler -------------------------------------

@@ -22,76 +22,12 @@
 
 #include "win.h"
 
-void TPath2Abs(char *p,char *Ficname);
 
 void GetFreeMem(char *buffer);
 #pragma aux GetFreeMem = \
     "mov ax,0500h" \
 	"int 31h" \
 	parm [edi];
-
-/*-----------------------------------------------------------*
- - Fonction qui convertit les caracteres ASCII en RedBug one -
- *-----------------------------------------------------------*/
-char CnvASCII(char car)
-{
-switch(car)
-    {
-    case 'ä':
-        return 232;
-    case 'Ç':
-        return 233;
-    case 'à':
-        return 234;
-    case 'â':
-        return 235;
-
-    case 'ó':
-        return 'u';
-    case '£':
-        return 'u';
-    case 'ñ':
-        return 'u';
-    case 'Å':
-        return 'u';
-
-    case 'ç':
-        return 'i';
-    case '°':
-        return 'i';
-    case 'å':
-        return 'i';
-    case 'ã':
-        return 'i';
-
-    case 'ï':
-        return 'o';
-    case '¢':
-        return 'o';
-    case 'ì':
-        return 'o';
-    case 'î':
-        return 'o';
-
-
-    case 'Ö':
-        return 224;
-    case '†':
-        return 225;
-    case 'É':
-        return 226;
-    case 'Ñ':
-        return 227;
-
-    case 'á':
-        return 231;
-
-    case 0xFA:
-        return 7;
-    default:
-        return car;
-    }
-}
 
 
 /*-----------------------------------------------------*
@@ -115,10 +51,11 @@ FF2=(struct file **)P2;
 F1=*FF1;
 F2=*FF2;
 
-// Ne trie pas si il ne le faut pas
-//----------------------------------
-if (DFen->order==0)
-    return -1;
+// Place les X:Reload en haut
+//----------------------------
+if (F1->name[1]==':') return -1;
+if (F2->name[1]==':') return 1;
+
 
 // Place les .. et . en haut
 //---------------------------
@@ -127,6 +64,11 @@ if (!strcmp(F2->name,"..")) return 1;
 
 if (!strcmp(F1->name,".")) return -1;
 if (!strcmp(F2->name,".")) return 1;
+
+// Ne trie pas si il ne le faut pas
+//----------------------------------
+if (DFen->order==0)
+    return -1;
 
 // Affiche les repertoires tout en haut
 //--------------------------------------
@@ -204,25 +146,7 @@ void SortFic(struct fenetre *Fen)
 qsort(Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
 }
 
-/*------------------------------*
- - Renvoit l'extension d'un nom -
- *------------------------------*/
-char *getext(const char *nom)
-{
-char *e,*ext;
 
-e=strchr(nom,'.');
-
-if (e==NULL)
-    ext=strchr(nom,0);
-    else
-    ext=e+1;
-
-return ext;
-}
-
-
-void PutInHistDir(void);
 
 // 1-> erreur
 // 0-> OK
@@ -271,203 +195,6 @@ return 0;
 }
 
 
-
-/*--------------------------------------*
- - Comparaison entre un nom et un autre -
- *--------------------------------------*/
-int Maskcmp(char *src,char *mask)
-{
-int n;
-
-for (n=0;n<strlen(mask);n++)
-    {
-    if ( (src[n]=='/') & (mask[n]=='/') ) continue;
-    if ( (src[n]=='\\') & (mask[n]=='/') ) continue;
-    if ( (src[n]=='\\') & (mask[n]=='\\') ) continue;
-    if ( (src[n]=='/') & (mask[n]=='\\') ) continue;
-    if (toupper(src[n])==toupper(mask[n])) continue;
-
-    return 1;
-    }
-return 0;
-}
-
-
-/*-----------------------------------------------------------*
- - Envoie le nom du fichier src dans dest si le mask est bon -
- - Renvoit 1 dans ce cas, sinon renvoie 0                    -
- *-----------------------------------------------------------*/
-int find1st(char *src,char *dest,char *mask)
-{
-int i;
-
-if (!Maskcmp(src,mask)) {
-    if ( (src[strlen(mask)]=='\\') | (src[strlen(mask)]=='/') )
-        memcpy(dest,src+strlen(mask)+1,strlen(src+strlen(mask)));
-        else
-        memcpy(dest,src+strlen(mask),strlen(src+strlen(mask))+1);
-    for (i=0;i<strlen(dest);i++)
-        {
-        if (dest[i]=='\\') return 0;
-        if (dest[i]=='/') return 0;
-        }
-    return 1;
-    }
-
-return 0;
-}
-
-
-/*----------------------------*
- - Comparaison avec WildCards -
- *----------------------------*/
-int WildCmp(char *a,char *b)
-{
-short p1=0,p2=0;
-int ok;
-char c1,c2,c3;
-
-ok=0;
-
-while (1)
-    {
-    c1=a[p1];
-    c2=b[p2];
-    c3=b[p2+1];
-
-    if ( (c1>='a') & (c1<='z') ) c1-=32;
-    if ( (c2>='a') & (c2<='z') ) c2-=32;
-    if ( (c3>='a') & (c3<='z') ) c3-=32;
-
-    if ( ((c1==0) & (c2==0)) |
-         ((c1==0) & (c2=='*') & (c3==0)) |
-         ((c1==0) & (c2=='*') & (c3=='.') & (b[p2+2]=='*')) |
-         ((c1==0) & (c2=='.') & (c3=='*'))
-         )
-        break;
-
-    if (c1==0)
-        {
-        ok=1;
-        break;
-        }
-
-    if ( (c1==c2) | (c2=='?') )
-        {
-        p1++;
-        p2++;
-        continue;
-        }
-    if  (c2=='*')
-        {
-        if (c1==c3)
-            p2+=2;
-        p1++;
-        continue;
-        }
-
-    ok=1;
-    break;
-    }
-
-return ok;
-}
-
-/*---------------------------------*
- - Give the name include in a path -
- - E.G. c:\kkcom\kkc.c --> "kkc.c" -
- -      c:\            --> ""      -
- -      c:\kkcom       --> "kkcom" -
- -           p         --> Ficname -
- *---------------------------------*/
-char *FileinPath(char *p,char *Ficname)
-{
-int n;
-char *s;
-
-for (n=0;n<strlen(p);n++)
-    if ( (p[n]=='\\') | (p[n]=='/') )
-        s=p+n+1;
-
-strcpy(Ficname,s);
-
-return s;
-}
-
-/*---------------------------------------------*
- - Make absolue path from old path and ficname -
- *---------------------------------------------*/
-void Path2Abs(char *p,char *Ficname)
-{
-int l,m,n;
-char car;
-
-for(n=0;n<strlen(p);n++)
-    if (p[n]=='/') p[n]='\\';
-
-for(n=0;n<strlen(Ficname);n++)
-    if (Ficname[n]=='/') Ficname[n]='\\';
-
-m=0;
-l=strlen(Ficname);
-for(n=0;n<l;n++)
-    if (Ficname[n]=='\\')
-        {
-        car=Ficname[n+1];
-
-        Ficname[n+1]=0;
-
-        TPath2Abs(p,Ficname+m);
-
-        Ficname[n+1]=car;
-        Ficname[n]=0;
-
-        m=n+1;
-        }
-
-TPath2Abs(p,Ficname+m);
-}
-
-void TPath2Abs(char *p,char *Ficname)
-{
-int n;
-static char old[256];     // Path avant changement
-
-memcpy(old,p,256);
-
-if (p[strlen(p)-1]=='\\') p[strlen(p)-1]=0;
-
-if ( (!strncmp(Ficname,"..",2)) & (p[0]!=0) ) {
-    for (n=strlen(p);n>0;n--)
-        if (p[n]=='\\') {
-            p[n]=0;
-            break;
-            }
-    if (p[strlen(p)-1]==':') strcat(p,"\\");
-    return;
-    }
-
-if (Ficname[0]!='.') {
-    if  ( (Ficname[1]==':') & (Ficname[2]=='\\') )  {
-        strcpy(p,Ficname);
-        if (p[strlen(p)-1]==':') strcat(p,"\\");
-        return;
-        }
-
-    if (Ficname[0]=='\\')  {
-        strcpy(p+2,Ficname);
-        if (p[strlen(p)-1]==':') strcat(p,"\\");
-        return;
-        }
-
-    if (p[strlen(p)-1]!='\\') strcat(p,"\\");
-    strcat(p,Ficname);
-   }
-
-if (p[strlen(p)-1]==':') strcat(p,"\\");
-}
-
-
 /*----------------------*
  - Change de repertoire -
  *----------------------*/
@@ -479,7 +206,7 @@ int n;
 int err;
 char *p;
 
-PrintAt(0,0,"%-80s","Wait Please");
+// PrintAt(0,0,"%-80s","Wait Please");
 
 p=DFen->path;
 memcpy(old,p,256);
@@ -494,65 +221,135 @@ Path2Abs(DFen->path,Ficname);
 if ( (p[strlen(p)-1]=='\\') & (p[strlen(p)-2]!=':') )
      p[strlen(p)-1]=0;
 
+err=0;
+
+do
+{
 if (DFen->system!=0)
-    {
-    if (strlen(DFen->VolName)>strlen(DFen->path))
+    if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
         DFen->system=0;
+
+if (DFen->system==0)
+    {
+    static char tnom[256],nom2[256];
+    int i;
+
+    if (chdir(DFen->path)!=0)
+        {
+        strcpy(nom2,DFen->path);
+        strcpy(tnom,"");
+        do
+            {
+            n=0;
+            for (i=0;i<strlen(DFen->path);i++)
+                if (DFen->path[i]=='\\') n=i;
+
+            if (n==0) break;
+
+            strcpy(tnom,DFen->path+n+1);
+            DFen->path[n]=0;
+            if (chdir(DFen->path)==0) break;
+            }
+        while(1);
+
+        if (n==0)
+            {
+            WinError("Invalid Path");
+            memcpy(DFen->path,"C:\\",4);
+            }
+            else
+            {
+            static char buf[256];
+
+            strcpy(buf,DFen->path);
+            Path2Abs(buf,tnom);
+
+            switch (n=NameIDF(buf))
+                {
+                case 30:    // ARJ
+                case 34:    // RAR
+                case 35:    // ZIP
+                case 32:    // LHA
+                case 102:   // KKD
+                    break;
+                default:
+                    n=0;
+                }
+
+            if (n!=0)
+                {
+                strcpy(DFen->VolName,buf);
+
+                strcpy(DFen->path,DFen->VolName);
+
+                switch (n)
+                    {
+                    case 34:    // RAR
+                        DFen->system=1;
+                        break;
+                    case 30:    // ARJ
+                        DFen->system=2;
+                        break;
+                    case 35:    // ZIP
+                        DFen->system=3;
+                        break;
+                    case 32:    // LHA
+                        DFen->system=4;
+                        break;
+                    case 102:   // KKD
+                        DFen->system=5;
+                        break;
+                    }
+
+                if (strlen(nom2)!=strlen(DFen->VolName))
+                    Path2Abs(DFen->path,nom2+strlen(DFen->VolName)+1);
+                }
+                else
+                {
+                WinMesg("Invalid Path",nom2);
+//                strcpy(DFen->path,GetLastHistDir());
+                }
+            }
+        }
     }
 
-// PrintAt(0,0,"(System:%d)",DFen->system);
-// PrintAt(0,1,"(%s)",DFen->path);
-// PrintAt(0,2,"(%s)",DFen->VolName);
-
-switch(DFen->system)  {
+switch(DFen->system)
+    {
     case 0:
-        if (chdir(DFen->path)!=0)   {
-            WinError("Invalid Path");
-            strcpy(DFen->path,GetLastHistDir());
-            }
         err=DOSlitfic();
-        strupr(DFen->path);
-
-        if (strcmp(Ficname,"..")!=0)
-            PutInHistDir();
+        if (err==0)
+            {
+            if (strcmp(Ficname,"..")!=0)
+                PutInHistDir();
+            }
         break;
     case 1:
         err=RARlitfic();
-        if (err==1)
-            err=RARlitfic();
-        strupr(DFen->path);
         break;
     case 2:
         err=ARJlitfic();
-        if (err==1)
-            err=ARJlitfic();
-        strupr(DFen->path);
         break;
     case 3:
         err=ZIPlitfic();
-        if (err==1)
-            err=ZIPlitfic();
-        strupr(DFen->path);
         break;
     case 4:
         err=LHAlitfic();
-        if (err==1)
-            err=LHAlitfic();
-        strupr(DFen->path);
         break;
     case 5:
         err=KKDlitfic();
-        if (err==1)
-            err=KKDlitfic();
-        strupr(DFen->path);
         break;
     default:
         sprintf(nom,"ChangeDir on system: %d",DFen->system);
         YouMad(nom);
         break;
     }
+}
+while(err==1);
 
-SortFic(DFen);
+strupr(DFen->path);
+
+if (DFen->nfen!=2)
+    SortFic(DFen);  // On trie pas la fenetre cachÇe
 
 if (err==0)
     {
@@ -562,14 +359,14 @@ if (err==0)
             if (!stricmp(DFen->F[n]->name,nom))
                 {
                 DFen->pcur=n;
-                DFen->scur=(DFen->yl)/2;   //n;
+                DFen->scur=(DFen->yl)/2;   // Centrage du nom
                 }
         }
     }
     else
     memcpy(p,old,256);
 
-PrintAt(0,0,"%-40s%40s","Ketchup Killers Commander","RedBug");
+// PrintAt(0,0,"%-40s%40s","Ketchup Killers Commander","RedBug");
 }
 
 
@@ -646,7 +443,7 @@ for (i=a0;i<256;i++)
 void PutInHistDir(void)
 {
 int i,j,k;
-static int TabDir[25];
+static int TabDir[100];
 
 int a;
 
@@ -655,7 +452,7 @@ do
     a=0;
 
     j=0;
-    for (i=0;i<25;i++)
+    for (i=0;i<100;i++)
         {
         TabDir[i]=j;
         if (Cfg->HistDir[j]==0) break;
@@ -715,7 +512,6 @@ switch(DFen->system)  {
 // Commandes globales
 // ------------------
 static int x0,py,xmax;       // position en X,Y ,X initial, Taille de X max.
-static int x1;               // longueur de la path
 static char str[256];        // commande interne
 static int px;               // Chaipus
 static char flag;            // direction flag pour plein de choses
@@ -779,14 +575,26 @@ return 0;
 // ---------------------------------
 void ChangeLine(void)
 {
-int n;
+int x1,m,n;
 
-PrintAt(x0,py,"%s>",DFen->path);
+if (DFen->nfen==2) return;      // Fenetre[2]
+
 x1=strlen(DFen->path)+1;
-PrintAt(x0+x1,py,str);
-GotoXY(x1+x0+strlen(str),py);
-for (n=strlen(str);n<xmax-x1;n++)
-    AffChr(x1+x0+n,py,32);
+m=strlen(str);
+
+if ( ((x1+m)>75) & (x1>40) )
+    {
+    n= (m>=(78-x0)) ? m-(78-x0) : 0;
+    GotoXY(x0+m-n+1,py);
+    PrintAt(x0,py,">%-*s",78-x0,str+n);
+    }
+    else
+    {
+    n= (m>=(79-(x0+x1))) ? m-(79-(x0+x1)) : 0;
+    GotoXY(x1+x0+m-n,py);
+    PrintAt(x0,py,"%s>%-*s",DFen->path,79-x0-x1,str+n);
+    }
+
 }
 
 
@@ -865,11 +673,7 @@ do {
 
    switch (a) {
 		case '\r':
-			 while (pos!=0) {
-				 pos--;
-				 if (affich==1)
-					AffChr(pos+x0+x1,py,32);
-				 }
+             while (pos!=0)  pos--;
 			 break;
 		case 8: 			// delete
 			if (pos>0) pos--;
@@ -879,29 +683,23 @@ do {
 				pos--;
                 if ((chaine[pos]==32) | (chaine[pos]=='.')) break;
 				chaine[pos]=0;
-				if (affich==1)
-					AffChr(pos+x0+x1,py,32);
 				}
 			break;
 		case '\n':          // passage Ö la ligne
 			traite=1;
 			break;
 		default:
-			if (affich==1)
-				 AffChr(pos+x0+x1,py,a);
 			chaine[pos]=a;
 			pos++;
 			break;
 		}
    chaine[pos]=0;
-   if (affich==1)
-	   AffChr(pos+x0+x1,py,32);
    n++;
    } while (suite[n]!=0);
 
 
 if (affich==1)
-    GotoXY(pos+x0+x1,py);
+    ChangeLine();
 
 // Traite les commandes normales (màme si traite==0) mais mettre Ö 1 apräs
 

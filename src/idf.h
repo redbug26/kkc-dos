@@ -2,7 +2,14 @@
 #define BYTE unsigned char
 #define WORD unsigned short
 
-struct key      {
+#define nbrkey 131
+        // number of format + 6
+
+/*------------------------------------*
+ - Internal description of all format -
+ *------------------------------------*/
+struct key
+        {
         char buf[25];
         char len;
         short pos;
@@ -10,42 +17,49 @@ struct key      {
         char *ext;
         char *pro;
         short numero;
-        char proc;              // procedure pour cl‚
-        char other;     // autres informations
-        char type;              // type de fichier
+        char proc;
+        char other;
+        char type;
         };
 
-#define nbrkey 128
-        // Nombre of format + 6
 
-struct info
+/*--------------------------------*
+ * Information that you muse use  *
+ *--------------------------------*/
+
+typedef struct __idfinfo
    {
+   int numero;           // ID KEY of the format
+
+   char path[256];       // The path of the file
+
+   char filename[80];    // Name of the file
+   char fullname[80];    // Title of the file
+   char message[10][80]; // Various message
+   char format[80];      // Name of the format
+   char info[80];        // Name of O.S. (if os!=0)
+   char Tinfo[80];
+   char composer[80];    // Name of the composer (for the module)
+   ULONG taille;         // Size of the file (if !=0)
+   char ext[4];          // The extension of the format
+   char os;              // 1: DOS, 2:WIN, 3:WIN32
+   int Btype;            // 1: module, 2: sample, 3: archive,
+                         // 4: bitmap, 5: anim  , 6: other.
+/* Internal variable */
+   char *buffer;         // buffer for E/S
+   ULONG posbuf;         // position in buffer (from posfic)
+   WORD sizebuf;         // size of buffer
    int handle;
    ULONG posfic;
-   char filename[80];
-   char fullname[80];		// le plus grand fullname est 40 (farandole)
-   char message[10][80];	// 10 Messages de 80 caracters
-   char format[80];
-   char info[80];               // contient le nom de l'OS si (os!=0)
-   char Tinfo[80];
-   char composer[80];
-   ULONG taille;
-   char ext[4];
-   int type;
-   char os;	// 1: DOS, 2:WIN, 3:WIN32
-   int numero;
-   int Btype;	// 1: module, 2: image, 3: executable,
-                // 4:other,   5:sample/instruments, 6:anim.
 
-   char *buffer;	// buffer pour E/S
-   ULONG posbuf;	// position du buffer dans le fichier par rapport … posfic
-   WORD sizebuf;		// taille du buffer
 
-   char path[256];              //
-};
+} RB_IDF;
 
-void Traitefic(char *nomfic,struct info*);	 // traite un fichier
 
-void ClearSpace(char *name);    // efface les espaces inutiles
+
+void Traitefic(RB_IDF*);       // traite un fichier
+
+// Call this function after giving the full pathname of the file
+
 
 

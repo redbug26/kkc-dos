@@ -22,6 +22,10 @@ struct file **Fic;
 unsigned error;
 char rech[256];
 
+if (chdir(DFen->path)!=0)
+    return 1;
+
+
 Fic=DFen->F;
 
 strcpy(rech,DFen->path);
@@ -31,7 +35,7 @@ if ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
     {
     Fic[0]=GetMem(sizeof(struct file));
 
-    Fic[0]->name=GetMem(4);
+    Fic[0]->name=GetMem(4); // Pour Reload
     memcpy(Fic[0]->name,rech,4);
     Fic[0]->time=0;
     Fic[0]->date=0;
@@ -61,7 +65,7 @@ if (error==1)
 
 while (error==0)
     {
-    if ( ((Cfg->pntrep==1) | (strcmp(ff.name,".")!=0)) &
+    if ( ((Cfg->pntrep==1) |  (strcmp(ff.name,".")!=0)) &
          ((Cfg->hidfil==1) | (((ff.attrib)&_A_HIDDEN)!=_A_HIDDEN)) &
          (((ff.attrib)&_A_VOLID)!=_A_VOLID)
          )
@@ -84,16 +88,15 @@ DFen->init=1;
 
 ChangeLine();
 
-// Temporise le temps … attendre avant le lecture du header
+// Temporise le temps … attendre avant le lecture du header OK ;-}
 
 switch(toupper(DFen->path[0]))
     {
-    case 'A':
-    case 'B':
-        DFen->IDFSpeed=10*18;
+    case 'C':
+        DFen->IDFSpeed=2*18;
         break;
     default:
-        DFen->IDFSpeed=2*18;
+        DFen->IDFSpeed=10*18;
         break;
    }
 

@@ -241,17 +241,6 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
 return 0;
 }
 
-void InstallARJ(void)
-{
-strcpy(DFen->VolName,DFen->path);
-Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
-
-strcpy(DFen->path,DFen->VolName);
-
-DFen->system=2;
-}
-
-
 /******************************************************************************
                                FICHIER .RAR
  *****************************************************************************/
@@ -412,16 +401,6 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
     }
 
 return 0;
-}
-
-void InstallRAR(void)
-{
-strcpy(DFen->VolName,DFen->path);
-Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
-
-strcpy(DFen->path,DFen->VolName);
-
-DFen->system=1;
 }
 
 /******************************************************************************
@@ -586,6 +565,8 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
             if (!stricmp(Dest,Fic[n]->name))
                 cont=0;
 
+
+
         if (cont==1)
             {
             Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
@@ -617,16 +598,6 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
     }
 
 return 0;
-}
-
-void InstallZIP(void)
-{
-strcpy(DFen->VolName,DFen->path);
-Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
-
-strcpy(DFen->path,DFen->VolName);
-
-DFen->system=3;
 }
 
 
@@ -831,16 +802,6 @@ if ( ((Cfg->pntrep==1) & (DFen->nbrfic==2)) | ((Cfg->pntrep==0) & (DFen->nbrfic=
 return 0;
 }
 
-void InstallLHA(void)
-{
-strcpy(DFen->VolName,DFen->path);
-Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
-
-strcpy(DFen->path,DFen->VolName);
-
-DFen->system=4;
-}
-
 /******************************************************************************
                                FICHIER .KKD
  *****************************************************************************/
@@ -891,28 +852,28 @@ DFen->nbrfic=0;
 
 if (Cfg->pntrep==1)
     {
-    Fic[1]->name=GetMem(2);
-    strcpy(Fic[1]->name,".");
+    Fic[DFen->nbrfic]->name=GetMem(2);
+    strcpy(Fic[DFen->nbrfic]->name,".");
 
-    Fic[1]->size=0;
-    Fic[1]->time=0;
-    Fic[1]->date=33;
-    Fic[1]->attrib=0x10;
-    Fic[1]->select=0;
+    Fic[DFen->nbrfic]->size=0;
+    Fic[DFen->nbrfic]->time=0;
+    Fic[DFen->nbrfic]->date=33;
+    Fic[DFen->nbrfic]->attrib=0x10;
+    Fic[DFen->nbrfic]->select=0;
 
     DFen->nbrfic=1;
     }
 
 if (strlen(DFen->path)==strlen(DFen->VolName))
     {
-    Fic[1]->name=GetMem(2);
-    strcpy(Fic[1]->name,"..");
+    Fic[DFen->nbrfic]->name=GetMem(2);
+    strcpy(Fic[DFen->nbrfic]->name,"..");
 
-    Fic[1]->size=0;
-    Fic[1]->time=0;
-    Fic[1]->date=33;
-    Fic[1]->attrib=0x10;
-    Fic[1]->select=0;
+    Fic[DFen->nbrfic]->size=0;
+    Fic[DFen->nbrfic]->time=0;
+    Fic[DFen->nbrfic]->date=33;
+    Fic[DFen->nbrfic]->attrib=0x10;
+    Fic[DFen->nbrfic]->select=0;
 
     (DFen->nbrfic)++;
     strcpy(nom,"");
@@ -1039,16 +1000,6 @@ if (fin==1)
     }
 
 return 0;
-}
-
-void InstallKKD(void)
-{
-strcpy(DFen->VolName,DFen->path);
-Path2Abs(DFen->VolName,DFen->F[DFen->pcur]->name);
-
-strcpy(DFen->path,DFen->VolName);
-
-DFen->system=5;
 }
 
 /**************************/

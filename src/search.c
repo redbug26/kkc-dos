@@ -41,7 +41,6 @@ FILE *fic;
 strcpy(fichier,path);
 Path2Abs(fichier,name);
 
-
 fic=fopen(fichier,"rb");
 if (fic==NULL)
     {
@@ -90,10 +89,11 @@ static touche;
 void cherdate(char *nom2)
 {
 char cont;
-struct find_t ff;
+struct file *ff;
 char error;
 char **TabRec;
 int NbrRec;
+int m;
 
 short touche;
 
@@ -104,23 +104,30 @@ TabRec[0]=malloc(strlen(nom2)+1);
 memcpy(TabRec[0],nom2,strlen(nom2)+1);
 NbrRec=1;
 
+
 do
 {
-PrintAt(0,0,"Go in  %-73s",TabRec[NbrRec-1]);
+m=strlen(TabRec[NbrRec-1]);
 
-strcpy(nomtemp,TabRec[NbrRec-1]);
-Path2Abs(nomtemp,"*.*");
+m= (m>=72) ? m-72 : 0;
+
+PrintAt(0,0,"Go in  %-73s",TabRec[NbrRec-1]+m);
+
+CommandLine("#cd %s",TabRec[NbrRec-1]);
+
+
 
 strcpy(nom,TabRec[NbrRec-1]);
 
 // The files
 
-error=_dos_findfirst(nomtemp,63,&ff);
+for (m=0;m<DFen->nbrfic;m++)
+    {
+    ff=DFen->F[m];
 
-while (error==0) {
-    error=ff.attrib;
+    error=ff->attrib;
 
-    if ( (ff.name[0]!='.') & (!WildCmp(ff.name,SearchName)) )
+    if ( (ff->name[0]!='.') & (!WildCmp(ff->name,SearchName)) )
         {
         cont=1;
 
@@ -129,7 +136,7 @@ while (error==0) {
 
         if ( ((SearchString[0])!=0) & (cont==1) )
             {
-            if (strfic(nom,ff.name)!=0) cont=0;
+            if (strfic(nom,ff->name)!=0) cont=0;
             }
 
         if (cont)
@@ -139,13 +146,13 @@ while (error==0) {
             pos=nbr;
 
             for (n=0;n<nbr;n++)
-                if ( (ff.wr_date>tabdate[n]) | ( (ff.wr_date==tabdate[n]) & (ff.wr_time>tabtime[n]) ) )
+                if ( (ff->date>tabdate[n]) | ( (ff->date==tabdate[n]) & (ff->time>tabtime[n]) ) )
                     {
                     pos=n;
                     break;
                     }
 
-            if ( (pos<nbrmax) & ((ff.wr_date>>9)+80<100) )
+            if ( (pos<nbrmax) & ((ff->date>>9)+80<100) )
                 {
                 if (nbr<nbrmax) nbr++;
 
@@ -157,11 +164,11 @@ while (error==0) {
                     tabdate[n]=tabdate[n-1];
                     }
 
-                strcpy(tabnom[pos],ff.name);
+                strcpy(tabnom[pos],ff->name);
                 strcpy(tabpath[pos],nom);
                 if (strlen(nom)==2) strcat(tabpath[pos],"\\");
-                tabtime[pos]=ff.wr_time;
-                tabdate[pos]=ff.wr_date;
+                tabtime[pos]=ff->time;
+                tabdate[pos]=ff->date;
 
                 for (n=0;n<nbr;n++)
                     {
@@ -173,8 +180,6 @@ while (error==0) {
         }
 
     BreakESC
-
-    error=_dos_findnext(&ff);
     }
 
 free(TabRec[NbrRec-1]);
@@ -182,18 +187,18 @@ NbrRec--;
 
 // The directories
 
-error=_dos_findfirst(nomtemp,63,&ff);
+for (m=0;m<DFen->nbrfic;m++)
+    {
+    ff=DFen->F[m];
 
-while (error==0) {
-    error=ff.attrib;
+    error=ff->attrib;
 
-    if ( (ff.name[0]!='.') & (sw!=5) )
+    if ( (ff->name[0]!='.') & (sw!=5) )
         {
         if ((error&0x10)==0x10)    // Subdir
             {
             strcpy(moi,nom);
-            strcat(moi,"\\");
-            strcat(moi,ff.name);
+            Path2Abs(moi,ff->name);
 
             TabRec[NbrRec]=malloc(strlen(moi)+1);
             memcpy(TabRec[NbrRec],moi,strlen(moi)+1);
@@ -202,8 +207,6 @@ while (error==0) {
         }
 
     BreakESC
-
-    error=_dos_findnext(&ff);
     }
 
 BreakESC
@@ -262,8 +265,6 @@ int n;
 
 strcpy(SearchOld,SearchName);
 
-
-
 n=WinTraite(T,18,&F);
 
 if (n!=27)  // pas escape
@@ -276,7 +277,7 @@ return 1;       // Erreur
 }
 
 
-void Search(void)
+void Search(struct fenetre *TempFen,struct fenetre *Fen)
 {
 int n;
 char *nom;
@@ -323,18 +324,21 @@ ChrWin(1,2,78,(Cfg->TailleY)-3,32);
 
 touche=0;
 
+DFen=TempFen;
+
 switch(sw)
     {
     case 3: // Current drive
-        sprintf(nom,"%c:",DFen->path[0]);
+        sprintf(nom,"%c:\\",Fen->path[0]);
+        CommandLine("#cd %s",nom);
         cherdate(nom);
         break;
     case 4: // Current dir & subdir
-        strcpy(nom,DFen->path);
+        strcpy(nom,Fen->path);
         cherdate(nom);
         break;
     case 5: // Current dir
-        strcpy(nom,DFen->path);
+        strcpy(nom,Fen->path);
         cherdate(nom);
         break;
     case 6: // all drive
@@ -342,7 +346,8 @@ switch(sw)
             {
             if (VerifyDisk(n+1)==0)
                 {
-                sprintf(nom,"%c:",n+'A');
+                sprintf(nom,"%c:\\",n+'A');
+                CommandLine("#cd %s",nom);
                 cherdate(nom);
                 }
             }
@@ -353,12 +358,15 @@ switch(sw)
             m=toupper(Drive[n])-'A';
             if (VerifyDisk(m+1)==0)
                 {
-                sprintf(nom,"%c:",m+'A');
+                sprintf(nom,"%c:\\",m+'A');
+                CommandLine("#cd %s",nom);
                 cherdate(nom);
                 }
             }
         break;
     }
+
+DFen=Fen;
 
 if (nbr==0)
     {
@@ -417,12 +425,14 @@ while ( (a!=27) & (a!=13) );
 ChargeEcran();
 
 if (a==13)
+    {
     CommandLine("#CD %s",tabpath[pos]);
 
-for (n=0;n<DFen->nbrfic;n++)
-    if (!stricmp(tabnom[pos],DFen->F[n]->name)) {
-        DFen->pcur=n;
-        DFen->scur=n;
+    for (n=0;n<Fen->nbrfic;n++)
+        if (!stricmp(tabnom[pos],Fen->F[n]->name)) {
+            Fen->pcur=n;
+            Fen->scur=n;
+            }
         }
     }
 

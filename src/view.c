@@ -45,6 +45,8 @@ static long pos;        // position de depart
 static long posl;       // taille du buffer
 static long posn;       // octet courant
 
+static char srcch[80];
+
 // Lit l'octet se trouvant en posn
 //---------------------------------
 char ReadChar(void)
@@ -501,7 +503,6 @@ int  arglen = 0, ansistate = NOTHING, x;
 char *b = buf, argbuf[MAXARGLEN] = "";
 
 // Gestion des SHIFT, CTRL ...
-char *Keyboard_Flag1=(char*)0x417;
 char car;
 
 
@@ -777,12 +778,18 @@ char car;
 char chaine[256];
 short lchaine;
 
-register int n;
+int n,m;
 
 char affichage[81];
 
 int code;
 int fin=0;
+
+int warp=0;
+
+int shift=0; // Vaut -1 si reaffichage de l'ecran
+             //       0 si pas de shift
+             //       1 si touche shiftee
 
 char pasfini;
 
@@ -877,7 +884,6 @@ ColWin(x,y,x+xl-1,y+yl-1,10*16+1);
 affichage[xl]=0;
 
 
-
 do
 {
 
@@ -890,17 +896,15 @@ y2=y;
 
 do
     {
-    lchaine=1;
+    lchaine=1;      // Longueur chaine
 
     chaine[0]=ReadChar();
 
-
-    switch(chaine[0])  {
-        case 0:
-            chaine[0]=32;
-            break;
+    switch(chaine[0])
+        {
         case 10:
-            lchaine=xl-x2+x+1;
+            lchaine=xl+1-(x2-x-warp);          // xl= taille totale de la ligne
+                                      // x2-x-warp= taille actuelle de la ligne
             memset(chaine,32,lchaine);
             aff=2;
             break;
@@ -923,40 +927,48 @@ do
         {
         car=chaine[n];
 
-        if (x2>=x+xl)
+        if ((x2-x-warp)>=xl)
             {
-            if (aff==2)
+            if (aff==2) // Le monsieur te demande d'afficher la ligne
                 {
-                PrintAt(x,y2,"%s",affichage);
+                if ( (shift!=1) | (y2!=0) )
+                    for (m=0;m<xl-shift;m++)
+                        AffChr(x+m,y2,affichage[m]);
+
                 affichage[0]=0;
                 x2=x;
                 y2++;
                 if (y2>=y+yl) break;
                 lchaine=0;
-                car=0;
                 aff=1;
                 }
                 else
                 aff=0;
             }
-
-        if ( (car!=0) & (aff!=0) )
+            else
             {
-            affichage[x2-x]=car;
+            if ((x2-x-warp)>=0)
+                affichage[x2-x-warp]=car;
             x2++;
             }
         }
 
     if (aff==2) aff=1;
 
-    if (y2>=y+yl)
-        break;
+    if (y2>=y+yl) break;
+
     posn++;
     if (posn>=taille)
         {
         pasfini=1;
         lchaine=xl-x2+x;
-        memset(affichage+x2-x,32,lchaine);
+
+        if (yl==Cfg->TailleY-1)
+            memset(affichage+x2-x,'-',lchaine);
+            else
+            memset(affichage+x2-x,' ',lchaine);
+
+        affichage[xl]=0;
         PrintAt(x,y2,"%s",affichage);
         y2++;
         break;
@@ -966,16 +978,28 @@ while(1);
 
 while(y2<y+yl)
     {
-    memset(affichage,32,xl);
+    memset(affichage,' ',xl);        // remplit une ligne entiere de espace
+    affichage[xl]=0;
     PrintAt(x,y2,"%s",affichage);
-    affichage[0]=0;
     y2++;
     }
 
+if (shift==0)
+    Masque(x,y,x+xl-1,y+yl-1);
+    else    // Ca marche mais ca pas b“
+    {
+    if ( (xl==80) & (y==0) )
+        Masque(x,y+1,x+xl-2,y+yl-1);
+    if ( (xl==80) & (y!=0) )
+        Masque(x,y,x+xl-2,y+yl-1);
+    if ( (xl!=80) & (y==0) )
+        Masque(x,y+1,x+xl-1,y+yl-1);
+    if ( (xl!=80) & (y!=0) )
+        Masque(x,y,x+xl-1,y+yl-1);
+    }
 
-Masque(x,y,x+xl-1,y+yl-1);
 
-cur1=-1;
+
 
 while (!kbhit())
 {
@@ -986,7 +1010,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
     int prc;
     char temp[80];
 
-    if (cur1==-1)
+    if (shift==0)
         SaveEcran();
 
     if (posn>taille) posn=taille;
@@ -1016,30 +1040,31 @@ if ( ((car&1)==1) | ((car&2)==2) )
 
     strncpy(temp,fichier,78);
 
-    temp[44]=0;
+    temp[45]=0;
 
-    PrintAt(0,0,"View: %-45s %9d bytes %3d%% co%4d ",temp,taille,prc,0);
+    PrintAt(0,0,"View: %-45s Col%3d %9d bytes %3d%% ",temp,warp,taille,prc);
 
     ColCol(79,1,Cfg->TailleY-2,1*16+2);
     ChrCol(79,1,cur1-1,32);
     ChrCol(79,cur1,cur2-cur1+1,219);
     ChrCol(79,cur2+1,Cfg->TailleY-1-cur2,32);
+
+    shift=1;
     }
     else
-    if (cur1!=-1)
-        ChargeEcran(),cur1=-1;
+    if (shift==1)
+        {
+        shift=-1;
+        break;
+        }
 
 }
 
-if (cur1!=-1)
-    ChargeEcran();
-
-code=Wait(0,0,0);
-
-
-
-
 posn=posd;
+
+if (shift!=-1)
+{
+code=Wait(0,0,0);
 
 switch(LO(code))
     {
@@ -1056,6 +1081,21 @@ switch(LO(code))
                 break;
             case 0x42:  // F8
                 Print(fichier,1);
+                break;
+            case 0x4D:  // RIGHT
+                warp+=8;
+                break;
+            case 0x4B:  // LEFT
+                warp-=8;
+                break;
+            case 0x74:  // CTRL RIGHT
+                warp+=40;
+                break;
+            case 0x73:  // CTRL LEFT
+                warp-=40;
+                break;
+            case 0x77:  // CTRL HOME
+                warp=0;
                 break;
             case 0x43:  // F9
                 ChangeMask();
@@ -1155,6 +1195,13 @@ switch(LO(code))
         break;
     }
 
+if (warp<0) warp=0;
+}
+else
+{
+shift=0;
+ChargeEcran();
+}
 }
 while(!fin);
 
@@ -1164,30 +1211,26 @@ ChargeEcran();
 return fin;
 }
 
-// Recherche une chaine
+/*----------------------*
+ - Recherche une chaine -
+ *----------------------*/
 void SearchTxt(void)
 {
 static char Dir[70];
 static int DirLength=70;
 static int CadreLength=71;
 
-struct Tmt T[5] = {
-      { 2,3,1,
-        Dir,
-        &DirLength},
+struct Tmt T[5] =
+    { { 2,3,1,Dir,&DirLength},
       {15,5,2,NULL,NULL},
       {45,5,3,NULL,NULL},
       { 5,2,0,"Change to which directory",NULL},
-      { 1,1,4,NULL,&CadreLength}
-      };
+      { 1,1,4,NULL,&CadreLength} };
 
-struct TmtWin F = {
-    3,10,76,17,
-    "Search Text"};
+struct TmtWin F =
+    { 3,10,76,17, "Search Text" };
 
-int n;
-int a;
-
+int a,n;
 char c1,c2;
 
 a=posn;
@@ -1208,6 +1251,8 @@ posn++;
 n=WinTraite(T,5,&F);
 
 if ( (n!=0) & (n!=1) ) return;
+
+strcpy(srcch,Dir);
 
 n=0;
 
@@ -1244,6 +1289,8 @@ if (Dir[n]!=0)
     WinError("Don't find text");
     return;
     }
+
+
 
 if (posn==0) return;
 posn--;
@@ -1322,7 +1369,7 @@ int ix,iy;
 char *ColTxt;
 char *ChrTxt;
 
-struct info Info;
+RB_IDF Info;
 
 
 ColTxt=GetMem(320000);
@@ -1687,6 +1734,8 @@ for (k=0;k<lentit;k++)
 
     if ( (debut==0) & (code==0) )
     switch(car)  {
+        case 0:
+            break;
         case 10:
             if (pre==0)
                 car=13;
@@ -1965,9 +2014,7 @@ switch(LO(code))   {
 
             strcpy(Info.path,fichier);
 
-            FileinPath(fichier,titre);
-
-            Traitefic(titre,&Info);
+            Traitefic(&Info);
             }
 
         break;
@@ -2079,7 +2126,7 @@ while(i!=-1)
             break;
         case 37: // GIF
         case 38: // JPG
-            FicIdf(fichier,i);
+            FicIdf(fichier,i,0);
             i=-1;
             break;
         default:
@@ -2110,6 +2157,9 @@ short xt[80],yt[80];
 char trouve;
 
 struct PourMask *CMask;
+
+
+
 
 if (((Cfg->wmask)&128)==128) return;
 
@@ -2165,6 +2215,7 @@ while(y<=y2)
                 m2++;
                 }
 
+
             if (trouve==1)
                 c2=10*16+5;
                 else
@@ -2198,8 +2249,25 @@ while(y<=y2)
 
     x++;
     if (x>x2) x=x1,y++;
-
     }
+
+if (*srcch!=0)
+    {
+    y=y1;
+    for (x=x1;x<=x2;x++)
+        chain2[x-x1]=GetChr(x,y1);
+    chain2[x2-x1+1]=0;
+
+    for (x=0;x<=(x2-x1)-strlen(srcch)+1;x++)
+        {
+        if (!strnicmp(chain2+x,srcch,strlen(srcch)))
+            {
+            for(l=0;l<strlen(srcch);l++)
+                AffCol(x1+l+x,y1,10*16+13);
+            }
+        }
+    }
+
 }
 
 
@@ -2368,6 +2436,22 @@ short lpt;
 char a;
 char Font[]={27,91,3,27,51,28};
 int m;
+
+struct Tmt T[3] = {
+      {5,3,2,NULL,NULL},                // 1:Ok
+      {25,3,3,NULL,NULL},
+      {5,1,0,"Do you want copy this file ?",NULL}
+      };
+
+struct TmtWin F = {18,4,61,9, "Print file"};
+
+m=WinTraite(T,3,&F);
+
+if (m==27)  // escape
+    return;
+    else
+    if (T[m].type==3) return;  // cancel
+
 
 lpt=0;
 

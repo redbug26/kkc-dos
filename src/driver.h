@@ -16,20 +16,15 @@ struct find_rb {
 
 #include "dos.h"
 
-void InstallRAR(void);
-int RARlitfic(void);
+int RARlitfic(void);            // system 1
 
-void InstallARJ(void);
-int ARJlitfic(void);
+int ARJlitfic(void);            // system 2
 
-void InstallZIP(void);
-int ZIPlitfic(void);
+int ZIPlitfic(void);            // system 3
 
-void InstallLHA(void);
-int LHAlitfic(void);
+int LHAlitfic(void);            // system 4
 
-void InstallKKD(void);
-int KKDlitfic(void);
+int KKDlitfic(void);            // system 5
 void MakeKKD(struct fenetre *Fen,char *ficname);
 
 

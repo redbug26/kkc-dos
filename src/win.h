@@ -1,3 +1,4 @@
+void PutInHistDir(void);
 void ChangeTaille(int i);
 
 void Fenet(int x1,int y1,int x2,int y2,int type);
@@ -11,6 +12,7 @@ void LitInfo(struct fenetre *Fen);
 void WinInfo(void);
 
 int InfoIDF(struct fenetre *Fen);
+int NameIDF(char *buf);
 void AfficheTout(void);
 void MenuBar(char c);
 void ErrWin95(void);

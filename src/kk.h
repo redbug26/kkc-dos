@@ -1,10 +1,10 @@
-#define VERSION "0.23"
+#define VERSION "0.3"
 
 #define ENTIER short
 
 #define CALLING __cdecl
 
-#define TOTFIC 1000
+#define TOTFIC 2000
 
 #define GAUCHE 0x4B
 #define DROITE 0x4D
@@ -60,6 +60,7 @@ struct fenetre {
      ENTIER system;      // 0: DOS, 1: RAR, 2: ARJ, 3: ZIP, 4: LHA, 5: KKD
 
      char VolName[255];  // Nom du volume
+     char nfen;          // Numero de la fenetre
 
 };
 
@@ -82,6 +83,10 @@ extern int IOerr;
 #include "help.h"
 
 #include "view.h"
+
+#include "util.h"
+
+#include "reddies.h"
 
 #ifdef DEBUG
 #define PUTSERR(__Chaine) PrintAt(0,0,__Chaine); getch()

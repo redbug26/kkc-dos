@@ -100,6 +100,8 @@ struct config {
      char logfile;          // vaut 1 si on utilise un logfile
      char debug;            // vaut 1 si on est en mode DEBUG
 
+     char autoreload;       // Reload automatiquement lorsque les deux fenˆtres sont les mˆmes
+
      char font;             // utilisation des fonts
 
      long strash;           // taille actuelle de la trash
@@ -129,7 +131,6 @@ struct config {
      };
 
 struct fichier {
-    char *LastDir;         // dernier directory
     char *FicIdfFile;      // idfext.rb
     char *CfgFile;         // kkrb.cfg
     char *view;            // view
@@ -139,6 +140,7 @@ struct fichier {
     char *temp;            // temp.tmp
     char *trash;           // repertoire trash
     char *log;             // logfile
+    char *LastDir;         // lastdir
     };
 
 struct PourMask

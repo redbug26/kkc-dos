@@ -314,8 +314,10 @@ Fics->help=GetMem(256);
 strcpy(Fics->help,path);
 strcat(Fics->help,"\\kksetup.hlp");
 
+/*
 Fics->LastDir=GetMem(256);
 strcpy(Fics->LastDir,path);
+*/
 
 
 Cfg->TailleY=30;

@@ -47,8 +47,10 @@ char key[8];
 // 2: no player for this file
 // 3: Arret ESCape
 
+// kefaire: 0 lancer application + fichier
+//          1 lancer application toute seule
 
-int FicIdf(char *name,int numero)
+int FicIdf(char *name,int numero,int kefaire)
 {
 int j,i,n,m;
 
@@ -111,9 +113,11 @@ for (j=0;j<nbr;j++)
 
 fread(&nbrdir,1,2,fic);
 
-for(n=0;n<nbrdir;n++)	{
+for(n=0;n<nbrdir;n++)
+    {
 	fread(col,1,128,fic);
-	for (i=0;i<nbrappl;i++) {
+    for (i=0;i<nbrappl;i++)
+        {
         if (n==app[i].NoDir-1)
             strcpy(app[i].dir,col);
 		}
@@ -185,19 +189,26 @@ if (nbrappl!=1)
             if (a==0x86)    WinMesg("Info. on dir",app[pos-m].dir);    // F12
 			}
 
-		} while ( (a!=27) & (a!=13) );
+        } while ( (a!=27) & (a!=13) & (a!=0x8D) & (a!=0x4B) & (a!=0x4D) );
 	ChargeEcran();
 
 	if (a==27) return 3;
 	n=pos-m;
 	}
 	else
+    {
 	n=0;
-
+    a=13;
+    }
 
 strcpy(chaine,app[n].dir);
 strcat(chaine,app[n].Filename);
-CommandLine("#%s %s",chaine,name);
+
+if ((kefaire==1) | (a!=13))
+    CommandLine("#%s",chaine);
+    else
+    CommandLine("#%s %s",chaine,name);
+    
 
 return 0;
 }

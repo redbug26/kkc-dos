@@ -7,7 +7,6 @@
 #include <dos.h>
 #include <direct.h>
 #include <malloc.h>
-#include <graph.h>
 #include <bios.h>
 #include <io.h>
 #include <fcntl.h>
@@ -16,7 +15,7 @@
 
 #include "idf.h"
 
-struct key K[nbrkey]=	{
+struct key K[nbrkey]=   {
 {  {"C64S tap"},
 		8,
 		0,
@@ -27,7 +26,7 @@ struct key K[nbrkey]=	{
 {  {"UC2"},
 		3,
 		0,
-		"UC2 archiver",
+        "UC2 Archive",
 		"UC2",
 		"Ad Infinitum Programs",
 		75,0,0,3},
@@ -111,7 +110,7 @@ struct key K[nbrkey]=	{
 {  {0x52,0x61,0x72,0x21,0x1A,0x07,0x00},
 		7,
 		0,
-		"RAR Archiver",
+        "RAR Archive",
 		"RAR",
         "Eugene Roshal",
 		34,0,1,3},
@@ -160,14 +159,14 @@ struct key K[nbrkey]=	{
 {  {0,0},
 		0,
 		0,
-		"ARJ Archiver",
+        "ARJ Archive",
 		"ARJ",
         "Robert K Jung",
 		30,1,0,3},
 {  {"-lh"},
 		3,
 		2,
-		"LHA Archiver",
+        "LHA Archive",
 		"LHA",
         "H. Yoshizaki",
 		32,0,0,3},
@@ -486,13 +485,7 @@ struct key K[nbrkey]=	{
 		"EXE",
 		"",
 		66,0,0,6},
-{  {0,0},
-   0,
-   0,
-   "Targa Picture",
-   "TGA",
-   "",
-   43,1,1,4},
+
 {  {0xE3,0x10,0,1,0,0,0,0},
 		8,
 		0,
@@ -517,7 +510,7 @@ struct key K[nbrkey]=	{
 {  {"DMS!"},
 		4,
 		0,
-        "DISK-Masher archive",
+        "DISK-Masher Archive",
 		"DMS",
         "SDS Software",
         70,0,0,3},
@@ -719,7 +712,7 @@ struct key K[nbrkey]=	{
         103,                          // Numero du format (unique)
         0,                            // vaut la clef doit ˆtre verifie par proc
         0,                            // vaut 1 si il existe un lien vers une proc
-        5},                           // type de fichier (1: module, 4: image, 3:archive, 6:other, 2:sample, 5:anim)
+        5},                           // type de fichier (1: module, 4: image, 3:Archive, 6:other, 2:sample, 5:anim)
 {  {0x50,0x61,0x63,0x6B,0x65,0x64,0x20,0x46,0x69,0x6C,0x65,0x20    },
     12,
     0,
@@ -831,41 +824,67 @@ struct key K[nbrkey]=	{
     "PlaySid Module",
     "DAT",
     "?",122,0,1,1},
+{  {0x00,0xE8,0x02,0x00,0x00,0x16,0x00,0x00,// úúúúúúúú
+    0x00,0x28,0x00,0x00,0x00,0x20,0x00,0x00},// ú(úúú úú
+    16,
+    0xd,
+    "Win95 Cursor",
+    "CUR",
+    "Microsoft",123,0,0,4},
+{  {0xFF,0xFF,0x00,0x01,0x64,0x00,0x00,0x00,// úúúúdúúú 
+    0x03,0x00    }, // úú 
+    10,
+    0x0,
+    "Alpha Microsystems BMP",   // No information (conversion from Alchemy)
+    "BMP",
+    "?",124,0,0,4},
+{  {0x00,0x11,0x02,0xFF,0x0C,0x00,0xFF,0xFE,// úúúúúúúú
+    0x00,0x00,0x00,0x48,0x00,0x00,0x00,0x48,// úúúHúúúH 
+    0x00,0x00,0x00,0x00,0x00,0x00,0x01    }, // úúúúúúú 
+    23,
+    0x20a,
+    "Macintosh PICT",
+    "PIC",
+    "?",125,0,0,4},
 
 /*******************************************
  - structures … traiter en dernier ressort -
  *******************************************/
-{  {0x00,0x01,0x00,0x00},
-        4,
-        0,
-        "True Type Font",
-        "TTF",
-        "",
-        65,0,0,6},
-{  {"PK"},
-        2,
-        0,
-        "ZIP Archiver",
-        "ZIP",
-        "PKWARE Inc.",
-        35,0,0,3},
-
-{  {0,0},                             // Clef
-        0,                            // Longueur de la clef
-        0,                            // Position de la clef dans le fichier
-        "HTML File",                  // Nom du format
-        "HTM",                        // Extension du format
-        "",                           // Createur du format
-        104,                          // Numero du format (unique)
-        1,                            // vaut la clef doit ˆtre verifie par proc
-        0,                            // vaut 1 si il existe un lien vers une proc
-        6},                           // type de fichier (1: module, 4: image, 3:archive, 6:other, 2:sample, 5:anim)
 {  {0,0},
-        2,
-        0,
-        "Text File",
-        "TXT",      // Extension ?
-        "",91,1,0,6},    // Laissez celui-ci dernier
+    0,
+    0,
+    "Targa Picture",
+    "TGA",
+    "",
+    43,1,1,4},
+{  {0x00,0x01,0x00,0x00},
+    4,
+    0,
+    "True Type Font",
+    "TTF",
+    "",
+    65,0,0,6},
+{  {"PK"},
+    2,
+    0,
+    "ZIP Archive",
+    "ZIP",
+    "PKWARE Inc.",
+    35,0,0,3},
+{  {0,0},
+    0,
+    0,
+    "HTML File",
+    "HTM",
+    "",
+    104,1,0,6},
+{  {0,0},
+    2,
+    0,
+    "Text File",
+    "TXT",
+    "",
+    91,1,0,6},    // Laisser celui-ci dernier
 
 /**************************************************
  - structures … ne pas toucher en dernier ressort -
@@ -916,76 +935,78 @@ struct key K[nbrkey]=	{
 };
 
 
+char *GetFile(char *p,char *Ficname);
 void SplitName(char *filename,char *name,char *ext);
 
 void Size2Chr(int Size,char *Taille);  // transforme la taille indiqu‚e en chaine
 
-short Infotxt(struct info *Info);	// Test pour voir si c'est du texte
-short Infomtm(struct info *Info);
-short Infoexe1(struct info *Info);
-short Infopsm(struct info *Info);
-short Info669(struct info *Info);
-short Infomod(struct info *Info);	// Nø1
-short Infodmf(struct info *Info);
-short Infoxm(struct info *Info);	// Nø2
-short Infoxi(struct info *Info);
-short Infos3m(struct info *Info);	// Nø3
-short Infout(struct info *Info);
-short Inforar(struct info *Info);
-short Infogif(struct info *Info);
-short Infopcx(struct info *Info);
-short Infobmp(struct info *Info);
-short Infookt(struct info *Info);
-short Infoau(struct info *Info);
-short Infoiff(struct info *Info);
-short Infolbm(struct info *Info);
-short Infomid(struct info *Info);
-short Infoarj(struct info *Info);
-short Infoit(struct info *Info);
-short Infomed(struct info *Info);
-short Infovoc(struct info *Info);
-short Infotpu(struct info *Info);
-short Infocmf(struct info *Info);
-short Infohlp(struct info *Info);
-short Infostm(struct info *Info);
-short Infofar(struct info *Info);
-short Infofsm(struct info *Info);
-short Infousm(struct info *Info);
-short Infofpt(struct info *Info);
-short Infof2r(struct info *Info);
-short Infomdl(struct info *Info);
-short Infospl(struct info *Info);
-short Infottf(struct info *Info);
-short Infogrp(struct info *Info);
-short Infotga(struct info *Info);
-short Infodlz(struct info *Info);
-short Infofli(struct info *Info);
-short Infoflc(struct info *Info);
-short Infoswg(struct info *Info);
-short Infoams(struct info *Info);
-short Infot64(struct info *Info);
-short Infop00(struct info *Info);
-short Infoamf(struct info *Info);
-short Infopkm(struct info *Info);
-short Infogb(struct info *Info);
-short Infoptm(struct info *Info);
-short Infohtm(struct info *Info);
-short Inforaw(struct info *Info);
-short Infoits(struct info *Info);
-short Infodp3(struct info *Info);
-short Infopat(struct info *Info);
-short Infodsf(struct info *Info);
-short Infouwf(struct info *Info);
-short Infoams2(struct info *Info);
-short Infoast(struct info *Info);
-short Infodsm(struct info *Info);
-short Infodat(struct info *Info);
+short Infotxt(RB_IDF *Info);   // Test pour voir si c'est du texte
+short Infomtm(RB_IDF *Info);
+short Infoexe1(RB_IDF *Info);
+short Infopsm(RB_IDF *Info);
+short Info669(RB_IDF *Info);
+short Infomod(RB_IDF *Info);   // Nø1
+short Infodmf(RB_IDF *Info);
+short Infoxm(RB_IDF *Info);    // Nø2
+short Infoxi(RB_IDF *Info);
+short Infos3m(RB_IDF *Info);   // Nø3
+short Infout(RB_IDF *Info);
+short Inforar(RB_IDF *Info);
+short Infogif(RB_IDF *Info);
+short Infopcx(RB_IDF *Info);
+short Infobmp(RB_IDF *Info);
+short Infookt(RB_IDF *Info);
+short Infoau(RB_IDF *Info);
+short Infoiff(RB_IDF *Info);
+short Infolbm(RB_IDF *Info);
+short Infomid(RB_IDF *Info);
+short Infoarj(RB_IDF *Info);
+short Infoit(RB_IDF *Info);
+short Infomed(RB_IDF *Info);
+short Infovoc(RB_IDF *Info);
+short Infotpu(RB_IDF *Info);
+short Infocmf(RB_IDF *Info);
+short Infohlp(RB_IDF *Info);
+short Infostm(RB_IDF *Info);
+short Infofar(RB_IDF *Info);
+short Infofsm(RB_IDF *Info);
+short Infousm(RB_IDF *Info);
+short Infofpt(RB_IDF *Info);
+short Infof2r(RB_IDF *Info);
+short Infomdl(RB_IDF *Info);
+short Infospl(RB_IDF *Info);
+short Infottf(RB_IDF *Info);
+short Infogrp(RB_IDF *Info);
+short Infotga(RB_IDF *Info);
+short Infodlz(RB_IDF *Info);
+short Infofli(RB_IDF *Info);
+short Infoflc(RB_IDF *Info);
+short Infoswg(RB_IDF *Info);
+short Infoams(RB_IDF *Info);
+short Infot64(RB_IDF *Info);
+short Infop00(RB_IDF *Info);
+short Infoamf(RB_IDF *Info);
+short Infopkm(RB_IDF *Info);
+short Infogb(RB_IDF *Info);
+short Infoptm(RB_IDF *Info);
+short Infohtm(RB_IDF *Info);
+short Inforaw(RB_IDF *Info);
+short Infoits(RB_IDF *Info);
+short Infodp3(RB_IDF *Info);
+short Infopat(RB_IDF *Info);
+short Infodsf(RB_IDF *Info);
+short Infouwf(RB_IDF *Info);
+short Infoams2(RB_IDF *Info);
+short Infoast(RB_IDF *Info);
+short Infodsm(RB_IDF *Info);
+short Infodat(RB_IDF *Info);
 
 
+void ClearSpace(char *name);    // efface les espaces inutiles
 
-ULONG ReadLng(struct info *Info,ULONG position,char type);
-WORD ReadInt(struct info *Info,ULONG position,char type);
-void ReadStr(struct info *Info,ULONG position,char *str,short taille);
+ULONG ReadLng(RB_IDF *Info,ULONG position,char type);
+WORD ReadInt(RB_IDF *Info,ULONG position,char type);
+void ReadStr(RB_IDF *Info,ULONG position,char *str,short taille);
 
 ULONG InvLong(ULONG entier);	// Inverse un ULONG HILO <-> LOHI
 WORD InvWord(WORD entier);				// Inverse un WORD HILO <-> LOHI
@@ -995,12 +1016,6 @@ char buffer[32768];
 
 char tampon[1024];   // Tampon pour faire n'importe quoi
 
-
-short ypos=0;			  // position pour directory
-int DSize=0;		   // taille totale dans tous les directories lus
-short  DFic=0;			  // nombre de fichier total dans --------------
-
-
 //////////////////////////////////////////////////////////////////////////////
 ////// FIN DES DECLARATIONS //////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -1008,7 +1023,7 @@ short  DFic=0;			  // nombre de fichier total dans --------------
 // positon par rapport … posfic
 // type =1 LoHi --> PC
 //				=2 HiLo --> Amiga
-ULONG ReadLng(struct info *Info,ULONG position,char type)
+ULONG ReadLng(RB_IDF *Info,ULONG position,char type)
 {
 ULONG entier;
 int pos;
@@ -1043,7 +1058,7 @@ return -1;
 // positon par rapport … posfic
 // type =1 LoHi --> PC
 //				=2 HiLo --> Amiga
-WORD ReadInt(struct info *Info,ULONG position,char type)
+WORD ReadInt(RB_IDF *Info,ULONG position,char type)
 {
 WORD entier;
 char *a;
@@ -1076,7 +1091,7 @@ return -1;
 }
 
 // positon par rapport … posfic
-void ReadStr(struct info *Info,ULONG position,char *str,short taille)
+void ReadStr(RB_IDF *Info,ULONG position,char *str,short taille)
 {
 int pos;
 
@@ -1158,7 +1173,7 @@ if (name!=NULL) {
 }
 
 
-void Traitefic(char *nomfic,struct info *Info)
+void Traitefic(RB_IDF *Info)
 {
 short n;
 short handle;
@@ -1168,10 +1183,10 @@ char path[256];
 
 short trv=-1;     // vaut -1 tant que l'on a rien trouv‚
 
-sprintf(path,"%s",Info->path);
+strcpy(path,Info->path);
 
 handle=open(path,O_BINARY | O_RDONLY);
-// if (handle==-1)				   // fichier non trouv‚
+if (handle==-1) return;
 
 memset(buffer,0,32768U);
 
@@ -1179,148 +1194,129 @@ read(handle,buffer,32768U);
 
 n=0;	// recherche dans tous les formats
 
-memset(Info,0,sizeof(struct info));
+memset(Info,0,sizeof(RB_IDF));
+strcpy(Info->path,path);
 Info->handle=handle;
 Info->posfic=0L;
 
-strcpy(Info->filename,nomfic);
+GetFile(Info->path,Info->filename);
 
 Info->buffer=buffer;	// buffer pour E/S
 Info->posbuf=Info->posfic;
 Info->sizebuf=32768U;
 
-for (n=0;n<nbrkey-6;n++)  {
-
-if (K[n].proc==0)
+for (n=0;n<nbrkey-6;n++)    // Il faut ignorer les 6 derniers clefs
+    {
+    if (K[n].proc==0)
 		if (!memcmp(buffer+K[n].pos,K[n].buf,K[n].len)) trv=n;
 
-// ProblŠme ici, logiquement, on devrait faire cela uniquement
-//		lorsque on a trouv‚ un type de fichier
-//		mais Quid lorsque K[n].proc=1;
-
-// trv=n alors !!
-
-sprintf(Info->format,K[n].format);
-strcpy(Info->ext,K[n].ext);
-
-//////////////////////////////////////////////////// OK?
-
-if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) ) {
-		switch(K[n].numero) {
-				case  2: err=Infoxm (Info); break;
-                case 83: err=Infop00(Info); break;
-                
-				case 19: err=Infout (Info); break;
-				case  3: err=Infos3m(Info); break;
-				case  6: err=Infodmf(Info); break;
-				case  4: err=Info669(Info); break;
-				case 15: err=Infomtm(Info); break;
-				case 34: err=Inforar(Info); break;
-                case 37: err=Infogif(Info); break;
-                case 40: err=Infopcx(Info); break;
-                case 36: err=Infobmp(Info); break;
-                case 73: err=Inforaw(Info); break;
-				case 16: err=Infookt(Info); break;
-				case 21: err=Infoau (Info); break;
-				case 23: err=Infoiff(Info); break;
-				case 39: err=Infolbm(Info); break;
-				case 10: err=Infoit (Info); break;
-				case 14: err=Infomid(Info); break;
-				case 30: err=Infoarj(Info); break;
-				case 13: err=Infomed(Info); break;
-				case 27: err=Infovoc(Info); break;
-				case  1: err=Infomod(Info); break;
-				case 17: err=Infopsm(Info); break;
-				case 57: err=Infoexe1(Info);break;
-				case 29: err=Infoxi (Info); break;
-				case 64: err=Infotpu(Info); break;
-				case  5: err=Infocmf(Info); break;
-				case 59: err=Infohlp(Info); break;
-				case 18: err=Infostm(Info); break;
-				case  8: err=Infofar(Info); break;
-				case 22: err=Infofsm(Info); break;
-				case 26: err=Infousm(Info); break;
-				case  9: err=Infofpt(Info); break;
-				case  7: err=Infof2r(Info); break;
-				case 12: err=Infomdl(Info); break;
-				case 25: err=Infospl(Info); break;
-				case 58: err=Infogrp(Info); break;
-				case 43: err=Infotga(Info); break;
-				case 31: err=Infodlz(Info); break;
-				case 49: err=Infofli(Info); break;
-				case 50: err=Infoflc(Info); break;
-				case 63: err=Infoswg(Info); break;
-				case 68: err=Infoams(Info); break;
-				case 76: err=Infot64(Info); break;
-                case 91: err=Infotxt(Info); break;
-                case 104:err=Infohtm(Info); break;
-                case 106:err=Infoamf(Info); break;
-                case 107:err=Infogb(Info); break;
-                case 108:err=Infoptm(Info); break;
-                case 110:err=Infopkm(Info); break;
-                case 111:err=Infoits(Info); break;
-                case 112:err=Infodp3(Info); break;
-                case 113:err=Infodsf(Info); break;
-                case 114:err=Infouwf(Info); break;
-                case 115:err=Infoams2(Info); break;
-                case 120:err=Infoast(Info); break;
-                case 121:err=Infodsm(Info); break;
-                case 122:err=Infodat(Info); break;
-                case 24:err=Infopat(Info); break;
-				default:
-						sprintf(Info->format,"Pingouin %d",K[n].numero);
-						trv=1;
-						break;
-
-				}
+    if ( (K[n].proc==1) | ((K[n].other==1) & (trv!=-1)) )
+        {
+        switch(K[n].numero)
+            {
+            case  2: err=Infoxm (Info); break;
+            case 83: err=Infop00(Info); break;
+            case 19: err=Infout (Info); break;
+            case  3: err=Infos3m(Info); break;
+            case  6: err=Infodmf(Info); break;
+            case  4: err=Info669(Info); break;
+            case 15: err=Infomtm(Info); break;
+            case 34: err=Inforar(Info); break;
+            case 37: err=Infogif(Info); break;
+            case 40: err=Infopcx(Info); break;
+            case 36: err=Infobmp(Info); break;
+            case 73: err=Inforaw(Info); break;
+            case 16: err=Infookt(Info); break;
+            case 21: err=Infoau (Info); break;
+            case 23: err=Infoiff(Info); break;
+            case 39: err=Infolbm(Info); break;
+            case 10: err=Infoit (Info); break;
+            case 14: err=Infomid(Info); break;
+            case 30: err=Infoarj(Info); break;
+            case 13: err=Infomed(Info); break;
+            case 27: err=Infovoc(Info); break;
+            case  1: err=Infomod(Info); break;
+            case 17: err=Infopsm(Info); break;
+            case 57: err=Infoexe1(Info);break;
+            case 29: err=Infoxi (Info); break;
+            case 64: err=Infotpu(Info); break;
+            case  5: err=Infocmf(Info); break;
+            case 59: err=Infohlp(Info); break;
+            case 18: err=Infostm(Info); break;
+            case  8: err=Infofar(Info); break;
+            case 22: err=Infofsm(Info); break;
+            case 26: err=Infousm(Info); break;
+            case  9: err=Infofpt(Info); break;
+            case  7: err=Infof2r(Info); break;
+            case 12: err=Infomdl(Info); break;
+            case 25: err=Infospl(Info); break;
+            case 58: err=Infogrp(Info); break;
+            case 43: err=Infotga(Info); break;
+            case 31: err=Infodlz(Info); break;
+            case 49: err=Infofli(Info); break;
+            case 50: err=Infoflc(Info); break;
+            case 63: err=Infoswg(Info); break;
+            case 68: err=Infoams(Info); break;
+            case 76: err=Infot64(Info); break;
+            case 91: err=Infotxt(Info); break;
+            case 104:err=Infohtm(Info); break;
+            case 106:err=Infoamf(Info); break;
+            case 107:err=Infogb(Info); break;
+            case 108:err=Infoptm(Info); break;
+            case 110:err=Infopkm(Info); break;
+            case 111:err=Infoits(Info); break;
+            case 112:err=Infodp3(Info); break;
+            case 113:err=Infodsf(Info); break;
+            case 114:err=Infouwf(Info); break;
+            case 115:err=Infoams2(Info); break;
+            case 120:err=Infoast(Info); break;
+            case 121:err=Infodsm(Info); break;
+            case 122:err=Infodat(Info); break;
+            case 24:err=Infopat(Info); break;
+            default:        // Ca serait une erreur de ma part alors
+                sprintf(Info->format,"Pingouin %d",K[n].numero);
+                trv=1;
+                break;
+            }
 		if (err==0) trv=n;
-
 		}
+    if (trv!=-1) break;
+    }
 
-if (trv!=-1) break;
-}
+if (trv==-1)
+    {
+    n=-2; // format non reconnu
 
-if (trv==-1) {
-		n=-2; // format non reconnu
-        strcpy(Info->format,"Unknown Format");
-		SplitName(nomfic,NULL,Info->ext);
-        Info->Btype=0;
-		}
-		else {
-		n=K[trv].numero;
-        Info->Btype=K[trv].type;
-		}
+    strcpy(Info->format,"Unknown Format");
+    SplitName(Info->filename,NULL,Info->ext);
+
+    Info->Btype=0;
+    }
+    else
+    {
+    if (*Info->format==0)
+        strcpy(Info->format,K[trv].format);
+    if (*Info->ext==0)
+        strcpy(Info->ext,K[trv].ext);
+
+    n=K[trv].numero;
+    Info->Btype=K[trv].type;
+    }
 
 if (*Info->fullname==0)
-		strcpy(Info->fullname,nomfic);
+    strcpy(Info->fullname,Info->filename);
+
 ClearSpace(Info->fullname);
 
 Info->posfic+=Info->taille;
 Info->numero=n;
 
 close(handle);
-
 }
 
 
 void ClearSpace(char *name)
 {
-/*
-char buf[1024];
-short n;
-
-n=0;
-while ((name[n]<=32) & (name[n]!=0))
-		n++;
-strcpy(buf,name+n);
-
-n=strlen(buf)-1;
-while ((buf[n]<=32) & (name[n]!=0))
-		n--;
-buf[n+1]=0;
-strcpy(name,buf);
-*/
-
 char c,buf[1024];
 short i,j;
 
@@ -1349,12 +1345,15 @@ if (name[i]!=0)
         }
 buf[j]=0;
 
+if (buf[j-1]==32)
+    buf[j-1]=0;
+
 strcpy(name,buf);
 }
 
 
 
-short Infomod(struct info *Info)
+short Infomod(RB_IDF *Info)
 {
 short chnl,instr;
 char *buf;
@@ -1380,9 +1379,9 @@ if (!memcmp(buf+1080,"FLT8",4)) { strcpy(Info->format,"StarTrekker"); chnl=8; in
 if (!memcmp(buf+1080,"EXO4",4)) { strcpy(Info->format,"StarTrekker"); chnl=8; instr=31; } // EXO OU EX0 ?
 if (!memcmp(buf+1080,"EXO8",4)) { strcpy(Info->format,"StarTrekker"); chnl=8; instr=31; }
 
-strcat(Info->format," module");
+if (chnl==0)  return 1;
 
-if (chnl==0)	return 1;
+strcat(Info->format," module");
 
 ReadStr(Info,0,Info->fullname,20);
 
@@ -1392,7 +1391,7 @@ strcpy(Info->Tinfo,"Inst/Patt/Chnl");
 return 0;
 }
 
-short Infodmf(struct info *Info)
+short Infodmf(RB_IDF *Info)
 {
 ReadStr(Info,13,Info->fullname,30);
 ReadStr(Info,43,Info->composer,20);
@@ -1408,7 +1407,7 @@ strcpy(Info[3].title,"Inst/Patt/Chnl"); */
 return 0;
 }
 
-short Infoit(struct info *Info)
+short Infoit(RB_IDF *Info)
 {
 char *buf;
 
@@ -1423,7 +1422,7 @@ strcpy(Info->Tinfo,"Inst/Patt/Orde");
 return 0;
 }
 
-short Infomid(struct info *Info)
+short Infomid(RB_IDF *Info)
 {
 char chunk[5];
 int lng,pos;
@@ -1489,7 +1488,7 @@ return 0;
 }
 
 
-short Infomtm(struct info *Info)
+short Infomtm(RB_IDF *Info)
 {
 
 char *buf;
@@ -1507,23 +1506,22 @@ strcpy(Info->Tinfo,"SngL/Chnl"); // sngl = songlength
 return 0;
 }
 
-short Info669(struct info *Info)
+short Info669(RB_IDF *Info)
 {
 char *buf;
 
 buf=Info->buffer;
 if ( (memcmp(buf,"if",2)!=0) & (memcmp(buf,"JN",2)!=0) )
-		return 1;
-
+    return 1;
 
 ReadStr(Info, 2,Info->message[0],36); // limite … 26 mais fait 108 octets en r‚alit‚
 ReadStr(Info,38,Info->message[1],36); // limite … 26 mais fait 108 octets en r‚alit‚
 ReadStr(Info,74,Info->message[2],36); // limite … 26 mais fait 108 octets en r‚alit‚
 
 if (!memcmp(buf,"if",2)) // 0x6669
-		strcpy(Info->format,"669 Module");
-		else
-		strcpy(Info->format,"Extended 669 Module");
+    strcpy(Info->format,"669 Module");
+    else
+    strcpy(Info->format,"Extended 669 Module");
 
 sprintf(Info->info, "%3d /%3d /%3d",buf[0x6E],buf[0x6F],8);
 strcpy(Info->Tinfo,"Inst/Patt/Chnl");
@@ -1531,7 +1529,7 @@ strcpy(Info->Tinfo,"Inst/Patt/Chnl");
 return 0;
 }
 
-short Infoxm(struct info *Info)
+short Infoxm(RB_IDF *Info)
 {
 char bname[25];
 
@@ -1552,14 +1550,13 @@ return 0;
 
 
 
-short Infos3m(struct info *Info)
+short Infos3m(RB_IDF *Info)
 {
 short n,chnl;
 
 char *buf;
 
 buf=Info->buffer;
-
 
 memcpy(Info->fullname,buf,28);
 Info->fullname[28]=0;
@@ -1573,7 +1570,7 @@ strcpy(Info->Tinfo,"Inst/Orde/Chnl");
 return 0;
 }
 
-short Infout(struct info *Info)
+short Infout(RB_IDF *Info)
 {
 short chnl,instr,patt;
 char version[5];
@@ -1649,20 +1646,16 @@ struct FileEntete
  ULONG FileAttr;
 };
 
-short Inforar(struct info *Info)
+short Inforar(RB_IDF *Info)
 {
 char Nomarch[256];
 char buffer[256];
 struct FileEntete Lt;
 short SolidType;
-ULONG pos;
-char fin;
-short nbr;				  // nombre de fichier
 
 char *buf;
 
 buf=Info->buffer;
-
 
 
 // Test la solidit‚ ;) de l'archive
@@ -1684,14 +1677,10 @@ strcat(buffer,Nomarch);
 
 sprintf(Info->message[0],"  Archive type: %20s",buffer);
 
-pos=Info->posfic;
-fin=0;
-nbr=0;
-
 return 0;
 }
 
-short Infogif(struct info *Info)
+short Infogif(RB_IDF *Info)
 {
 char car;
 short Lp,Hp;
@@ -1818,7 +1807,7 @@ Info->taille=(tell(Info->handle)-Info->posfic);
 return 0;
 }
 
-short Infopcx(struct info *Info)
+short Infopcx(RB_IDF *Info)
 {
 short Lp,Hp;
 char BP;
@@ -1837,7 +1826,7 @@ return 0;
 
 
 
-short Infobmp(struct info *Info)
+short Infobmp(RB_IDF *Info)
 {
 char *buf;
 
@@ -1849,7 +1838,7 @@ memcpy(&(Info->taille),buf+2,4); /* Ordre des bytes pour le int: LO-LO-HI-HI */
 return 0;
 }
 
-short Infopkm(struct info *Info)
+short Infopkm(RB_IDF *Info)
 {
 short Lp,Hp;
 
@@ -1861,7 +1850,7 @@ sprintf(Info->message[0]," Image is      %4d * %4d / 8Bps",Lp,Hp);
 return 0;
 }
 
-short Inforaw(struct info *Info)
+short Inforaw(RB_IDF *Info)
 {
 WORD Lp,Hp,Bp;
 
@@ -1875,7 +1864,7 @@ sprintf(Info->message[0]," Image is      %4d * %4d / %2dBps",Lp,Hp,Bp);
 return 0;
 }
 
-short Infookt(struct info *Info)
+short Infookt(RB_IDF *Info)
 {
 short chnl,inst,patt;
 ULONG pos;
@@ -1934,7 +1923,7 @@ Info->taille=(tell(Info->handle)-Info->posfic);
 return 0;
 }
 
-short Infoau(struct info *Info)
+short Infoau(RB_IDF *Info)
 {
 ULONG dataLocation,dataSize,dataFormat,samplingRate;
 char *text;
@@ -1972,7 +1961,7 @@ Info->taille=dataSize+dataLocation;
 return 0;
 }
 
-short Infoiff(struct info *Info)
+short Infoiff(RB_IDF *Info)
 {
 ULONG pos;
 WORD samplingRate;
@@ -2030,7 +2019,7 @@ break;
 return 0;
 }
 
-short Infolbm(struct info *Info)
+short Infolbm(RB_IDF *Info)
 {
 ULONG pos;
 char chunk[5];
@@ -2095,9 +2084,9 @@ return 0;
 
 
 
-short Infoarj(struct info *Info)
+short Infoarj(RB_IDF *Info)
 {
-char *buf;
+unsigned char *buf;
 
 buf=Info->buffer;
 
@@ -2146,7 +2135,7 @@ struct MMD0song {
 }; */ // length = 788 bytes
 
 
-short Infomed(struct info *Info)
+short Infomed(RB_IDF *Info)
 {
 char *buf;
 
@@ -2160,7 +2149,7 @@ Info->taille=ReadLng(Info,4,2);
 return 0;
 }
 
-short Infovoc(struct info *Info)
+short Infovoc(RB_IDF *Info)
 {
 short type;
 int size,pos;
@@ -2222,7 +2211,7 @@ Info->taille=tell(Info->handle)-Info->posfic;
 return 0;
 }
 
-short Infopsm(struct info *Info)
+short Infopsm(RB_IDF *Info)
 {
 
 
@@ -2232,7 +2221,7 @@ Info->taille=ReadLng(Info,4,1)+12;
 return 0;
 }
 
-short Infoexe1(struct info *Info)
+short Infoexe1(RB_IDF *Info)
 {
 unsigned short modulo,file,header,overlay,pe,ip,cs;
 char htc[]={0xBA,0,0,0x2E,0x89,0x16,0,0,0xB4,0x30,0xCD,0x21}; // header C++
@@ -2448,7 +2437,7 @@ Info->taille=(int)modulo+((int)file)*512-512;
 return 0;
 }
 
-short Infoxi(struct info *Info)
+short Infoxi(RB_IDF *Info)
 {
 char bname[21];
 
@@ -2470,7 +2459,7 @@ return 0;
 }
 
 
-short Infotpu(struct info *Info)
+short Infotpu(RB_IDF *Info)
 {
 char *buf;
 
@@ -2496,7 +2485,7 @@ struct Scmf {
 		short nbrinst;
 		short bastempo;
 		};
-short Infocmf(struct info *Info)
+short Infocmf(RB_IDF *Info)
 {
 struct Scmf *Bcmf;
 short l,n;
@@ -2535,7 +2524,7 @@ sprintf(Info->info,"%3d /%3d",Bcmf->nbrinst,l);
 return 0;
 }
 
-short Infohlp(struct info *Info)
+short Infohlp(RB_IDF *Info)
 {
 char keysize[]={0x00,0x00,0x01,0x00};
 
@@ -2552,7 +2541,7 @@ if (!memcmp(buf+0x23,keysize,4))
 return 0;
 }
 
-short Infostm(struct info *Info)	// 8 channel
+short Infostm(RB_IDF *Info)    // 8 channel
 {
 char *buf;
 
@@ -2570,7 +2559,7 @@ sprintf(Info->info,"%3d / 8",buf[33]);
 return 0;
 }
 
-short Infofar(struct info *Info)	// 16 channel
+short Infofar(RB_IDF *Info)    // 16 channel
 {
 char *buf;
 
@@ -2583,68 +2572,68 @@ sprintf(Info->format,"Farandole Module V%d.%d",buf[49]/16,buf[49]&15);
 return 0;
 }
 
-short Infofsm(struct info *Info)
+short Infofsm(RB_IDF *Info)
 {
 ReadStr(Info,0x04,Info->fullname,32);
 return 0;
 }
 
-short Infousm(struct info *Info)
+short Infousm(RB_IDF *Info)
 {
 ReadStr(Info,0x04,Info->fullname,32);
 return 0;
 }
 
 
-short Infofpt(struct info *Info)
+short Infofpt(RB_IDF *Info)
 {
 ReadStr(Info,0x04,Info->fullname,32);
 return 0;
 }
 
-short Infof2r(struct info *Info)
+short Infof2r(RB_IDF *Info)
 {
 ReadStr(Info,0x06,Info->fullname,40);
 return 0;
 }
 
-short Infoits(struct info *Info)
+short Infoits(RB_IDF *Info)
 {
 ReadStr(Info,0x14,Info->fullname,22);
 return 0;
 }
 
-short Infodp3(struct info *Info)
+short Infodp3(RB_IDF *Info)
 {
 ReadStr(Info,0x30,Info->fullname,22);
 return 0;
 }
 
-short Infopat(struct info *Info)
+short Infopat(RB_IDF *Info)
 {
 ReadStr(Info,0x83,Info->fullname,16);
 return 0;
 }
 
-short Infodsf(struct info *Info)
+short Infodsf(RB_IDF *Info)
 {
 ReadStr(Info,4,Info->fullname,22);
 return 0;
 }
 
-short Infouwf(struct info *Info)
+short Infouwf(RB_IDF *Info)
 {
 ReadStr(Info,0,Info->fullname,22);
 return 0;
 }
 
-short Infoams2(struct info *Info)
+short Infoams2(RB_IDF *Info)
 {
 ReadStr(Info,37,Info->fullname,22);
 return 0;
 }
 
-short Infoast(struct info *Info)
+short Infoast(RB_IDF *Info)
 {
 WORD lng;
 
@@ -2660,7 +2649,7 @@ strcpy(Info->fullname,tampon);
 return 0;
 }
 
-short Infodsm(struct info *Info)
+short Infodsm(RB_IDF *Info)
 {
 ReadStr(Info,4,tampon,79);
 tampon[79]=0;
@@ -2673,7 +2662,7 @@ strcpy(Info->fullname,tampon);
 return 0;
 }
 
-short Infodat(struct info *Info)
+short Infodat(RB_IDF *Info)
 {
 ReadStr(Info,0x16,Info->fullname,32);
 ReadStr(Info,0x36,Info->composer,32);
@@ -2684,7 +2673,7 @@ return 0;
 
 
 
-short Infomdl(struct info *Info)
+short Infomdl(RB_IDF *Info)
 {
 char chunk[2];
 ULONG taille;
@@ -2727,7 +2716,7 @@ Info->taille=tell(Info->handle)-Info->posfic;
 return 0;
 }
 
-short Infospl(struct info *Info)
+short Infospl(RB_IDF *Info)
 {
 char *buf;
 
@@ -2739,7 +2728,7 @@ return 0;
 }
 
 
-short Infogrp(struct info *Info)
+short Infogrp(RB_IDF *Info)
 {
 char name[10];
 char key2[]={0x00,0x80,0xFF,0xFF,0x0A,0x00};
@@ -2767,7 +2756,7 @@ return 0;
 }
 
 
-short Infotga(struct info *Info)
+short Infotga(RB_IDF *Info)
 {
 char key1[]={0,1,1,0};
 char key2[]={0,0,2,0};
@@ -2784,12 +2773,11 @@ if (!memcmp(buf,key1,4))		sprintf(Info->format,"Targa Picture 256 Col.");
 if (!memcmp(buf,key2,4))		sprintf(Info->format,"Targa Picture True Col.");
 		else
 		return 1;
-strcpy(Info->ext,"TGA");
 return 0;
 }
 
 
-short Infodlz(struct info *Info)
+short Infodlz(RB_IDF *Info)
 {
 char *buf;
 
@@ -2798,7 +2786,7 @@ Info->taille=(ULONG)(*(WORD*)(buf+0xA))+17+(ULONG)(buf[0x9])*65536L;
 return 0;
 }
 
-short Infofli(struct info *Info)
+short Infofli(RB_IDF *Info)
 {
 short Lp,Hp,BP,frame;
 
@@ -2820,7 +2808,7 @@ Info->taille=ReadLng(Info,0,1);
 return 0;
 }
 
-short Infoflc(struct info *Info)
+short Infoflc(RB_IDF *Info)
 {
 short Lp,Hp,BP,frame;
 
@@ -2841,50 +2829,50 @@ Info->taille=ReadLng(Info,0,1);
 return 0;
 }
 
-short Infoswg(struct info *Info)
+short Infoswg(RB_IDF *Info)
 {
 ReadStr(Info,57,Info->fullname,48);
 return 0;
 }
 
-short Infoams(struct info *Info)
+short Infoams(RB_IDF *Info)
 {
 ReadStr(Info,8,Info->fullname,Info->buffer[7]);
 return 0;
 }
 
 
-short Infot64(struct info *Info)
+short Infot64(RB_IDF *Info)
 {
 ReadStr(Info,0x28,Info->fullname,24);
 return 0;
 }
 
-short Infop00(struct info *Info)
+short Infop00(RB_IDF *Info)
 {
 ReadStr(Info,0x08,Info->fullname,18);
 return 0;
 }
 
-short Infoamf(struct info *Info)
+short Infoamf(RB_IDF *Info)
 {
 ReadStr(Info,0x04,Info->fullname,32);
 return 0;
 }
 
-short Infogb(struct info *Info)
+short Infogb(RB_IDF *Info)
 {
 ReadStr(Info,0x134,Info->fullname,16);
 return 0;
 }
 
-short Infoptm(struct info *Info)
+short Infoptm(RB_IDF *Info)
 {
 ReadStr(Info,0,Info->fullname,28);
 return 0;
 }
 
-short Infotxt(struct info *Info)
+short Infotxt(RB_IDF *Info)
 {
 unsigned short pos,i;
 unsigned char a;
@@ -2991,7 +2979,7 @@ if (pos>999) Info->fullname[0]=0;
 return 0;
 }
 
-short Infohtm(struct info *Info)
+short Infohtm(RB_IDF *Info)
 {
 unsigned short n,d;
 char *buf;
@@ -3030,3 +3018,18 @@ for(n=0;n<32768;n++)
 return 1;
 }
 
+char *GetFile(char *p,char *Ficname)
+{
+int n;
+char *s;
+
+if (*p==0) return Ficname;
+
+for (n=0;n<strlen(p);n++)
+    if ( (p[n]=='\\') | (p[n]=='/') )
+        s=p+n+1;
+
+strcpy(Ficname,s);
+
+return Ficname;
+}

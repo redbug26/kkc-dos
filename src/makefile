@@ -8,7 +8,7 @@
 
 #.SILENT
 
-DEBUG = 1
+#DEBUG = 0
 
 CA = wasm
 CC = wcc386
@@ -69,10 +69,10 @@ all : kk.exe kkmain.exe kksetup.exe kkdesc.exe kkkkrgr.exe kkfont.exe idf.lib
 
 kkmain.exe  : kkmain.obj    idf.lib   hard.obj   win.obj gestion.obj &
                  dos.obj driver.obj ficidf.obj copie.obj  delete.obj &
-              search.obj   help.obj   view.obj
+              search.obj   help.obj   view.obj  util.obj reddies.obj
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
-kksetup.exe : kksetup.obj hard.obj idf.lib help.obj
+kksetup.exe : kksetup.obj hard.obj idf.lib help.obj reddies.obj
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 kkdesc.exe  : kkdesc.obj idf.lib hard.obj help.obj
