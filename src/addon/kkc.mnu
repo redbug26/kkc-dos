@@ -1,0 +1,36 @@
+;
+;
+;
+
+[Main]
+; remarque
+
+DOS-program      = [DOSProgs]
+My games         = [Games]
+Communication    = [Comm]
+Utility          = [Util]
+Dosshell         = c:\4dos.com
+
+[DOSProgs]
+DOS-Editor       = edit
+
+[Games]
+Eclipse pacman     = f:
+                     cd \redbug\epacman
+                     greedy
+
+[Comm]
+Termail    = c:
+             cd \lync
+             tm
+
+Lync      = c:
+            cd \lync
+            lync
+
+[Util]
+
+Cubic player = c:\cubic\cp !.!
+
+[MenuEnd]
+

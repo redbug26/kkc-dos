@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "kk.h"
+#include "kk.H"
 
 #define MACROVERSION 2
 

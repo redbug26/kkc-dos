@@ -1196,11 +1196,12 @@ struct key K[nbrkey]=   {
 /*
    other: bit 7 6 5 4 3 2 1 0
               ³ ³ ³ ³ ³ ³ ³ ³
-              ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ 1: IDF have more information on file
-              ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ 2: The key is not defined in structure
-              ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄÄ 4: This is a text file
-              ³ ³ ³ ³ ÀÄÄÄÄÄÄÄÄÄ 8: Sauce information possible
-              ÀÄÁÄÁÄÁÄÄÄÄÄÄÄÄÄÄÄ  : Always to 0
+              ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ  1: IDF have more information on file
+              ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ  2: The key is not defined in structure
+              ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄÄ  4: This is a text file
+              ³ ³ ³ ³ ÀÄÄÄÄÄÄÄÄÄ  8: Sauce information possible
+              ³ ³ ³ ÀÄÄÄÄÄÄÄÄÄÄÄ 10: MP3 information possible
+              ÀÄÁÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄ   : Always to 0
    type: 1: module
          2: sample
          3: archive
@@ -1280,14 +1281,14 @@ struct key K[nbrkey]=   {
      "MPEG 2 Audio Layer 2",
      "MP2",
      "ISO",
-     135,1*2+1,2},
+     135,0x10+1*2+1,2},
 {  NULL,
      0,
      0,
      "MPEG 2 Audio Layer 3",
      "MP3",
      "ISO",
-     136,1*2+1,2},
+     136,0x10+1*2+1,2},
 {  "\x80",
     1,
     0,
@@ -1436,10 +1437,11 @@ void SplitName(char *filename,char *name,char *ext);
 void Size2Chr(int Size,char *Taille);
                               // transforme la taille indiqu‚e en chaine
 
-bool IsTxt(RB_IDF *Info); //--Renvoit le pourcentage texte (>50=texte)--
+int IsTxt(RB_IDF *Info); //--Renvoit le pourcentage texte (>50=texte)--
 
 short Infotxt(RB_IDF *Info);   //--- Test pour voir si c'est du texte --
 short InfoSauce(RB_IDF *Info);
+short InfoMP3(RB_IDF *Info);
 short Infomtm(RB_IDF *Info);
 short Infong(RB_IDF *Info);
 short Infoexe1(RB_IDF *Info);
@@ -1664,7 +1666,7 @@ if (type==2)
     return result;
     }
 
-return 0;
+return -1;
 }
 
 /*--------------------------------------------------------------------*\
@@ -2074,13 +2076,17 @@ if (trv==-1)
 
     Info->Btype=0;
     }
-    else
+else
     {
-    if (((K[trv].other)&8)==8)
+    if (((K[trv].other)&0x08)==0x08)
         InfoSauce(Info);
+
+    if (((K[trv].other)&0x10)==0x10)
+        InfoMP3(Info);
 
     if (*Info->format==0)
         strcpy(Info->format,K[trv].format);
+
     if (*Info->ext==0)
         strcpy(Info->ext,K[trv].ext);
 
@@ -4324,7 +4330,7 @@ return 0;
 }
 
 
-bool IsTxt(RB_IDF *Info)
+int IsTxt(RB_IDF *Info)
 {
 unsigned short pos;
 uchar a;
@@ -4556,4 +4562,26 @@ if (!strcmp(buffer,"SAUCE"))
 return 1;
 }
 
+short InfoMP3(RB_IDF *Info)
+{
+char buffer[3];
+int pos;
+
+//--- Teste si on a sauce ----------------------------------------------
+
+pos=Info->sizemax-128;
+
+ReadStr(Info,pos,buffer,3);
+if (!memcmp(buffer,"TAG",3))
+    {
+    ReadStr(Info,pos+3,Info->fullname,30);
+    ReadStr(Info,pos+33,Info->composer,30);
+
+    strcpy(Info->Tinfo,"Rem");
+    ReadStr(Info,pos+63,Info->info,30);
+    return 0;
+    }
+
+return 1;
+}
 

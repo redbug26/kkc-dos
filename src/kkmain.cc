@@ -6,10 +6,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-//#include <fcntl.h>
+#include <fcntl.h>
 #include <signal.h> 							  // For handling signal
-
-// #include <conio.h>
 
 #include "kk.h"
 
@@ -88,8 +86,7 @@ void QuickSearch(int key,BYTE *c,BYTE *c2);
 /*--------------------------------------------------------------------*\
 |- Gestion des pannels												  -|
 \*--------------------------------------------------------------------*/
-void CreateNewFen(FENETRE *Fen,int n);
-void CloseNewFen(FENETRE *Fen);
+
 void InitDispNewFen(FENETRE *Fen);
 void DispNewFen(FENETRE *Fen);
 
@@ -113,7 +110,7 @@ char Select_Chaine[32]="*.*";
 
 char *Screen_Buffer;
 
-#ifndef LINUX
+#ifndef DJGPP
 char *ShellAdr=(char*)0xBB000;
 #else
 char ShellAdr[256]="";
@@ -296,7 +293,7 @@ if (n==1)
 		nom[strlen(nom)-1]=0;
 
 		for(i=0;i<Fen->nbrfic;i++)
-			if (!WildCmp(Fen->F[i]->name,nom))
+            if (!WildCmp(GetFilename(Fen,i),nom))
 				FicSelect(Fen,i,1); 						   // Select
 		}
 	fclose(fic);
@@ -307,13 +304,15 @@ if (n==2)
 	fic=fopen(nom,"wt");
 	if (fic==NULL)
 		{
-		WinError("File couldn't be created");
+        WinError(KKMsgErr[0]);  //--- File couldn't be created ---------
 		return;
 		}
 	for(i=0;i<Fen->nbrfic;i++)
 		{
-		if ((Fen->F[i]->select)==1)
-			fprintf(fic,"%s\n",Fen->F[i]->name);
+        struct file *F;
+        F=GetFile(Fen,i);
+        if ((F->select)==1)
+            fprintf(fic,"%s\n",F->name);
 		}
 	fclose(fic);
 	}
@@ -330,14 +329,17 @@ int retour;
 MENU menu;
 int nbr,max;
 int n,x,y;
+struct file *F;
 
-if (DFen->F[DFen->pcur]->name[0]=='*')
+F=GetFile(DFen,-1);
+
+if (F->name[0]=='*')
 	{
 	nbr=1;
 	bar[0].Titre="Run Function";   bar[0].fct=84;
 	}
 else
-if ((DFen->F[DFen->pcur]->attrib & RB_SUBDIR)==RB_SUBDIR)
+if ((F->attrib & RB_SUBDIR)==RB_SUBDIR)
 	{
 	nbr=6;
 	bar[0].Titre="Enter";   bar[0].fct=84;
@@ -450,10 +452,8 @@ char buffer[256];
 char bartxt[81];
 int car;
 
-/*
 if (Wait(0,0)!='R') return;
 if (Wait(0,0)!='B') return;
-*/
 
 KKWin Win;
 
@@ -473,18 +473,18 @@ Bar(bartxt);
 
 car=Wait(0,0);
 
-switch(car)
+switch(HI(car))
 	{
-	case KEY_F(2): //--- F2 ------------------------------------------------
+	case 0x3C: //--- F2 ------------------------------------------------
 		KKCfg->savekey^=1;
 		break;
-	case KEY_F(3): //--- F3 ------------------------------------------------
+	case 0x3D: //--- F3 ------------------------------------------------
 		Cfg->debug^=1;
 		break;
-	case KEY_F(4): //--- F4 ------------------------------------------------
+	case 0x3E: //--- F4 ------------------------------------------------
 		SpeedTest();
 		break;
-	case KEY_F(5): //--- F5 ------------------------------------------------
+	case 0x3F: //--- F5 ------------------------------------------------
 		{
 		FILE *fic;
 		int n;
@@ -507,10 +507,10 @@ switch(car)
 		fclose(fic);
 		}
 		break;
-	case KEY_F(6): //--- F6 ------------------------------------------------
+	case 0x40: //--- F6 ------------------------------------------------
 		GestionFct(106);
 		break;
-	case KEY_F(7): //--- F7 ------------------------------------------------
+	case 0x41: //--- F7 ------------------------------------------------
 		#ifndef NOFONT
 			{
 			FILE *fic;
@@ -543,7 +543,7 @@ switch(car)
 		#endif
 		break;
 
-	case KEY_F(10): //--- F10 -----------------------------------------------
+	case 0x44: //--- F10 -----------------------------------------------
 		car=27;
 		break;
 	}
@@ -648,13 +648,14 @@ if (retour!=0)
 		switch(i)
 			{
 			case 1: 						 // Pas de fichier IDFEXT.RB
-				CommandLine("@ ERROR WITH FICIDF @");
+				WinError("Error with ficidf");
 				break;
 			case 0:
+				WinError("toto2");
 				if (enter)
 					CommandLine(buffer);
 					else
-					CommandLine(buffer+1);
+					KeyLine(buffer+1);
 				break;
 			}
 		}
@@ -808,9 +809,10 @@ Fin();
 |-111: Compute the size of the current directory					  -|
 |-112: Wired Compo													  -|
 |-113: Wired compo configuration									  -|
+|-114: Tree 														  -|
 \*--------------------------------------------------------------------*/
 
-#define CURRENTNAME DFen->F[DFen->pcur]->name
+#define CURRENTNAME GetFilename(DFen,-1)
 
 void GestionFct(FUNCTION fct)
 {
@@ -819,42 +821,35 @@ static char buffer[256],buf2[256];
 char *ext;
 int i,j;
 FILE *fic;
+struct file *F;
 
 if (KKCfg->key!=0)
 	PutLIFOFct(KKCfg->key);
 
 KKCfg->key=fct;
 
-if ( ((DFen->F[DFen->pcur]->attrib & RB_SUBDIR)!=RB_SUBDIR) &
-		 (CURRENTNAME[0]!='*') )
-	{
-	switch(KKCfg->key)
-		{
-		case 84:	//--- Enter
-		case  7:	//--- View file
-		case  9:	//--- Edit file
-		case  8:	//--- Quick view file
+switch(KKCfg->key)
+    {
+    case 84:    //--- Enter
+    case  7:    //--- View file
+    case  9:    //--- Edit file
+    case  8:    //--- Quick view file
+        F=GetFile(DFen,-1);
+        if ( ((F->attrib & RB_SUBDIR)!=RB_SUBDIR) & (CURRENTNAME[0]!='*') )
+            {
 			strcpy(KKCfg->FileName,CURRENTNAME);
 			AccessFile(DFen->pcur);
-			break;
-		}
-	}
-
-//printf("Traite Commandline after dos %d FIN)\n\n",fct); exit(1);
-//
-InitDispNewFen(DFen);
-//DispNewFen(DFen);
-                                                                                              
+            }
+        break;
+    }
 
 KKCfg->key=GetLIFOFct();
-
 
 switch(fct)
 	{
 	case 0:
 		break;
 	case 1:
-//		  PrintAt(0,0,"Info->macro: %d",Info->macro); Wait(0,0);
 		if (Info->macro)
 			HelpTopic(_lbuf[0]);
 			else
@@ -952,7 +947,7 @@ switch(fct)
 
 		if (!strcmp(CURRENTNAME,"."))
 			for (i=0;i<DFen->nbrfic;i++)
-				if (!WildCmp(DFen->F[i]->name,Select_Chaine))
+                if (!WildCmp(GetFilename(DFen,i),Select_Chaine))
 					FicSelect(DFen,i,1);
 
 		if (KKCfg->insdown==1)
@@ -970,18 +965,23 @@ switch(fct)
 		break;
 	case 19:									// Select temporary file
 		for (i=0;i<DFen->nbrfic;i++)
-			if ( (!WildCmp(DFen->F[i]->name,"*.bak")) |
-				 (!WildCmp(DFen->F[i]->name,"*.old")) |
-				 (!WildCmp(DFen->F[i]->name,"*.tmp")) |
-				 (!WildCmp(DFen->F[i]->name,"*.map")) |
-				 (!WildCmp(DFen->F[i]->name,"*.lst")) |
-				 (!WildCmp(DFen->F[i]->name,"*.obj")) |
-				 (!WildCmp(DFen->F[i]->name,"cache.its")) |
-				 (!WildCmp(DFen->F[i]->name,"cache.iti")) |
-				 (!WildCmp(DFen->F[i]->name,"chklist.ms")) |
-				 (!WildCmp(DFen->F[i]->name,"file*.chk")) |
-				 (!WildCmp(DFen->F[i]->name,"*.$")) )
+            {
+            char *name;
+            name=GetFilename(DFen,i);
+
+            if ( (!WildCmp(name,"*.bak")) |
+                 (!WildCmp(name,"*.old")) |
+                 (!WildCmp(name,"*.tmp")) |
+                 (!WildCmp(name,"*.map")) |
+                 (!WildCmp(name,"*.lst")) |
+                 (!WildCmp(name,"*.obj")) |
+                 (!WildCmp(name,"cache.its")) |
+                 (!WildCmp(name,"cache.iti")) |
+                 (!WildCmp(name,"chklist.ms")) |
+                 (!WildCmp(name,"file*.chk")) |
+                 (!WildCmp(name,"*.$")) )
 					  FicSelect(DFen,i,1);				  // Select file
+            }
 		break;
 	case 20:												 // Quit KKC
 		break;
@@ -1044,7 +1044,7 @@ switch(fct)
 		WinCD();
 		break;
 	case 30:								 // Put file on command line
-		CommandLine("%s ",CURRENTNAME);
+		KeyLine("%s ",CURRENTNAME);
 		break;
 	case 31:											// Configuration
 		Setup();
@@ -1093,18 +1093,10 @@ switch(fct)
 	   // WinInfo(Fenetre);
 		break;
 	case 36:
-		if (DFen->pcur<DFen->nbrfic-1)
-			{
-			DFen->scur++;
-			DFen->pcur++;
-			}
+        DeplPCurFen(DFen,1);
 		break;
 	case 37:
-		if (DFen->pcur>0)
-			{
-			DFen->scur--;
-			DFen->pcur--;
-			}
+        DeplPCurFen(DFen,-1);
 		break;
 	case 38:
 		DFen=DFen->Fen2;
@@ -1163,7 +1155,8 @@ switch(fct)
 			}
 		break;
 	case 46:	  // Selection du fichier en tant que repertoire courant
-		if ((DFen->F[DFen->pcur]->attrib & RB_SUBDIR)==RB_SUBDIR)
+        F=GetFile(DFen,-1);
+        if ((F->attrib & RB_SUBDIR)==RB_SUBDIR)
 				CommandLine("#cd %s",CURRENTNAME);
 		break;
 	case 47:				  // Switch le mode ecran (nombre de lignes)
@@ -1268,6 +1261,8 @@ switch(fct)
 		Path2Abs(buffer,CURRENTNAME);
 		i=NameIDF(buffer);
 
+		WinError("toto");
+
 		i=FicIdf(buffer,"",i,1);
 
 		switch(i)
@@ -1305,7 +1300,7 @@ switch(fct)
 		if (oldhist[0]==32)
 			strcpy(oldhist,CLstr);
 		History2Line(GetPrevHistCom(oldhist),buffer);
-		CommandLine("0\r%s",buffer);
+		KeyLine("0\r%s",buffer);
 		break;
 	case 71:						 // Fenetre affichage de file_id.diz
 		DFen=DFen->Fen2;
@@ -1384,34 +1379,33 @@ switch(fct)
 		PathDir();
 		break;
 	case 84:
-			if (CommandLine("\n")!=0) //--- Pas de car. sur la ligne ---
-				{
-				break;
-				}
+        F=GetFile(DFen,-1);
+        if (KeyLine("\n")!=0) //--- Pas de car. sur la ligne ---
+            break;
 
-			if (DFen->F[DFen->pcur]->name[0]=='*')
-				{
-				FUNCTION d;
-				sscanf(DFen->F[DFen->pcur]->name+1,"%d",&d);
-				GestionFct(d);
-				break;
-				}
+        if (F->name[0]=='*')
+            {
+            FUNCTION d;
+            sscanf(F->name+1,"%d",&d);
+            GestionFct(d);
+            break;
+            }
 
-		   if ((DFen->F[DFen->pcur]->attrib & RB_SUBDIR)==RB_SUBDIR)
-				{
-				CommandLine("#cd %s",DFen->F[DFen->pcur]->name);
-				break;
-				}
+        if ((F->attrib & RB_SUBDIR)==RB_SUBDIR)
+            {
+            CommandLine("#cd %s",F->name);
+            break;
+            }
 
 		ext=getext(CURRENTNAME);
 		if ( (!stricmp(ext,"COM")) | (!stricmp(ext,"BAT")) |
 			 ((!stricmp(ext,"BTM")) & (KKCfg->_4dos==1)) )
 			{
-			CommandLine("%s\n",CURRENTNAME);
+			CommandLine("#%s",CURRENTNAME);
 			break;
 			}
 
-		switch(i=EnterArcFile(DFen,DFen->F[DFen->pcur]->name))
+        switch(i=EnterArcFile(DFen,F->name))
 			{
 //			  case -2:				  break;
 			case -1:											   // OK
@@ -1421,11 +1415,9 @@ switch(fct)
 				RunDFenMacro(DFen->path,CURRENTNAME);
 				break;
 			case 57:									   // Executable
-				CommandLine("%s\n",CURRENTNAME);
+				CommandLine("#%s",CURRENTNAME);
 				break;
 			default:
-
-
 				strcpy(buf2,DFen->path);
 				Path2Abs(buf2,CURRENTNAME);
 				i=FicIdf(buffer,buf2,i,0);
@@ -1433,14 +1425,13 @@ switch(fct)
 				switch(i)
 					{
 					case 0: //-- Execution de la ligne de commande -----
-						CommandLine(buffer);
-						CommandLine("\n");
+						CommandLine("%s",buffer);
 						break;
 					case 1: //-- Pas de fichier IDFEXT.RB --------------
 						WinError("You must search player in setup");
 						break;
 					case 2: //-- No Player for this file ---------------
-//						   CommandLine(CURRENTNAME);
+//						CommandLine(CURRENTNAME);
 						 break;
 					case 3: //-- ESCape --------------------------------
 						break;
@@ -1535,7 +1526,7 @@ switch(fct)
 		if (oldhist[0]==32)
 			strcpy(oldhist,CLstr);
 		History2Line(GetNextHistCom(oldhist),buffer);
-		CommandLine("0\r%s",buffer);
+		KeyLine("0\r%s",buffer);
 		break;
 	case 94:
 		if (oldhist[0]==32)
@@ -1557,25 +1548,30 @@ switch(fct)
 				sprintf(buffer,buf2);
 
 			for(i=oldhistnum;i<DFen->nbrfic;i++)
-				if ( (!WildCmp(DFen->F[i]->name,buffer)) |
-					 ((!WildCmp(DFen->F[i]->name,buf2)) &
-					 ((DFen->F[i]->attrib & RB_SUBDIR)==RB_SUBDIR)) )
+                {
+                struct file *Fi;
+                Fi=GetFile(DFen,i);
+
+                if ( (!WildCmp(Fi->name,buffer)) |
+                     ((!WildCmp(Fi->name,buf2)) &
+                     ((Fi->attrib & RB_SUBDIR)==RB_SUBDIR)) )
 					{
 					j=strlen(CLstr+strlen(oldhist)-strlen(ext));
 					if (j>0)
 						memset(buffer,8,j);
 					buffer[j]=0;
 
-					strcat(buffer,DFen->F[i]->name);
+                    strcat(buffer,Fi->name);
 					strlwr(buffer);
 
-					CommandLine(buffer);
-					if ((DFen->F[i]->attrib & RB_SUBDIR)==RB_SUBDIR)
-						CommandLine("\\");
+					KeyLine(buffer);
+                    if ((Fi->attrib & RB_SUBDIR)==RB_SUBDIR)
+						KeyLine("\\");
 
 					oldhistnum=i+1;
 					break;
 					}
+                }
 			}
 		break;
 	case 95:
@@ -1652,12 +1648,14 @@ switch(fct)
 			_cbuf[0]=1; //--- Erreur -----------------------------------
 
 			for (i=0;i<DFen->nbrfic;i++)
-				if (!WildCmp(DFen->F[i]->name,buffer))
+                {
+                if (!WildCmp(GetFilename(DFen,i),buffer))
 					{
 					_cbuf[0]=0; //--- Pas d'erreur ---------------------
 					DFen->scur=DFen->pcur=i;
 					break;
 					}
+                }
 			}
 		break;
 	case 104:
@@ -1685,13 +1683,16 @@ switch(fct)
 		ViewNewFile();
 		break;
 	case 111:
-		DFen->sizedir=1;
+        DFen->sizedir=DFen->sizedir ? 0:1;
 		break;
 	case 112:
 		Wired();
 		break;
 	case 113:
 		WiredCfg();
+		break;
+	case 114:
+		FenTree(DFen,DFen->path);
 		break;
 	}
 }
@@ -1764,9 +1765,6 @@ switch(key)
 	case KEY_F(9) + 0x2D00:   strcpy(buffer,"Alt-F9");  break;
 	case KEY_F(10) + 0x2D00:  strcpy(buffer,"Alt-F10"); break;
 
-
-#ifndef LINUX
-
 	case KEY_F11 :	strcpy(buffer,"F11");  break;
 	case KEY_F12 :	strcpy(buffer,"F12");  break;
 	case KEY_F11 + 0x0200:	 strcpy(buffer,"Shift-F11");  break;
@@ -1776,15 +1774,18 @@ switch(key)
 	case KEY_F11 + 0x0600:	 strcpy(buffer,"Alt-F11");  break;
 	case KEY_F12 + 0x0600:	 strcpy(buffer,"Alt-F12");  break;
 
-	case KEY_INS: strcpy(buffer,"INS"); break;
-    case KEY_A_ENTER: strcpy(buffer,"Alt-ENTER"); break;
+	case KEY_PPAGE : strcpy(buffer,"PGUP");   break;
+	case KEY_NPAGE : strcpy(buffer,"PGDN");   break;
+	case KEY_UP    : strcpy(buffer,"UP");     break;
+	case KEY_DOWN  : strcpy(buffer,"DOWN");   break;
+	case KEY_RIGHT : strcpy(buffer,"RIGHT");  break;
+	case KEY_LEFT  : strcpy(buffer,"LEFT");   break;
+	case KEY_END   : strcpy(buffer,"END");    break;
+	case KEY_HOME  : strcpy(buffer,"HOME");   break;
 
-	case KEY_C_PPAGE : strcpy(buffer,"Ctrl-PGUP");   break;
-	case KEY_C_NPAGE : strcpy(buffer,"Ctrl-PGDN");   break;
-	case KEY_C_UP	 : strcpy(buffer,"Ctrl-UP");     break;
-	case KEY_C_DOWN  : strcpy(buffer,"Ctrl-DOWN");   break;
-	case KEY_C_RIGHT : strcpy(buffer,"Ctrl-RIGHT");  break;
-	case KEY_C_LEFT  : strcpy(buffer,"Ctrl-LEFT");   break;
+	case KEY_INS: strcpy(buffer,"INS"); break;
+
+	case KEY_A_ENTER: strcpy(buffer,"Alt-ENTER"); break;
 
 //	  case KEY_S_PPAGE : strcpy(buffer,"Shift-PGUP");   break;
 //	  case KEY_S_NPAGE : strcpy(buffer,"Shift-PGDN");   break;
@@ -1795,6 +1796,12 @@ switch(key)
 //	  case KEY_S_END   : strcpy(buffer,"Shift-END");    break;
 //	  case KEY_S_HOME  : strcpy(buffer,"Shift-HOME");   break;
 
+	case KEY_C_PPAGE : strcpy(buffer,"Ctrl-PGUP");   break;
+	case KEY_C_NPAGE : strcpy(buffer,"Ctrl-PGDN");   break;
+	case KEY_C_UP	 : strcpy(buffer,"Ctrl-UP");     break;
+	case KEY_C_DOWN  : strcpy(buffer,"Ctrl-DOWN");   break;
+	case KEY_C_RIGHT : strcpy(buffer,"Ctrl-RIGHT");  break;
+	case KEY_C_LEFT  : strcpy(buffer,"Ctrl-LEFT");   break;
 //	  case KEY_C_END   : strcpy(buffer,"Ctrl-END");    break;
 //	  case KEY_C_HOME  : strcpy(buffer,"Ctrl-HOME");   break;
 
@@ -1806,17 +1813,6 @@ switch(key)
 //	  case KEY_A_LEFT  : strcpy(buffer,"Alt-LEFT");   break;
 //	  case KEY_A_END   : strcpy(buffer,"Alt-END");    break;
 //	  case KEY_A_HOME  : strcpy(buffer,"Alt-HOME");   break;
-
-#endif 
-
-	case KEY_PPAGE : strcpy(buffer,"PGUP");   break;
-	case KEY_NPAGE : strcpy(buffer,"PGDN");   break;
-	case KEY_UP    : strcpy(buffer,"UP");     break;
-	case KEY_DOWN  : strcpy(buffer,"DOWN");   break;
-	case KEY_RIGHT : strcpy(buffer,"RIGHT");  break;
-	case KEY_LEFT  : strcpy(buffer,"LEFT");   break;
-	case KEY_END   : strcpy(buffer,"END");    break;
-	case KEY_HOME  : strcpy(buffer,"HOME");   break;
 	}
 }
 
@@ -1879,7 +1875,7 @@ if (u==0)
 	break;
 	}
 
-switch (poscur) 	// Marjo
+switch (poscur)
 	{
 	case 0:
 		bar[0].fct=7;
@@ -1961,6 +1957,7 @@ for(n=0;n<nbmenu;n++)
 		char keybuf[20];
 
 		key=GetKeyScan((FUNCTION)(bar[n].fct));
+
 		GetBufKey(key,keybuf);
 
 		if (keybuf[0]!=0)
@@ -1998,6 +1995,7 @@ for(n=0;n<nbmenu;n++)
 		bar[n].Help=0;
 		bar[n].Titre=NULL;
 		}
+
 	}
 
 s=2;
@@ -2089,10 +2087,15 @@ strcpy(Select_Chaine,_sbuf[10]);
 MacFree(10);
 
 for (n=0;n<DFen->nbrfic;n++)
-	if ( (KKCfg->seldir==1) |
-						 ((DFen->F[n]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
-			if (!WildCmp(DFen->F[n]->name,Select_Chaine))
-				FicSelect(DFen,n,1);
+    {
+    struct file *F;
+    F=GetFile(DFen,n);
+
+    if ( (KKCfg->seldir==1) | ((F->attrib & RB_SUBDIR)!=RB_SUBDIR) )
+        if (!WildCmp(F->name,Select_Chaine))
+            FicSelect(DFen,n,1);
+    }
+
 }
 
 /*--------------------------------------------------------------------*\
@@ -2120,10 +2123,14 @@ strcpy(Select_Chaine,_sbuf[10]);
 MacFree(10);
 
 for (n=0;n<DFen->nbrfic;n++)
-	if ( (KKCfg->seldir==1) |
-						 ((DFen->F[n]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
-		if (!WildCmp(DFen->F[n]->name,Select_Chaine))
+    {
+    struct file *F;
+    F=GetFile(DFen,n);
+
+    if ( (KKCfg->seldir==1) | ((F->attrib & RB_SUBDIR)!=RB_SUBDIR) )
+        if (!WildCmp(F->name,Select_Chaine))
 			FicSelect(DFen,n,0);
+    }
 }
 
 
@@ -2148,9 +2155,12 @@ strcpy(Select_Chaine,_sbuf[10]);
 MacFree(10);
 
 for (m=0;m<DFen->nbrfic;m++)
-	if ( (KKCfg->seldir==1) |
-						 ((DFen->F[m]->attrib & RB_SUBDIR)!=RB_SUBDIR) )
-		if (!WildCmp(DFen->F[m]->name,Select_Chaine))
+    {
+    struct file *F;
+    F=GetFile(DFen,m);
+
+    if ( (KKCfg->seldir==1) | ((F->attrib & RB_SUBDIR)!=RB_SUBDIR) )
+        if (!WildCmp(F->name,Select_Chaine))
 			{
 			if (n==2)
 				FicSelect(DFen,m,0);
@@ -2158,6 +2168,7 @@ for (m=0;m<DFen->nbrfic;m++)
 			if (n==1)
 				FicSelect(DFen,m,1);
 			}
+    }
 }
 
 
@@ -2224,7 +2235,7 @@ for (i=0;i<50;i++)
 	dir[i].Titre=path+j;
 	dir[i].Help=0;
 	dir[i].fct=i+1;
-//	strupr(dir[i].Titre); 
+	strupr(dir[i].Titre);
 	if (strlen(dir[i].Titre)==0) break;
 	while ( (j!=k) & (path[j]!=0) ) j++;
 	j++;
@@ -2292,7 +2303,7 @@ if (i!=0)
 	if (PannelMenu(dir,i,&menu)==2)
 		{
 		History2Line(dir[menu.cur].Titre,dest);
-		CommandLine("%s\n",dest);
+		CommandLine("#%s",dest);
 		}
 	}
 
@@ -2371,9 +2382,14 @@ n=WinTraite(T,5,&F,0);
 if (n!=-1)
 	if (T[n].type!=3)
 		{
+        char buffer[256];
+
 		CommandLine("#md %s",Dir);
+        strcpy(buffer,DFen->path);
+        Path2Abs(buffer,Dir);
 		CommandLine("#cd %s",Dir);
-		CommandLine("#cd ..");
+        if(!stricmp(buffer,DFen->path))
+            CommandLine("#cd ..");
 		}
 }
 
@@ -2408,9 +2424,8 @@ MacAlloc(10,256);
 if (!(Info->macro))
 	{
 	strcpy(_sbuf[10],DFen->path);
-	Path2Abs(_sbuf[10],DFen->F[DFen->pcur]->name);
-	}
-
+    Path2Abs(_sbuf[10],GetFilename(DFen,-1));
+    }
 
 n=MWinTraite(editfile_kkt);
 if (n==-1)
@@ -2444,7 +2459,7 @@ MacAlloc(10,256);
 if (!(Info->macro))
 	{
 	strcpy(_sbuf[10],DFen->path);
-	Path2Abs(_sbuf[10],DFen->F[DFen->pcur]->name);
+    Path2Abs(_sbuf[10],GetFilename(DFen,-1));
 	}
 
 
@@ -2476,8 +2491,10 @@ switch(n)
 void ViewFile(char *fichier)
 {
 char buffer[256];
+struct file *F;
+F=GetFile(DFen,-1);
 
-if ((DFen->F[DFen->pcur]->attrib & RB_SUBDIR)==RB_SUBDIR)
+if ((F->attrib & RB_SUBDIR)==RB_SUBDIR)
 	return;
 
 if (DFen->FenTyp!=0)
@@ -2487,8 +2504,6 @@ if (DFen->FenTyp!=0)
 
 strcpy(buffer,DFen->path);
 Path2Abs(buffer,fichier);
-
-//printf("Traite Commandline after dos (%d) FIN)\n\n",DFen->system); exit(1);
 
 if (KKCfg->vieweur[0]!=0)
 	CommandLine("#%s %s",KKCfg->vieweur,buffer);
@@ -2552,27 +2567,34 @@ if (n!=-1)
 \*--------------------------------------------------------------------*/
 void ChangeDrive(char *OldPath)
 {
-static char path[256],path2[256];
-char buffer[32],volume[32];
-long fpos,cpos,pos;
+char buf0[32];
+char buf5[32], path[256], buf1[32], path2[256], buf2[32], buffer[32], buf3[32], volume[32], buf4[32];
+
+signed int fpos,cpos,pos;   // position of the /, first is 12 (max is 19)
 
 char drive[26];
-long m,n,x,l,nbr;
+long m, n, x, l, nbr;
 long x1;
-char d;
-int i,olddrive;
+char cdrive, olddrive, oldcdrive;
 
-int p1,p2;
+int p1, p2;
 int car;
 
 DriveSet(DFen->path);
 
 nbr=0;
 
-for (i=0;i<26;i++)
+memset(buf0,69,32);
+memset(buf1,69,32);
+memset(buf2,69,32);
+memset(buf3,69,32);
+memset(buf4,69,32);
+memset(buf5,69,32);
+
+for (n=0;n<26;n++)  //--- Test if drive exist --------------------------
 	{
-	drive[i]=(char)DriveExist((char)i);
-	if (drive[i]==1)
+    drive[n]=(char)DriveExist((char)n);
+    if (drive[n]==1)
 		nbr++;
 	}
 
@@ -2598,7 +2620,7 @@ PrintAt(x1+2,7, "Choose a drive");
 PrintAt(x1+2,11,"Directory...");
 
 m=x+l/2;
-for (n=0;n<26;n++)
+for (n=0;n<26;n++)  //--- Display drive that exists --------------------
 	{
 	if (drive[n]==1)
 		{
@@ -2606,15 +2628,15 @@ for (n=0;n<26;n++)
 		AffChr(m,9,(char)(n+'A'));
 		m+=l;
 		}
-		else
+    else
 		drive[n]=0;
 	}
-
 
 cpos=50;
 fpos=0;
 
-i=toupper(OldPath[0])-'A';
+cdrive=(char)(toupper(OldPath[0])-'A');
+oldcdrive=cdrive;
 olddrive=-1;
 
 car=0;
@@ -2624,52 +2646,73 @@ do	{
 		{
 		switch(car)
 			{
-			case KEY_LEFT:	i--,cpos=50; break; 				 // LEFT
-			case KEY_RIGHT: i++,cpos=50; break; 				// RIGHT
-			case KEY_DOWN:	cpos++; break;						 // DOWN
-			case KEY_UP:	cpos--; break;						   // UP
-			case KEY_HOME:	cpos=12; break; 					 // HOME
-			case KEY_END:	cpos=pos-1; break;					  // END
+            case KEY_LEFT:
+                if (cdrive==0)
+                    cdrive=25;
+                else
+                    cdrive--;
+                cpos=50;
+                break;                      // LEFT
+            case KEY_RIGHT:
+                if (cdrive==25)
+                    cdrive=0;
+                else
+                    cdrive++;
+                cpos=50;
+                break;                      // RIGHT
+
+            case KEY_DOWN:
+                cpos++;
+                break;                      // DOWN
+
+            case KEY_UP:
+                cpos--;
+                break;                      // UP
+
+            case KEY_HOME:
+                cpos=12;
+                break;                      // HOME
+
+            case KEY_END:
+                cpos=pos-1;
+                break;                      // END
 			}
 
-		if (i>=26) i=0;
-		if (i<0) i=25;
-
-		if ( (drive[i]!=0) & (cpos==50) )
-			if (DriveReady((char)i)==1)
+        if ( (drive[cdrive]!=0) & (cpos==50) )  // Reload existing drive
+            {
+            if (DriveReady(cdrive)==1)
 				{
 				Window(x1+2,12,x1+35,19,Cfg->col[16]);
 
-				if (OldPath[0]==i+'A')
+                if (oldcdrive==cdrive)
 					strcpy(path,OldPath);
-					else
-					DrivePath((char)i,path);
+                else
+                    DrivePath(cdrive,path);
 
 				if (path[strlen(path)-1]!=DEFSLASH)
 					strcat(path,"\\");
 
-				DriveInfo((char)i,buffer);
+                DriveInfo(cdrive,buffer);
+                sprintf(volume,"[%s]",buffer);
 
-				sprintf(volume,"[%s]",buffer);
-
-	 //--- Calcule le nombre de position occup‚e par les repertoires ---
 				pos=12;
 				for (p2=0;p2<strlen(path);p2++)
 					if (IsSlash(path[p2]))
 						pos++;
 				break;
 				}
-				else
+            else
 				{
-				if ( (HI(car)!=GAUCHE) & (HI(car)!=DROITE) )
+                if ( (car!=KEY_LEFT) & (car!=KEY_RIGHT) )
 					{
 					if (olddrive!=-1)
-						i=olddrive;
-						else
-						car=DROITE;
+                        cdrive=olddrive;
+                    else
+                        car=KEY_RIGHT;
 					cpos=0;
 					}
 				}
+            }
 		}
 	while (cpos==50);
 
@@ -2685,12 +2728,14 @@ do	{
 	while (cpos-fpos<12)
 		fpos--;
 
+    //--- Here, cpos never is equal to 50 ---
+
 	pos=12;
-	p1=0;
+    p1=0;
 	p2=0;
 
 	for (p2=0;p2<strlen(path);p2++)
-		{
+        {
 		if (IsSlash(path[p2]))
 			{
 			memset(path2,32,255);
@@ -2704,7 +2749,7 @@ do	{
 				sprintf(path2+10,"%21s",volume);
 				PrintAt(x1+4,pos,"%s",path2);
 				}
-				else
+            else
 				{
 				if ( (pos-fpos>12) & (pos-fpos<=19) )
 					PrintAt(x1+4,pos-fpos,"%s",path2);
@@ -2714,14 +2759,12 @@ do	{
 			}
 		}
 
-	if (cpos!=50)
-		ColLin(x1+3,cpos-fpos,32,Cfg->col[18]);
+    ColLin(x1+3,cpos-fpos,32,Cfg->col[18]);
 
-	AffCol(drive[i],9,Cfg->col[17]);
+    AffCol(drive[cdrive],9,Cfg->col[17]);
 	car=Wait(0,0);
 
-	if (cpos!=50)
-		ColLin(x1+3,cpos-fpos,32,Cfg->col[16]);
+    ColLin(x1+3,cpos-fpos,32,Cfg->col[16]);
 
 #ifndef NOMOUSE
 	if (car==0)
@@ -2732,12 +2775,12 @@ do	{
 		py=MousePosY();
 		pz=MouseButton();
 
-		if (py==9)
+        if (py==9)          //--- Change drive from mouse ---
 			{
 			for(n=0;n<26;n++)
 				if (drive[n]==px) car=n+'A';
 			}
-			else
+        else
 			if ((px>=x1) & (px<=x1+32))
 				{
 				cpos=py+fpos;
@@ -2752,36 +2795,39 @@ do	{
 		}
 #endif
 
-	AffCol(drive[i],9,Cfg->col[16]);
+    if (drive[cdrive]!=0)
+        AffCol(drive[cdrive],9,Cfg->col[16]);
 
-	if (LO(car)==0)
-		{
-		switch(HI(car))
-			{
-			case 0x3B:
-				HelpTopic(72);
-				break;
-			}
-		}
+    switch(car)
+        {
+        case 0x3B00:
+            HelpTopic(72);
+            break;
 
-	if (HI(car)==0)
-		{
-		d=(uchar)(toupper(car)-'A');
-		if (d<26)	//--- d is always > 0 ------------------------------
-			if (drive[d]!=0)
-				{
-				if (!DriveReady(d))
-					EjectDrive(d);
+        case 13:
+        case 27:
+            break;
 
-				ColLin(x1+3,cpos-fpos,32,Cfg->col[16]);
-				olddrive=i;
-				i=d;
-				cpos=50;
-				}
-		}
+        default:
+            car=toupper(car);
+            if ((car<='Z') & (car>='A'))
+                {
+                if (drive[car-'A']!=0)
+                    {
+                    olddrive=cdrive;
+                    cdrive=(char)(car-'A');
 
-} while ( (LO(car)!=27) & (LO(car)!=13));
+                    if (!DriveReady(cdrive))
+                        EjectDrive(cdrive);
 
+                    ColLin(x1+3,cpos-fpos,32,Cfg->col[16]);
+                    cpos=50;
+                    }
+                }
+            break;
+        }
+    }
+while ( (car!=27) & (car!=13) );
 
 pos=12;
 p1=p2=0;
@@ -2795,13 +2841,30 @@ for (p2=0;p2<strlen(path);p2++)
 		pos++;
 		}
 	}
-if (path[strlen(path)-1]==':') strcat(path,"\\");
+
+if (path[2]==0)     // a:0
+    strcat(path,"\\");
+
+if (memcmp(buf0,buf1,32)!=0) WinError("BUF1 ERROR");
+if (memcmp(buf0,buf2,32)!=0) WinError("BUF2 ERROR");
+if (memcmp(buf0,buf3,32)!=0) WinError("BUF3 ERROR");
+if (memcmp(buf0,buf4,32)!=0) WinError("BUF4 ERROR");
+if (memcmp(buf0,buf5,32)!=0) WinError("BUF5 ERROR");
 
 if (car==13)
 	{
+//    PrintAt(0,0,"(%s)",path);    WinError("toto4");
 	CommandLine("#cd %s",path);
+//    WinError("toto6");
 	DFen->FenTyp=0;
 	}
+
+if (memcmp(buf0,buf1,32)!=0) WinError("BUF1 ERROR");
+if (memcmp(buf0,buf2,32)!=0) WinError("BUF2 ERROR");
+if (memcmp(buf0,buf3,32)!=0) WinError("BUF3 ERROR");
+if (memcmp(buf0,buf4,32)!=0) WinError("BUF4 ERROR");
+if (memcmp(buf0,buf5,32)!=0) WinError("BUF5 ERROR");
+
 }
 
 
@@ -2915,7 +2978,7 @@ if (lng!=0)
 	if (chaine[lng-1]!='*')
 		strcat(chaine,"*");
 
-if (WildCmp(DFen->F[DFen->pcur]->name,chaine)!=0)
+if (WildCmp(GetFilename(DFen,-1),chaine)!=0)
 	lng=0;
 
 if (key!=0)
@@ -3003,7 +3066,7 @@ do
 
 		while ((i>=0) & (i<DFen->nbrfic))
 			{
-			if (!WildCmp(DFen->F[i]->name,chaine))
+            if (!WildCmp(GetFilename(DFen,i),chaine))
 				{
 				DFen->scur=DFen->pcur=i;
 				fin2=1;
@@ -3015,7 +3078,7 @@ do
 		if ((vit==0) & (fin2==0))
 			{
 			for (i=0;i<DFen->nbrfic;i++)
-				if (!WildCmp(DFen->F[i]->name,chaine))
+                if (!WildCmp(GetFilename(DFen,i),chaine))
 					{
 					DFen->scur=DFen->pcur=i;
 					fin2=1;
@@ -3067,7 +3130,7 @@ FileinPath(fic,buf);
 
 k=-1;
 for (i=0;i<DFen->nbrfic;i++)
-	if (!WildCmp(buf,DFen->F[i]->name))
+    if (!WildCmp(buf,GetFilename(DFen,i)))
 		{
 		k=i;
 		break;
@@ -3075,13 +3138,16 @@ for (i=0;i<DFen->nbrfic;i++)
 
 if ( (DFen->system!=0) & (k!=-1) )
 	{
+    struct file *F;
+    F=GetFile(DFen,k);
+
 	strcpy(buf,KKFics->trash);
-	Path2Abs(buf,DFen->F[k]->name);
+    Path2Abs(buf,F->name);
 	infic=fopen(buf,"rb");
 	if (infic!=NULL)
 		{
 		i=flength(fileno(infic));
-		if (i==DFen->F[k]->size)
+        if (i==F->size)
 			k=-2;
 		fclose(infic);
 		}
@@ -3113,13 +3179,17 @@ static char nom[256];
 static char tnom[256];
 static char buffer[256];
 
+struct file *F;
+
 char ChangePos=0;
 
 int i;
 
 FenOld=DFen;
 
-strcpy(tnom,DFen->F[n]->name);
+F=GetFile(DFen,n);
+
+strcpy(tnom,F->name);
 
 switch (DFen->system)
 	{
@@ -3135,21 +3205,20 @@ switch (DFen->system)
 	case 6: 													  // DFP
 	case 8: 													  // RAW
 	case 9: 													  // DKF
-		DFen=Fenetre[2];  // Copie de l'autre c“t‚ (t'es content Phil ?)
+        DFen=Fenetre[2];
 		CommandLine("#cd %s",KKFics->trash);
 
 		KKCfg->FenAct= (KKCfg->FenAct)+2;
 
-		DFen=FenOld;
-								 // Mets le nom du fichier dans la trash
+        DFen=FenOld;              // Mets le nom du fichier dans la trash
 		strcpy(buffer,KKFics->trash);
 		Path2Abs(buffer,"kktrash.sav");
 		fic=fopen(buffer,"at");
 		strcpy(buffer,KKFics->trash);
-		Path2Abs(buffer,DFen->F[n]->name);
+        Path2Abs(buffer,F->name);
 		fprintf(fic,"%s\n",buffer);
 		fclose(fic);
-		KKCfg->strash+=DFen->F[n]->size;
+        KKCfg->strash+=F->size;
 
 									 // Copie les fichiers dans la trash
 		(KKCfg->noprompt)=(char)((KKCfg->noprompt)|1);
@@ -3170,7 +3239,7 @@ if (ChangePos)
 	strcpy(nom,DFen->path);
 	Path2Abs(nom,tnom);
 	for (i=0;i<DFen->nbrfic;i++)
-		if (!WildCmp(tnom,DFen->F[i]->name))
+        if (!WildCmp(tnom,GetFilename(DFen,i)))
 			{
 			DFen->pcur=i;
 			DFen->scur=i;
@@ -3201,7 +3270,7 @@ if (Info.numero==173)
 			return -2;
 
 		strcpy(Info.path,DFen->path);
-		Path2Abs(Info.path,DFen->F[DFen->pcur]->name);
+        Path2Abs(Info.path,GetFilename(DFen,-1));
 
 		assert(Info.path[0]!=0); //--- Stop prog if this cdt arrive ----
 
@@ -3238,7 +3307,7 @@ if (Info.numero==173)
 			return -2;
 
 		strcpy(Info.path,DFen->path);
-		Path2Abs(Info.path,DFen->F[DFen->pcur]->name);
+        Path2Abs(Info.path,GetFilename(DFen,-1));
 
 		assert(Info.path[0]!=0); //--- Stop prog if this cdt arrive ----
 
@@ -3307,7 +3376,7 @@ int EnterHost(void)
 static char buf[256];
 
 strcpy(buf,DFen->path);
-Path2Abs(buf,DFen->F[DFen->pcur]->name);
+Path2Abs(buf,GetFilename(DFen,-1));
 
 strcpy(DFen->VolName,DFen->path);
 
@@ -3337,8 +3406,10 @@ void SaveSel(FENETRE *F1)
 struct file *F;
 int i,j;
 
-pcurname=(char*)GetMem(strlen(F1->F[F1->pcur]->name)+1);
-strcpy(pcurname,F1->F[F1->pcur]->name);
+F=GetFile(F1,-1);
+
+pcurname=(char*)GetMem(strlen(F->name)+1);
+strcpy(pcurname,F->name);
 
 F1pcur=F1->pcur;
 F1scur=F1->scur;
@@ -3351,7 +3422,7 @@ if (F1nbrsel!=0)
 
 	for(i=0;i<F1->nbrfic;i++)
 		{
-		F=F1->F[i];
+        F=GetFile(F1,i);
 
 		if ((F->select)==1)
 			{
@@ -3379,7 +3450,7 @@ DFen->scur=F1scur;
 
 j=1;
 for (i=0;i<DFen->nbrfic;i++)
-	if (!WildCmp(DFen->F[i]->name,nom))
+    if (!WildCmp(GetFilename(DFen,i),nom))
 		{
 		DFen->pcur=i;
 
@@ -3396,7 +3467,7 @@ if (F1nbrsel!=0)
 
 		for(i=0;i<DFen->nbrfic;i++)
 			{
-			if (!WildCmp(DFen->F[i]->name,nom))
+            if (!WildCmp(GetFilename(DFen,i),nom))
 				{
 				switch(n)
 					{
@@ -3512,7 +3583,7 @@ if (KKCfg->key==0)
 	GetPosMouse(&oldxm,&oldym,&oldzm2);
 #endif
 
-	while ( (!KbHit()) & (c==0) ) // RedBug
+	while ( (!KbHit()) & (c==0) )
 		{
 #ifndef NOMOUSE
 		int n,xm2,ym2,zm2;
@@ -3526,13 +3597,13 @@ if (KKCfg->key==0)
 			int size;
 			struct file *F;
 
-			F=DFen->F[n];
+            F=GetFile(DFen,n);
 
 			if ((F->info==NULL) & ((F->attrib & RB_SUBDIR)==RB_SUBDIR)
 				 & (F->name[0]!='.') )
 				{
 				strcpy(path,DFen->path);
-				Path2Abs(path,DFen->F[n]->name);
+                Path2Abs(path,GetFilename(DFen,n));
 
 				size=RepSize(path);
 				if (size>=0)
@@ -3616,12 +3687,16 @@ if (KKCfg->key==0)
 
 				if ( ((DFen->pcur+n)>=0) &	((DFen->scur+n)>=0))
 					{
+                    struct file *F;
+
+                    F=GetFile(DFen,-1);
+
 					DeplPCurFen(DFen,n);
 
 					switch (oldsel)
 						{
 						case -1:
-							oldsel=DFen->F[DFen->pcur]->select;
+                            oldsel=F->select;
 							FicSelect(DFen,DFen->pcur,2);
 							break;
 						case 0:
@@ -3776,12 +3851,94 @@ if (KKCfg->key==0)
 	if (c==0)
 		c=Wait(0,0);
 
-    if (c!=0) {
-           // printf("Traite Commandline after dos %d FIN)\n\n",c); exit(1);
-            //PrintAt(0,0,"%d",c);
-    }
+/*
+    if (c=='a')  //--- mymy
+        {
+        char fin;
+        FENETRE *SFen;
+        KKWin Win;
+        int oldact;
+        struct file *F;
 
-	KKCfg->key=GetKeyFct((ushort)c);
+        oldact=KKCfg->FenAct;
+
+        SFen=AllocWin();
+
+        DFen=SFen;
+
+        SFen->x=20;
+        SFen->y=5;
+        SFen->xl=20+40;
+        SFen->yl=20;
+
+        KKCfg->FenAct=SFen->nfen;
+
+        switch (Cfg->windesign)
+            {
+            case 1:
+            case 4:
+                SFen->y2=SFen->y+1;
+                SFen->yl2=SFen->yl-SFen->y-(1+(KKCfg->pathdown))-3;
+                break;
+            case 2:
+            case 3:
+                SFen->y2=SFen->y;
+                SFen->yl2=SFen->yl-SFen->y-(1+(KKCfg->pathdown))-2;
+                break;
+            }
+
+        CommandLine("#cd d:\\mp3");
+
+        do
+        {
+        fin=0;
+
+        FenNor(SFen);
+
+        c=Win.Wait(0,0);
+
+        switch(GetKeyFct((ushort)c))
+            {
+            case 84:
+                F=GetFile(SFen,-1);
+                if ((F->attrib & RB_SUBDIR)==RB_SUBDIR)
+                    CommandLine("#cd %s",GetFilename(SFen,-1));
+                else
+                    fin=1;
+                break;
+            case 36:
+                DeplPCurFen(SFen,1);
+                break;
+            case 37:
+                DeplPCurFen(SFen,-1);
+                break;
+            case 52:
+                DeplPCurFen(SFen,-10);
+                break;
+            case 53:
+                DeplPCurFen(SFen,10);
+                break;
+            case 54:
+                SFen->scur=0;
+                SFen->pcur=0;
+                break;
+            case 55:
+                SFen->scur=SFen->nbrfic-1;
+                SFen->pcur=SFen->nbrfic-1;
+                break;
+            }
+        }
+        while(!fin);
+
+        KKCfg->FenAct=oldact;
+
+        FreeWin(SFen);
+
+        c=0;
+        }
+*/
+
+    KKCfg->key=GetKeyFct((ushort)c);
 
 	if (iskeypressed(SHIFT))		//--- Left shift or right shift ----
 		{
@@ -3805,7 +3962,7 @@ if (KKCfg->key==0)
 		case 0x3E:	//--- F4 -------------------------------------------
 		case 0x56:	//--- SHIFT-F3 -------------------------------------
 		case 0x8D:	//--- CTRL-UP --------------------------------------
-			if (!strcmp(DFen->F[DFen->pcur]->name,".."))
+            if (!strcmp(GetFilename(DFen,-1),".."))
 				{
 				int sel,selnbr;
 
@@ -3814,38 +3971,38 @@ if (KKCfg->key==0)
 				car=0;
 				for (i=0;i<DFen->nbrfic;i++)
 					{
-					if (!WildCmp(DFen->F[i]->name,"FILE_ID.DIZ"))
+                    if (!WildCmp(GetFilename(DFen,i),"FILE_ID.DIZ"))
 						sel=16,selnbr=i;
 
 					if (sel<16)
 						{
-						if (!WildCmp(DFen->F[i]->name,"README.1ST"))
+                        if (!WildCmp(GetFilename(DFen,i),"README.1ST"))
 							sel=15,selnbr=i;
 
 					if (sel<15)
 						{
-						if (!WildCmp(DFen->F[i]->name,"README.TXT"))
+                        if (!WildCmp(GetFilename(DFen,i),"README.TXT"))
 							sel=14,selnbr=i;
 
 					if (sel<14)
 						{
-						if (!WildCmp(DFen->F[i]->name,"README.*"))
+                        if (!WildCmp(GetFilename(DFen,i),"README.*"))
 							sel=13,selnbr=i;
 
 					if (sel<13)
 						{
-						if (!WildCmp(DFen->F[i]->name,"*.NFO"))
+                        if (!WildCmp(GetFilename(DFen,i),"*.NFO"))
 							sel=12,selnbr=i;
 
 					if (sel<12)
 						{
-						if (!WildCmp(DFen->F[i]->name,"*.TXT"))
+                        if (!WildCmp(GetFilename(DFen,i),"*.TXT"))
 							sel=11,selnbr=i;
 						}
 
 					if (sel<11)
 						{
-						if (!WildCmp(DFen->F[i]->name,"*.DOC"))
+                        if (!WildCmp(GetFilename(DFen,i),"*.DOC"))
 							sel=10,selnbr=i;
 						}
 						}
@@ -3876,7 +4033,7 @@ if (KKCfg->key==0)
 
 		}
 
-	strcpy(KKCfg->FileName,DFen->F[DFen->pcur]->name);
+    strcpy(KKCfg->FileName,GetFilename(DFen,-1));
 
 //--- accessfile
 
@@ -3890,7 +4047,7 @@ else	//--- Retour d'un shell ----------------------------------------
 
 	c=-1;
 	for (i=0;i<DFen->nbrfic;i++)
-		if (!WildCmp(KKCfg->FileName,DFen->F[i]->name))
+        if (!WildCmp(KKCfg->FileName,GetFilename(DFen,i)))
 			{
 			DFen->pcur=i;
 			DFen->scur=i;
@@ -3899,7 +4056,7 @@ else	//--- Retour d'un shell ----------------------------------------
 			}
 	if (c==-1)
 		{
-		WinError("Couldn't access to this file");   //--- Error --------
+        WinError(KKMsgErr[1]);   //--- Couldn't access to this file ------
 		InitFctStack();
 		KKCfg->key=0;
 		}
@@ -4017,14 +4174,14 @@ switch (c)
 		oldhist[0]=32;
 		oldhistnum=0;
 		KKCfg->posinhist=512;
-		if (CommandLine("\r")==0)
+		if (KeyLine("\r")==0)
 			if (KKCfg->Esc2Close==1)
 				GestionFct(14),GestionFct(15);
 		break;
 	case 0:
 		break;
 	case 32:
-		if (CommandLine(" ")==0)
+		if (KeyLine(" ")==0)
 			GestionFct(16);
 		break;
 //-Retour Switch car----------------------------------------------------
@@ -4033,7 +4190,7 @@ switch (c)
 
 		if (fct==0)
 			{
-			CommandLine("%c",car);
+			KeyLine("%c",car);
 			KKCfg->posinhist=512;
 			oldhist[0]=32;
 			oldhistnum=0;
@@ -4072,9 +4229,6 @@ void AfficheTout(void)
 {
 int n;
 
-//printf("Traite Commandline after dos %s FIN)\n\n","affichetout"); exit(1);
-
-
 DFen=Fenetre[(KKCfg->FenAct)&1];
 
 for(n=0;n<NBWIN;n++)
@@ -4085,8 +4239,6 @@ for(n=0;n<NBWIN;n++)
 		Fenetre[n]->xl=Fenetre[n]->x+39;
 		}
 	}
-
-//printf("Traite Commandline after dos %d %d FIN)\n\n",Cfg->TailleX, Fenetre[0]->xl); exit(1);
 
 if (KKCfg->isidf)
 	{
@@ -4300,14 +4452,10 @@ long taille;
 for (t=0;t<NBWIN;t++)
 	KKCfg->FenTyp[t]=(short)(Fenetre[t]->FenTyp);
 
-
 cfgwopen();
-
-
 cfgwrite((void*)Cfg,sizeof(struct config));
 
 cfgwrite((void*)KKCfg,sizeof(struct kkconfig));
-
 
 for(n=0;n<16;n++)
 	{
@@ -4320,8 +4468,6 @@ for(n=0;n<16;n++)
 	cfgwrite(&taille,2);
 	cfgwrite(KKCfg->V.Mask[n]->title,taille);
 	}
-
-
 
 
 for(t=0;t<NBWIN;t++)
@@ -4337,23 +4483,22 @@ for(t=0;t<NBWIN;t++)
 
 	for (n=0;n<Fen->nbrfic;n++)
 		{
-		if (Fen->F[n]->select==1)
+        struct file *F;
+        F=GetFile(Fen,n);
+
+        if (F->select==1)
 			{
 			ns--;
-			m=strlen(Fen->F[n]->name);
+            m=strlen(F->name);
 			cfgwrite(&m,4); 					  // Longueur du nom
-			cfgwrite(Fen->F[n]->name,m);	  // Fichier selectionn‚
+            cfgwrite(F->name,m);              // Fichier selectionn‚
 			if (ns==0) break;
 			}
 		}
 
-    if (Fen->F[Fen->pcur] != NULL) {
-	    m=strlen(Fen->F[Fen->pcur]->name);
-	    cfgwrite(&m,4); 							  // Longueur du nom
-	    cfgwrite(Fen->F[Fen->pcur]->name,m);		  // Fichier courant
-        } else {
-        cfgwrite(&(Fen->F[Fen->pcur]),4);     
-        }
+    m=strlen(GetFilename(Fen,-1));
+	cfgwrite(&m,4); 							  // Longueur du nom
+    cfgwrite(GetFilename(Fen,-1),m);              // Fichier courant
 
 	cfgwrite(&(Fen->scur),sizeof(short));// Pos du fichier … l'ecran
 	}
@@ -4448,7 +4593,7 @@ for (t=0;t<NBWIN;t++)
 		nom[m]=0;
 
 		for (n=0;n<DFen->nbrfic;n++)
-			if (!stricmp(nom,DFen->F[n]->name))
+            if (!stricmp(nom,GetFilename(DFen,n)))
 				FicSelect(DFen,n,1);
 		}
 
@@ -4460,7 +4605,7 @@ for (t=0;t<NBWIN;t++)
 	cfgread(&(DFen->scur),sizeof(short)); //Pos du fichier … l'ecran
 
 	for (n=0;n<DFen->nbrfic;n++)
-		if (!stricmp(nom,DFen->F[n]->name))
+        if (!stricmp(nom,GetFilename(DFen,n)))
 			DFen->pcur=n;
 	}
 
@@ -4528,7 +4673,10 @@ if ( (DFen->Fen2->FenTyp==2) & (DFen->FenTyp==2) )
 			{
 			Cadre(x1, 1+x*3,x2, 3+x*3,2,Cfg->col[55],Cfg->col[56]);
 			ColLin(x1+1,2+x*3,8,Cfg->col[17]);
-			memcpy(chaine,KKCfg->Qmenu+x*8,8);
+
+            sprintf(chaine," %6s ",InfoFct[KKCfg->Nmenu[x]-1].bar);
+
+//            memcpy(chaine,KKCfg->Qmenu+x*8,8);
 			PrintAt(x1+1,2+x*3 ,chaine);
 			}
 		}
@@ -4577,7 +4725,7 @@ PosY=SPosY+(OldCfg->TailleY)-MaxY;
 void HelpHandler(void);
 void HelpTopicHandler(char *topic);
 
-static int inhelp=0;
+static inhelp=0;
 
 void HelpHandler(void)
 {
@@ -4617,7 +4765,7 @@ inhelp=0;
  -																	  -
 \*--------------------------------------------------------------------*/
 
-int main(int argc,char **argv)
+void main(int argc,char **argv)
 {
 char *path;
 int n;
@@ -4626,7 +4774,7 @@ char startfromkkc;
 int oldx,oldy;
 
 /*--------------------------------------------------------------------*\
-|- Initiation generale de hard.cc									  -|
+|- Initiation g‚n‚rale de hard.cc									  -|
 \*--------------------------------------------------------------------*/
 Redinit();
 
@@ -4663,7 +4811,7 @@ Font2Buf(OldFont);
 #endif
 
 Cfg->col[7]=7;
-// Information("Starting Ketchup Killers Commander");
+// Information("Starting "PRODNAME);
 
 /*--------------------------------------------------------------------*\
 |-						 Initialise les buffers 					  -|
@@ -4674,7 +4822,7 @@ KKCfg=(struct kkconfig*)GetMem(sizeof(struct kkconfig));
 for(n=0;n<NBWIN;n++)
 	{
 	Fenetre[n]=(FENETRE*)GetMem(sizeof(FENETRE));
-	Fenetre[n]->F=(struct file**)GetMem(TOTFIC*sizeof(void *));
+    Fenetre[n]->Fic=(struct file**)GetMem(TOTFIC*sizeof(void *));
 	}
 
 KKFics=(struct kkfichier*)GetMem(sizeof(struct kkfichier));
@@ -4722,7 +4870,7 @@ LoadErrorHandler();
 signal(SIGBREAK,Signal_Handler);
 #endif
 
-#ifndef LINUX
+#ifndef DJGPP
 signal(SIGABRT,Abort_Handler);
 signal(SIGFPE,Signal_Handler);
 signal(SIGILL,Signal_Handler);
@@ -4867,18 +5015,11 @@ if (!cont)	//--- Erreur! On verifie que le support n'est pas proteg‚ --
 
 #else
 
-// passe bien ici
-//
-
 IOerr=0;
 for (n=0;n<NBWIN;n++)
 	{
 	DFen=Fenetre[n];
-#ifdef __WC32__
 	strcpy(DFen->path,"c:\\");
-#else
-    strcpy(DFen->path,"/");
-#endif
 	CommandLine("#cd %s",DFen->path);
 	DFen->pcur=0;
 	}
@@ -4887,16 +5028,10 @@ IOver=0;
 DFen=Fenetre[0];
 saveconfig=0;
 
-//printf("ok\n\n"); exit(1);
-
 DefaultKKCfg();
 DefaultCfg(NewCfg);
 
-startfromkkc = 0;
-
 #endif
-
-//printf("ok\n\n"); exit(1); // ne passe pas ici
 
 Cfg=NewCfg;
 
@@ -5031,7 +5166,7 @@ if (KKCfg->savekey)
 
 RunAutoMacro();
 
-//TitleBox("Ketchup Killers Commander");
+//TitleBox(PRODNAME);
 
 WinShellColor(Cfg->col[0]);
 
@@ -5121,7 +5256,7 @@ if ((n==2) | (n==3))
 	fic=fopen(Dir,"wb");
 	if (fic==NULL)
 		{
-		WinError("File couldn't be created");
+        WinError(KKMsgErr[0]);
 		return;
 		}
 	Buffer2Screen(Screen_Buffer,OldScr);
@@ -5144,7 +5279,7 @@ Path2Abs(Dir,"KKSCREEN.RAW");
 fic=fopen(Dir,"wb");
 if (fic==NULL)
 	{
-	WinError("File couldn't be created");
+    WinError(KKMsgErr[0]);
 	return;
 	}
 Buffer2Screen(Screen_Buffer,OldScr);
@@ -5180,15 +5315,15 @@ for(i=0;i<DFen->nbrfic;i++)
 	{
 	n=-1;
 
-	F1=DFen->F[i];
+    F1=GetFile(DFen,i);
 
 	for(j=0;j<DFen->Fen2->nbrfic;j++)
-		if (!WildCmp(F1->name,DFen->Fen2->F[j]->name))
+        if (!WildCmp(F1->name,GetFilename(DFen->Fen2,j)))
 			n=j;
 
 	if (n!=-1)
 		{
-		F2=DFen->Fen2->F[n];
+        F2=GetFile(DFen->Fen2,n);
 
 		if ( (_cbuf[10]==1) & ((F1->size)!=(F2->size)) )
 			n=-1;
@@ -5274,7 +5409,7 @@ if (strlen(suite+1)>120)	//-- La ligne de commande est trop grande --
 	fprintf(fic,
 		  "@REM *-------------------------------------------------*\n");
 	fprintf(fic,
-		  "@REM * Batch file created by Ketchup Killers Commander *\n");
+		  "@REM * Batch file created by %25s *\n",PRODNAME);
 	fprintf(fic,
 		  "@REM * when command line is too long                   *\n");
 	fprintf(fic,
@@ -5292,8 +5427,6 @@ if (strlen(suite+1)>120)	//-- La ligne de commande est trop grande --
 suite[0]='#';
 
 memcpy(SpecSortie,suite,256);
-
-//printf("Traite Commandline %s %d FIN)\n\n",suite,KKCfg->internshell); exit(1);
 
 if (KKCfg->internshell)
 	{
@@ -5322,7 +5455,6 @@ if (KKCfg->internshell)
 		GotoXY(0,PosY);
 		}
 
-//printf("Traite Commandline %s %d FIN)\n\n",suite,KKCfg->internshell); exit(1);
 	ret=system(suite+1);
 
 	Buffer_Clr();
@@ -5339,13 +5471,14 @@ if (KKCfg->internshell)
 	GestionFct(67);
 
 	if (ret!=0)
-		WinError(suite+1),
-		WinError("System couldn't be loaded");
+        {
+        WinError(suite+1);
+        WinError(KKMsgErr[2]);    //--- Couldn't access to this file ---
+        }
 
 	}
 	else
 	Fin();
-
 }
 
 
@@ -5374,8 +5507,6 @@ if ( (KKCfg->scrrest==0) & (saveconfig) )
 
 if (saveconfig)
 	SaveCfg();
-
-//printf("FIN2\n\n"); exit(1);
 
 DriveSet(DFen->path);
 
@@ -5450,56 +5581,7 @@ exit(1);
 }
 
 
-FENETRE *AllocWin(void)
-{
-FENETRE *SFen;
 
-SFen=(FENETRE*)GetMem(sizeof(FENETRE));
-
-CreateNewFen(SFen,0);
-
-SFen->F=(struct file**)GetMem(TOTFIC*sizeof(void *));
-
-SFen->x=40;
-SFen->nfen=7;
-SFen->Fen2=SFen;
-SFen->y=1;
-SFen->yl=(Cfg->TailleY)-4;
-SFen->xl=39;
-SFen->order=17;
-SFen->pcur=0;
-SFen->scur=0;
-
-SFen->nbrfic=0;
-
-SFen->OldDFen=DFen;
-
-return SFen;
-}
-
-void FreeWin(FENETRE *SFen)
-{
-int n;
-
-DFen=SFen->OldDFen;
-
-for(n=0;n<SFen->nbrfic;n++)
-	{
-	if (SFen->F[n]->info!=NULL)
-		LibMem(SFen->F[n]->info);
-	if (SFen->F[n]->longname!=NULL)
-		LibMem(SFen->F[n]->longname);
-
-	LibMem(SFen->F[n]->name);
-	LibMem(SFen->F[n]);
-	}
-
-LibMem(SFen->F);
-
-CloseNewFen(SFen);
-
-LibMem(SFen);
-}
 
 /*--------------------------------------------------------------------*\
 |- Gestion de la fenˆtre ext‚rieure 								  -|
@@ -5721,21 +5803,20 @@ sb=1+(KKCfg->pathdown);
 
 if (KKCfg->isbar)
 	KKCfg->cmdline=(char)(Cfg->TailleY-2);
-	else
+else
 	KKCfg->cmdline=(char)(Cfg->TailleY-1);
 
 KKCfg->shellx=(char)(MIN(OldCfg->TailleX,Cfg->TailleX));
 KKCfg->shelly=(char)(MIN(OldCfg->TailleY,Cfg->TailleY-1));
 
-
 if (KKCfg->isidf)
 	Fen->y=1;
-	else
+else
 	Fen->y=0;
 
 if (KKCfg->sizewin==0)
 	Fen->yl=(KKCfg->cmdline)-1;
-	else
+else
 	Fen->yl=Fen->y+KKCfg->sizewin-1;
 
 if (Fen->yl>(KKCfg->cmdline)-1)
@@ -5774,18 +5855,6 @@ DFen=OldFen;
 |- Gestion des fenetres 											  -|
 \*--------------------------------------------------------------------*/
 
-
-void CreateNewFen(FENETRE *Fen,int n)
-{
-Fen->FenTyp=n;
-Fen->init=1;
-}
-
-void CloseNewFen(FENETRE *Fen)
-{
-Fen->FenTyp=0;
-Fen->init=1;
-}
 
 void InitDispNewFen(FENETRE *Fen)
 {

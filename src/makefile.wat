@@ -11,7 +11,7 @@
 #Verify the date of the libraries
 VERLIB = 1
 
-#DEBUG = 1
+DEBUG = 1
 
 CA = wasm
 CC = wcc386
@@ -38,7 +38,6 @@ ASM = tasm
 ASMOPTS = -UT310 -p -ml -m9 -zi -d__WC32__ -l
 
 kkcpath=include
-
 kktpath=$(kkcpath)\kkt
 
 
@@ -79,7 +78,7 @@ LAOPTS = debug all
 
 #zp1 alignement
 
-# CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1 -zm -i=$(kkcpath) -i=$(kktpath)
+CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1 -zm -i=$(kkcpath) -i=$(kktpath)
 
 # -obx  (watcom 11.0) chaipuqoui
 # -oneatx (prend bcp de taille)
@@ -89,13 +88,10 @@ LAOPTS = debug all
 # option el : eliminate no referenced segment
 
 CPOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1 -zm -i=$(kkcpath) -i=$(kktpath)
-# CPOPTS = -d__WC32__ -i=$(kkcpath) -i=$(kktpath) -i=d:\src\ptc\src
 
 AOPTS =
 
 LOPTS = option stack=256k option c option el
-#LOPTS = library ptc.lib option stack=256k
-
 LAOPTS =
 
 !endif
@@ -106,8 +102,7 @@ LIB = idf.lib hard.lib kkedit.lib search.lib ficidf.lib reddies.lib &
 
 DEP = kkmain.obj win.obj gestion.obj driver.obj &
       macro.obj copie.obj delete.obj util.obj watdos.obj &
-      wired.obj &
-       $(LANGUAGE).obj $(LIB)
+      $(LANGUAGE).obj $(LIB)
 
 
 #-----------------------------------------------------------------------#
@@ -153,7 +148,7 @@ view.dll : view.obj hard.lib idf.lib reddies.obj
 .c.obj:
          $(CC) $* $(CCOPTS)
 .cc.obj:
-         $(CP) $* $(CPOPTS)
+         $(CP) $* $(CCOPTS)
 
 
 !ifdef VERLIB

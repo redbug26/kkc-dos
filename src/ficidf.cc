@@ -1,23 +1,23 @@
 /*--------------------------------------------------------------------*\
 |- Association header - player										  -|
 \*--------------------------------------------------------------------*/
+#include <dos.h>
+#include <process.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <conio.h>
 
 
 #include "kk.h"
 #include "idf.h"
 
 #ifdef LINUX
+	#include "kkt/filesetu.h"
 #else
-    #include <dos.h>
-    #include <process.h>
-    #include <conio.h>
+	#include "kkt\filesetu.h"
 #endif
-
-#include "filesetu.h"
 
 static struct iarapp
 	{
@@ -56,7 +56,7 @@ static char chaine[132];
 static FILE *fic;
 static char clef[8];
 
-char rbbox[32768];
+char box[32768];
 
 static char Filename[256],Titre[256],Meneur[256];
 
@@ -426,14 +426,14 @@ do
 			break;
 		case 4:
 			fread(&lenbox,2,1,fic);
-			fread(rbbox,lenbox,1,fic);
+			fread(box,lenbox,1,fic);
 
 			for (i=0;i<nbrappl;i++)
 				{
 				if (nbrbox==app[i].numbox-1)
 					{
 					app[i].box=(char*)GetMem(lenbox);
-					memcpy(app[i].box,rbbox,lenbox);
+					memcpy(app[i].box,box,lenbox);
 					}
 				}
 			nbrbox++;
@@ -675,14 +675,14 @@ do
 			break;
 		case 4:
 			fread(&lenbox,2,1,fic);
-			fread(rbbox,lenbox,1,fic);
+			fread(box,lenbox,1,fic);
 
 			for (i=0;i<nbrappl;i++)
 				{
 				if (nbrbox==app[i].numbox-1)
 					{
 					app[i].box=(char*)GetMem(lenbox);
-					memcpy(app[i].box,rbbox,lenbox);
+					memcpy(app[i].box,box,lenbox);
 					}
 				}
 			nbrbox++;
@@ -993,26 +993,26 @@ struct _keydef defkeydef[]=
 	  { 0x0015 , 68 },
 	  { 0x0019 , 38 },
 	  { 'ý'    , 19 },
-	  { '_'    , 65 },
+	  { 236    , 65 },
 	  { 0x8500 , 74 },
 	  { 0x1C00 , 58 },
-	  { KEY_UP , 37 },
+	  { 0x4800 , 37 },
 	  { 0x5200 , 16 },
-	  { KEY_DOWN , 36 }, // BAS
-	  { KEY_LEFT , 56 }, // GAUCHE
-	  { KEY_RIGHT , 57 }, // DROITE
-	  { KEY_PPAGE , 52 },
-	  { KEY_NPAGE , 53 },
-	  { KEY_HOME , 54 }, // HOME
-	  { KEY_END , 55 }, // END
-	  { KEY_F(1),  1 }, // F1
-	  { KEY_F(2), 79 }, // F2
-	  { KEY_F(3) ,  7 }, // F3
-	  { KEY_F(4) ,  9 },
-	  { KEY_F(5) , 10 },
-	  { KEY_F(6) , 11 },
-	  { KEY_F(7) , 12 },
-	  { KEY_F(8) , 13 },
+	  { 0x5000 , 36 },
+	  { 0x4B00 , 56 },
+	  { 0x4D00 , 57 },
+	  { 0x4900 , 52 },
+	  { 0x5100 , 53 },
+	  { 0x4700 , 54 },
+	  { 0x4F00 , 55 },
+	  { 0x3B00 ,  1 },
+	  { 0x3C00 , 79 },
+	  { 0x3D00 ,  7 },
+	  { 0x3E00 ,  9 },
+	  { 0x3F00 , 10 },
+	  { 0x4000 , 11 },
+	  { 0x4100 , 12 },
+	  { 0x4200 , 13 },
 	  { 0x5400 ,107 },
 	  { 0x5500 , 39 },
 	  { 0x5600 ,110 },
@@ -1050,8 +1050,8 @@ struct _keydef defkeydef[]=
 	  { 0xA100 , 51 },
 	  { 0x8B00 , 99 },
 	  { 0x8C00 , 31 },
-	  { KEY_F(9) , 87 }, // F9
-	  { KEY_F(10) , 88 }, // F10 QUIT
+	  { 0x4300 , 87 },
+	  { 0x4400 , 88 },
 	  { 0x5D00 , 97 },
 	  { 0x000F ,105 },
 	  { 0x001A , 67 },
@@ -1104,13 +1104,6 @@ KKCfg->lift=1;
 KKCfg->KeyAfterShell=0;
 
 KKCfg->savekey=0;			//--- Vaut 0 par defaut --------------------
-
-memcpy(KKCfg->Qmenu,"ChgDrive"
-					"  Swap  "
-					"Go Trash"
-					"QuickDir"
-					" Select "
-					"  Info  ",48);
 
 memcpy(KKCfg->Nmenu,Nm,8*sizeof(short));
 

@@ -8,6 +8,8 @@
 |- By RedBug/Ketchup^Pulpe											  -|
 \*--------------------------------------------------------------------*/
 
+const int maxnowrap=255;
+
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -40,7 +42,7 @@ void StartWinView(char *name,char *titre);
 #define VIEWER_HTML 104
 #define VIEWER_TXT 91
 
-char kk_raw;						//--- si vaut 1 -> kk_raw screen ansi -----
+char raw;						//--- si vaut 1 -> raw screen ansi -----
 char secpart=0; 				//--- Affiche les messages secrets -----
 
 /*--------------------------------------------------------------------*\
@@ -71,8 +73,12 @@ public:
 	void getname(char*);	 //--- Nom du fichier -------------------
 	void setname(char*);	 //--- Nom du fichier -------------------
 
+	void getliaison(char*);  //--- Nom de la liaison ----------------
+	void setliaison(char*);  //--- Nom de la liaison ----------------
+
 protected:
 	char filename[256];
+	char liaison[256];
 
 	int idf;				 //--- IDF Number -----------------------
 
@@ -93,9 +99,40 @@ strcpy(name,filename);
 
 void KKFile::setname(char *name)
 {
+char *numam;
+FILE *fic;
 
 strcpy(filename,name);
+liaison[0]=0;
+
+numam=strrchr(filename,'#');
+if (numam!=NULL)
+	{
+	strcpy(liaison,numam+1);
+	numam[0]=0;
+	}
+
+fic=fopen(filename,"rb");
+if (fic==NULL)
+	{
+	strcpy(filename,name);
+	}
+else
+	fclose(fic);
 }
+
+
+
+void KKFile::getliaison(char *name)
+{
+strcpy(name,liaison);
+}
+
+void KKFile::setliaison(char *name)
+{
+strcpy(liaison,name);
+}
+
 
 KKFile::KKFile(char *name)
 {
@@ -107,7 +144,7 @@ nbroct=-1;
 sizebuf=32768;	   //--- Taille Maximum du buffer de lecture -----------
 view_buffer=(char*)GetMem(sizebuf); //--Allocation du buffer de lecture-
 
-strcpy(filename,name);
+setname(name);
 }
 
 KKFile::~KKFile()
@@ -123,12 +160,8 @@ int KKFile::Reload(int i)
 RB_IDF Info;
 
 char ficbuf[256];
-char *numam;
 
 strcpy(ficbuf,filename);
-numam=strrchr(ficbuf,'#');
-if (numam!=NULL)
-	numam[0]=0;
 
 if (fic!=NULL)
 	fclose(fic);
@@ -478,7 +511,7 @@ void BufAffCol(long x,long y,long c);
 char PRN_print(int lpt,char a);
 
 void SaveFile(KKFile &Fic,int n);
-
+void ExtraFilter(KKFile &Fic);
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
@@ -550,7 +583,7 @@ uchar ROR(uchar,uchar);
 	  parm [al] [cl] \
 	  value [al];
 
-#ifdef LINUX
+#ifdef GCC
 uchar ROR(uchar a,uchar b)
 {
 return(a+b);
@@ -844,8 +877,99 @@ switch(n)
 	}
 
 LibMem(buf);
-
 }
+
+
+/*--------------------------------------------------------------------*\
+|- Filtre rien que le texte                                           -|
+\*--------------------------------------------------------------------*/
+void ExtraFilter(KKFile &Fic)
+{
+FILE *outfic;
+char *buf, chaine[256];
+int pos,x,y,z,z0, len;
+char car,ecrit;
+int res;
+
+int maxpage=70, minpage=4;
+
+buf=(char*)GetMem(32768);
+
+MacAlloc(10,256);
+Fic.getname(_sbuf[10]);
+
+strcpy(_sbuf[10],KKFics->temp);
+
+
+res=MWinTraite(viewsave_kkt);
+
+if (res==1)
+    {
+    pos=(Fic.posn);
+    outfic=fopen(_sbuf[10],"wb");
+    (Fic.posn)=0;
+    x=Fic.taille;       //--- Reste … copier
+    while(x>0)
+        {
+        if (x<32768)
+            z0=x;
+        else
+            z0=32768;
+
+        x-=z0;
+
+        z=0;
+        y=0;
+        len=0;
+
+        do
+            {
+            car=Fic.ReadChar();
+            (Fic.posn)++;
+
+            ecrit=0;
+
+/*            if ( ((car>='a') & (car<='z')) |
+                 ((car>='A') & (car<='Z')) |
+                 (car==32) )
+*/
+              if ( (car>=32) & (car<=128) )
+                {
+                chaine[len]=car;
+                len++;
+                if (len>=maxpage)
+                    ecrit=1;
+                }
+            else
+                {
+                if (len>=minpage)
+                    ecrit=1;
+                else
+                    len=0;
+                }
+
+            if (ecrit)
+                {
+                chaine[len]=0x0D;
+                chaine[len+1]=0x0A;
+                memcpy(buf+z,chaine,len+2);
+                z+=len+2;
+                len=0;
+                }
+            y++;
+            }
+        while(y!=z0);
+
+        fwrite(buf,1,z,outfic);
+        }
+    fclose(outfic);
+    (Fic.posn)=pos;
+    }
+MacFree(10);
+
+LibMem(buf);
+}
+
 
 
 /*--------------------------------------------------------------------*\
@@ -1072,34 +1196,40 @@ switch(car)
 	case KEY_END:
 		(Fic.posn)=(Fic.taille)-((((Cfg->TailleY)-6)*16));
 		break;
+    case KEY_F(1):
+        HelpTopic(8);
+        fin=VIEWER_BINARY;
+        break;
+    case KEY_F(2):
+        SaveFile(Fic,0);
+        break;
+
+    case KEY_F(3):
+        ExtraFilter(Fic);
+        break;
+
+    case KEY_F(4):
+        cv=ChangeViewer(1);
+        if (cv!=0)
+            fin=cv;
+        break;
 	case KEY_F(6):
 		ChgViewPreproc(Fic);
 		break;
 	case KEY_F(7):
 		SearchHexa(Fic);
 		break;
-	case KEY_F(10):
-	case KEY_C_UP:
-		fin=-1;
-		break;
-	case KEY_F(1):
-		HelpTopic(8);
-		fin=VIEWER_BINARY;
-		break;
-	case KEY_F(4):
-		cv=ChangeViewer(1);
-		if (cv!=0)
-			fin=cv;
-		break;
+    case KEY_F(10):
+    case KEY_C_UP:
+        fin=-1;
+        break;
+
 	case KEY_A_F11:
 		fin=VIEWER_AUTO;
 		break;
 	case KEY_A_F12:
 		ViewSetup(Fic);
 		fin=VIEWER_BINARY;
-		break;
-	case KEY_F(2):
-		SaveFile(Fic,0);
 		break;
 	case 32:
 	case 13:
@@ -1624,7 +1754,7 @@ do
 		}
 //
 	if ((car!=10) & (car!=13)) m++;
-	if ((m>xl) & (ViewCfg->warp!=0))
+    if ((m>xl) & ((ViewCfg->warp!=0) | (m>maxnowrap)) )
 		{
 		(Fic.posn)--;
 		return 1;
@@ -1669,7 +1799,7 @@ do
 		return 1;
 		}
 	if ((car!=10) & (car!=13)) m++;
-	if ((m>=xl) & (ViewCfg->warp!=0)) return 1;
+    if ((m>=xl) & ((ViewCfg->warp!=0) | (m>=maxnowrap)) ) return 1;
 	}		 // m>xl-1
 while(1);
 
@@ -1813,7 +1943,7 @@ if (ViewCfg->ajustview)
 
 	if (xm>=((Cfg->TailleX)-1))
 		xl=Cfg->TailleX;
-		else
+    else
 		autowarp=1, xl=xm;						  //--> Longueur fenˆtre
 
 	if (ym>Cfg->TailleY-1)
@@ -2013,31 +2143,44 @@ do
 
 	tpos=x2-x-warp-1;
 
-	if ( (tpos>=xl2) & (aff==0) )	// Si le prochain d‚passe la fenˆtre
+    if (aff==0)    // Si le prochain d‚passe la fenˆtre
 		{
-		if (tpos>=xl2)
-			{
-			if ( (ViewCfg->warp==1) & (autowarp==0) )
-				{
-				aff=2;
+        switch(ViewCfg->warp)
+            {
+            case 0:
+                if (tpos>=(maxnowrap-1))
+                    {
+                    aff=2;
 
-				w1=xl2; 							// Premier … retenir
-				w2=tpos;							// Dernier … retenir
-				}
+                    w1=maxnowrap;
+                    w2=tpos;
+                    }
+                break;
+            case 1:
+                if ((tpos>=xl2) & (autowarp==0))
+                    {
+                    aff=2;
 
-			if ( (ViewCfg->warp==2) & (autowarp==0) )
-				{
-				int n;
+                    w1=xl2;                         // Premier … retenir
+                    w2=tpos;                        // Dernier … retenir
+                    }
+                break;
+            case 2:
+                if ((tpos>=xl2) & (autowarp==0) )
+                    {
+                    int n;
 
-				aff=2;
-				n=xl2;
-				while ( (n>0) & (linechr[n]!=32) ) n--;
+                    aff=2;
+                    n=xl2;
+                    while ( (n>0) & (linechr[n]!=32) )
+                        n--;
 
-				if (n==0) n=xl2-1;	  // On coupe pas trop !
+                    if (n==0) n=xl2-1;    // On coupe pas trop !
 
-				w1=n+1;
-				w2=tpos;
-				}
+                    w1=n+1;
+                    w2=tpos;
+                    }
+                break;
 			}
 		}
 
@@ -2075,7 +2218,7 @@ do
 			memcpy(linechr,linechr+w1,w2-w1+1);
 			memcpy(linecol,linecol+w1,w2-w1+1);
 
-			x2+=(w2-w1+1);
+            x2+=(w2-w1+1)+warp;     // +warp
 			}
 
 		aff=0;
@@ -2381,6 +2524,8 @@ switch(code)
 if ( (ViewCfg->warp!=0) & (autowarp==1) ) warp=0;
 
 if (warp<0) warp=0;
+if (warp>=maxnowrap-xl) warp=maxnowrap-xl;
+
 }
 else
 {
@@ -2532,19 +2677,19 @@ y=((Cfg->TailleY)-2*(nbr-2))/2;
 if (y<2) y=2;
 
 bar[0].Titre="Texte";
-bar[0].Help=0;
+bar[0].Help=NULL;
 bar[0].fct=VIEWER_TXT;
 
 bar[1].Titre="Binary";
-bar[1].Help=0;
+bar[1].Help=NULL;
 bar[1].fct=VIEWER_BINARY;
 
 bar[2].Titre="Ansi";
-bar[2].Help=0;
+bar[2].Help=NULL;
 bar[2].fct=VIEWER_ANSI;
 
 bar[3].Titre="HTML";
-bar[3].Help=0;
+bar[3].Help=NULL;
 bar[3].fct=VIEWER_HTML;
 
 menu.cur=i; // +1
@@ -2648,7 +2793,7 @@ if (c1==c2)
 	{
 	if (n!=0)
 		{
-		(Fic.posn)-=(n-1);
+        (Fic.posn)-=(n-2);
 		n=0;
 		}
 	}
@@ -3023,7 +3168,7 @@ for(i=0;i<16;i++)
 		bar[nbr].fct=i+10;
 
 		bar[nbr].Titre=ViewCfg->Mask[i]->title;
-		bar[nbr].Help=0;
+		bar[nbr].Help=NULL;
 
 		if ( ((ViewCfg->wmask)&15) ==i) n=nbr;
 
@@ -3040,7 +3185,7 @@ do
 {
 sprintf(bars1,"Mask %3s",(ViewCfg->wmask&128)==128 ? "OFF" : "ON");
 bar[0].Titre=bars1;
-bar[0].Help=0;
+bar[0].Help=NULL;
 bar[0].fct=2;
 
 bar[1].fct=0;
@@ -3118,24 +3263,24 @@ if (y<2) y=2;
 
 sprintf(bars0,"Normal %c",ViewCfg->cnvtable==0 ? 15 : 32);
 bar[0].Titre=bars0;
-bar[0].Help=0;
+bar[0].Help=NULL;
 bar[0].fct=1;
 
 sprintf(bars1,"BBS    %c",ViewCfg->cnvtable==1 ? 15 : 32);
 bar[1].Titre=bars1;
-bar[1].Help=0;
+bar[1].Help=NULL;
 bar[1].fct=2;
 
 sprintf(bars2,"Latin  %c",ViewCfg->cnvtable==2 ? 15 : 32);
 bar[2].Titre=bars2;
-bar[2].Help=0;
+bar[2].Help=NULL;
 bar[2].fct=3;
 
 bar[3].fct=0;
 
 sprintf(bars4,"%s",ViewCfg->autotrad ? "Auto" : "No Auto");
 bar[4].Titre=bars4;
-bar[4].Help=0;
+bar[4].Help=NULL;
 bar[4].fct=10;
 
 n=0;
@@ -3194,19 +3339,19 @@ y=((Cfg->TailleY)-2*(nbr-2))/2;
 if (y<2) y=2;
 
 bar[0].Titre="DOS (CR/LF)";
-bar[0].Help=0;
+bar[0].Help=NULL;
 bar[0].fct=1;						// lnfeed=0
 
 bar[1].Titre="Unix (LF)";
-bar[1].Help=0;
+bar[1].Help=NULL;
 bar[1].fct=3;						// lnfeed=2
 
 bar[2].Titre="Mac (CR)";
-bar[2].Help=0;
+bar[2].Help=NULL;
 bar[2].fct=2;						// lnfeed=1
 
 bar[3].Titre="Mixed (CR-LF)";
-bar[3].Help=0;
+bar[3].Help=NULL;
 bar[3].fct=5;						// lnfeed=4
 
 bar[4].fct=4;
@@ -3222,7 +3367,7 @@ do
 	{
 	sprintf(bars4,"User Line Feed: $%02X",ViewCfg->userfeed);
 	bar[4].Titre=bars4;
-	bar[4].Help=0;
+	bar[4].Help=NULL;
 
 	menu.x=x;
 	menu.y=y;
@@ -3269,7 +3414,6 @@ if (retour==0)
 |-	Retourne 1 si tout va bien										  -|
 \*--------------------------------------------------------------------*/
 
-#ifndef LINUX
 char PRN_print(int lpt,char a)
 {
 union REGS regs;
@@ -3313,12 +3457,6 @@ while(cont);
 
 return result;
 }
-#else
-char PRN_print(int lpt,char a)
-{
-return 1;
-}
-#endif
 
 
 
@@ -3444,7 +3582,7 @@ maxy=Cfg->TailleY;
 curx=0;
 cury=0;
 
-if (kk_raw==0)
+if (raw==0)
 	ReadANS(Fic);
 	else
 	ReadRAW(Fic);
@@ -3894,7 +4032,7 @@ char file2[256];
 
 debpos=0;
 
-kk_raw=0;
+raw=0;
 
 ViewCfg=V;
 
@@ -3903,9 +4041,6 @@ SaveScreen();
 Bar(" ----  ----  ---- ChView ----  ----  ----  ----  ----  ---- ");
 
 strcpy(file2,file);
-
-//printf("Traite Commandline after dos (%s-%d) FIN)\n\n",file2,type); exit(1);
-
 
 if (file2[0]==0)
 	GetListFile(file2);
@@ -3931,7 +4066,7 @@ switch(type)
 		break;
 	case 5:
 		i=VIEWER_ANSI;
-		kk_raw=1;
+		raw=1;
 		break;
 	default:
 		i=-1;
@@ -4082,7 +4217,7 @@ if (ViewCfg->saveviewpos)
 
 			bar[nbrbar].Titre=(char*)GetMem(strlen(ficname)+1);
 			strcpy(bar[nbrbar].Titre,ficname);
-			bar[nbrbar].Help=0;
+			bar[nbrbar].Help=NULL;
 			bar[nbrbar].fct=nbrbar+1;
 			nbrbar++;
 			if (nbrbar==MAXFILE) break;
@@ -4333,7 +4468,7 @@ nbr=0;
 while (((V->Traduc[n])!=0) & (nbr<NBMAXPROC))
 	{
 	GetNamePreproc(V->Traduc[n],V->Traduc[n+1],bar[nbr].Titre);
-	bar[nbr].Help=0;
+	bar[nbr].Help=NULL;
 	bar[nbr].fct=n+1;	//--- Emplacement de l'option ------------------
 	n+=2;
 	nbr++;
@@ -4892,7 +5027,6 @@ char ReadAlign(char *titre);
 int HtmlView(KKFile &Fic,int &debpos)
 {
 char liaison[256];
-char *numam;
 
 char finview;
 
@@ -4991,13 +5125,7 @@ yl=y+ypage-1;
 
 (Fic.posn)=debpos;
 
-Fic.getname(liaison);
-
-numam=strrchr(liaison,'#');
-if (numam!=NULL)
-	strcpy(liaison,numam+1);
-else
-	liaison[0]=0;
+Fic.getliaison(liaison);
 
 if ((liaison[0]!=0) & (debpos==0))
 	{
@@ -5812,6 +5940,7 @@ while(rete!=suiv);
 
 if ( (suiv->next!=NULL) & (suiv!=NULL) )
 	{
+    char chaine[256];
 	int ye2;
 
 	if ((suiv->y1>=ysplit) & (split==1))
@@ -5844,7 +5973,12 @@ if ( (suiv->next!=NULL) & (suiv!=NULL) )
 				break;
 			}
 
-	PrintAt(0,yl+1,"%-*s",Cfg->TailleX,suiv->link);
+    if (strlen(suiv->link)<256)
+        {
+        strcpy(chaine,suiv->link);
+        ReduceString(chaine,Cfg->TailleX);
+        PrintAt(0,yl+1,"%-*s",Cfg->TailleX,chaine);
+        }
 	}
 
 
@@ -6155,17 +6289,7 @@ if (code==0)	 //--- Pression bouton souris --------------------------
 
 			if (titre2[0]=='#')     //--- Internal Link ----------------
 				{
-				char ficbuf[256];
-				char *numam;
-
-				Fic.getname(ficbuf);
-				numam=strrchr(ficbuf,'#');
-				if (numam!=NULL)
-					numam[0]=0;
-
-				strcat(ficbuf,titre2);
-
-				Fic.setname(ficbuf);
+				Fic.setliaison(titre2+1);
 
 				Info.numero=VIEWER_HTML;
 				fin=VIEWER_HTML;

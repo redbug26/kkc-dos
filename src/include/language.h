@@ -2,7 +2,7 @@
 
 #define RB_LANG
 
-#define NBRFUNCT 113
+#define NBRFUNCT 114
 
 typedef struct __toto
     {
@@ -20,7 +20,7 @@ extern INFOFCT InfoFct[NBRFUNCT];
 extern char _BarHeader[][10];
 
 /*--------------------------------------------------------------------*\
-|- Label in pannel                                                    -|
+|- Label in pannel						      -|
 \*--------------------------------------------------------------------*/
 
 extern char _PannelHeader[][20];
@@ -42,6 +42,16 @@ extern char _LabelUnsel[];
 extern char _LabelUnkno[];
 
 extern char _LabelSel[];
+
+extern char _CopyFrom[];
+extern char _CopyTo[];
+extern char _CopyLinkStr[];
+extern char _CopyLink[];
+extern char _CopyOneTo[];
+extern char _CopyMulTo[];
+extern char _CopyFilTo[];
+
+extern char KKMsgErr[][40];
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/

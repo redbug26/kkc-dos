@@ -5,25 +5,24 @@
 |-    Version DJGPP                                                   -|
 \*--------------------------------------------------------------------*/
 
+#include <direct.h>
+#include <dos.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <conio.h>
 #include <stdarg.h>
+#include <bios.h>
+#include <io.h>
 #include <fcntl.h>
+#include <sys\types.h>
+#include <sys\stat.h>
 
 #include "kk.h"
 
-#ifdef LINUX
-    #include <unistd.h>
-#else
-    #include <direct.h>
-    #include <dos.h>
-#include <conio.h>
-#include <bios.h>
-#include <io.h>
-#include <sys\types.h>
-#include <sys\stat.h>
+#ifdef GCC
+#include <unistd.h>
 #endif
 
 

@@ -9,6 +9,14 @@ void Redinit(void);
 
 #define KKHARD_H
 
+#ifdef CYGNUS
+#define GCC
+#endif
+
+#ifdef DJGPP
+#define GCC
+#endif
+
 #ifndef DEBUG
 #define NDEBUG
 #endif
@@ -42,14 +50,11 @@ clock_k GetClock(void);
 #define HI(qsd) ((BYTE)(qsd/256))
 #define LO(qsd) ((BYTE)(qsd%256))
 
-#ifdef LINUX
-#define DEFSLASH '/'
-#else
 #define DEFSLASH '\\'
-#endif
 
 #define RBPALDEF {43,37,30, 31,22,17,  0, 0, 0, 58,58,50, 44,63,63, 63,63,21, 43,37,30,  0, 0, 0, 63,63, 0, 63,63,63, 43,37,30, 63,20,20, 20,40,20,  0,40,40, 35,30,27,  0, 0, 0}
 
+// ret cancel=1 ok=0
 #define WinError(_ErrMsg_) WinMesg("Error",_ErrMsg_,0)
 
 #define MAX(_rx,_ry) (((_rx)>(_ry)) ? (_rx) : (_ry))
@@ -64,11 +69,15 @@ class KKWin
 public:
     KKWin();
     KKWin(char *title);
-    KKWin(char *buf,int x1,int y1,int x2,int y2,int type,int col);
+    KKWin(char *title,int x1,int y1,int x2,int y2,int type,int col);
 
     ~KKWin();
 
     void Test(char *chaine);
+
+    void init(char *title,int x1,int y1,int x2,int y2,int type,int col);
+    void gotoxy(int x,int y);
+    void print(char *str,...);
 
     int Wait(int x,int y);
 
@@ -77,7 +86,9 @@ protected:
     char *title;
     int left,top,right,bottom,color,type;
 
-    void Defaults(void);
+    int px,py;
+
+    char *buffer;
 
 };
 
@@ -136,6 +147,11 @@ extern struct fichier *Fics;
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
   extern void (*AffChr)(long x,long y,long c);
   extern void (*AffCol)(long x,long y,long c);
   extern long (*Wait)(long x,long y);
@@ -146,6 +162,10 @@ extern struct fichier *Fics;
   extern void (*Clr)(void);
   extern int  (*SetMode)(void);
   extern void (*Cadre)(int x1,int y1,int x2,int y2,int type,int col1,int col2);
+
+#ifdef __cplusplus
+};
+#endif
 
 void Buffer_Clr(void);
 
@@ -172,7 +192,17 @@ void InitFontFile(char*);
 |- Display handler						      -|
 \*--------------------------------------------------------------------*/
 
-extern int (*disp_system)(int,char *);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+  extern int (*disp_system)(int,char *);
+
+#ifdef __cplusplus
+};
+#endif
+
 
 int givesyst(int x);
 
@@ -219,7 +249,6 @@ void MoveText(long x1,long y1,long x2,long y2,long x3,long y3);
 /*--------------------------------------------------------------------*\
 |- Absolute function						      -|
 \*--------------------------------------------------------------------*/
-
 extern char _RB_screen[];
 
 #define GetChr(_rx,_ry) *(_RB_screen+((_ry)*256+(_rx)))
@@ -381,7 +410,8 @@ typedef struct __mainmenu
    ³ ³ ³ ³ ³ ³ ÀÄÄÄÄ   2 Don't use shortcut.
    ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄ   4 Don't save screen.
    ³ ³ ³ ³ ÀÄÄÄÄÄÄÄÄ   8 Don't accept LEFT & RIGHT key.
-   ÀÄÁÄÁÄÁÄÄÄÄÄÄÄÄÄÄ	 0
+   ³ ³ ³ ÀÄÄÄÄÄÄÄÄÄÄ  16 Break on any invalid key
+   ÀÄÁÄÁÄÄÄÄÄÄÄÄÄÄÄÄ	 0
 */
 
 int BarMenu(BARMENU *bar,int nbr,int *poscur,int *xp,int yp);
@@ -554,10 +584,7 @@ void LoadErrorHandler(void);   //--- Load the internal error handler ---
 #endif
 
 // #define USEPTC
-//
-#ifndef LINUX
-#define USEVESA
-#endif
+// #define USEVESA
 
 
 // #define NODRIVE 1
@@ -567,14 +594,6 @@ void LoadErrorHandler(void);   //--- Load the internal error handler ---
 
 #ifdef CURSES
 #include <curses.h>
-
-#define KEY_C_UP 0x991232
-#define KEY_A_F11 0x991233
-#define KEY_A_F12 0x991234
-#define KEY_C_RIGHT 0x991235
-#define KEY_C_LEFT 0x991236
-#define KEY_C_HOME 0x991237
-
 #else
 
 #define KEY_F(n)      (0x3A+n)*256
@@ -619,34 +638,14 @@ void LoadErrorHandler(void);   //--- Load the internal error handler ---
 
 
 
-#ifdef LINUX
-
-// for comptability only
-
-int strnicmp(char *,char *,int);
-int stricmp(char *a,char*b);
-char *strlwr(char *a);
-char *strupr(char *a);
-unsigned _bios_keybrd(unsigned cmd);
-int filelength(int fic);
-
-#define toupper(n) (((n)>='a') & ((n)<='z')) ? (n)-'a'+'A' : (n)
-
+#ifdef LCCWIN
+int stricmp(char *,char*);
 #endif
 
 #endif
 
 
-#define NORTONPAL "\x00\x00\x00\x00\x00\x2A\x00\x2A\x00\x00\x2A\x2A" \
-		  "\x2A\x00\x00\x2A\x00\x2A\x2A\x15\x00\x2A\x2A\x2A" \
-		  "\x15\x15\x15\x15\x15\x3F\x15\x3F\x15\x15\x3F\x3F" \
-		  "\x3F\x15\x15\x3F\x15\x3F\x3F\x3F\x15\x3F\x3F\x3F"
+#define NORTONPAL "\x00\x00\x00\x00\x00\x2A\x00\x2A\x00\x00\x2A\x2A\x2A\x00\x00\x2A\x00\x2A\x2A\x15\x00\x2A\x2A\x2A\x15\x15\x15\x15\x15\x3F\x15\x3F\x15\x15\x3F\x3F\x3F\x15\x15\x3F\x15\x3F\x3F\x3F\x15\x3F\x3F\x3F"
 
-#define NORTONCOL "\x1B\x30\x1E\x3E\x1E\x03\x30\x30\x0F\x30\x3F\x3E" \
-		  "\x0F\x0E\x30\x19\x1B\x13\x30\x3F\x3E\x0F\x15\x12" \
-		  "\x30\x3F\x0F\x3E\x4F\x4E\x70\x00\x14\x13\xB4\x60" \
-		  "\x70\x1B\x1B\x1B\x1E\x30\x30\x0F\x3F\x3F\x4F\x4F" \
-		  "\x3F\x0F\x70\x90\x30\x30\x0E\x1B\x1B\xA0\xB0\xC0" \
-		  "\x0E\x0F\x04\x07"
-
+#define NORTONCOL "\x1B\x30\x1E\x3E\x1E\x03\x30\x30\x0F\x30\x3F\x3E\x0F\x0E\x30\x19\x1B\x13\x30\x3F\x3E\x0F\x15\x12\x30\x3F\x0F\x3E\x4F\x4E\x70\x00\x14\x13\xB4\x60\x70\x1B\x1B\x1B\x1E\x30\x30\x0F\x3F\x3F\x4F\x4F\x3F\x0F\x70\x90\x30\x30\x0E\x1B\x1B\xA0\xB0\xC0\x0E\x0F\x04\x07"
 

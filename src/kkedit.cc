@@ -2,15 +2,13 @@
 |- Editor by RedBug/Ketchup^Pulpe                                     -|
 \*--------------------------------------------------------------------*/
 
-// define STANDALONE_KKEDIT to compile kkedit.cc without kkmain
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
-#include "kk.h"
+#include "hard.h"
 
 #ifndef LINUX
     #include <dos.h>
@@ -18,8 +16,10 @@
     #include <io.h>
     #include <conio.h>
     #include <mem.h>
-#else
-    #include <unistd.h>
+#endif
+
+#ifdef GCC
+#include <unistd.h>
 #endif
 
 //--- kkt ---------------------------------------------------------------
@@ -29,9 +29,9 @@
 
 #define LENMAX 2048
 
+#include "kk.h"
 
-
-#ifdef STANDALONE_KKEDIT
+#ifdef TEST
 
 void Edit(KKEDIT *E,char *name);
 
@@ -39,7 +39,7 @@ void Edit(KKEDIT *E,char *name);
 /*--------------------------------------------------------------------*\
 |- Main function                                                      -|
 \*--------------------------------------------------------------------*/
-int main(int argc,char **argv)
+void main(short argc,char **argv)
 {
 int OldX,OldY;                         // To save the size of the screen
 int n;
@@ -47,32 +47,25 @@ KKEDIT E;
 
 char *path;
 
-if (argc != 2) {
-    return 0;
-}
-
-
 /*--------------------------------------------------------------------*\
 |-  Initialisation de l'ecran                                         -|
 \*--------------------------------------------------------------------*/
 
-Redinit();
+Cfg=(struct config*)GetMem(sizeof(struct config));
 
-InitScreen(0);                     // Initialise toutes les donn‚es HARD
-
-OldX=GetScreenSizeX(); // A faire apres le SetMode ou le InitScreen
+OldX=GetScreenSizeX();
 OldY=GetScreenSizeY();
 
 Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;                  // Initialisation de la taille ecran
 
-//printf("FIN2(%d,%d)\n\n", Cfg->TailleX, Cfg->TailleY); exit(1);
+InitScreen(0);                     // Initialise toutes les donn‚es HARD
 
 /*--------------------------------------------------------------------*\
 |-  Save the current path                                             -|
 \*--------------------------------------------------------------------*/
 
-path=(char*)GetMem(256);
+path=GetMem(256);
 
 strcpy(path,*argv);
 for (n=strlen(path);n>0;n--) {
@@ -83,29 +76,32 @@ for (n=strlen(path);n>0;n--) {
     }
 
 /*--------------------------------------------------------------------*\
+|-  Initialisation des variables                                      -|
+\*--------------------------------------------------------------------*/
+
+Fics=GetMem(sizeof(struct fichier));
+
+/*--------------------------------------------------------------------*\
 |- Path & File initialisation                                         -|
 \*--------------------------------------------------------------------*/
 
 SetDefaultPath(path);
 
-
-/*
 Fics->help=GetMem(256);
 strcpy(Fics->help,path);
 strcat(Fics->help,"\\test1.hlp");
-*/
 
 
 /*--------------------------------------------------------------------*\
 |- Configuration loading                                              -|
 \*--------------------------------------------------------------------*/
 
-DefaultCfg(Cfg);
+DefaultCfg();
 
-#ifndef LINUX
+Cfg->TailleY=50;
+
 TXTMode();
 LoadPal(Cfg->palette);
-#endif
 
 #ifndef NOFONT
 InitFont();
@@ -120,9 +116,7 @@ DesinitScreen();
 Cfg->TailleX=OldX;
 Cfg->TailleY=OldY;
 
-#ifndef LINUX
 TXTMode();
-#endif
 
 puts("That's all folk...");
 }
@@ -131,14 +125,11 @@ void Edit(KKEDIT *E,char *name)
 {
 char *fichier;
 
-
 SaveScreen();
 
 Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
-//printf("ok\n\n"); exit(1);
-
-fichier=(char*)GetMem(256);
+fichier=GetMem(256);
 strcpy(fichier,name);
 
 
@@ -522,18 +513,11 @@ Bar(" Help  Save  ----  ----  Zoom  ----  ----  ----  ----  ---- ");
 ColLin(0,0,Cfg->TailleX,Cfg->col[7]);
 ChrLin(0,0,Cfg->TailleX,32);
 
-#ifndef STANDALONE_KKEDIT
 x0_old=DFen->x+1;
 y0_old=DFen->y+1;
 
 xm_old=DFen->xl-DFen->x-1;
 ym_old=DFen->yl-DFen->y-1;
-#else 
-x0_old = 0;
-y0_old = 0;
-xm_old = 1;
-ym_old = 1;
-#endif
 
 if ((E->zoom)==1)
     {
@@ -740,26 +724,6 @@ switch(car)
         UpdateLine(chaine,ligne);
         SaveFile(l0->next,fichier);
         break;
-
-    case KEY_F(3):
-        {
-                int i,j;
-                for(i=0;i<16;i++)
-                        for(j=0;j<16;j++)
-                        {
-                                ColLin(i*5+5,j+5,3,i+j*16);
-                                PrintAt(i*5+6,j+5,"%3d", i+j*16);
-                        }
-                while(Wait(cx+x0-xp,cy+y0)==ERR);
-
-                             {int n;
-                                                           for (n=0;n<40;n++) {
-                                                                                                 attrset(COLOR_PAIR(n % 8));
-                                                                                                                               mvaddch(0,n,65);
-                                                                                                                                                     }
-                                                                         }
-                              getch();
-        }
 
     case KEY_F(5):  //--- ZOOM -----------------------------------------
         LoadScreen();
@@ -1067,7 +1031,6 @@ switch(car)
 
     case 0x1B:  //--- ESC ----------------------------------------------
     case 0x2D00: //--- ALT X -------------------------------------------
-#ifndef STANDALONE_KKEDIT
         if (savebit)
             {
             switch(MWinTraite(editsave_kkt))
@@ -1083,10 +1046,6 @@ switch(car)
                     break;
                 }
             }
-#else
-        UpdateLine(chaine,ligne);
-        SaveFile(l0->next,fichier);
-#endif
 
         affiche=1;
         break;
@@ -1097,9 +1056,6 @@ switch(car)
             PutCur(7,7);
         else
             PutCur(2,7);
-        break;
-
-    case ERR: // Nokey
         break;
 
     default:

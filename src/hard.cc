@@ -1,6 +1,9 @@
 /*--------------------------------------------------------------------*\
 |- Hard-function													  -|
 \*--------------------------------------------------------------------*/
+#define HARD_DEBUG 1
+
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,17 +11,22 @@
 #include <ctype.h>
 #include <string.h>
 
-#ifdef LINUX
-#include <unistd.h>
-#endif
-
 #include "hard.h"
 
 #include "font8x16.h"
 #include "font8x8.h"
 
+#ifdef GCC
+#include <unistd.h>
+#endif
+
 #ifndef __WC32__
 #include <time.h>
+#endif
+
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
 void (*AffChr)(long x,long y,long c);
@@ -32,14 +40,10 @@ void (*Clr)(void);
 int  (*SetMode)(void);
 void (*Cadre)(int x1,int y1,int x2,int y2,int type,int col1,int col2);
 
-#ifdef CURSES
-void Curses_AffChr(long x,long y,long c);
-void Curses_AffCol(long x,long y,long c);
-void Curses_GotoXY(long x,long y);
-long Curses_Wait(long x,long y);
-int Curses_SetMode(void);
-char Curses_KbHit(void);
+#ifdef __cplusplus
+};
 #endif
+
 
 #if defined(__WC32__) | defined(DJGPP)
 	#include <conio.h>
@@ -121,8 +125,6 @@ int IOerr;
 struct config *Cfg;
 struct fichier *Fics;
 
-char _RB_screen[256*128*2];
-
 static int _numhelp;
 
 /*--------------------------------------------------------------------*\
@@ -144,6 +146,8 @@ static char _IntBuffer[256];		   // Buffer interne multi usage ---
 
 static int _KeyBuf[32]; 			   // Buffer pour les touches ------
 static int _NbrKey=0;				   // Nbr de touches dans KeyBuf ---
+
+char _RB_screen[256*128*2];
 
 char *scrseg[50];
 
@@ -292,61 +296,6 @@ switch(car)
 	}
 }
 
-#ifdef LINUX
-
-unsigned _bios_keybrd(unsigned cmd)  // UTILISE pour voir si shift est pressé
-{
-return 0;
-}
-
-char kbhit(void)
-{
-return Curses_KbHit();
-}
-
-
-#define cprintf printf
-
-int filelength(int fic)
-{
-        return 1;
-}
-
-int strnicmp(char *s1,char *s2,int c)
-{
-char ns1[255], ns2[255];
-strcpy(ns1,s1);
-strcpy(ns2,s2);
-strupr(ns1);
-strupr(ns2);
-return(strncmp(ns1,ns2,c));
-}
-
-int stricmp(char *s1, char *s2)
-{
-char ns1[255], ns2[255];
-strcpy(ns1,s1);
-strcpy(ns2,s2);
-strupr(ns1);
-strupr(ns2);
-return(strcmp(ns1,ns2));
-}
-
-char *strlwr(char *a)
-{
-}
-
-char *strupr(char *s)
-{
-int i;
-for(i=0;s[i]!=0;i++) if((s[i]>96)&&(s[i]<123)) s[i]-=32;
-return(s);
-}
-
-
-
-#endif
-
 
 /*--------------------------------------------------------------------*\
 |-	Fonction interne d'affichage                                      -|
@@ -405,7 +354,6 @@ void Cache_AffChr(long x,long y,long c);
 void Cache_AffCol(long x,long y,long c);
 void Cache_GotoXY(long x,long y);
 void Cache_WhereXY(long *x,long *y);
-
 
 
 #ifndef NOINT10
@@ -625,8 +573,6 @@ void Mode80(void)
 {
 }
 
-char _curx,_cury;
-
 void GetCur(char *x,char *y)
 {
 *x=_curx;
@@ -655,6 +601,7 @@ void GetPal(int x,char *r,char *g,char *b)
 
 
 long _cx,_cy;
+char _curx,_cury;
 
 void Norm_GotoXY(long x,long y)
 {
@@ -1654,7 +1601,6 @@ while (KbHit())
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
-#ifndef LINUX
 void Delay(long ms)
 {
 clock_k Cl;
@@ -1673,16 +1619,6 @@ for (m=0;m<n;m++)
 	while ((inp(0x3DA) & 8)==8);
 	}
 }
-#else
-void Delay(long ms)
-{
-}
-
-void Pause(int n)
-{
-}
-#endif
-
 
 // type: 0	   double exterieur
 // type: 1	   double interieur
@@ -2877,23 +2813,19 @@ char defcol[64]={
 	1*16+10,10*16+1,10*16+3,3*16+1,4*16+1,5*16+1,0*16+11,0*16+7,0*16+13,
 																 0*16+2};
 
-//Cfg2->TailleY=30;
+Cfg2->TailleY=30;
 Cfg2->font=1;
-
-memcpy(Cfg2->palette,NORTONPAL,48);
-memcpy(Cfg2->col,NORTONCOL,64);
 
 #else
 
-//Cfg2->TailleY=25;
+Cfg2->TailleY=25;
 Cfg2->font=0;
-
-memcpy(Cfg2->palette,NORTONPAL,48);
-memcpy(Cfg2->col,NORTONCOL,64);
 #endif
 
 Cfg2->windesign=4;
 
+memcpy(Cfg2->palette,NORTONPAL,48);
+memcpy(Cfg2->col,NORTONCOL,64);
 
 Cfg2->SaveSpeed=120;
 
@@ -2927,10 +2859,6 @@ char defcol[]="\x1B\x30\x1E\x3E\x1E\x03\x30\x30\x0F\x30\x3F\x3E"
 		   "\x70\x1B\x1B\x1B\x1E\x30\x30\x0F\x3F\x3F\x4F\x4F"
 		   "\x3F\x0F\x80\x90\x30\x30\x0E\x1B\x1B\xA0\xB0\xC0"
 		   "\x04\x03\x05\x07";
-
-#ifndef NOFONT
-//	  Font2Buf(_intfont);
-#endif
 
 Cfg2->font=0;
 
@@ -3116,7 +3044,16 @@ InitMouse();
 |-																	  -|
 \*--------------------------------------------------------------------*/
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 int (*disp_system)(int,char *);
+
+#ifdef __cplusplus
+};
+#endif
 
 /*--------------------------------------------------------------------*\
 |-	Renvoit le nombre de systeme									  -|
@@ -3125,20 +3062,12 @@ int givesyst(int x)
 {
 int nbrsyst=0;
 
-//printf("Traite Commandline after dos %d FIN)\n\n",x); exit(1);
-
-
-#ifdef CURSES
-if (nbrsyst==x)
-	{	disp_system=curses_system; return 1; }
-nbrsyst++;
-#endif
-
 #ifndef NODIRECTVIDEO
 if (nbrsyst==x)
 	{	 disp_system=cache_system; return 1; }
 nbrsyst++;
 #endif
+
 
 #ifndef NOANSI
 if (nbrsyst==x)
@@ -3155,6 +3084,14 @@ nbrsyst++;
 #ifndef NODIRECTVIDEO
 if (nbrsyst==x)
 	{	disp_system=video_system; return 1; }
+nbrsyst++;
+#endif
+
+
+
+#ifdef CURSES
+if (nbrsyst==x)
+	{	disp_system=curses_system; return 1; }
 nbrsyst++;
 #endif
 
@@ -3199,24 +3136,16 @@ int n, ok, old;
 
 ok=0;
 
-
 if ((Cfg->TailleX==0) | (Cfg->TailleY==0))
 	{
 	Cfg->TailleX=80;
 	Cfg->TailleY=25;
 	}
 
-#ifdef LINUX
-AffChr=Curses_AffChr;
-AffCol=Curses_AffCol;
-Wait=Curses_Wait;
-SetMode=Curses_SetMode;
-#else 
 AffChr=Cache_AffChr;
 AffCol=Cache_AffCol;
 Wait=Cache_Wait;
 SetMode=Cache_SetMode;
-#endif
 
 KbHit=Norm_KbHit;
 GotoXY=Norm_GotoXY;
@@ -3224,7 +3153,6 @@ WhereXY=Norm_WhereXY;
 Window=Norm_Window;
 Cadre=Norm_Cadre;
 Clr=Norm_Clr;
-
 
 if (a!=-1)
 	{
@@ -3253,8 +3181,6 @@ if (a!=-1)
 			}
 		}
 	}
-
-//printf("Traite Commandline after dos (%s) FIN)\n\n",buffer); exit(1);
 
 InitSeg();
 return ok;
@@ -3400,15 +3326,15 @@ if (car==0)
 
 // car=1 -> touche pour rire
 
-switch(car)
+switch(HI(car))
 	{
-	case KEY_LEFT:		//--- Gauche ---------------------------------------
+	case 0x4B:		//--- Gauche ---------------------------------------
 		c--;
 		break;
-	case KEY_RIGHT:		//--- Droite ---------------------------------------
+	case 0x4D:		//--- Droite ---------------------------------------
 		c++;
 		break;
-    case KEY_DOWN:
+	case 80:
 		ok=1;
 		break;
 	}
@@ -3493,18 +3419,14 @@ else
 		{
 		i=0;
 
-        if (bar[n].fct != 0) {
-
 		do
 			{
 			do
 				{
-                car = bar[n].Titre[i];
-
-				let[n]=(char)toupper(car);
+				let[n]=(char)(toupper(bar[n].Titre[i]));
 				i++;
 				}
-			while ((car<=32) & (car!=0));
+			while ((let[n]<=32) & (let[n]!=0));
 
 			fin=1;
 			if (let[n]!=0)
@@ -3513,17 +3435,13 @@ else
 			}
 		while(fin==0);
 		}
-        }
 	}
 
 max=0;
 
-for (n=0;n<nbr;n++) {
-    if (bar[n].fct !=0 ) {
-	    if (max<strlen(bar[n].Titre))
-		    max=strlen(bar[n].Titre);
-    }
-}
+for (n=0;n<nbr;n++)
+	if (max<strlen(bar[n].Titre))
+		max=strlen(bar[n].Titre);
 
 if (((menu->attr)&1)==1)
 	nbraff=menu->nbrmax;
@@ -3537,6 +3455,7 @@ if (nbraff>Cfg->TailleY-yp-2)
 	}
 
 prem=0;
+
 
 if (((menu->attr)&4)==0)
 	SaveScreen();
@@ -3702,22 +3621,22 @@ if (car==0)
 
 do
 	{
+	int err=0;
+
 	switch(car)
 		{
-        case 0:
-            break;
-		case KEY_UP:	   //--- UP ----------------------------------------
+		case 0x4800:	 //--- UP ----------------------------------------
 			c--;
 			break;
-		case KEY_LEFT:	   //--- LEFT --------------------------------------
+		case 0x4B00:	 //--- LEFT --------------------------------------
 			if (((menu->attr)&8)==0)
 				fin=-1, car=27;
 			break;
-		case KEY_RIGHT:	   //--- RIGHT -------------------------------------
+		case 0x4D00:	 //--- RIGHT -------------------------------------
 			if (((menu->attr)&8)==0)
 				fin=1, car=27;
 			break;
-		case KEY_PPAGE :	   //--- PGUP --------------------------------------
+		case 0x4900:	 //--- PGUP --------------------------------------
 			m=c;
 			for(n=0;n<nbraff;n++)
 				{
@@ -3728,7 +3647,7 @@ do
 				}
 			break;
 
-		case KEY_NPAGE:	   //--- PGDN --------------------------------------
+		case 0x5100:	 //--- PGDN --------------------------------------
 			m=c;
 			for(n=0;n<nbraff;n++)
 				{
@@ -3739,10 +3658,10 @@ do
 				}
 			break;
 
-		case KEY_DOWN:	   //--- DOWN --------------------------------------
+		case 0x5000:	 //--- DOWN --------------------------------------
 			c++;
 			break;
-		case KEY_HOME:	   //--- HOME --------------------------------------
+		case 0x4700:	 //--- HOME --------------------------------------
 			for (n=0;n<nbr;n++)
 				if (bar[n].fct!=0)
 					{
@@ -3750,59 +3669,54 @@ do
 					break;
 					}
 			break;
-        case KEY_END:	   //--- END ---------------------------------------
+		case 0x4F00:	 //--- END ---------------------------------------
 			for (n=0;n<nbr;n++)
 				if (bar[n].fct!=0)
 					c=n;
 			break;
-		case KEY_F(1):	   //--- F1 ----------------------------------------
+		case 0x3B00:	 //--- F1 ----------------------------------------
 			if (bar[c].Help!=0)
 				HelpTopic(bar[c].Help);
 			break;
-        case KEY_F(2):	   //--- F2 ----------------------------------------
-			if (fonction[1]!=NULL)
-				fonction[1](&(bar[c]));
-            break;
-        case KEY_F(3):     //--- F3 ----------------------------------------
-            if (fonction[2]!=NULL)
-                fonction[2](&(bar[c]));
-            break;
-        case KEY_F(4):     //--- F4 ----------------------------------------
-            if (fonction[3]!=NULL)
-                fonction[3](&(bar[c]));
-            break;
-        case KEY_F(5):     //--- F5 ----------------------------------------
-            if (fonction[4]!=NULL)
-                fonction[4](&(bar[c]));
-            break;
-        case KEY_F(6):     //--- F6 ----------------------------------------
-            if (fonction[5]!=NULL)
-                fonction[5](&(bar[c]));
-            break;
-        case KEY_F(7):     //--- F7 ----------------------------------------
-            if (fonction[6]!=NULL)
-                fonction[6](&(bar[c]));
-            break;
-        case KEY_F(8):     //--- F8 ----------------------------------------
-            if (fonction[7]!=NULL)
-                fonction[7](&(bar[c]));
-            break;  
-        case KEY_F(9):     //--- F9 ----------------------------------------
-            if (fonction[8]!=NULL)
-                fonction[8](&(bar[c]));
-            break;
-        case KEY_F(10):     //--- F10 ----------------------------------------
-            if (fonction[9]!=NULL)
-                fonction[9](&(bar[c]));
-            break;
+		case 0x3C00:	 //--- F2 ----------------------------------------
+		case 0x3D00:	 //--- F3 ----------------------------------------
+		case 0x3E00:	 //--- F4 ----------------------------------------
+		case 0x3F00:	 //--- F5 ----------------------------------------
+		case 0x4000:	 //--- F6 ----------------------------------------
+		case 0x4100:	 //--- F7 ----------------------------------------
+		case 0x4200:	 //--- F8 ----------------------------------------
+		case 0x4300:	 //--- F9 ----------------------------------------
+		case 0x4400:	 //--- F0 ----------------------------------------
+			if (fonction[HI(car)-0x3B]!=NULL)
+				fonction[HI(car)-0x3B](&(bar[c]));
+			break;
+
+		case 13:
+		case 27:
+			break;
+
+		default:
+			err=1;
+			break;
 		}
 
 	if (LO(car)!=0)
 		for (n=0;n<nbr;n++)
 			if (toupper(car)==let[n])
+				{
 				c=n,car=13;
+				err=0;
+				}
+
+	if ((err==1) & ((menu->attr&16)==16))
+		{
+		fin=car;
+		car=27;
+		break;
+		}
 	}
 while (bar[c].fct==0);
+
 }
 while ( (car!=13) & (car!=27) );
 
@@ -3812,8 +3726,6 @@ if (((menu->attr)&4)==0)
 menu->cur=c;
 
 LibMem(let);
-
-//PrintAt(1,1,"(%d,%d)",fin,car);
 
 if (car==27)
 	return fin;
@@ -4337,8 +4249,6 @@ void SetScreenSizeY(int y)
 }
 #else
 
-// Mode par defaut
-
 void Buf2Scr(char *buffer)
 {
 }
@@ -4356,7 +4266,7 @@ return _screensizex;
 
 int GetScreenSizeY(void)
 {
-return  _screensizey;
+return _screensizey;
 }
 
 void SetScreenSizeX(int x)
@@ -4394,6 +4304,42 @@ fclose(fic);
 #endif
 
 
+#ifdef LINUX
+
+char kbhit(void)
+{
+return 1;
+}
+
+#define cprintf printf
+
+char inp(int a)
+{
+return 0;
+}
+
+int filelength(FILE *fic)
+{
+return 1;
+}
+
+int strnicmp(char *a,char *b,int c)
+{
+return strncmp(a,b,c);
+}
+
+void outp(int a,int b)
+{
+}
+#endif
+
+#ifdef LCCWIN
+int stricmp(char *a,char *b,int c)
+{
+return strcmp(a,b,c);
+}
+#endif
+
 
 /*--------------------------------------------------------------------*\
 |- Time handler 													  -|
@@ -4418,38 +4364,40 @@ return clock();
 |- Classe KKWin 													  -|
 \*--------------------------------------------------------------------*/
 
-KKWin::KKWin()
+KKWin::KKWin(char *buf,int x1,int y1,int x2,int y2,int typ,int col)
 {
-Defaults();
-
-SaveScreen();
-}
-
-void KKWin::Test(char *chaine)
-{
-PrintAt(0,0,chaine);
-Wait(0,0);
+init(buf,x1,y1,x2,y2,typ,col);
 }
 
 KKWin::KKWin(char *buf)
 {
-Defaults();
-
-SaveScreen();
-
-title=(char*)GetMem(strlen(buf));
-strcpy(title,buf);
+init(buf,0,0,0,0,-1,0);
 }
 
-KKWin::KKWin(char *buf,int x1,int y1,int x2,int y2,int typ,int col)
+KKWin::KKWin(void)
+{
+init(NULL,0,0,0,0,-1,0);
+}
+
+
+void KKWin::init(char *buf,int x1,int y1,int x2,int y2,int typ,int col)
 {
 SaveScreen();
 
-title=(char*)GetMem(strlen(buf));
-strcpy(title,buf);
+if (buf!=NULL)
+	{
+	title=(char*)GetMem(strlen(buf));
+	strcpy(title,buf);
+	}
+else
+	title=NULL;
 
-WinCadre(x1,y1,x2,y2,typ);
-Window(x1+1,y1+1,x2-1,y2-1,col);
+
+if ((x1!=x2) & (y1!=y2))
+	{
+	WinCadre(x1,y1,x2,y2,typ);
+	Window(x1+1,y1+1,x2-1,y2-1,col);
+	}
 
 left=x1;
 top=y1;
@@ -4457,7 +4405,60 @@ right=x2;
 bottom=y2;
 color=col;
 type=typ;
+
+gotoxy(1,1);
+
+buffer=(char*)GetMem(MaxZ);
 }
+
+
+void KKWin::print(char *string,...)
+{
+va_list arglist;
+
+char *suite;
+int ax,ay;
+
+suite=_IntBuffer;
+
+va_start(arglist,string);
+vsprintf(_IntBuffer,string,arglist);
+va_end(arglist);
+
+ax=px+left;
+ay=py+top;
+
+while (*suite!=0)
+	{
+	if (ax<right)
+		AffChr(ax,ay,CnvASCII(0,*suite));
+	ax++;
+	px++;
+	suite++;
+	}
+}
+
+void KKWin::gotoxy(int x,int y)
+{
+px=x;
+py=y;
+}
+
+
+KKWin::~KKWin()
+{
+if (title!=NULL)
+	LibMem(title);
+
+LibMem(buffer);
+LoadScreen();
+}
+
+int KKWin::Wait(int x,int y)
+{
+return ::Wait(x,y);
+}
+
 
 void Beep(int type)
 {
@@ -4482,30 +4483,7 @@ switch(type)
 	}
 }
 
-KKWin::~KKWin()
-{
-if (title!=NULL)
-	LibMem(title);
 
-LoadScreen();
-}
-
-int KKWin::Wait(int x,int y)
-{
-return ::Wait(x,y);
-}
-
-void KKWin::Defaults(void)
-{
-title=NULL;
-
-left=0;
-top=0;
-right=0;
-bottom=0;
-color=0;
-type=-1;
-}
 
 
 /*--------------------------------------------------------------------*\
@@ -4609,9 +4587,19 @@ return 1;
 
 
 
-
 void Cache_AffChr(long x,long y,long c)
 {
+#ifdef HARD_DEBUG
+char chaine[128];
+
+sprintf(chaine,"affchr x %d %d",x,y);
+
+if ((x<0) | (x>=Cfg->TailleX))
+    WinError(chaine);
+if ((y<0) | (y>=Cfg->TailleY))
+    WinError("AffChr Y");
+#endif
+
 if (*(_RB_screen+((y<<8)+x))!=(char)c)
 	{
 	*(scrseg[y]+(x<<1))=(char)c;
@@ -4621,6 +4609,13 @@ if (*(_RB_screen+((y<<8)+x))!=(char)c)
 
 void Cache_AffCol(long x,long y,long c)
 {
+#ifdef HARD_DEBUG
+if ((x<0) | (x>=Cfg->TailleX))
+    WinError("AffCol X");
+if ((y<0) | (y>=Cfg->TailleY))
+    WinError("AffCol Y");
+#endif
+
 if (*(_RB_screen+((y<<8)+x)+256*128)!=(char)c)
 	{
 	*(scrseg[y]+(x<<1)+1)=(char)c;
@@ -4686,7 +4681,6 @@ return b;
 }
 
 
-
 #ifdef __WC32__
 int Cache_KbHit(void)
 {
@@ -4706,6 +4700,13 @@ return 1;
 void Cache_GotoXY(long x,long y)
 {
 union REGS regs;
+
+#ifdef HARD_DEBUG
+if ((x<0) | (x>=Cfg->TailleX))
+    WinError("GotoXY X");
+if ((y<0) | (y>=Cfg->TailleY))
+    WinError("GotoXY Y");
+#endif
 
 regs.h.dl=(char)x;
 regs.h.dh=(char)y;
@@ -5269,6 +5270,82 @@ return 1;
 }
 #endif
 
+/*--------------------------------------------------------------------*\
+|- curses															  -|
+\*--------------------------------------------------------------------*/
+#ifdef CURSES
+
+#include <curses.h>
+
+void Curses_AffChr(long x,long y,long c);
+void Curses_AffCol(long x,long y,long c);
+void Curses_GotoXY(long x,long y);
+
+
+int curses_system(int command,char *buffer)
+{
+switch (command)
+	{
+	case 1: 	//--- Info ---------------------------------------------
+		strcpy(buffer,"Curses Mode");
+		return 5;
+
+	case 2:
+		initscr();
+		cbreak();
+		noecho();
+		nonl();
+		intrflush(stdscr,FALSE);
+		keypad(stdscr,TRUE);
+
+		AffChr=Curses_AffChr;
+		AffCol=Curses_AffCol;
+		GotoXY=Curses_GotoXY;
+		return 1;
+
+	case 3:
+		endwin();
+		return 1;
+
+	default:
+		return -1;
+	}
+}
+
+
+void Curses_AffCol(long x,long y,long c)
+{
+char ch,attr;
+
+*(_RB_screen+((y<<8)+x)+256*128)=(char)c;
+
+attr=*(_RB_screen+((y<<8)+x)+256*128);
+ch=*(_RB_screen+((y<<8)+x));
+
+mvaddch(y,x,ch+attr*256);
+}
+
+void Curses_AffChr(long x,long y,long c)
+{
+char ch,attr;
+
+*(_RB_screen+((y<<8)+x))=(char)c;
+
+attr=*(_RB_screen+((y<<8)+x)+256*128);
+ch=*(_RB_screen+((y<<8)+x));
+
+mvaddch(y,x,ch+attr*256);
+}
+
+void Curses_GotoXY(long x,long y)
+{
+move(y,x);
+refresh();
+}
+
+#endif
+
+
 
 /*--------------------------------------------------------------------*\
 |- video / DJGPP													  -|
@@ -5478,108 +5555,13 @@ return 1;
 
 #include <curses.h>
 
-
-void Curses_Cadre(int x1,int y1,int x2,int y2,int type,int col1,int col2)
-{
-
-// Cfg->windesign
-//  type
-        
-ColLin(x1,y1,x2-x1+1,col1);
-ColCol(x1,y1+1,y2-y1,col1);
-
-ColLin(x1+1,y2,x2-x1,col2);
-ColCol(x2,y1+1,y2-y1-1,col2);
-
-AffChr(x1,y1,'(');
-AffChr(x2,y1,')');
-AffChr(x1,y2,'(');
-AffChr(x2,y2,')');
-
-ChrLin(x1+1,y1,x2-x1-1,'-');
-ChrLin(x1+1,y2,x2-x1-1,'-');
-
-ChrCol(x1,y1+1,y2-y1-1,'|');
-ChrCol(x2,y1+1,y2-y1-1,'|');
-}
-
-
-int Curses_SetMode(void)
-{
-int TX,TY;
-long lig;
-char ok;
-
-memset(_RB_screen,0,256*128*2); //--- Clr --------------------------
-
-Cfg->reinit=1;
-
-Cfg->UseFont=0;                         // utilise les fonts 8x?
-
-Cfg->TailleX = _screensizex;
-Cfg->TailleY = _screensizey;
-
-InitSeg();
-
-return 1;
-}
-
-char Curses_KbHit(void)
-{
-int ckey, retour;
-
-//return 0;
-
-if ( (ckey = getch()) != ERR) {
-    retour = 1;
-    } else {
-    retour = 0;
-    }
-
-if (retour == 1) {
-//        printf("Traite Commandline after dos (%d) FIN)\n\n",ckey); exit(1);
-    PutKey(ckey);
-    }
-
-return retour;
-}
-       
-       
-
-long Curses_Wait(long x,long y)
-{
-int a,b;
-clock_k Cl;
-
-if ((x!=0) | (y!=0))
-	GotoXY(x,y);
-
-if (_NbrKey!=0)
-	return GetKey();
-
-Cl=GetClock();
-
-a=0;
-b=0;
-
-if (b==0)
-	{
-	a=getch();
-	if (a==0)
-		return getch()*256+a;
-
-	return a;
-	}
-
-return b;
-}
+void Curses_AffChr(long x,long y,long c);
+void Curses_AffCol(long x,long y,long c);
+void Curses_GotoXY(long x,long y);
 
 
 int curses_system(int command,char *buffer)
 {
-WINDOW *w;
-        
-
 switch (command)
 	{
 	case 1: 	//--- Info ---------------------------------------------
@@ -5587,34 +5569,16 @@ switch (command)
 		return 5;
 
 	case 2:
-		w=initscr();
+		initscr();
 		cbreak();
 		noecho();
-        nonl();
-        nodelay(w, TRUE);
-
+		nonl();
 		intrflush(stdscr,FALSE);
-        start_color();
-
-        _screensizex = getmaxx(w);
-        _screensizey = getmaxy(w);
-
-
-        {
-                int n,m;
-
-                for(n=0;n<8;n++)
-                        for(m=0;m<8;m++)
-                                init_pair(n+m*8,n,m);
-        }
-
-        curs_set(1);
 		keypad(stdscr,TRUE);
 
 		AffChr=Curses_AffChr;
 		AffCol=Curses_AffCol;
 		GotoXY=Curses_GotoXY;
-        Cadre=Curses_Cadre;
 		return 1;
 
 	case 3:
@@ -5626,31 +5590,30 @@ switch (command)
 	}
 }
 
-void Curses_AffCol(long x,long y,long attr)
+
+void Curses_AffCol(long x,long y,long c)
 {
-char ch;
+char ch,attr;
 
-*(_RB_screen+((y<<8)+x)+256*128)=(char)attr;
+*(_RB_screen+((y<<8)+x)+256*128)=(char)c;
 
+attr=*(_RB_screen+((y<<8)+x)+256*128);
 ch=*(_RB_screen+((y<<8)+x));
 
-attrset(COLOR_PAIR( (attr & 7) + ((attr & 240) >>2) ));
-mvaddch(y,x,ch);
+mvaddch(y,x,ch+attr*256);
 }
 
-void Curses_AffChr(long x,long y,long ch)
+void Curses_AffChr(long x,long y,long c)
 {
-char attr;
+char ch,attr;
 
-*(_RB_screen+((y<<8)+x))=(char)ch;
+*(_RB_screen+((y<<8)+x))=(char)c;
 
-attr=  *(_RB_screen+((y<<8)+x)+256*128);
+attr=*(_RB_screen+((y<<8)+x)+256*128);
+ch=*(_RB_screen+((y<<8)+x));
 
-
-attrset(COLOR_PAIR( (attr & 7) + ((attr & 240) >>2) ));
-mvaddch(y,x,ch);
+mvaddch(y,x,ch+attr*256);
 }
-
 
 void Curses_GotoXY(long x,long y)
 {

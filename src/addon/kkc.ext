@@ -1,0 +1,6 @@
+; Ketchup Commander Extension Configuration File
+
+; Copy this file in your user directory (generally .\trash)
+; for the file who required a special player
+
+mpg: E:\WINDOWS\RunDll32.exe AMovie.ocx,RunDll !:!\!.!

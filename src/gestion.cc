@@ -5,11 +5,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <conio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <io.h>
 #include <fcntl.h>
-//#include <sys\stat.h>
+#include <sys\types.h>
+#include <sys\stat.h>
 
 #ifdef __WC32__
 	#include <direct.h>
@@ -20,13 +23,21 @@
 #include "kk.h"
 #include "win.h"
 
-#ifdef LINUX
+#ifdef GCC
 	#include <unistd.h>
-#else
-//#include <conio.h>
-//#include <io.h>
-//#include <sys\types.h>
 #endif
+
+void InsertLog(char *chaine);
+
+
+//---------------- Configuration ----------------
+
+char *driversel="*.*";
+
+//---------------- Configuration ----------------
+
+
+
 
 
 
@@ -128,19 +139,36 @@ switch((DFen->order)&15)
 	{
 	case 1:
 		c=stricmp(F1->name,F2->name);			//--- name ---
+        if (c==0)
+            c=stricmp(e1,e2);                   //--- ext ----
 //		  c=istricmp(F1->name,F2->name);
 		break;
 	case 2:
-		c=stricmp(e1,e2);						//--- ext ----
-		if (c==0)
-			c=stricmp(F1->name,F2->name);
+        c=stricmp(e1,e2);                       //--- ext ----
+        if (c==0)
+            c=stricmp(F1->name,F2->name);       //--- name ---
 		break;
 	case 3:
-		c=(F1->date)-(F2->date);				//--- date ---
-		if (c==0) c=(F1->time)-(F2->time);
+        c=(F1->date)-(F2->date);                //--- date ---
+        if (c==0)
+            {
+            c=(F1->time)-(F2->time);            //--- time ---
+            if (c==0)
+                {
+                c=stricmp(F1->name,F2->name);   //--- name ---
+                if (c==0)
+                    c=stricmp(e1,e2);           //--- ext ----
+                }
+            }
 		break;
 	case 4:
 		c=(F1->size)-(F2->size);				//--- size ---
+        if (c==0)
+            {
+            c=stricmp(F1->name,F2->name);       //--- name ---
+            if (c==0)
+                c=stricmp(e1,e2);               //--- ext ----
+            }
 		break;
 	}
 
@@ -195,7 +223,7 @@ if (i<j)
 void SortFic(FENETRE *Fen)
 {
 if ((DFen->nfen>=2) | ((DFen->order&15)==0)) return;
-qsort((void*)Fen->F,Fen->nbrfic,sizeof(struct file *),SortTest);
+qsort((void*)Fen->Fic,Fen->nbrfic,sizeof(struct file *),SortTest);
 }
 
 
@@ -245,7 +273,6 @@ oldscur=DFen->scur;
 p=DFen->curpath;
 memcpy(old,p,256);
 
-
 // ClearAllSpace(Ficname); //--- Oui ou non ?
 
 // Conversion suivant le type de dir du systeme (pour comptabilite UNIX)
@@ -255,7 +282,6 @@ for(n=0;n<strlen(Ficname);n++)
 FileinPath(DFen->path,nom);
 
 Path2Abs(DFen->path,Ficname);
-
 
 if ( (p[strlen(p)-1]==DEFSLASH) & (p[strlen(p)-2]!=':') )
 	 p[strlen(p)-1]=0;
@@ -267,18 +293,7 @@ err=0;
 \*--------------------------------------------------------------------*/
 
 for(n=0;n<DFen->nbrfic;n++)
-	{
-    if (DFen->F[n] != NULL) {
-	if (DFen->F[n]->info!=NULL)
-		LibMem(DFen->F[n]->info);
-	if (DFen->F[n]->longname!=NULL)
-		LibMem(DFen->F[n]->longname);
-
-	LibMem(DFen->F[n]->name);
-	LibMem(DFen->F[n]);
-    }
-	}
-
+    FreeFile(DFen,n);
 
 DFen->nbrfic=0;
 
@@ -291,12 +306,10 @@ char system;
 
 system=DFen->system;
 
-
 switch(DFen->system)
 	{
 	case 0:
 		err=DOSlitfic();
-//printf("Traite Commandline after cmdrun %s FIN)\n\n","DOS"); exit(1);
 		if (err==0)
 			{
 			if ( (strcmp(Ficname,"..")!=0) & (DFen->Fen2!=DFen) )
@@ -345,38 +358,29 @@ if ((err==1) & (DFen->system==system))
 while(err==1);
 
 if (KKCfg->addselect)
-	{
-	 DFen->F[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
-
-	 DFen->F[DFen->nbrfic]->name=(char*)GetMem(4);
-	 strcpy(DFen->F[DFen->nbrfic]->name,"*92");
-	 DFen->F[DFen->nbrfic]->time=0;
-	 DFen->F[DFen->nbrfic]->date=0;
-	 DFen->F[DFen->nbrfic]->attrib=RB_VOLID;
-	 DFen->F[DFen->nbrfic]->select=0;
-	 DFen->F[DFen->nbrfic]->size=0;
-	 DFen->nbrfic++;
-	 }
+    CreateFile(DFen,"*92",0,0,_A_VOLID,0);
 
 if (KKCfg->fullnamesup)
 	{
 	for(n=0;n<DFen->nbrfic;n++)
 		{
+        struct file *F;
 		char old[256],nouv[256];
 
+        F=GetFile(DFen,n);
 		strcpy(old,DFen->path);
 
-		if ((DFen->F[n]->name[0]!='.') & (DFen->F[n]->name[0]!='*'))
+        if ((F->name[0]!='.') & (F->name[0]!='*'))
 			{
 			if (DFen->system==0)
 				{
-				Path2Abs(old,DFen->F[n]->name);
+                Path2Abs(old,F->name);
 				Short2LongFile(old,nouv);
 				FileinPath(nouv,old);
 				}
-				else
+            else
 				{
-				strcpy(old,DFen->F[n]->name);
+                strcpy(old,F->name);
 				}
 
 			strcpy(nouv,old);
@@ -386,13 +390,13 @@ if (KKCfg->fullnamesup)
 				strlwr(old+1);
 				}
 
-			DFen->F[n]->longname=(char*)GetMem(strlen(old)+1);
-			memcpy(DFen->F[n]->longname,old,strlen(old)+1);
+            F->longname=(char*)GetMem(strlen(old)+1);
+            strcpy(F->longname,old);
 			}
 		}
 	}
 
-// StrUpr(DFen->path);
+StrUpr(DFen->path);
 
 SortFic(DFen);
 
@@ -401,11 +405,13 @@ if (err==0)
 	if (!strcmp(Ficname,".."))
 		{
 		for (n=0;n<DFen->nbrfic;n++)
-			if (!WildCmp(DFen->F[n]->name,nom))
+            {
+            if (!WildCmp(GetFilename(DFen,n),nom))
 				{
 				DFen->pcur=n;
 				DFen->scur=(DFen->yl)/2;			  // Centrage du nom
 				}
+            }
 		}
 	}
 	else
@@ -662,12 +668,12 @@ while(s[n]!=0)
 		n+=strlen(path)-3;
 		}
 	else
-	if (!strnicmp(s+n,DFen->F[DFen->pcur]->name,
-								 strlen(DFen->F[DFen->pcur]->name)))
+    if (!strnicmp(s+n,GetFilename(DFen,-1),
+                                          strlen(GetFilename(DFen,-1))))
 		{
 		strcat(chaine+m,"!.!");
 		m+=3;
-		n+=strlen(DFen->F[DFen->pcur]->name);
+        n+=strlen(GetFilename(DFen,-1));
 		}
 	else
 	if (!strnicmp(s+n,path2,2))
@@ -677,12 +683,12 @@ while(s[n]!=0)
 		n+=2;
 		}
 	else
-	if (!strnicmp(s+n,DFen->Fen2->F[DFen->Fen2->pcur]->name,
-					 strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name)))
+    if (!strnicmp(s+n,GetFilename(DFen->Fen2,-1),
+                                    strlen(GetFilename(DFen->Fen2,-1))))
 		{
 		strcat(chaine+m,"$.$");
 		m+=3;
-		n+=strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name);
+        n+=strlen(GetFilename(DFen->Fen2,-1));
 		}
 	else
 	   {
@@ -743,9 +749,8 @@ if (!strnicmp(s+n,"!/",2))
 else
 if (!strnicmp(s+n,"!.!",3))
 	{
-	memcpy(chaine+m,DFen->F[DFen->pcur]->name,
-									 strlen(DFen->F[DFen->pcur]->name));
-	m+=strlen(DFen->F[DFen->pcur]->name);
+    memcpy(chaine+m,GetFilename(DFen,-1),strlen(GetFilename(DFen,-1)));
+    m+=strlen(GetFilename(DFen,-1));
 	n+=3;
 	}
 else
@@ -773,9 +778,9 @@ if (!strnicmp(s+n,"$/",2))
 else
 if (!strnicmp(s+n,"$.$",3))
 	{
-	memcpy(chaine+m,DFen->Fen2->F[DFen->Fen2->pcur]->name,
-						 strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name));
-	m+=strlen(DFen->Fen2->F[DFen->Fen2->pcur]->name);
+    memcpy(chaine+m,GetFilename(DFen->Fen2,-1),
+                         strlen(GetFilename(DFen->Fen2,-1)));
+    m+=strlen(GetFilename(DFen->Fen2,-1));
 	n+=3;
 	}
 else
@@ -1008,7 +1013,7 @@ time=F->time;
 
 strcpy(nom,F->name);
 
-if ((F->attrib& RB_SUBDIR)!=RB_SUBDIR)
+if ((F->attrib& _A_SUBDIR)!=_A_SUBDIR)
 	strlwr(nom);
 
 ext[0]=0;
@@ -1035,10 +1040,10 @@ sprintf(ch1,"%-8s %-3s",nom,ext);
 switch(nn)
 	{
 	case 1:
-		if ((F->attrib & RB_SUBDIR)==RB_SUBDIR)
+		if ((F->attrib & _A_SUBDIR)==_A_SUBDIR)
 			strcpy(ch2,"SUB--DIR");
 
-		if ((F->attrib & RB_VOLID)==RB_VOLID)
+		if ((F->attrib & _A_VOLID)==_A_VOLID)
 			strcpy(ch2,"##Vol-ID##");
 		break;
 
@@ -1053,10 +1058,10 @@ switch(nn)
 				else
 				sprintf(ch2,"%5sb",Long2Str(F->size,temp2));
 
-		if ((F->attrib & RB_SUBDIR)==RB_SUBDIR)
+		if ((F->attrib & _A_SUBDIR)==_A_SUBDIR)
 			strcpy(ch2,"DIR ");
 
-		if ((F->attrib & RB_VOLID)==RB_VOLID)
+		if ((F->attrib & _A_VOLID)==_A_VOLID)
 			strcpy(ch2,"#Vol# ");
 		break;
 	case 6:
@@ -1071,7 +1076,7 @@ sprintf(ch4,"%02d:%02d",(time>>11)&31,(time>>5)&63);
 if (F->select!=0)
 	memcpy(ch4,"<SEL>",5);
 
-if ((F->attrib & RB_HIDDEN)==RB_HIDDEN)
+if ((F->attrib & _A_HIDDEN)==_A_HIDDEN)
 	ch1[8]=176;  // 176,177,178
 
 
@@ -1156,8 +1161,8 @@ int nbrcol=4;
 int maxcol;
 int sizecol;
 
-//struct dosdate_t Date;
-//struct dostime_t Time;
+struct dosdate_t Date;
+struct dostime_t Time;
 
 WinShellClrScr();
 
@@ -1167,8 +1172,8 @@ sizecol=KKCfg->shellx/nbrcol;
 
 maxcol=(DFen->nbrfic+nbrcol-1)/nbrcol;
 
-//_dos_getdate(&Date);
-//_dos_gettime(&Time);
+_dos_getdate(&Date);
+_dos_gettime(&Time);
 
 ColLin(0,KKCfg->cmdline,KKCfg->shellx,Cfg->col[2]);
 ChrLin(0,KKCfg->cmdline,KKCfg->shellx,32);
@@ -1176,9 +1181,9 @@ PrintAt(0,KKCfg->cmdline,"Running %s",str);
 
 WinShellColor(Cfg->col[0]);
 
-//sprintf(buf1,"%02d:%02d:%02d",Time.hour,Time.minute,Time.second);
+sprintf(buf1,"%02d:%02d:%02d",Time.hour,Time.minute,Time.second);
 strcpy(buf2,"Kdir, by Ketchup Killers");
-//sprintf(buf3,"%s %02d,%02d",_month[Date.month-1],Date.day,Date.year);
+sprintf(buf3,"%s %02d,%02d",_month[Date.month-1],Date.day,Date.year);
 
 m=sizecol*nbrcol-1;
 i=(m-strlen(buf2))/2;
@@ -1208,7 +1213,7 @@ for(n=0;n<maxcol;n++)
 	for(m=0;m<nbrcol;m++)
 		{
 		if (n+m*maxcol<DFen->nbrfic)
-			PutDirInBuf(DFen->F[n+m*maxcol],nbrcol,buffer+m*sizecol,col+m*sizecol);
+            PutDirInBuf(GetFile(DFen,n+m*maxcol),nbrcol,buffer+m*sizecol,col+m*sizecol);
 		if (m!=nbrcol-1)
 			buffer[sizecol*(m+1)-1]=179;
 		}
@@ -1230,6 +1235,17 @@ ColLin(0,KKCfg->cmdline,Cfg->TailleX,Cfg->col[0]);
 WinShellCloseMore();
 }
 
+void InsertLog(char *chaine)
+{
+FILE *fic;
+time_t t;
+
+t=time(NULL);
+fic=fopen(KKFics->log,"at");
+fprintf(fic,"%-50s @ %s",chaine,ctime(&t));
+fclose(fic);
+}
+
 
 /*--------------------------------------------------------------------*\
 |-	Commandes globales												  -|
@@ -1242,25 +1258,8 @@ static int px;												  // Chaipus
 \*--------------------------------------------------------------------*/
 int Run(char *chaine)
 {
-FILE *fic;
-time_t t;
-
 if ((chaine[0]!='#') & (strcmp(chaine,"cd .")!=0) & (KKCfg->logfile==1))
-	{
-	t=time(NULL);
-	fic=fopen(KKFics->log,"at");
-	fprintf(fic,"%-50s @ %s",chaine,ctime(&t));
-	fclose(fic);
-	}
-
-/*
- if (strcmp(chaine,"cd /")) {
-     printf("Traite Commandline (%s) FIN)\n\n",chaine); 
-         exit(1);
-             }
- */
-
-
+    InsertLog(chaine);
 
 if (KKCfg->cmdrun)
 	{
@@ -1420,7 +1419,6 @@ if ( ((x1+m)>75) & (x1>40) )
 |-	 - 1: Execution du commande externe OK							  -|
 |-	 - 0: Pas d'execution                                             -|
 \*--------------------------------------------------------------------*/
-
 int CommandLine(char *string,...)
 {
 char sortie[256];
@@ -1440,12 +1438,13 @@ char FctType;										 // =1 suite[0]=='#'
 
 int traite; 					   // vaut 1 si on doit traiter la ligne
 
-
 suite=sortie;
 
 va_start(parameter,string);
 vsprintf(sortie,string,parameter);
 va_end(parameter);
+
+// PrintAt(0,0,"(%s)",suite);  Wait(0,0);
 
 if (suite[0]=='#')
 	{
@@ -1515,15 +1514,12 @@ do {
 if (affich==1)
 	DFen->ChangeLine=1;
 
-
-
 /*--------------------------------------------------------------------*\
 |-Traite les commandes normales (mˆme si traite==0) ! mettre … 1 aprŠs-|
 \*--------------------------------------------------------------------*/
 
 if ( (traite==1) & (affich==1) )
 	Line2History(chaine);
-
 
 if (FctType==1) traite=1;
 
@@ -1556,14 +1552,6 @@ if ( (chaine[1]==':') & (chaine[0]!=0) & (chaine[2]==0) & (traite==1) )
 	}
 #endif
 
-
-/*
-if (strcmp(chaine,"cd /")) {
-    printf("Traite Commandline %s %d FIN)\n\n",chaine,traite); 
-    exit(1);
-    }
-    */
-
 if (traite==1)
 	{
 	if (Run(chaine)==0)
@@ -1592,6 +1580,148 @@ if (FctType==2)
 return 1;
 }
 
+
+/*--------------------------------------------------------------------*\
+|-	Code de retour													  -|
+|-	 - 1: Execution du commande externe OK							  -|
+|-	 - 0: Pas d'execution                                             -|
+\*--------------------------------------------------------------------*/
+int KeyLine(char *string,...)
+{
+char sortie[256];
+char *suite;
+va_list parameter;
+
+char *a;												  // caracter lu
+
+char *chaine;					  // pointeur sur chaine pour traitement
+char affich;							   // vaut 1 si on doit afficher
+int pos;										 // position dans chaine
+
+int traite; 					   // vaut 1 si on doit traiter la ligne
+
+suite=sortie;
+
+va_start(parameter,string);
+vsprintf(sortie,string,parameter);
+va_end(parameter);
+
+pos=px; 									// position dans command
+chaine=CLstr;									 // commande externe
+affich=1;												 // afficher
+a=suite;
+
+traite=0;
+
+if (suite[0]==0) return 0;
+
+if (px==0)
+	{
+	if ( (suite[0]=='\n') | (suite[0]==32) | (suite[0]=='\r') )
+		 return 0;
+	}
+
+do {
+	switch (*a)
+		{
+		case '\r':
+			while (pos!=0)
+				pos--;
+			break;
+
+		case 8: 	   //--- delete ------------------------------------
+			if (pos>0)
+				pos--;
+				else
+				Beep(BEEP_WARNING0);
+			break;
+
+		case 0X7F:	   //--- CTRL-DEL ----------------------------------
+			while (pos!=0)
+				{
+				pos--;
+				if ((chaine[pos]==32) | (chaine[pos]=='.')) break;
+				chaine[pos]=0;
+				}
+			break;
+
+		case '\n':     //--- passage … la ligne ------------------------
+			traite=1;
+			break;
+
+		default:
+			chaine[pos]=*a;
+			pos++;
+			break;
+		}
+   chaine[pos]=0;
+
+   a++;
+   } while ((*a)!=0);
+
+if (affich==1)
+	DFen->ChangeLine=1;
+
+/*--------------------------------------------------------------------*\
+|-Traite les commandes normales (mˆme si traite==0) ! mettre … 1 aprŠs-|
+\*--------------------------------------------------------------------*/
+
+if ( (traite==1) & (affich==1) )
+	Line2History(chaine);
+
+#ifndef NODRIVE
+if ( (chaine[1]==':') & (chaine[0]!=0) & (chaine[2]==0) & (traite==1) )
+	{
+	char path[MAXPATH];
+	char drive;
+
+	drive=(char)toupper(chaine[0]);
+	if ((drive>='A') & (drive<='Z'))
+		{
+		drive-='A';
+
+		if (DriveReady(drive))
+			{
+			DrivePath(drive,path);
+			if (path[strlen(path)-1]==':')
+				strcat(path,"\\");
+
+			ChangeDir(path);
+			DFen->ChangeLine=1; 					   // Affichage Path
+			}
+			else
+			WinError("Invalid Drive");
+
+		traite=1;
+		goto Ligne_Traite;
+		}
+	}
+#endif
+
+if (traite==1)
+	{
+	if (Run(chaine)==0)
+		Shell(">%s",chaine);
+
+	goto Ligne_Traite;
+	}
+
+Ligne_Traite:
+
+if (traite==1)
+	{
+	CLstr[0]=0;
+	px=0;
+	DFen->ChangeLine=1;
+	}
+else
+	{
+	px=pos;
+	}
+
+return 1;
+}
+
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
@@ -1608,7 +1738,7 @@ return 1;
 \*--------------------------------------------------------------------*/
 int IsDir(struct file *F)
 {
-if ( (F->attrib & RB_SUBDIR)!=RB_SUBDIR) return 0;
+if ( (F->attrib & _A_SUBDIR)!=_A_SUBDIR) return 0;
 if (F->name[1]==':') return 0;
 if (F->name[1]=='*') return 0;
 if (F->name[0]=='*') return 0;
@@ -1631,46 +1761,172 @@ return 1;
 \*--------------------------------------------------------------------*/
 int FicSelect(FENETRE *Fen,int n,char q)
 {
-if (Fen->F[n]->name[0]=='.') return 1;
-if (Fen->F[n]->name[1]==':') return 1;
-if (Fen->F[n]->name[0]=='*') return 1;
-if (Fen->F[n]->name[1]=='*') return 1;
-if ((Fen->F[n]->attrib & RB_VOLID)==RB_VOLID) return 1;
+struct file *F;
+
+F=GetFile(Fen,n);
+
+if (F->name[0]=='.') return 1;
+if (F->name[1]==':') return 1;
+if (F->name[0]=='*') return 1;
+if (F->name[1]=='*') return 1;
+if ((F->attrib & _A_VOLID)==_A_VOLID) return 1;
 
 switch(q)
 	{
 	case 0: //--- Deselect ---------------------------------------------
-		if (Fen->F[n]->select==1)
+        if (F->select==1)
 			{
-			Fen->F[n]->select=0;
-			Fen->taillesel-=Fen->F[n]->size;
+            F->select=0;
+            Fen->taillesel-=F->size;
 			Fen->nbrsel--;
 			}
 		break;
 	case 1: //--- Select -----------------------------------------------
-		if (Fen->F[n]->select==0)
+        if (F->select==0)
 			{
-			Fen->F[n]->select=1;
-			Fen->taillesel+=Fen->F[n]->size;
+            F->select=1;
+            Fen->taillesel+=F->size;
 			Fen->nbrsel++;
 			}
 		break;
 	case 2: //--- inverse selection ------------------------------------
-		if (Fen->F[n]->select==0)
+        if (F->select==0)
 			{
-			Fen->F[n]->select=1;
-			Fen->taillesel+=Fen->F[n]->size;
+            F->select=1;
+            Fen->taillesel+=F->size;
 			Fen->nbrsel++;
 			}
-			else
+        else
 			{
-			Fen->F[n]->select=0;
-			Fen->taillesel-=Fen->F[n]->size;
+            F->select=0;
+            Fen->taillesel-=F->size;
 			Fen->nbrsel--;
 			}
 		break;
 	}
-
 return 0;
+}
+
+
+struct file *GetFile(FENETRE *Fen,int n)
+{
+if (n==-1)
+    n=Fen->pcur;
+
+if (n<Fen->nbrfic)
+    return Fen->Fic[n];
+
+WinError("GetFile");
+return NULL;
+}
+
+char *GetFilename(FENETRE *Fen,int n)
+{
+if (n==-1)
+    n=Fen->pcur;
+
+if (n<Fen->nbrfic)
+    return Fen->Fic[n]->name;
+
+WinError("GetFilename");
+return NULL;
+}
+
+void CreateFile(FENETRE *Fen,char *name,unsigned short time,unsigned short date,char attrib,int size)
+{
+int n;
+
+if ((attrib!=_A_VOLID) & (attrib!=_A_SUBDIR) & (WildCmp(name,driversel)!=0))
+    return;
+
+n=Fen->nbrfic;
+
+Fen->Fic[n]=(struct file*)GetMem(sizeof(struct file));
+Fen->Fic[n]->name=(char*)GetMem(strlen(name)+1);
+strcpy(Fen->Fic[n]->name,name);
+Fen->Fic[n]->time=time;
+Fen->Fic[n]->date=date;
+Fen->Fic[n]->attrib=attrib;
+Fen->Fic[n]->select=0;
+
+if ((attrib&_A_SUBDIR)==_A_SUBDIR)
+    Fen->Fic[n]->size=0;
+else
+    Fen->Fic[n]->size=size;
+
+Fen->Fic[n]->desc=0;
+
+
+Fen->nbrfic=n+1;
+Fen->taillefic+=size;
+}
+
+void FreeFile(FENETRE *Fen,int n)
+{
+if (n>=Fen->nbrfic)
+    WinError("Freefile");
+
+if (Fen->Fic[n]->info!=NULL)
+    LibMem(Fen->Fic[n]->info);
+if (Fen->Fic[n]->longname!=NULL)
+    LibMem(Fen->Fic[n]->longname);
+
+LibMem(Fen->Fic[n]->name);
+LibMem(Fen->Fic[n]);
+}
+
+FENETRE *AllocWin(void)
+{
+FENETRE *SFen;
+
+SFen=(FENETRE*)GetMem(sizeof(FENETRE));
+
+CreateNewFen(SFen,0);
+
+SFen->Fic=(struct file**)GetMem(TOTFIC*sizeof(void *));
+
+SFen->x=40;
+SFen->nfen=7;
+SFen->Fen2=SFen;
+SFen->y=1;
+SFen->yl=(Cfg->TailleY)-4;
+SFen->xl=39;
+SFen->order=17;
+SFen->pcur=0;
+SFen->scur=0;
+
+SFen->nbrfic=0;
+
+SFen->OldDFen=DFen;
+
+return SFen;
+}
+
+void FreeWin(FENETRE *SFen)
+{
+int n;
+
+DFen=SFen->OldDFen;
+
+for(n=0;n<SFen->nbrfic;n++)
+    FreeFile(SFen,n);
+
+LibMem(SFen->Fic);
+
+CloseNewFen(SFen);
+
+LibMem(SFen);
+}
+
+void CreateNewFen(FENETRE *Fen,int n)
+{
+Fen->FenTyp=n;
+Fen->init=1;
+}
+
+void CloseNewFen(FENETRE *Fen)
+{
+Fen->FenTyp=0;
+Fen->init=1;
 }
 

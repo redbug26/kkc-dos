@@ -1,24 +1,19 @@
 /*--------------------------------------------------------------------*\
 |- Outil de recherche de fichiers                                     -|
 \*--------------------------------------------------------------------*/
+#include <ctype.h>
+#include <io.h>
 
 #include <stdio.h>
 #include <string.h>
 
+#include <conio.h>
 
 //#include <time.h>
-//
-#ifndef LINUX
-    #include <ctype.h>
-    #include <io.h>
-    #include <conio.h>
-#endif
-
-
 
 #include "kk.h"
 
-#include "kktsearch.h"
+#include "kkt\search.h"
 
 extern FENETRE *Fenetre[4];     // uniquement pour trouver la 3‚me trash
 
@@ -140,7 +135,7 @@ ok=(!stricmp(nom,DFen->path));
 if (ok)
 for (m=0;m<DFen->nbrfic;m++)
     {
-    ff=DFen->F[m];
+    ff=GetFile(DFen,m);
 
     error=ff->attrib;
 
@@ -215,7 +210,7 @@ LibMem(TabRec[NbrRec]);
 if (ok)
 for (m=0;m<DFen->nbrfic;m++)
     {
-    ff=DFen->F[m];
+    ff=GetFile(DFen,m);
 
     error=ff->attrib;
 
@@ -366,11 +361,13 @@ switch(_cbuf[10])
     case 2: //--- Selected dir & subdir --------------------------------
         for(n=0;n<Fen->nbrfic;n++)
             {
-            if ( (Fen->F[n]->select) |
-                                  ((Fen->nbrsel==0) & (Fen->pcur==n)))
+            struct file *F;
+            F=GetFile(Fen,n);
+
+            if ( (F->select) | ((Fen->nbrsel==0) & (Fen->pcur==n)))
                 {
                 strcpy(nom,Fen->path);
-                Path2Abs(nom,Fen->F[n]->name);
+                Path2Abs(nom,F->name);
                 cherdate(nom);
                 }
             }
@@ -515,7 +512,7 @@ if (nbr==0)
                     CommandLine("#CD %s",tabpath[pos]);
                     k=-1;
                     for (i=0;i<DFen->nbrfic;i++)
-                        if (!WildCmp(tabnom[pos],DFen->F[i]->name))
+                        if (!WildCmp(tabnom[pos],GetFilename(DFen,i)))
                             {
                             DFen->pcur=i;
                             DFen->scur=i;
@@ -543,7 +540,7 @@ if (nbr==0)
                         CommandLine("#CD %s",tabpath[n]);
                         k=-1;
                         for (i=0;i<DFen->nbrfic;i++)
-                            if (!WildCmp(tabnom[n],DFen->F[i]->name))
+                            if (!WildCmp(tabnom[n],GetFilename(DFen,i)))
                                 {
                                 DFen->pcur=i;
                                 DFen->scur=i;
@@ -579,7 +576,7 @@ if (nbr==0)
         CommandLine("#CD %s",tabpath[pos]);
 
         for (n=0;n<DFen->nbrfic;n++)
-            if (!WildCmp(tabnom[pos],DFen->F[n]->name))
+            if (!WildCmp(tabnom[pos],GetFilename(DFen,n)))
                 {
                 DFen->pcur=n;
                 DFen->scur=n;

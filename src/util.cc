@@ -1,33 +1,32 @@
 /*--------------------------------------------------------------------*\
-|- Procedures diverses (outils dos)                                   -|
+|- Procedures diverses (outils dos) 								  -|
 \*--------------------------------------------------------------------*/
 #include <ctype.h>
+#include <io.h>
 #include <stdio.h>
 #include <string.h>
+#include <conio.h>
+#include <dos.h>
+#include <bios.h>									  // Gestion clavier
 #include <fcntl.h>
 //#include <time.h>
 
 #include "kk.h"
 
-#ifdef LINUX
-    #include <unistd.h>
-#else
-    #include <io.h>
-    #include <conio.h>
-    #include <dos.h>
-    #include <bios.h>                                     // Gestion clavier
+#ifdef GCC
+#include <unistd.h>
 #endif
 
 
 /*--------------------------------------------------------------------*\
-|- Fonction cach‚e IDF                                                -|
+|- Fonction cach‚e IDF												  -|
 \*--------------------------------------------------------------------*/
 
-void ClearSpace(char *name);    //--- efface les espaces inutiles ------
+void ClearSpace(char *name);	//--- efface les espaces inutiles ------
 
 
 /*--------------------------------------------------------------------*\
-|- Prototype local                                                    -|
+|- Prototype local													  -|
 \*--------------------------------------------------------------------*/
 char *GetLine(char *ligne,FILE *fic);
 
@@ -42,13 +41,13 @@ int UserMenuExist(void);
 void PcTeam(void);
 
 /*--------------------------------------------------------------------*\
-|- Buffer global                                                      -|
+|- Buffer global													  -|
 \*--------------------------------------------------------------------*/
 
 static char buffer[256];
 
 /*--------------------------------------------------------------------*\
-|- Fonction                                                           -|
+|- Fonction 														  -|
 \*--------------------------------------------------------------------*/
 
 int WinAttrib(void)
@@ -67,49 +66,49 @@ static int y2=7,y3=3;
 
 
 struct Tmt T[34] = {
-      { 30, 4,10, "",&sa},
-      { 38, 4,10, "",&sa},
-      { 46, 4,10, "",&sa},
-      { 30, 6,10, "",&sh},
-      { 38, 6,10, "",&sh},
-      { 46, 6,10, "",&sh},
-      { 30, 8,10, "",&sr},
-      { 38, 8,10, "",&sr},
-      { 46, 8,10, "",&sr},
-      { 30,10,10, "",&ss},
-      { 38,10,10, "",&ss},
-      { 46,10,10, "",&ss},
+	  { 30, 4,10, "",&sa},
+	  { 38, 4,10, "",&sa},
+	  { 46, 4,10, "",&sa},
+	  { 30, 6,10, "",&sh},
+	  { 38, 6,10, "",&sh},
+	  { 46, 6,10, "",&sh},
+	  { 30, 8,10, "",&sr},
+	  { 38, 8,10, "",&sr},
+	  { 46, 8,10, "",&sr},
+	  { 30,10,10, "",&ss},
+	  { 38,10,10, "",&ss},
+	  { 46,10,10, "",&ss},
 
-      { 35,13,11, Day,&deux},
-      { 38,13,11, Month,&deux},
-      { 41,13,11, Year,&quatre},
-      { 35,15,11, Hour,&deux},
-      { 38,15,11, Minute,&deux},
-      { 41,15,11, Second,&deux},
+	  { 35,13,11, Day,&deux},
+	  { 38,13,11, Month,&deux},
+	  { 41,13,11, Year,&quatre},
+	  { 35,15,11, Hour,&deux},
+	  { 38,15,11, Minute,&deux},
+	  { 41,15,11, Second,&deux},
 
-      { 6,2,0,"Change Attribute        Set    Unset   Change",NULL},
-      { 45,1,0,"Not",NULL},
+	  { 6,2,0,"Change Attribute        Set    Unset   Change",NULL},
+	  { 45,1,0,"Not",NULL},
 
-      { 6, 4,0,"Archive",NULL},
-      { 6, 6,0,"Hidden ",NULL},
-      { 6, 8,0,"Read-only",NULL},
-      { 6,10,0,"System",NULL},
-      { 6,13,0,"Date",NULL},
-      { 6,15,0,"Time",NULL},
+	  { 6, 4,0,"Archive",NULL},
+	  { 6, 6,0,"Hidden ",NULL},
+	  { 6, 8,0,"Read-only",NULL},
+	  { 6,10,0,"System",NULL},
+	  { 6,13,0,"Date",NULL},
+	  { 6,15,0,"Time",NULL},
 
-      {37,13,0,"/",NULL},
-      {40,13,0,"/",NULL},
-      {37,15,0,":",NULL},
-      {40,15,0,":",NULL},
+	  {37,13,0,"/",NULL},
+	  {40,13,0,"/",NULL},
+	  {37,15,0,":",NULL},
+	  {40,15,0,":",NULL},
 
-      { 26,3,9,&x2,&y2},
-      { 33,12,9,&x3,&y3},
+	  { 26,3,9,&x2,&y2},
+	  { 33,12,9,&x3,&y3},
 
-      {10,17,2,NULL,NULL},                // 1:Ok
-      {35,17,3,NULL,NULL},
-      };
+	  {10,17,2,NULL,NULL},				  // 1:Ok
+	  {35,17,3,NULL,NULL},
+	  };
 
-struct TmtWin F =   {   8,4,69,23, "Change attribute/time"};
+struct TmtWin F =	{	8,4,69,23, "Change attribute/time"};
 
 int n,m;
 unsigned short datep,timep;
@@ -127,137 +126,144 @@ strcpy(Second,"-");
 
 
 for (n=0;n<DFen->nbrfic;n++)
-    {
-    if ((DFen->F[n]->select==1) | ((DFen->nbrsel==0) & (n==DFen->pcur)))
-        {
-        o=(DFen->F[n]->attrib);
-        o=(o&0x20)!=0x20;
+	{
+    struct file *F;
 
-        if (sa==-1) sa=0+o;
-        if (sa!=o) sa=2;
+    F=GetFile(DFen,n);
 
-        o=(DFen->F[n]->attrib);
-        o=(o&0x2)!=0x2;
+    if ((F->select==1) | ((DFen->nbrsel==0) & (n==DFen->pcur)))
+		{
+        o=(F->attrib);
+		o=(o&0x20)!=0x20;
 
-        if (sh==-1) sh=3+o;
-        if (sh!=3+o) sh=5;
+		if (sa==-1) sa=0+o;
+		if (sa!=o) sa=2;
 
-        o=(DFen->F[n]->attrib);
-        o=(o&0x1)!=0x1;
+        o=(F->attrib);
+		o=(o&0x2)!=0x2;
 
-        if (sr==-1) sr=6+o;
-        if (sr!=6+o) sr=8;
+		if (sh==-1) sh=3+o;
+		if (sh!=3+o) sh=5;
 
-        o=(DFen->F[n]->attrib);
-        o=(o&0x4)!=0x4;
+        o=(F->attrib);
+		o=(o&0x1)!=0x1;
 
-        if (ss==-1) ss=9+o;
-        if (ss!=9+o) ss=11;
+		if (sr==-1) sr=6+o;
+		if (sr!=6+o) sr=8;
 
-        sprintf(buffer,"%2d",(DFen->F[n]->date)&31);
-        if (!strcmp(Day,"-"))        strcpy(Day,buffer);
-        if (strcmp(Day,buffer)!=0)   strcpy(Day,"");
+        o=(F->attrib);
+		o=(o&0x4)!=0x4;
 
-        sprintf(buffer,"%2d",((DFen->F[n]->date)>>5)&15);
-        if (!strcmp(Month,"-"))        strcpy(Month,buffer);
-        if (strcmp(Month,buffer)!=0)   strcpy(Month,"");
+		if (ss==-1) ss=9+o;
+		if (ss!=9+o) ss=11;
 
-        sprintf(buffer,"%4d",((DFen->F[n]->date)>>9)+1980);
-        if (!strcmp(Year,"-"))        strcpy(Year,buffer);
-        if (strcmp(Year,buffer)!=0)   strcpy(Year,"");
+        sprintf(buffer,"%2d",(F->date)&31);
+		if (!strcmp(Day,"-"))        strcpy(Day,buffer);
+		if (strcmp(Day,buffer)!=0)	 strcpy(Day,"");
 
-        sprintf(buffer,"%02d",((DFen->F[n]->time)>>11)&31);
-        if (!strcmp(Hour,"-"))        strcpy(Hour,buffer);
-        if (strcmp(Hour,buffer)!=0)   strcpy(Hour,"");
+        sprintf(buffer,"%2d",((F->date)>>5)&15);
+		if (!strcmp(Month,"-"))        strcpy(Month,buffer);
+		if (strcmp(Month,buffer)!=0)   strcpy(Month,"");
 
-        sprintf(buffer,"%02d",((DFen->F[n]->time)>>5)&63);
-        if (!strcmp(Minute,"-"))        strcpy(Minute,buffer);
-        if (strcmp(Minute,buffer)!=0)   strcpy(Minute,"");
+        sprintf(buffer,"%4d",((F->date)>>9)+1980);
+		if (!strcmp(Year,"-"))        strcpy(Year,buffer);
+		if (strcmp(Year,buffer)!=0)   strcpy(Year,"");
 
-        sprintf(buffer,"%02d",((DFen->F[n]->time)&31)*2);
-        if (!strcmp(Second,"-"))        strcpy(Second,buffer);
-        if (strcmp(Second,buffer)!=0)   strcpy(Second,"");
-        }
-    }
+        sprintf(buffer,"%02d",((F->time)>>11)&31);
+		if (!strcmp(Hour,"-"))        strcpy(Hour,buffer);
+		if (strcmp(Hour,buffer)!=0)   strcpy(Hour,"");
+
+        sprintf(buffer,"%02d",((F->time)>>5)&63);
+		if (!strcmp(Minute,"-"))        strcpy(Minute,buffer);
+		if (strcmp(Minute,buffer)!=0)	strcpy(Minute,"");
+
+        sprintf(buffer,"%02d",((F->time)&31)*2);
+		if (!strcmp(Second,"-"))        strcpy(Second,buffer);
+		if (strcmp(Second,buffer)!=0)	strcpy(Second,"");
+		}
+	}
 
 
 NumHelp(39);
 n=WinTraite(T,34,&F,0);
 
-if (n!=-1)  // pas escape
-    {
-    if (T[n].type!=3)    // pas cancel
-        for (n=0;n<DFen->nbrfic;n++)
-            {
-            if ( (DFen->F[n]->select==1) | ((DFen->nbrsel==0) &
-                                                      (n==DFen->pcur)) )
-                {
-                int hand2;
+if (n!=-1)	// pas escape
+	{
+	if (T[n].type!=3)	 // pas cancel
+		for (n=0;n<DFen->nbrfic;n++)
+			{
+            struct file *F;
+            F=GetFile(DFen,n);
+
+            if ( (F->select==1) | ((DFen->nbrsel==0) &
+													  (n==DFen->pcur)) )
+				{
+				int hand2;
 
                 strcpy(buffer,DFen->path);
-                Path2Abs(buffer,DFen->F[n]->name);
+                Path2Abs(buffer,F->name);
 
-                o=0;
-                if (sa!=2)  o=0x20*(1-sa);
-                if (sa!=5)  o+=+0x2*(4-sh);
-                if (sr!=8)  o+=0x1*(7-sr);
-                if (ss!=11) o+=0x4*(10-ss);
+				o=0;
+				if (sa!=2)	o=0x20*(1-sa);
+				if (sa!=5)	o+=+0x2*(4-sh);
+				if (sr!=8)	o+=0x1*(7-sr);
+				if (ss!=11) o+=0x4*(10-ss);
 
-                _dos_setfileattr(buffer,o);
-                _dos_getfileattr(buffer,&o);
-                DFen->F[n]->attrib=(char)o;
+				_dos_setfileattr(buffer,o);
+				_dos_getfileattr(buffer,&o);
+                F->attrib=(char)o;
 
-                _dos_open(buffer,O_RDONLY,&hand2);
-                _dos_getftime(hand2,&datep,&timep);
+				_dos_open(buffer,O_RDONLY,&hand2);
+				_dos_getftime(hand2,&datep,&timep);
 
-                if (*Day!=0)
-                    {
-                    sscanf(Day,"%d",&m);
-                    datep=(ushort)((datep&65504)+m);
-                    }
-                if (*Month!=0)
-                    {
-                    sscanf(Month,"%d",&m);
-                    datep=(ushort)((datep&65055)+(m<<5));
-                    }
-                if (*Year!=0)
-                    {
-                    sscanf(Year,"%d",&m);
-                    datep=(ushort)((datep&511)+((m-1980)<<9));
-                    }
-                if (*Hour!=0)
-                    {
-                    sscanf(Hour,"%d",&m);
-                    timep=(ushort)((timep&2047)+(m<<11));
-                    }
-                if (*Minute!=0)
-                    {
-                    sscanf(Minute,"%d",&m);
-                    timep=(ushort)((timep&63519)+(m<<5));
-                    }
-                if (*Second!=0)
-                    {
-                    sscanf(Second,"%d",&m);
-                    timep=(ushort)((timep&65504)+(m/2));
-                    }
+				if (*Day!=0)
+					{
+					sscanf(Day,"%d",&m);
+					datep=(ushort)((datep&65504)+m);
+					}
+				if (*Month!=0)
+					{
+					sscanf(Month,"%d",&m);
+					datep=(ushort)((datep&65055)+(m<<5));
+					}
+				if (*Year!=0)
+					{
+					sscanf(Year,"%d",&m);
+					datep=(ushort)((datep&511)+((m-1980)<<9));
+					}
+				if (*Hour!=0)
+					{
+					sscanf(Hour,"%d",&m);
+					timep=(ushort)((timep&2047)+(m<<11));
+					}
+				if (*Minute!=0)
+					{
+					sscanf(Minute,"%d",&m);
+					timep=(ushort)((timep&63519)+(m<<5));
+					}
+				if (*Second!=0)
+					{
+					sscanf(Second,"%d",&m);
+					timep=(ushort)((timep&65504)+(m/2));
+					}
 
-                _dos_setftime(hand2,datep,timep);
-                _dos_close(hand2);
+				_dos_setftime(hand2,datep,timep);
+				_dos_close(hand2);
 
-                _dos_open(buffer,O_RDONLY,&hand2);
-                _dos_getftime(hand2,&datep,&timep);
-                _dos_close(hand2);
+				_dos_open(buffer,O_RDONLY,&hand2);
+				_dos_getftime(hand2,&datep,&timep);
+				_dos_close(hand2);
 
-                DFen->F[n]->date=datep;
-                DFen->F[n]->time=timep;
-                }
+                F->date=datep;
+                F->time=timep;
+				}
 
-            }
-    }
+			}
+	}
 
 #endif
 
-return 1;                                                      // Erreur
+return 1;													   // Erreur
 }
 
 #ifndef NOCOM
@@ -276,80 +282,80 @@ Window(20,5,60,10,Cfg->col[16]);
 PrintAt(35,5,"Server Mode");
 
 com_open(Cfg->comport,Cfg->comspeed,Cfg->combit,
-                                           Cfg->comparity,Cfg->comstop);
+										   Cfg->comparity,Cfg->comstop);
 sprintf(buf,"ATS0=0");
 for(n=0;n<strlen(buf);n++)
-    com_send_ch(buf[n]);
+	com_send_ch(buf[n]);
 com_close();
 
 
 do
-    {
-    regs.w.dx=(short)(Cfg->comport-1);
-    regs.w.ax=0x300;
+	{
+	regs.w.dx=(short)(Cfg->comport-1);
+	regs.w.ax=0x300;
 
-    int386(0x14,&regs,&regs);
+	int386(0x14,&regs,&regs);
 
-    PrintAt(21,7,"Modem Status: (0x%4X) ",regs.w.ax);
-    }
+	PrintAt(21,7,"Modem Status: (0x%4X) ",regs.w.ax);
+	}
 while( (!kbhit()) & ((regs.h.al&64)==0) );
 
 if ((regs.h.al&64)==64)
-    {
-    PrintAt(44,7,"RING");
+	{
+	PrintAt(44,7,"RING");
 
-    com_open(Cfg->comport,Cfg->comspeed,Cfg->combit,
-                                           Cfg->comparity,Cfg->comstop);
+	com_open(Cfg->comport,Cfg->comspeed,Cfg->combit,
+										   Cfg->comparity,Cfg->comstop);
 
-    while ( (com_read_ch()!=27) & (!kbhit()) )
-        {
-        clock_k cl;
+	while ( (com_read_ch()!=27) & (!kbhit()) )
+		{
+		clock_k cl;
 
-        sprintf(buf,"\x1b[6n*");
-        for(n=0;n<strlen(buf);n++)   com_send_ch(buf[n]);
+		sprintf(buf,"\x1b[6n*");
+		for(n=0;n<strlen(buf);n++)	 com_send_ch(buf[n]);
 
-        cl=GetClock();
-        while((GetClock()-cl)<60)
-            PrintAt(21,8,"Terminal Ready ? : %s",
-                                           com_ch_ready() ? "Yes":"No");
-        }
+		cl=GetClock();
+		while((GetClock()-cl)<60)
+			PrintAt(21,8,"Terminal Ready ? : %s",
+										   com_ch_ready() ? "Yes":"No");
+		}
 
-    if (com_ch_ready())
-        {
-        PrintAt(21,10,"Erase port buffer");
+	if (com_ch_ready())
+		{
+		PrintAt(21,10,"Erase port buffer");
 
-        while(com_ch_ready()==1)
-            com_read_ch();
-        ok=1;
-        }
+		while(com_ch_ready()==1)
+			com_read_ch();
+		ok=1;
+		}
 
-    com_close();
+	com_close();
 
-    if (ok==1)
-        {
-        LoadScreen();
-        Cfg->font=0;
-        ChangeTaille(25);                          // Rafraichit l'ecran
-        DFen->yl=(Cfg->TailleY)-4;
-        DFen->Fen2->yl=(Cfg->TailleY)-4;
-        DFen->ChangeLine=1;
+	if (ok==1)
+		{
+		LoadScreen();
+		Cfg->font=0;
+		ChangeTaille(25);						   // Rafraichit l'ecran
+		DFen->yl=(Cfg->TailleY)-4;
+		DFen->Fen2->yl=(Cfg->TailleY)-4;
+		DFen->ChangeLine=1;
 
-        DesinitScreen();
-        Cfg->display=2;
-        InitScreen(Cfg->display);
+		DesinitScreen();
+		Cfg->display=2;
+		InitScreen(Cfg->display);
 
-        sprintf(buf,"\x1b[=255h");
-        for(n=0;n<strlen(buf);n++)   com_send_ch(buf[n]);
+		sprintf(buf,"\x1b[=255h");
+		for(n=0;n<strlen(buf);n++)	 com_send_ch(buf[n]);
 
-        UseCfg();
+		UseCfg();
 
-        com_send_ch(27);
-        com_send_ch(27);
-        }
-    }
+		com_send_ch(27);
+		com_send_ch(27);
+		}
+	}
 
 if (ok==0)
-    LoadScreen();
+	LoadScreen();
 
 while (kbhit()) Wait(0,0);
 }
@@ -357,7 +363,7 @@ while (kbhit()) Wait(0,0);
 
 /*--------------------------------------------------------------------*\
 |----------------------------------------------------------------------|
-|- Gestion du menu F2                                                 -|
+|- Gestion du menu F2												  -|
 |----------------------------------------------------------------------|
 \*--------------------------------------------------------------------*/
 
@@ -373,36 +379,36 @@ int n;
 
 infic=fopen(KKFics->menu,"rt");
 if (infic==NULL)
-    {
-    outfic=fopen(KKFics->menu,"wt");
-    if (outfic==NULL) return 0;
-    fprintf(outfic,"%s\n%s = %s\n",section,titre,buffer);
-    fclose(outfic);
-    return 1;
-    }
+	{
+	outfic=fopen(KKFics->menu,"wt");
+	if (outfic==NULL) return 0;
+	fprintf(outfic,"%s\n%s = %s\n",section,titre,buffer);
+	fclose(outfic);
+	return 1;
+	}
 
 outfic=fopen(KKFics->temp,"wt");
 if (outfic==NULL)
-    {
-    fclose(infic);
-    return 0;
-    }
+	{
+	fclose(infic);
+	return 0;
+	}
 
 while (fgets(buf2,256,infic)!=NULL)
-    {
-    memcpy(buf1,buf2,256);
-    ClearSpace(buf1);
-    fprintf(outfic,"%s",buf2);
+	{
+	memcpy(buf1,buf2,256);
+	ClearSpace(buf1);
+	fprintf(outfic,"%s",buf2);
 
-    if (!strnicmp(buf1,section,strlen(section)))
-        {
-        fprintf(outfic,"%s = %s\n",titre,buffer);
-        ok=1;
-        }
-    }
+	if (!strnicmp(buf1,section,strlen(section)))
+		{
+		fprintf(outfic,"%s = %s\n",titre,buffer);
+		ok=1;
+		}
+	}
 
 if (ok==0)
-    fprintf(outfic,"%s\n%s = %s\n",section,titre,buffer);
+	fprintf(outfic,"%s\n%s = %s\n",section,titre,buffer);
 
 
 fclose(outfic);
@@ -411,13 +417,13 @@ fclose(infic);
 strcpy(buf1,KKFics->menu);
 
 for (n=0;n<strlen(buf1);n++)
-    {
-    if (buf1[n]=='.')
-        {
-        buf1[n]=0;
-        break;
-        }
-    }
+	{
+	if (buf1[n]=='.')
+		{
+		buf1[n]=0;
+		break;
+		}
+	}
 strcat(buf1,".bak");
 
 unlink(buf1);
@@ -465,7 +471,7 @@ return 1;
 
 
 /*--------------------------------------------------------------------*\
-|-  Result:    1 --> fin                                              -|
+|-	Result:    1 --> fin											  -|
 \*--------------------------------------------------------------------*/
 
 int MenuGroup(char *groupe)
@@ -487,54 +493,54 @@ if (fic==NULL) return 1;
 
 ok=0;
 while(GetLine(ligne,fic)!=NULL)
-    {
-    if (!strnicmp(ligne,groupe,strlen(groupe)))
-        {
-        ok=1;
-        break;
-        }
-    }
+	{
+	if (!strnicmp(ligne,groupe,strlen(groupe)))
+		{
+		ok=1;
+		break;
+		}
+	}
 if (ok==0)
-    {
-    fclose(fic);
-    return 1;
-    }
+	{
+	fclose(fic);
+	return 1;
+	}
 
 nbr=0;
 do
-    {
-    bar[nbr].fct=ftell(fic);
+	{
+	bar[nbr].fct=ftell(fic);
 
-    if (GetLine(ligne,fic)==NULL) break;
+	if (GetLine(ligne,fic)==NULL) break;
 
-    if (ligne[0]=='[')
-        break;
+	if (ligne[0]=='[')
+		break;
 
-    buf=strchr(ligne,'=');
-    if (buf!=NULL)
-        {
-        if (strchr(ligne,'[')!=NULL)
-            strcpy(titre[nbr]," ");
-            else
-            strcpy(titre[nbr],"");
+	buf=strchr(ligne,'=');
+	if (buf!=NULL)
+		{
+		if (strchr(ligne,'[')!=NULL)
+			strcpy(titre[nbr]," ");
+			else
+			strcpy(titre[nbr],"");
 
-        *buf=0;
-        ClearSpace(ligne);
-        if (strlen(ligne)>20) ligne[20]=0;
-        strcat(titre[nbr],ligne);
-        bar[nbr].Titre=titre[nbr];
-        bar[nbr].Help=0;
-        nbr++;
-        if (nbr==20) break;
-        }
-    }
+		*buf=0;
+		ClearSpace(ligne);
+		if (strlen(ligne)>20) ligne[20]=0;
+		strcat(titre[nbr],ligne);
+		bar[nbr].Titre=titre[nbr];
+		bar[nbr].Help=NULL;
+		nbr++;
+		if (nbr==20) break;
+		}
+	}
 while(1);
 
 if (nbr==0)
-    {
-    fclose(fic);
-    return 1;
-    }
+	{
+	fclose(fic);
+	return 1;
+	}
 
 menu.attr=8;
 
@@ -543,52 +549,52 @@ menu.y=4;
 menu.cur=0;
 
 if (PannelMenu(bar,nbr,&menu)==2)
-    {
-    fseek(fic,bar[menu.cur].fct,SEEK_SET);
-    GetLine(ligne,fic);
-    buf=strchr(ligne,'[');
+	{
+	fseek(fic,bar[menu.cur].fct,SEEK_SET);
+	GetLine(ligne,fic);
+	buf=strchr(ligne,'[');
 
-    if (buf!=NULL)
-        {
-        strcpy(groupe,buf);
-        groupe[strlen(groupe)-1]=0;
-        fclose(fic);
-        return 0;
-        }
+	if (buf!=NULL)
+		{
+		strcpy(groupe,buf);
+		groupe[strlen(groupe)-1]=0;
+		fclose(fic);
+		return 0;
+		}
 
-    strcpy(filename,KKFics->trash);
-    Path2Abs(filename,"z.bat");
+	strcpy(filename,KKFics->trash);
+	Path2Abs(filename,"z.bat");
 
-    outfic=fopen(filename,"wt");
-    fprintf(outfic,
-          "@REM *-------------------------------------------------*\n");
-    fprintf(outfic,
-          "@REM * Batch file created by Ketchup Killers Commander *\n");
-    fprintf(outfic,
-          "@REM * according to your user menu                     *\n");
-    fprintf(outfic,
-          "@REM *-------------------------------------------------*\n");
+	outfic=fopen(filename,"wt");
+	fprintf(outfic,
+		  "@REM *-------------------------------------------------*\n");
+	fprintf(outfic,
+		  "@REM * Batch file created by Ketchup Killers Commander *\n");
+	fprintf(outfic,
+		  "@REM * according to your user menu                     *\n");
+	fprintf(outfic,
+		  "@REM *-------------------------------------------------*\n");
 
-    buf=strchr(ligne,'=')+1;        // Il y a tjs un '=' sur cette ligne
-    ClearSpace(buf);
-    History2Line(buf,buffer);
-    fprintf(outfic,"@%s\n",buffer);
+	buf=strchr(ligne,'=')+1;        // Il y a tjs un '=' sur cette ligne
+	ClearSpace(buf);
+	History2Line(buf,buffer);
+	fprintf(outfic,"@%s\n",buffer);
 
-    while(GetLine(ligne,fic)!=NULL)
-        {
-        if ( (ligne[0]=='[') | (strchr(ligne,'=')!=NULL) )
-            break;
+	while(GetLine(ligne,fic)!=NULL)
+		{
+		if ( (ligne[0]=='[') | (strchr(ligne,'=')!=NULL) )
+			break;
 
-        History2Line(ligne,buffer);
-        fprintf(outfic,"@%s\n",buffer);
-        }
+		History2Line(ligne,buffer);
+		fprintf(outfic,"@%s\n",buffer);
+		}
 
-    fclose(outfic);
-    fclose(fic);
+	fclose(outfic);
+	fclose(fic);
 
-    CommandLine("#%s",filename);
-    return 1;
-    }
+	CommandLine("#%s",filename);
+	return 1;
+	}
 
 
 fclose(fic);
@@ -596,7 +602,7 @@ return 1;
 }
 
 /*--------------------------------------------------------------------*\
-|- Menu                                                               -|
+|- Menu 															  -|
 \*--------------------------------------------------------------------*/
 void Menu(void)
 {
@@ -607,20 +613,20 @@ MENU menu;
 int nbr=0;
 
 if (MenuPcTeamExist())
-    {
-    bar[nbr].Titre="CD team Menu";
-    bar[nbr].Help=500;
-    bar[nbr].fct=2;
-    nbr++;
-    }
+	{
+	bar[nbr].Titre="CD team Menu";
+	bar[nbr].Help=500;
+	bar[nbr].fct=2;
+	nbr++;
+	}
 
 if (UserMenuExist())
-    {
-    bar[nbr].Titre="User Menu";
-    bar[nbr].Help=79;
-    bar[nbr].fct=1;
-    nbr++;
-    }
+	{
+	bar[nbr].Titre="User Menu";
+	bar[nbr].Help=79;
+	bar[nbr].fct=1;
+	nbr++;
+	}
 
 menu.attr=8;
 
@@ -631,21 +637,21 @@ menu.cur=0;
 if (nbr==0) return;
 
 if (nbr>1)
-    if (PannelMenu(bar,nbr,&menu)!=2)
-        return;
+	if (PannelMenu(bar,nbr,&menu)!=2)
+		return;
 
 switch(bar[menu.cur].fct)
-    {
-    case 1:
-        strcpy(res,"[Main]");
-        do
-            r=MenuGroup(res);
-        while(r==0);
-        break;
-    case 2:
-        PcTeam();
-        break;
-    }
+	{
+	case 1:
+		strcpy(res,"[Main]");
+		do
+			r=MenuGroup(res);
+		while(r==0);
+		break;
+	case 2:
+		PcTeam();
+		break;
+	}
 }
 
 /*--------------------------------------------------------------------*\
@@ -663,19 +669,19 @@ int n;
 char buffer[256],buf2[256],enter[64];
 
 struct Tmt T[] = {
-      { 6, 7,2,NULL,NULL},                                      // le OK
-      {27, 7,3,NULL,NULL},                                  // le CANCEL
+	  { 6, 7,2,NULL,NULL},										// le OK
+	  {27, 7,3,NULL,NULL},									// le CANCEL
 
-      {12, 2,1,title, &lng},
-      { 2, 2,0,"Title:   ",NULL},
-      {12, 3,1,section, &lng},
-      { 2, 3,0,"Section: ",NULL},
+	  {12, 2,1,title, &lng},
+	  { 2, 2,0,"Title:   ",NULL},
+	  {12, 3,1,section, &lng},
+	  { 2, 3,0,"Section: ",NULL},
 
-      { 1, 1,9,&x1,&y1},
+	  { 1, 1,9,&x1,&y1},
 
-      { 1, 5,8,"Change to current directory",&l1}
+	  { 1, 5,8,"Change to current directory",&l1}
 
-    };
+	};
 
 struct TmtWin F = {-1,5,46,14,"New User Menu"};
 
@@ -686,15 +692,15 @@ strcpy(section,"[Main]");
 Line2PrcLine(buf,line);
 
 if (!strncmp(line,"!.!",3))
-    {
-    int n;
+	{
+	int n;
 
-    strcpy(buffer,line);
-    strcpy(line,buf);
-    for(n=0;n<strlen(line);n++)
-        if (line[n]==32) break;
-    strcpy(line+n+1,buffer+4);
-    }
+	strcpy(buffer,line);
+	strcpy(line,buf);
+	for(n=0;n<strlen(line);n++)
+		if (line[n]==32) break;
+	strcpy(line+n+1,buffer+4);
+	}
 
 
 l1=0;
@@ -711,16 +717,16 @@ memset(enter,32,80);
 enter[strlen(title)+3]=0;
 
 if (l1==1)
-    {
-    sprintf(buf2,"%c:\n",path[0]);
-    strcat(buffer,buf2);
+	{
+	sprintf(buf2,"%c:\n",path[0]);
+	strcat(buffer,buf2);
 
-    strcat(buffer,enter);
-    sprintf(buf2,"cd %s\n",path+2);
-    strcat(buffer,buf2);
+	strcat(buffer,enter);
+	sprintf(buf2,"cd %s\n",path+2);
+	strcat(buffer,buf2);
 
-    strcat(buffer,enter);
-    }
+	strcat(buffer,enter);
+	}
 
 sprintf(buf2,"%s\n",line);
 strcat(buffer,line);
@@ -733,7 +739,7 @@ MenuInsert(section,title,buffer);
 static FILE *teamfic;
 
 /*--------------------------------------------------------------------*\
-|-                                                                    -|
+|-																	  -|
 \*--------------------------------------------------------------------*/
 char *TeamGetLine(char *res,FILE *fic)
 {
@@ -742,10 +748,10 @@ char *a;
 a=fgets(res,1024,fic);
 
 if (a!=NULL)
-    {
-    n=strlen(res)-1;
-    while ( ( (res[n]==0x0D) | (res[n]==0x0A) ) & (n>=0) ) res[n]=0,n--;
-    }
+	{
+	n=strlen(res)-1;
+	while ( ( (res[n]==0x0D) | (res[n]==0x0A) ) & (n>=0) ) res[n]=0,n--;
+	}
 
 return a;
 }
@@ -761,17 +767,17 @@ x=0;
 y=0;
 
 for(n=0;n<strlen(ligne);n++)
-    {
-    char aff=1;
+	{
+	char aff=1;
 
-    switch(ligne[n])
-        {
-        case ' ': if (x>30) aff=0,x=0,y++; break;
-        }
-    if ((aff) & (ligne[n]>=32))
-        x++;
-    if (x>mx) mx=x;
-    }
+	switch(ligne[n])
+		{
+		case ' ': if (x>30) aff=0,x=0,y++; break;
+		}
+	if ((aff) & (ligne[n]>=32))
+		x++;
+	if (x>mx) mx=x;
+	}
 
 x1=(Cfg->TailleX-mx)/2;
 
@@ -789,19 +795,19 @@ x=0;
 y=1;
 
 for(n=0;n<strlen(ligne);n++)
-    {
-    char aff=1;
+	{
+	char aff=1;
 
-    switch(ligne[n])
-        {
-        case ' ': if (x>30) aff=0,x=0,y++; break;
-        }
-    if ((aff) & (ligne[n]>=32))
-        {
-        PrintAt(x1+x,y1+y,"%c",ligne[n]);
-        x++;
-        }
-    }
+	switch(ligne[n])
+		{
+		case ' ': if (x>30) aff=0,x=0,y++; break;
+		}
+	if ((aff) & (ligne[n]>=32))
+		{
+		PrintAt(x1+x,y1+y,"%c",ligne[n]);
+		x++;
+		}
+	}
 
 while(!KbHit());
 
@@ -827,19 +833,19 @@ y=0;
 
 
 for(n=0;n<strlen(ligne);n++)
-    {
-    char aff=1;
+	{
+	char aff=1;
 
-    switch(ligne[n])
-        {
-        case '$': aff=0,x=0,y++; break;
-        case '*': ligne[n]=','; break;
-        case ' ': if (x>30) aff=0,x=0,y++; break;
-        }
-    if ((aff) & (ligne[n]>=32))
-        x++;
-    if (x>mx) mx=x;
-    }
+	switch(ligne[n])
+		{
+		case '$': aff=0,x=0,y++; break;
+		case '*': ligne[n]=','; break;
+		case ' ': if (x>30) aff=0,x=0,y++; break;
+		}
+	if ((aff) & (ligne[n]>=32))
+		x++;
+	if (x>mx) mx=x;
+	}
 
 x1=Cfg->TailleX-mx-1;
 
@@ -857,21 +863,21 @@ x=0;
 y=1;
 
 for(n=0;n<strlen(ligne);n++)
-    {
-    char aff=1;
+	{
+	char aff=1;
 
-    switch(ligne[n])
-        {
-        case '$': aff=0,x=0,y++; break;
-        case '*': ligne[n]=','; break;
-        case ' ': if (x>30) aff=0,x=0,y++; break;
-        }
-    if ((aff) & (ligne[n]>=32))
-        {
-        PrintAt(x1+x,y1+y,"%c",ligne[n]);
-        x++;
-        }
-    }
+	switch(ligne[n])
+		{
+		case '$': aff=0,x=0,y++; break;
+		case '*': ligne[n]=','; break;
+		case ' ': if (x>30) aff=0,x=0,y++; break;
+		}
+	if ((aff) & (ligne[n]>=32))
+		{
+		PrintAt(x1+x,y1+y,"%c",ligne[n]);
+		x++;
+		}
+	}
 
 while(!KbHit());
 
@@ -881,15 +887,15 @@ return 0;
 }
 
 /* kf1: 1-> path+fichier
-        2-> info … afficher
+		2-> info … afficher
 
    kf2: 0-> run
-        1-> installation
+		1-> installation
 
    kf3: 0-> ?
-        1-> dos
-        2-> win95
-        3-> win3x
+		1-> dos
+		2-> win95
+		3-> win3x
 */
 
 int TeamSelect(struct barmenu *bar)
@@ -923,54 +929,57 @@ if (!strnicmp(ligne,"!WINi!",6))         kf1=1,kf2=1,kf3=3,len=6;
 if (!strnicmp(ligne,"!WRIe!",6))         kf1=1,kf2=0,kf3=0,len=6;
 
 if (kf1==1)
-    {
-    strcpy(buf,DFen->path);
-    Path2Abs(buf,ligne+len);
-    Path2Abs(buf,"..");
-    CommandLine("#CD %s",buf);
-    FileinPath(ligne+len,buf);
-    ok=-1;
-    len=strlen(buf);
+	{
+	strcpy(buf,DFen->path);
+	Path2Abs(buf,ligne+len);
+	Path2Abs(buf,"..");
+	CommandLine("#CD %s",buf);
+	FileinPath(ligne+len,buf);
+	ok=-1;
+	len=strlen(buf);
 
-    for(i=0;i<DFen->nbrfic;i++)
-        {
-        buf[len]=0;
-        if (!WildCmp(DFen->F[i]->name,buf))
-            {   ok=i;  break; }
-        strcpy(buf+len,".exe");
-        if (!WildCmp(DFen->F[i]->name,buf))
-            {   ok=i;  break; }
-        strcpy(buf+len,".com");
-        if (!WildCmp(DFen->F[i]->name,buf))
-            {   ok=i;  break; }
-        strcpy(buf+len,".bat");
-        if (!WildCmp(DFen->F[i]->name,buf))
-            {   ok=i;  break; }
-        }
-    if (ok!=-1)
-        {
-        DFen->pcur=i;
-        DFen->scur=(DFen->yl)/2;              // Centrage du nom
-        if ((kf3>=2) & (KKCfg->_Win95!=1))
-            WinError("This program cannot be run in DOS mode");
-            else
-            {
-            retour=1;
-            strcpy(KKCfg->FileName,DFen->F[DFen->pcur]->name);
-            PutLIFOFct(84);
-            }
-        }
+	for(i=0;i<DFen->nbrfic;i++)
+		{
+        struct file *F;
+        F=GetFile(DFen,i);
 
-    }
+		buf[len]=0;
+        if (!WildCmp(F->name,buf))
+			{	ok=i;  break; }
+		strcpy(buf+len,".exe");
+        if (!WildCmp(F->name,buf))
+			{	ok=i;  break; }
+		strcpy(buf+len,".com");
+        if (!WildCmp(F->name,buf))
+			{	ok=i;  break; }
+		strcpy(buf+len,".bat");
+        if (!WildCmp(F->name,buf))
+			{	ok=i;  break; }
+		}
+	if (ok!=-1)
+		{
+		DFen->pcur=i;
+		DFen->scur=(DFen->yl)/2;			  // Centrage du nom
+		if ((kf3>=2) & (KKCfg->_Win95!=1))
+			WinError("This program cannot be run in DOS mode");
+			else
+			{
+			retour=1;
+            strcpy(KKCfg->FileName,GetFilename(DFen,-1));
+			PutLIFOFct(84);
+			}
+		}
+
+	}
 
 if (kf1==2)
-    {
-    TeamAffLine(bar->Titre,ligne+len+1);
-    Wait(0,0);
-    }
+	{
+	TeamAffLine(bar->Titre,ligne+len+1);
+	Wait(0,0);
+	}
 
 if (kf1==0)
-    PrintAt(0,0,"%s",ligne);
+	PrintAt(0,0,"%s",ligne);
 
 
 return retour;
@@ -978,7 +987,7 @@ return retour;
 
 
 /*--------------------------------------------------------------------*\
-|-  Result:    1 --> fin                                              -|
+|-	Result:    1 --> fin											  -|
 \*--------------------------------------------------------------------*/
 
 int PcTeamGroup(char *groupe)
@@ -996,29 +1005,29 @@ if (teamfic==NULL) return 1;
 
 nbr=0;
 do
-    {
-    if (TeamGetLine(ligne,teamfic)==NULL) break;
-    if (ligne[0]!='@') break;
+	{
+	if (TeamGetLine(ligne,teamfic)==NULL) break;
+	if (ligne[0]!='@') break;
 
-    bar[nbr].Titre=(char*)GetMem(strlen(ligne));
-    memcpy(bar[nbr].Titre,ligne+1,strlen(ligne)+1); // On passe le '@' -
+	bar[nbr].Titre=(char*)GetMem(strlen(ligne));
+	memcpy(bar[nbr].Titre,ligne+1,strlen(ligne)+1); // On passe le '@' -
 
-    bar[nbr].Help=500;
-    bar[nbr].fct=ftell(teamfic);
+	bar[nbr].Help=500;
+	bar[nbr].fct=ftell(teamfic);
 
-    TeamGetLine(ligne,teamfic);
-    TeamGetLine(ligne,teamfic);
+	TeamGetLine(ligne,teamfic);
+	TeamGetLine(ligne,teamfic);
 
-    nbr++;
-    if (nbr==100) break;
-    }
+	nbr++;
+	if (nbr==100) break;
+	}
 while(1);
 
 if (nbr==0)
-    {
-    fclose(teamfic);
-    return 1;
-    }
+	{
+	fclose(teamfic);
+	return 1;
+	}
 
 menu.attr=2+8;
 
@@ -1027,18 +1036,18 @@ menu.y=4;
 menu.cur=0;
 
 do
-    {
-    NewEvents(TeamFct,"PcTeam",1);
+	{
+	NewEvents(TeamFct,"PcTeam",1);
 
-    if (PannelMenu(bar,nbr,&menu)!=2)
-        break;
+	if (PannelMenu(bar,nbr,&menu)!=2)
+		break;
 
-    if (TeamSelect(&(bar[menu.cur])))
-        {
-        retour=1;
-        break;
-        }
-    }
+	if (TeamSelect(&(bar[menu.cur])))
+		{
+		retour=1;
+		break;
+		}
+	}
 while(1);
 
 ClearEvents();
@@ -1049,7 +1058,7 @@ return retour;
 }
 
 /*--------------------------------------------------------------------*\
-|- Menu                                                               -|
+|- Menu 															  -|
 \*--------------------------------------------------------------------*/
 int MenuPcTeamExist(void)
 {
@@ -1088,24 +1097,24 @@ bar[4].Titre="Demos, images et sons"; bar[4].Help=500;
 bar[5].Titre="Divers"; bar[5].Help=500;
 
 if (!strnicmp(volume,"LUDICD",6))
-    {
-    bar[0].Titre="Jeux commerciaux";
-    bar[1].Titre="Ludo-educatifs";
-    bar[2].Titre="Shareware";
-    bar[3].Titre="Trucs et astuces";
-    bar[4].Titre="Add-on et scenarios";
-    bar[5].Titre="Divers";
-    }
+	{
+	bar[0].Titre="Jeux commerciaux";
+	bar[1].Titre="Ludo-educatifs";
+	bar[2].Titre="Shareware";
+	bar[3].Titre="Trucs et astuces";
+	bar[4].Titre="Add-on et scenarios";
+	bar[5].Titre="Divers";
+	}
 
 if (!strnicmp(volume,"CDPRO",5))
-    {
-    bar[0].Titre="Outils commerciaux";
-    bar[1].Titre="Shareware";
-    bar[2].Titre="Creations";
-    bar[3].Titre="Toolbox";
-    bar[4].Titre="Hardware";
-    bar[5].Titre="Divers";
-    }
+	{
+	bar[0].Titre="Outils commerciaux";
+	bar[1].Titre="Shareware";
+	bar[2].Titre="Creations";
+	bar[3].Titre="Toolbox";
+	bar[4].Titre="Hardware";
+	bar[5].Titre="Divers";
+	}
 
 bar[0].fct=1;
 bar[1].fct=2;
@@ -1123,7 +1132,7 @@ menu.cur=n;
 do
 {
 if (PannelMenu(bar,6,&menu)!=2)
-    break;
+	break;
 
 strcpy(res,DFen->path);
 Path2Abs(res,"\\pc__team");
@@ -1131,7 +1140,7 @@ sprintf(name,"text_0%d.txt",menu.cur);
 Path2Abs(res,name);
 
 if (PcTeamGroup(res))
-    break;
+	break;
 }
 while(1);
 
@@ -1142,7 +1151,7 @@ n=menu.cur;
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
-#define MAXLCD 100
+#define MAXLCD 1000
 
 void ExecLCD(FENETRE *Fen,char *dir)
 {
@@ -1170,7 +1179,7 @@ do
 {
 fic=fopen(rep,"rb");
 if (fic==NULL)
-    if (MakeNCD()) return;
+	if (MakeNCD()) return;
 
 }while(fic==NULL);
 
@@ -1181,31 +1190,31 @@ fread(&nbr,1,2,fic);
 fseek(fic,2,SEEK_CUR);
 
 for(n=0;n<nbr;n++)
-    {
-    fread(name,1,13,fic);
-    fread(a,1,3,fic);
+	{
+	fread(name,1,13,fic);
+	fread(a,1,3,fic);
 
-    l=0;
-    for(m=0;m<strlen(rep);m++)
-        {
-        if (rep[m]=='\\')
-            {
-            l++;
-            if (l==a[0]) rep[m]=0;
-            }
-        }
-    Path2Abs(rep,name);
+	l=0;
+	for(m=0;m<strlen(rep);m++)
+		{
+		if (rep[m]=='\\')
+			{
+			l++;
+			if (l==a[0]) rep[m]=0;
+			}
+		}
+	Path2Abs(rep,name);
 
-    if ((!WildCmp(name,dir)) | (!WildCmp(rep,rep2)))
-        {
-        bar[nbrbar].Titre=(char*)GetMem(strlen(rep)+1);
-        strcpy(bar[nbrbar].Titre,rep);
-        bar[nbrbar].Help=0;
-        bar[nbrbar].fct=nbrbar+1;
-        nbrbar++;
-        if (nbrbar==MAXLCD) break;
-        }
-    }
+	if ((!WildCmp(name,dir)) | (!WildCmp(rep,rep2)))
+		{
+		bar[nbrbar].Titre=(char*)GetMem(strlen(rep)+1);
+		strcpy(bar[nbrbar].Titre,rep);
+		bar[nbrbar].Help=0;
+		bar[nbrbar].fct=nbrbar+1;
+		nbrbar++;
+		if (nbrbar==MAXLCD) break;
+		}
+	}
 fclose(fic);
 
 menu.x=2;
@@ -1216,18 +1225,18 @@ menu.attr=2+8;
 menu.cur=0;
 
 if (nbrbar==0)
-    err=1;
+	err=1;
 
 if (nbrbar>1)
-    if (PannelMenu(bar,nbrbar,&menu)!=2)
-        err=1;
+	if (PannelMenu(bar,nbrbar,&menu)!=2)
+		err=1;
 
 if (!err)
-    CommandLine("#cd %s",bar[menu.cur].Titre);
+	CommandLine("#cd %s",bar[menu.cur].Titre);
 
 
 for(n=0;n<nbrbar;n++)
-    LibMem(bar[n].Titre);
+	LibMem(bar[n].Titre);
 LibMem(bar);
 }
 
@@ -1243,7 +1252,6 @@ int NbrRec;
 int n,m;
 static char rep[256],moi[256],nom[256];
 char name[13];
-FENETRE *SFen,*OldFen;
 static char volname[256];
 FILE *fic;
 int pos;
@@ -1266,25 +1274,7 @@ fwrite("PNCI\0",5,1,fic);
 fwrite(&nbr,2,1,fic);
 fwrite(&nbr,2,1,fic);
 
-
-
-OldFen=DFen;
-
-SFen=(FENETRE*)GetMem(sizeof(FENETRE));
-SFen->F=(struct file**)GetMem(TOTFIC*sizeof(void *));
-
-SFen->x=40;
-SFen->nfen=7;
-SFen->FenTyp=0;
-SFen->Fen2=SFen;
-SFen->y=1;
-SFen->yl=(Cfg->TailleY)-4;
-SFen->xl=39;
-SFen->order=0;
-SFen->pcur=0;
-SFen->scur=0;
-
-DFen=SFen;
+DFen=AllocWin();
 
 TabRec=(char**)GetMem(500*sizeof(char*));
 ARec=(char*)GetMem(500*3);
@@ -1306,88 +1296,85 @@ nbr++;
 
 ARec[0]=0;
 for(n=0;n<strlen(nom);n++)
-    if (nom[n]=='\\') ARec[0]++;
+	if (nom[n]=='\\') ARec[0]++;
 
 memset(name,0,13);
 FileinPath(nom,name);
 
 if (strlen(name)==0)
-    {
-    ARec[0]=0;
-    ARec[1]=1;
-    ARec[2]=0;
+	{
+	ARec[0]=0;
+	ARec[1]=1;
+	ARec[2]=0;
 
-    memset(name,0,13);
+	memset(name,0,13);
 
-    strcpy(name,"\\");
-    }
+	strcpy(name,"\\");
+	}
 
 fwrite(name,13,1,fic);
 fwrite(ARec,3,1,fic);
 
 for(n=0;n<13;n++)
-    crc+=name[n];
+	crc+=name[n];
 for(n=0;n<3;n++)
-    crc+=ARec[n];
+	crc+=ARec[n];
 
 for(n=0;n<NbrRec;n++)
-    {
-    TabRec[n]=TabRec[n+1];
-    ARec[n*3]=ARec[(n+1)*3];
-    ARec[n*3+1]=ARec[(n+1)*3+1];
-    ARec[n*3+2]=ARec[(n+1)*3+2];
-    }
+	{
+	TabRec[n]=TabRec[n+1];
+	ARec[n*3]=ARec[(n+1)*3];
+	ARec[n*3+1]=ARec[(n+1)*3+1];
+	ARec[n*3+2]=ARec[(n+1)*3+2];
+	}
 
 prem=1;
 pos=0;
 for (m=0;m<DFen->nbrfic;m++)
-    {
-    ff=DFen->F[m];
+	{
+    ff=GetFile(DFen,m);
 
-    if (ff->name[0]!='.')
-        {
-        if (IsDir(ff))
-            {
-            int l;
+	if (ff->name[0]!='.')
+		{
+		if (IsDir(ff))
+			{
+			int l;
 
-            for(n=NbrRec;n>pos;n--)
-                {
-                TabRec[n]=TabRec[n-1];
-                ARec[n*3]=ARec[(n-1)*3];
-                ARec[n*3+1]=ARec[(n-1)*3+1];
-                ARec[n*3+2]=ARec[(n-1)*3+2];
-                }
+			for(n=NbrRec;n>pos;n--)
+				{
+				TabRec[n]=TabRec[n-1];
+				ARec[n*3]=ARec[(n-1)*3];
+				ARec[n*3+1]=ARec[(n-1)*3+1];
+				ARec[n*3+2]=ARec[(n-1)*3+2];
+				}
 
-            strcpy(moi,nom);
-            Path2Abs(moi,ff->name);
+			strcpy(moi,nom);
+			Path2Abs(moi,ff->name);
 
-            l=strlen(moi)+1;
+			l=strlen(moi)+1;
 
-            TabRec[pos]=(char*)GetMem(l);
-            memcpy(TabRec[pos],moi,l);
+			TabRec[pos]=(char*)GetMem(l);
+			memcpy(TabRec[pos],moi,l);
 
-            ARec[pos*3+1]=prem;
-            ARec[pos*3+2]=1;
+			ARec[pos*3+1]=prem;
+			ARec[pos*3+2]=1;
 
-            prem=0;
+			prem=0;
 
-            NbrRec++;
-            pos++;
-            }
-        }
-    }
+			NbrRec++;
+			pos++;
+			}
+		}
+	}
 if (pos!=0)
-    ARec[(pos-1)*3+2]=0;
+	ARec[(pos-1)*3+2]=0;
 }
 while (NbrRec!=0);
 
 LibMem(ARec);
 LibMem(TabRec);
 
-LibMem(SFen->F);
-LibMem(SFen);
-
-DFen=OldFen;
+FreeWin(DFen);
 
 // le crc est la somme de tous les names[13] et des a[3]
 fwrite(&crc,2,1,fic);
@@ -1401,5 +1388,234 @@ fwrite(&nbr,2,1,fic);
 fclose(fic);
 
 return 0;
+}
+
+
+
+
+/*--------------------------------------------------------------------*\
+|-	Fenetre TREE													  -|
+\*--------------------------------------------------------------------*/
+void FenTree(FENETRE *Fen,char *dir)
+{
+MENU menu;
+static struct barmenu *bar;
+char *onoff;
+
+int nbrbar,nbrtru;
+int posd[64];
+
+FILE *fic;
+static char rep[256],rep2[256],name[13];
+char a[3];
+short int nbr;
+int m,n,l,err;
+
+bar=(struct barmenu*)GetMem(sizeof(struct barmenu)*MAXLCD);
+onoff=(char*)GetMem(MAXLCD);
+memset(onoff,2,MAXLCD);
+
+do
+{
+err=0;
+
+strcpy(rep,Fen->path);
+Path2Abs(rep,"\\treeinfo.ncd");
+
+strcpy(rep2,Fen->path);
+Path2Abs(rep2,dir);
+
+do
+	{
+	fic=fopen(rep,"rb");
+	if (fic==NULL)
+		if (MakeNCD()) return;
+
+	}
+while(fic==NULL);
+
+fseek(fic,5,SEEK_SET);
+
+fread(&nbr,1,2,fic);
+
+fseek(fic,2,SEEK_CUR);
+
+menu.cur=0;
+
+menu.x=2;
+menu.y=2;
+
+menu.attr=2+8+16;
+
+nbrbar=0;
+nbrtru=0;
+
+for(n=0;n<nbr;n++)
+	{
+	fread(name,1,13,fic);
+	fread(a,1,3,fic);
+
+	l=0;
+	for(m=0;m<strlen(rep);m++)
+		{
+		if (rep[m]=='\\')
+			{
+			l++;
+			if (l==a[0]) rep[m]=0;
+			}
+		}
+	Path2Abs(rep,name);
+
+	if (!strnicmp(rep,dir,strlen(rep)))
+		if (WildCmp(rep,dir)!=0)
+			onoff[nbrtru]=(char)(onoff[nbrtru]|1);
+
+	if (a[2]==1)
+		posd[a[0]]=1;
+	else
+		posd[a[0]]=0;
+
+	if ((a[1]==1) & (nbrbar!=1))
+		{
+		if ((onoff[nbrtru-1]&2)==2)   //--- visible
+			{
+			if ((onoff[nbrtru-1]&1)==1)  //--- developp‚
+				memcpy(bar[nbrbar-1].Titre+a[0]*2-3,"[-]",3);
+			else
+				{
+				posd[a[0]-1]|=2;
+				memcpy(bar[nbrbar-1].Titre+a[0]*2-3,"[+]",3);
+				}
+			}
+		}
+
+	if (a[0]!=0)
+		{
+		char ok=0;
+		int i;
+
+		for(i=0;i<a[0];i++)
+			if((posd[i]&2)==2)
+				ok=1;
+
+		if (ok)
+			onoff[nbrtru]=(char)(onoff[nbrtru]&125);
+		else
+			onoff[nbrtru]=(char)(onoff[nbrtru]|2);
+		}
+
+	if ((onoff[nbrtru]&2)==2)
+		{
+		char buf[256];
+
+		buf[0]=0;
+
+		if (nbrbar!=0)
+			{
+			int i,j;
+
+			j=0;
+			for(i=1;i<a[0];i++)
+				{
+				if ((posd[i]&1)==1)
+					buf[j]=179;
+				else
+					buf[j]=32;
+				j++;
+				buf[j]=32;
+				j++;
+				}
+
+			if (a[2]==1)
+				buf[j]=195;
+			else
+				buf[j]=192;
+
+			buf[j+1]=0;
+			strcat(buf,"ÄÄÄÄ");
+			}
+
+		 strcat(buf,name);
+
+		bar[nbrbar].Titre=(char*)GetMem(strlen(buf)+1);
+		strcpy(bar[nbrbar].Titre,buf);
+		bar[nbrbar].Help=0;
+		bar[nbrbar].fct=nbrtru+1;
+
+		if (!WildCmp(rep,dir))
+			menu.cur=nbrbar;
+
+		nbrbar++;
+		if (nbrbar==MAXLCD) break;
+		}
+
+	nbrtru++;
+
+	}
+fclose(fic);
+
+if (nbrbar==0)
+	break;
+
+err=PannelMenu(bar,nbrbar,&menu);
+
+if (err=='*')
+	onoff[bar[menu.cur].fct-1]=(char)(onoff[bar[menu.cur].fct-1]^1);
+
+if (err=='+')
+	onoff[bar[menu.cur].fct-1]=(char)(onoff[bar[menu.cur].fct-1]|1);
+
+if (err=='-')
+	onoff[bar[menu.cur].fct-1]=(char)(onoff[bar[menu.cur].fct-1]&126);
+
+strcpy(rep,Fen->path);
+Path2Abs(rep,"\\treeinfo.ncd");
+
+fic=fopen(rep,"rb");
+if (fic==NULL)
+	break;
+
+fseek(fic,5,SEEK_SET);
+fread(&nbr,1,2,fic);
+fseek(fic,2,SEEK_CUR);
+
+nbrtru=0;
+
+for(n=0;n<nbr;n++)
+	{
+	fread(name,1,13,fic);
+	fread(a,1,3,fic);
+
+	l=0;
+	for(m=0;m<strlen(rep);m++)
+		{
+		if (rep[m]=='\\')
+			{
+			l++;
+			if (l==a[0]) rep[m]=0;
+			}
+		}
+	Path2Abs(rep,name);
+
+	if ((bar[menu.cur].fct-1)==nbrtru)
+		strcpy(dir,rep);
+
+	nbrtru++;
+
+	}
+fclose(fic);
+
+
+for(n=0;n<nbrbar;n++)
+	LibMem(bar[n].Titre);
+
+}
+while ((err!=0) & (err!=2));
+
+LibMem(onoff);
+LibMem(bar);
+
+if (err==2)
+	CommandLine("#cd %s",dir);
 }
 

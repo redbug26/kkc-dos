@@ -9,15 +9,15 @@
 // - Minimal version of Ketchup Killers Macro needed (0 if not handled)
 
 INFOFCT InfoFct[NBRFUNCT]= {
- {  1,1," Aide ","Aide",91,1},
- {  2,1," Invt ","Inverse la s‚l‚ction des fichiers",91,1},
- {  3,1," Slct ","S‚l‚ction de fichiers..",91,1},
- {  4,1,"Unslct","D‚s‚l‚ction de fichiers..",91,1},
- {  5,1,"Trouve","Recherche de fichiers",91,1},
- {  6,1," MKKD ","Cr‚e un fichier KKD",91,0},
- {  7,1," Voir ","Voir le fichier",91,0},
- {  8,1," Voir ","Voir le fichier (viewer interne)",91,0},
- {  9,1,"Editer","Edite le fichier",91,0},
+ {	1,1," Aide ","Aide",91,1},
+ {	2,1," Invt ","Inverse la s‚l‚ction des fichiers",91,1},
+ {	3,1," Slct ","S‚l‚ction de fichiers..",91,1},
+ {	4,1,"Unslct","D‚s‚l‚ction de fichiers..",91,1},
+ {	5,1,"Trouve","Recherche de fichiers",91,1},
+ {	6,1," MKKD ","Cr‚e un fichier KKD",91,0},
+ {	7,1," Voir ","Voir le fichier",91,0},
+ {	8,1," Voir ","Voir le fichier (viewer interne)",91,0},
+ {	9,1,"Editer","Edite le fichier",91,0},
  { 10,1,"Copier","Copie les fichiers",91,0},
  { 11,1,"RenDep","Renomme/D‚place le fichier",91,0},
  { 12,1,"Cr‚Rep","Cr‚er le r‚pŠrtoire..",91,0},
@@ -47,19 +47,19 @@ INFOFCT InfoFct[NBRFUNCT]= {
  { 35,1,"QuInfo","Display 'quick information' on file",91,0},
  { 36,1," Down ","Scroll down",91,0},
  { 37,1,"  Up  ","Scroll up",91,0},
- { 38,1,"DiInfo","Display disk information",91,0},
+ { 38,1,"RepNfo","Display disk information",91,0},
  { 39,1,"Attrib","Change attribut",91,0},
  { 40,1," Hist ","Directories history",91,0},
- { 41,1,"Parent","Go in the parent directory",91,0},
- { 42,1," User ","Go in the user directory",91,0},
+ { 41,1,"Parent","Va dans le repertoire pere",91,0},
+ { 42,1," Pers ","Va dans le repertoire utilisateur",91,0},
  { 43,0," ---- ","?? Go in the mainwindow",91,0},
- { 44,1,"Rename","Rename Window",91,0},
+ { 44,1,"Renome","Rename Window",91,0},
  { 45,1,"InEdit","Internal editor",91,0},
  { 46,1,"EnterD","Enter in directory",91,0},
- { 47,1," Line ","Switch lines",91,0},
- { 48,1," Type ","Switch screen",91,0},
- { 49,1,"DrLeft","Change drive of the left window",91,0},
- { 50,1,"DrRght","Change drive of the right window",91,0},
+ { 47,1,"Lignes","Echange lignes",91,0},
+ { 48,1,"Ecran ","Echange ecran",91,0},
+ { 49,1,"DrLeft","Change le lecteur de la fenetre gauche",91,0},
+ { 50,1,"DrRght","Change le lecteur de la fenetre droite",91,0},
  { 51,1,"RunDir","Go in the running directory",91,0},
  { 52,1," Pgup ","10 lines up",91,0},
  { 53,1," Pgdn ","10 lines down",91,0},
@@ -122,23 +122,24 @@ INFOFCT InfoFct[NBRFUNCT]= {
  {110,1,"Voir..","View a file (internal or external)",100,0},
  {111,1,"SizeDr","Calcule la taille du r‚pertoire",110,0},
  {112,1,"NCompo","Ajoute une nouvelle composition",130,0},
- {113,1,"CompoC","Configuration de la partie compo",130,0}
+ {113,1,"CompoC","Configuration de la partie compo",130,0},
+ {114,1,"Arbre.","Arborescence de repertoire",130,0}
 
  };
 
 char _BarHeader[][10]=
-    {"Fichier","Panneau","Disque","Selection","Outils","Options","Aide"};
+	{"Fichier","Panneau","Disque","Selection","Outils","Options","Aide"};
 
 /*--------------------------------------------------------------------*\
-|- Label in pannel                                                    -|
+|- Label in pannel													  -|
 \*--------------------------------------------------------------------*/
 
 char _PannelHeader[][20]=
-    {"    Nom     ",                // 12
-     "  Taille  ",                  // 10
-     "  Date  ",                    // 8
-     "Heure",                       // 5
-     "     Nom long     "};         // 18
+	{"    Nom     ",                // 12
+	 "  Taille  ",                  // 10
+	 "  Date  ",                    // 8
+	 "Heure",                       // 5
+	 "     Nom long     "};         // 18
 
 char _OneFilHeader[]="%-10s Octets dans un fichier    ";
 char _MulFilHeader[]="%-10s Octets dans %3d fichiers  ";
@@ -157,4 +158,25 @@ char _LabelUnsel[]="(D‚)s‚l‚ct  ";
 char _LabelUnkno[]="Inconnu     ";
 
 char _LabelSel[]="<SEL>";
+
+char _CopyFrom[]="De  %59s";
+char _CopyTo[]  ="A   %59s";
+char _CopyLinkStr[]="Lien sur %s";
+char _CopyLink[]="Lien";
+char _CopyOneTo[]="Copie un fichier (%11s octets) sur";
+char _CopyMulTo[]="Copie %d fichiers (%11s octets) sur";
+char _CopyFilTo[]="Copie les fichiers sur";
+
+char KKMsgErr[][40]=
+    { "Fichier ne peut pas etre cree",         // 0
+      "Fichier non accessible",     // 1
+      "Systeme ne peut pas etre charge"         // 2
+    };
+
+// 500	cd team menu
+// 501	execute player (ficidf)
+// 502	dos4gw error
+// 503	create new user menu
+// 504	archive
+
 
