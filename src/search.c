@@ -543,7 +543,8 @@ if (nbr==0)
                         else
                         {
                         AccessFile(k);
-                        View(DFen);
+
+                        GestionFct(8);  //--- Appelle le viewer --------
                         }
                     }
                 break;

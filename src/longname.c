@@ -381,7 +381,7 @@ R.es=DOSbuf1;
 
 DOS_Int(0x2F,&R);
 
-WinMesg("Information Message","Put a CD-ROM is in the tray",0);
+WinMesg("Information Message","Put a CD-ROM in the tray",0);
 
 buf[0]=13;
 buf[1]=lect;

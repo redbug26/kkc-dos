@@ -689,9 +689,9 @@ struct key K[nbrkey]=   {
 {  "SMK",
         3,
         0,
-        "Smacker animation",
+        "Smacker Graphics File",
         "SMK",
-        "", 103, 0*2+0, 5},
+        "Jeff Roberts", 103, 0*2+0, 5}, //--- RAD Software -------------
 {  "\x50\x61\x63\x6B\x65\x64\x20\x46\x69\x6C\x65\x20",
     12,
     0,
@@ -989,10 +989,10 @@ struct key K[nbrkey]=   {
     0,
     "Elf executable",    //--- Executable and Linking Format -----------
     "OUT",
-    "USL",158,0*2+0,6},    //--- UNIX System Laboratories ----------------
+    "USL",158,0*2+0,6},    //--- UNIX System Laboratories --------------
 {  "[MDF]",
     5,                 // Gautier Porter aka Fire Dragon / Knights -----
-    0,
+    0,                          //--- Impulse pour la version [MDF3] ---
     "MusicDisk Factory File",
     "MDF",
     "Fire Dragon",159,4,1},

@@ -18,6 +18,9 @@
 
 #define DOOR 1
 
+#include "view.h"
+
+
 struct kkfichier
      {
      char *menu;                                              // kkc.mnu
@@ -31,16 +34,6 @@ struct kkfichier
      };
 
 extern struct kkfichier *KKFics;
-
-struct PourMask
-     {
-     char Ignore_Case;                         // 1 si on ignore la case
-     char Other_Col;                  // 1 si on colorie les autres noms
-     char chaine[1024];  // chaine de comparaison EX: "asm break case @"
-     char title[40];                                 // nom de ce masque
-     };
-
-extern struct PourMask **Mask;
 
 struct RB_info
      {
@@ -175,17 +168,7 @@ struct kkconfig
 
     //--- Variable pour le viewer --------------------------------------
 
-     char warp;                    // 0: pas de warp, 1: word, 2: entier
-     char cnvtable;                // Table de conversion pour le viewer
-     char autotrad;                  // Traduit automatiquement un table
-     char ajustview;                  // Fit the width of file in viewer
-     char saveviewpos;                // Save position of file in viewer
-     unsigned char wmask;             // C'est quel masque kon emploie ?
-
-     char lnfeed;                // 0: CR/LF  1:CR  2:LF  3:user 4:CR|LF
-     char userfeed;                                       // Si lnfeed=3
-
-     long AnsiSpeed;
+     KKVIEW V;
 
     //--- Don't look this ----------------------------------------------
 
@@ -238,7 +221,6 @@ extern int IOerr;
 #include "copie.h"
 #include "delete.h"
 #include "search.h"
-#include "view.h"
 #include "edit.h"
 #include "util.h"
 #include "reddies.h"

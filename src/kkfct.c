@@ -32,29 +32,32 @@ KKCfg->confexit=1;
 KKCfg->dispath=0;
 KKCfg->pathdown=0;
 
-strcpy(Mask[0]->title,"C Style");
-strcpy(Mask[0]->chaine,      "asm break case cdecl char const continue "
+strcpy(KKCfg->V.Mask[0]->title,"C Style");
+strcpy(KKCfg->V.Mask[0]->chaine,
+                             "asm break case cdecl char const continue "
                          "default do double else enum extern far float "
                              "for goto huge if int interrupt long near "
                            "pascal register short signed sizeof static "
                             "struct switch typedef union unsigned void "
                                                     "volatile while @");
-Mask[0]->Ignore_Case=0;
-Mask[0]->Other_Col=1;
+KKCfg->V.Mask[0]->Ignore_Case=0;
+KKCfg->V.Mask[0]->Other_Col=1;
 
-strcpy(Mask[1]->title,"Pascal Style");
-strcpy(Mask[1]->chaine,    "absolute and array begin case const div do "
+strcpy(KKCfg->V.Mask[1]->title,"Pascal Style");
+strcpy(KKCfg->V.Mask[1]->chaine,
+                           "absolute and array begin case const div do "
                             "downto else end external file for forward "
                             "function goto if implementation in inline "
                           "interface interrupt label mod nil not of or "
                                "packed procedure program record repeat "
                            "set shl shr string then to type unit until "
                                            "uses var while with xor @");
-Mask[1]->Ignore_Case=1;
-Mask[1]->Other_Col=1;
+KKCfg->V.Mask[1]->Ignore_Case=1;
+KKCfg->V.Mask[1]->Other_Col=1;
 
-strcpy(Mask[2]->title,"Assembler Style");
-strcpy(Mask[2]->chaine,"aaa aad aam aas adc add and arpl bound bsf bsr "
+strcpy(KKCfg->V.Mask[2]->title,"Assembler Style");
+strcpy(KKCfg->V.Mask[2]->chaine,
+                       "aaa aad aam aas adc add and arpl bound bsf bsr "
       "bswap bt btc btr bts call cbw cdq clc cld cli clts cmc cmp cmps "
       "cmpxchg cwd cwde daa das dec div enter esc hlt idiv imul in inc "
      "ins int into invd invlpg iret iretd jcxz jecxz jmp ja jae jb jbe "
@@ -70,15 +73,16 @@ strcpy(Mask[2]->chaine,"aaa aad aam aas adc add and arpl bound bsf bsr "
       "std sti stos str sub test verr verw wait fwait wbinvd xchg xlat "
                                "db dw dd endp ends assume xlatb xor @");
 
-Mask[1]->Ignore_Case=1;
-Mask[1]->Other_Col=1;
+KKCfg->V.Mask[1]->Ignore_Case=1;
+KKCfg->V.Mask[1]->Other_Col=1;
 
-strcpy(Mask[15]->title,"Ketchup^Pulpe Style");
-strcpy(Mask[15]->chaine,      "ketchup killers redbug access darköangel "
-                   "off topy kennet typeöone pulpe tyby djamm vatin "
+strcpy(KKCfg->V.Mask[15]->title,"Ketchup^Pulpe Style");
+strcpy(KKCfg->V.Mask[15]->chaine,
+                             "ketchup killers redbug access darköangel "
+                      "off topy kennet typeöone pulpe tyby djamm vatin "
                    "marjorie katana ecstasy cray magicöfred cobra z @");
-Mask[15]->Ignore_Case=1;
-Mask[15]->Other_Col=1;
+KKCfg->V.Mask[15]->Ignore_Case=1;
+KKCfg->V.Mask[15]->Other_Col=1;
 
 strcpy(KKCfg->extens,"RAR ARJ ZIP LHA DIZ EXE COM BAT BTM");
 
@@ -140,17 +144,17 @@ strcpy(KKCfg->HistDir,"C:\\");
 
 strcpy(KKCfg->HistCom,"!.!");
 
-KKCfg->warp=1;
-KKCfg->cnvtable=0;                                      // Table Ketchup
-KKCfg->autotrad=0;
-KKCfg->ajustview=1;
-KKCfg->saveviewpos=1;
-KKCfg->wmask=15;                                    // RedBug preference
+KKCfg->V.warp=1;
+KKCfg->V.cnvtable=0;                                    // Table Ketchup
+KKCfg->V.autotrad=0;
+KKCfg->V.ajustview=1;
+KKCfg->V.saveviewpos=1;
+KKCfg->V.wmask=15;                                  // RedBug preference
 
-KKCfg->lnfeed=4;                                                // CR/LF
-KKCfg->userfeed=0xE3;
+KKCfg->V.lnfeed=4;                                              // CR/LF
+KKCfg->V.userfeed=0xE3;
 
-KKCfg->AnsiSpeed=133;
+KKCfg->V.AnsiSpeed=133;
 }
 
 void FileSetup(void)
@@ -282,6 +286,10 @@ Path2Abs(KKFics->menu,"kkc.mnu");
 KKFics->ficscreen=(char*)GetMem(256);
 strcpy(KKFics->ficscreen,KKFics->trash);
 Path2Abs(KKFics->ficscreen,"kkc.scr");
+
+KKCfg->V.viewhist=(char*)GetMem(256);
+strcpy(KKCfg->V.viewhist,KKFics->trash);
+Path2Abs(KKCfg->V.viewhist,"kkview.rb");
 }
 
 

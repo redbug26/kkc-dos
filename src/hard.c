@@ -2014,7 +2014,10 @@ void *buf;
 buf=malloc(s);
 
 if (buf==NULL)
+    {
+    WinError("Not Enough Memory !");
     exit(1);
+    }
 
 memset(buf,0,s);
 
@@ -2028,7 +2031,10 @@ void *buf;
 buf=malloc(s);
 
 if (buf==NULL)
+    {
+    WinError("Not Enough Memory !");
     exit(1);
+    }
 
 return buf;
 }
@@ -2778,6 +2784,7 @@ int __far Error_handler(unsigned deverr,unsigned errcode,
 {
 int i,n,erreur[3];
 char car;
+int t;
 
 switch(IOerr)
     {
@@ -2787,6 +2794,8 @@ switch(IOerr)
         return _HARDERR_FAIL;
     }
 
+t=(Cfg->TailleX-80)/2;
+
 IOerr=1;
 
 if (IOver==1)
@@ -2794,22 +2803,22 @@ if (IOver==1)
 
 SaveScreen();
 
-Cadre(19,9,61,16,0,Cfg->col[46],Cfg->col[47]);
-Window(20,10,60,15,Cfg->col[28]);
+Cadre(t+19,9,t+61,16,0,Cfg->col[46],Cfg->col[47]);
+Window(t+20,10,t+60,15,Cfg->col[28]);
 
-PrintAt(23,10,"Disk Error: %s",((deverr&32768)==32768) ? "No":"Yes");
+PrintAt(t+23,10,"Disk Error: %s",((deverr&32768)==32768) ? "No":"Yes");
 
-PrintAt(23,11,"Position of error: ");
+PrintAt(t+23,11,"Position of error: ");
 
 switch((deverr&1536)/512)
     {
-    case 0: PrintAt(42,11,"MS-DOS"); break;
-    case 1: PrintAt(42,11,"FAT"); break;
-    case 2: PrintAt(42,11,"Directory"); break;
-    case 3: PrintAt(42,11,"Data-area"); break;
+    case 0: PrintAt(42+t,11,"MS-DOS"); break;
+    case 1: PrintAt(42+t,11,"FAT"); break;
+    case 2: PrintAt(42+t,11,"Directory"); break;
+    case 3: PrintAt(42+t,11,"Data-area"); break;
     }
 
-PrintAt(23,12,"Type of error: %s %04X",((deverr&256)==256) ?
+PrintAt(t+23,12,"Type of error: %s %04X",((deverr&256)==256) ?
                                                  "Write":"Read",deverr);
 i=8192;
 n=0;
@@ -2825,29 +2834,29 @@ for(n=0;n<3;n++)
 
 if (erreur[0])
     {
-    PrintAt(25,14,"Ignore");
-    AffCol(25,14,Cfg->col[29]);
-    Cadre(24,13,31,15,2,Cfg->col[46],Cfg->col[47]);
+    PrintAt(t+25,14,"Ignore");
+    AffCol(t+25,14,Cfg->col[29]);
+    Cadre(t+24,13,t+31,15,2,Cfg->col[46],Cfg->col[47]);
     }
 
 if (erreur[1])
     {
-    PrintAt(38,14,"Retry");
-    AffCol(38,14,Cfg->col[29]);
-    Cadre(37,13,43,15,2,Cfg->col[46],Cfg->col[47]);
+    PrintAt(t+38,14,"Retry");
+    AffCol(t+38,14,Cfg->col[29]);
+    Cadre(t+37,13,t+43,15,2,Cfg->col[46],Cfg->col[47]);
     }
 
 if (erreur[2])
     {
-    PrintAt(51,14,"Fail");
-    AffCol(51,14,Cfg->col[29]);
-    Cadre(50,13,55,15,2,Cfg->col[46],Cfg->col[47]);
+    PrintAt(t+51,14,"Fail");
+    AffCol(t+51,14,Cfg->col[29]);
+    Cadre(t+50,13,t+55,15,2,Cfg->col[46],Cfg->col[47]);
     }
 
 IOerr=0;
 do
 {
-car=(char)getch();
+car=getch();    //  Wait(0,0);
 
 if ( (car=='I') | (car=='i') & (erreur[0]) ) IOerr=1;
 if ( (car=='R') | (car=='r') & (erreur[1]) ) IOerr=2;
@@ -2897,7 +2906,7 @@ rech[1]=':';
 rech[2]='\\';
 rech[3]=0;
 
-if (opendir(rech)==NULL)
+if (opendir(rech)==NULL)             //--- Quid if no file on disk ? ---
     IOerr=1;
 
 if (_dos_getdiskfree(c,&d)!=0)
@@ -3257,8 +3266,8 @@ fin=0;
 
 do
 {
-if (c<0) c=0;
-if (c>nbr-1) c=nbr-1;
+if (c<0) c=nbr-1;
+if (c>nbr-1) c=0;
 
 while ((c-prem)<0) prem--;
 while ((c-prem)>=nbraff) prem++;
@@ -3523,6 +3532,8 @@ for(i=0;i<16;i++)
 help_fin=0;
 
 fic=fopen(Fics->help,"rb");
+if (fic==NULL) return;
+
 lng=filelength(fileno(fic));
 hlp=(char*)GetMem(lng);
 fread(hlp,1,lng,fic);
@@ -3572,6 +3583,8 @@ FILE *fic;
 help_fin=0;
 
 fic=fopen(Fics->help,"rb");
+if (fic==NULL) return;
+
 lng=filelength(fileno(fic));
 hlp=(char*)GetMem(lng);
 fread(hlp,1,lng,fic);

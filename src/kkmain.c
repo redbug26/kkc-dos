@@ -81,7 +81,6 @@ extern int IOver;
 extern int IOerr;
 
 struct kkconfig *KKCfg;
-struct PourMask **Mask;
 struct kkfichier *KKFics;
 
 
@@ -380,6 +379,9 @@ Fin();
 |- 81: Switch la taille horizontale                                   -|
 |- 82: Change les couleurs                                            -|
 |- 83: Fenetre changement de dir d'apres PATH                         -|
+|- 84: ENTER                                                          -|
+|- 85: R‚solution de s‚curit‚                                         -|
+|- 86: Eject le support                                               -|
 \*--------------------------------------------------------------------*/
 
 void GestionFct(int fct)
@@ -423,10 +425,13 @@ switch(fct)
         if ((DFen->F[DFen->pcur]->attrib & RB_SUBDIR)==RB_SUBDIR)
             break;
 
+        strcpy(buffer,DFen->path);
+        Path2Abs(buffer,DFen->F[DFen->pcur]->name);
+
         switch(DFen->system)
             {
             case 0:
-                View(DFen);
+                View(&(KKCfg->V),buffer);
                 break;
             }
         break;
@@ -856,7 +861,7 @@ switch(fct)
         ExecCom();
         break;
     case 74:
-        ViewFile(KKFics->temp);
+        View(&(KKCfg->V),KKFics->temp);
         break;
     case 75:                                   // Fenetre directory tree
         DFen=DFen->Fen2;
@@ -956,6 +961,73 @@ switch(fct)
                     }
                 break;
             }
+        break;
+    case 85:
+        {
+        static char oldpal[48],oldcol[64];
+        static char old=0;
+        static int tx,ty,font,type,dispath,pathdown;
+
+        char pal[]="\x00\x00\x00\x00\x00\x2A\x00\x2A\x00\x00\x2A\x2A"
+                   "\x2A\x00\x00\x2A\x00\x2A\x2A\x15\x00\x2A\x2A\x2A"
+                   "\x15\x15\x15\x15\x15\x3F\x15\x3F\x15\x15\x3F\x3F"
+                   "\x3F\x15\x15\x3F\x15\x3F\x3F\x3F\x15\x3F\x3F\x3F";
+        char col[]="\x1B\x30\x1E\x3E\x1E\x03\x30\x30\x0F\x30\x3F\x3E"
+                   "\x0F\x0E\x30\x19\x1B\x13\x30\x3F\x3E\x0F\x15\x12"
+                   "\x30\x3F\x0F\x3E\x4F\x4E\x70\x00\x14\x13\xB4\x60"
+                   "\x70\x1B\x1B\x1B\x1E\x30\x30\x0F\x3F\x3F\x4F\x4F"
+                   "\x3F\x0F\x80\x90\x30\x30\x0E\x1B\x1B\xA0\xB0\xC0"
+                   "\x04\x03\x05\x07";
+
+        if (!old)
+            {
+            memcpy(oldpal,Cfg->palette,48);
+            memcpy(oldcol,Cfg->col,64);
+            tx=Cfg->TailleX;
+            ty=Cfg->TailleY;
+            font=Cfg->font;
+            type=KKCfg->fentype;
+            dispath=KKCfg->dispath;
+            pathdown=KKCfg->pathdown;
+
+            memcpy(Cfg->palette,pal,48);
+            memcpy(Cfg->col,col,64);
+
+            Cfg->TailleY=25;
+            Cfg->TailleX=80;
+            Cfg->font=0;
+
+            KKCfg->fentype=1;
+            KKCfg->dispath=1;
+            KKCfg->pathdown=0;
+
+            DesinitScreen();
+            Cfg->display=0; //--- Normal Output ----------------------------
+            InitScreen(0);
+            old=1;
+
+            }
+        else
+            {
+            memcpy(Cfg->palette,oldpal,48);
+            memcpy(Cfg->col,oldcol,64);
+
+            Cfg->TailleY=ty;
+            Cfg->TailleX=tx;
+            Cfg->font=font;
+
+            KKCfg->fentype=type;
+
+            KKCfg->dispath=dispath;
+            KKCfg->pathdown=pathdown;
+            old=0;
+            }
+
+        GestionFct(67);                            // Rafraichit l'ecran
+        }
+        break;
+    case 86:
+        EjectCD(DFen);
         break;
     }
 
@@ -1185,6 +1257,9 @@ if (n==0)
    KKCfg->fentype=n;
 
 if (KKCfg->fentype>4) KKCfg->fentype=1;
+
+CalcSizeWin(Fenetre[0]);
+CalcSizeWin(Fenetre[1]);
 }
 
 
@@ -1648,7 +1723,7 @@ do  {
 
                 sprintf(volume,"[%s]",buffer);
 
-             //Calcule le nombre de position occup‚e par les repertoires
+     //--- Calcule le nombre de position occup‚e par les repertoires ---
                 pos=12;
                 for (p2=0;p2<strlen(path);p2++)
                     if (path[p2]==DEFSLASH)
@@ -2528,13 +2603,17 @@ if (KKCfg->key==0)
 
     KKCfg->key=(short)c;
 
-    //--- Positionne le pointeur sur FILE_ID.DIZ si on est sur .. --
+    if (((car&3)!=0) & (c==13))     //--- Left shift or right shift ----
+        c=0,        GestionFct(85);
+
+
+    //--- Positionne le pointeur sur FILE_ID.DIZ si on est sur .. ------
     switch(HI(c))
         {
-        case 0x3D:  //--- F3 ---------------------------------------
-        case 0x3E:  //--- F4 ---------------------------------------
-        case 0x56:  //--- SHIFT-F3 ---------------------------------
-        case 0x8D:  //--- CTRL-UP ----------------------------------
+        case 0x3D:  //--- F3 -------------------------------------------
+        case 0x3E:  //--- F4 -------------------------------------------
+        case 0x56:  //--- SHIFT-F3 -------------------------------------
+        case 0x8D:  //--- CTRL-UP --------------------------------------
             if (!strcmp(DFen->F[DFen->pcur]->name,".."))
                 {
                 car=0;
@@ -2565,16 +2644,18 @@ if (KKCfg->key==0)
     switch(LO(c))
         {
         case 13:
-           KKCfg->key=0;
-           if (CommandLine("\n")!=0)
-               {
-               c=0;
-               break;
-               }
-
-           if (DFen->F[DFen->pcur]->name[1]=='*')
+            KKCfg->key=0;
+            if (CommandLine("\n")!=0)
                 {
-                EjectCD(DFen);
+                c=0;
+                break;
+                }
+
+            if (DFen->F[DFen->pcur]->name[0]=='*')
+                {
+                int d;
+                sscanf(DFen->F[DFen->pcur]->name+1,"%d",&d);
+                GestionFct(d);
                 c=0;
                 break;
                 }
@@ -3140,14 +3221,14 @@ fwrite((void*)KKCfg,sizeof(struct kkconfig),1,fic);
 
 for(n=0;n<16;n++)
     {
-    fwrite(&(Mask[n]->Ignore_Case),1,1,fic);
-    fwrite(&(Mask[n]->Other_Col),1,1,fic);
-    taille=strlen(Mask[n]->chaine);
+    fwrite(&(KKCfg->V.Mask[n]->Ignore_Case),1,1,fic);
+    fwrite(&(KKCfg->V.Mask[n]->Other_Col),1,1,fic);
+    taille=strlen(KKCfg->V.Mask[n]->chaine);
     fwrite(&taille,2,1,fic);
-    fwrite(Mask[n]->chaine,taille,1,fic);
-    taille=strlen(Mask[n]->title);
+    fwrite(KKCfg->V.Mask[n]->chaine,taille,1,fic);
+    taille=strlen(KKCfg->V.Mask[n]->title);
     fwrite(&taille,2,1,fic);
-    fwrite(Mask[n]->title,taille,1,fic);
+    fwrite(KKCfg->V.Mask[n]->title,taille,1,fic);
     }
 
 
@@ -3196,6 +3277,7 @@ int m,n,i,t,nbr;
 FILE *fic;
 char nom[256];
 short taille;
+struct PourMask **Mask;
 
 fic=fopen(KKFics->CfgFile,"rb");
 if (fic==NULL) return -1;
@@ -3214,11 +3296,15 @@ if (Cfg->crc!=0x69)
     return -1;
     }
 
+Mask=KKCfg->V.Mask;
+
 if (fread((void*)KKCfg,sizeof(struct kkconfig),1,fic)==0)
     {
     fclose(fic);
     return -1;
     }
+
+KKCfg->V.Mask=Mask;
 
 if ( (KKCfg->overflow1!=0) | (KKCfg->crc!=0x69) )
     {
@@ -3231,14 +3317,14 @@ if (KKCfg->palafter!=1)
 
 for(n=0;n<16;n++)
     {
-    fread(&(Mask[n]->Ignore_Case),1,1,fic);
-    fread(&(Mask[n]->Other_Col),1,1,fic);
+    fread(&(KKCfg->V.Mask[n]->Ignore_Case),1,1,fic);
+    fread(&(KKCfg->V.Mask[n]->Other_Col),1,1,fic);
     fread(&taille,2,1,fic);
-    fread(Mask[n]->chaine,taille,1,fic);
-    Mask[n]->chaine[taille]=0;
+    fread(KKCfg->V.Mask[n]->chaine,taille,1,fic);
+    KKCfg->V.Mask[n]->chaine[taille]=0;
     fread(&taille,2,1,fic);
-    fread(Mask[n]->title,taille,1,fic);
-    Mask[n]->title[taille]=0;
+    fread(KKCfg->V.Mask[n]->title,taille,1,fic);
+    KKCfg->V.Mask[n]->title[taille]=0;
     }
 
 for (t=0;t<NBWIN;t++)
@@ -3529,9 +3615,9 @@ for(n=0;n<NBWIN;n++)
 Fics=(struct fichier*)GetMem(sizeof(struct fichier));
 KKFics=(struct kkfichier*)GetMem(sizeof(struct kkfichier));
 
-Mask=(struct PourMask**)GetMem(sizeof(struct PourMask*)*16);
+KKCfg->V.Mask=(struct PourMask**)GetMem(sizeof(struct PourMask*)*16);
 for (n=0;n<16;n++)
-    Mask[n]=(struct PourMask*)GetMem(sizeof(struct PourMask));
+    KKCfg->V.Mask[n]=(struct PourMask*)GetMem(sizeof(struct PourMask));
 
 
 path=(char*)GetMem(256);

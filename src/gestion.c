@@ -56,8 +56,8 @@ if (F2->name[1]==':') return -1;
 
 // Place les X* Eject en bas
 //---------------------------
-if (F1->name[1]=='*') return 1;
-if (F2->name[1]=='*') return -1;
+if (F1->name[0]=='*') return 1;
+if (F2->name[0]=='*') return -1;
 
 
 // Place les .. et . en haut

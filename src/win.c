@@ -68,6 +68,12 @@ if (KKCfg->_Win95==1)
     else
     strcpy(buffer,F->name);
 
+if (F->name[0]=='*')
+    {
+    PrintAt(0,0,"%-40s%-*s","Internal function",(Cfg->TailleX)-40,"");
+    return 0;
+    }
+
 if ( (F->attrib & _A_SUBDIR)==_A_SUBDIR)
     {
     PrintAt(0,0,"%-40s%-*s","Directory",(Cfg->TailleX)-40,buffer);
@@ -422,7 +428,7 @@ struct TmtWin F = {-1,3,74,22,"Setup"};
 int n;
 
 l1=KKCfg->mtrash;
-l2=KKCfg->AnsiSpeed;
+l2=KKCfg->V.AnsiSpeed;
 l3=KKCfg->confexit;
 l4=KKCfg->pntrep;
 l5=KKCfg->logfile;
@@ -436,9 +442,9 @@ l12=KKCfg->dispcolor;
 l13=KKCfg->insdown;
 l14=KKCfg->seldir;
 l15=KKCfg->esttime;
-l16=KKCfg->ajustview;
+l16=KKCfg->V.ajustview;
 l17=KKCfg->currentdir;
-l18=KKCfg->saveviewpos;
+l18=KKCfg->V.saveviewpos;
 
 do
 {
@@ -459,7 +465,7 @@ while(T[n].type==5);
 
 
 KKCfg->mtrash=l1;
-KKCfg->AnsiSpeed=l2;
+KKCfg->V.AnsiSpeed=l2;
 KKCfg->confexit=l3;
 KKCfg->pntrep=l4;
 KKCfg->logfile=l5;
@@ -473,9 +479,9 @@ KKCfg->dispcolor=l12;
 KKCfg->insdown=l13;
 KKCfg->seldir=l14;
 KKCfg->esttime=l15;
-KKCfg->ajustview=l16;
+KKCfg->V.ajustview=l16;
 KKCfg->currentdir=l17;
-KKCfg->saveviewpos=l18;
+KKCfg->V.saveviewpos=l18;
 
 SaveCfg();
 
@@ -714,46 +720,46 @@ struct TmtWin F = {-1,5,80,22,"Mask Setup"};
 
 int n;
 
-l1=Mask[11]->Ignore_Case;
-l2=Mask[12]->Ignore_Case;
-l3=Mask[13]->Ignore_Case;
-l4=Mask[14]->Ignore_Case;
+l1=KKCfg->V.Mask[11]->Ignore_Case;
+l2=KKCfg->V.Mask[12]->Ignore_Case;
+l3=KKCfg->V.Mask[13]->Ignore_Case;
+l4=KKCfg->V.Mask[14]->Ignore_Case;
 
-SplitMasque(Mask[11]->chaine,buffer[0],buffer[1]);
-SplitMasque(Mask[12]->chaine,buffer[2],buffer[3]);
-SplitMasque(Mask[13]->chaine,buffer[4],buffer[5]);
-SplitMasque(Mask[14]->chaine,buffer[6],buffer[7]);
+SplitMasque(KKCfg->V.Mask[11]->chaine,buffer[0],buffer[1]);
+SplitMasque(KKCfg->V.Mask[12]->chaine,buffer[2],buffer[3]);
+SplitMasque(KKCfg->V.Mask[13]->chaine,buffer[4],buffer[5]);
+SplitMasque(KKCfg->V.Mask[14]->chaine,buffer[6],buffer[7]);
 
 n=WinTraite(T,18,&F,0);
 
 if (n==27) return;                                             // ESCape
 if (T[n].type==3) return;                                      // Cancel
 
-Mask[11]->Ignore_Case=l1;
-Mask[12]->Ignore_Case=l2;
-Mask[13]->Ignore_Case=l3;
-Mask[14]->Ignore_Case=l4;
+KKCfg->V.Mask[11]->Ignore_Case=l1;
+KKCfg->V.Mask[12]->Ignore_Case=l2;
+KKCfg->V.Mask[13]->Ignore_Case=l3;
+KKCfg->V.Mask[14]->Ignore_Case=l4;
 
-JointMasque(Mask[11]->chaine,buffer[0],buffer[1]);
-if (strlen(Mask[11]->chaine)>2)
-    strcpy(Mask[11]->title,"User config 1");
+JointMasque(KKCfg->V.Mask[11]->chaine,buffer[0],buffer[1]);
+if (strlen(KKCfg->V.Mask[11]->chaine)>2)
+    strcpy(KKCfg->V.Mask[11]->title,"User config 1");
     else
-    strcpy(Mask[11]->title,"");
-JointMasque(Mask[12]->chaine,buffer[2],buffer[3]);
-if (strlen(Mask[12]->chaine)>2)
-    strcpy(Mask[12]->title,"User config 2");
+    strcpy(KKCfg->V.Mask[11]->title,"");
+JointMasque(KKCfg->V.Mask[12]->chaine,buffer[2],buffer[3]);
+if (strlen(KKCfg->V.Mask[12]->chaine)>2)
+    strcpy(KKCfg->V.Mask[12]->title,"User config 2");
     else
-    strcpy(Mask[12]->title,"");
-JointMasque(Mask[13]->chaine,buffer[4],buffer[5]);
-if (strlen(Mask[13]->chaine)>2)
-    strcpy(Mask[13]->title,"User config 3");
+    strcpy(KKCfg->V.Mask[12]->title,"");
+JointMasque(KKCfg->V.Mask[13]->chaine,buffer[4],buffer[5]);
+if (strlen(KKCfg->V.Mask[13]->chaine)>2)
+    strcpy(KKCfg->V.Mask[13]->title,"User config 3");
     else
-    strcpy(Mask[13]->title,"");
-JointMasque(Mask[14]->chaine,buffer[6],buffer[7]);
-if (strlen(Mask[14]->chaine)>2)
-    strcpy(Mask[14]->title,"User config 4");
+    strcpy(KKCfg->V.Mask[13]->title,"");
+JointMasque(KKCfg->V.Mask[14]->chaine,buffer[6],buffer[7]);
+if (strlen(KKCfg->V.Mask[14]->chaine)>2)
+    strcpy(KKCfg->V.Mask[14]->title,"User config 4");
     else
-    strcpy(Mask[14]->title,"");
+    strcpy(KKCfg->V.Mask[14]->title,"");
 
 }
 
@@ -840,7 +846,7 @@ Path2Abs(path,"FILE_ID.DIZ");
 name=AccessAbsFile(path);  // Ajout GEDEON -----------------------------
 
 if (name!=NULL)
-    ViewFile(name);
+    View(&(KKCfg->V),name);
 
 DFen->init=1;
 }
@@ -1156,14 +1162,14 @@ switch (KKCfg->fentype)
         for (i=yl-sb;i<yl;i++)
             PrintAt(x,i,  "�                                      �");
         PrintAt(x,yl,     "응컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴컴廟");
-        col=10*16+5;
+        col=(Cfg->col[4]&15)+(Cfg->col[37]&240);
         break;
     case 4:
         if (Cfg->UseFont==1)
             Cfg->Tfont=168;                // Barre Verticale | with 8x?
         a=Cfg->Tfont;
 
-        Window(x+1,yl-sb,xl-1,yl-1,32);
+        Window(x+1,yl-sb,xl-1,yl-1,Cfg->col[0]);
 
         PrintAt(x+1,Fen->y2,
                      "    Name    %c   Size   %c  Date  %cTime ",a,a,a);
@@ -1278,17 +1284,29 @@ for (i=0;(i<Fen->yl2) & (n<Fen->nbrfic);i++,n++,y1++)
         if ((Fen->F[n]->attrib & _A_VOLID)==_A_VOLID)
             strcpy(ch2,"##Vol-ID##");
 
-        if (nom[1]==':')
+        if (nom[0]=='*')
             {
-            strcpy(ch2,"##Reload##");
-            strcpy(ch3,"        ");
-            strcpy(ch4,"     ");
-            }
+            int d;
+            sscanf(nom+1,"%d",&d);
 
-        if (nom[1]=='*')
-            {
-            strcpy(ch1,"CD-ROM Drive");
-            strcpy(ch2," RELOAD ");
+            switch(d)
+                {
+                case 86: //--- Eject CD --------------------------------
+                    strcpy(ch1,"CD-ROM Drive");
+                    strcpy(ch2," RELOAD ");
+                    break;
+                case 27: //--- Reload Disk -----------------------------
+                    strcpy(ch1,"Drive       ");
+                    strcpy(ch2," RELOAD ");
+                    break;
+                default:
+                    strcpy(ch1,"Unknow      ");
+                    strcpy(ch2,"Function");
+                    break;
+                }
+
+//            strcpy(ch3,"        ");
+//            strcpy(ch4,"     ");
             }
 
         if (Fen->F[n]->select!=0)
@@ -1632,18 +1650,13 @@ else
 
 void ShiftMenu(void)
 {
-// char chaine[37];
-
 if (DFen->yl==0) return;
+
+if ((KKCfg->pathdown) | (KKCfg->dispath))
+    return;
 
 AffUpperPath(DFen,DFen->yl-1);
 AffUpperPath(DFen->Fen2,DFen->yl-1);
-
-/*
-memcpy(chaine,DFen->path,37);
-chaine[36]=0;
-PrintAt(DFen->x3,DFen->y3,"%-36s",chaine);
-*/
 }
 
 

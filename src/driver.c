@@ -44,7 +44,7 @@ if (((KKCfg->noprompt)&1)==0)
 
     PrintAt(xarc+8,5,"Reading Archive");
 
-    x=xarc+11;
+    x=xarc+9;
     y=10;
 
     PrintAt(x,y,"    STOP    ");
@@ -1166,7 +1166,7 @@ if ( ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
     Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
     Fic[DFen->nbrfic]->name=GetMem(4);                  // Pour Reload
-    memcpy(Fic[DFen->nbrfic]->name,rech,4);
+    strcpy(Fic[DFen->nbrfic]->name,"*27");
     Fic[DFen->nbrfic]->time=0;
     Fic[DFen->nbrfic]->date=0;
     Fic[DFen->nbrfic]->attrib=_A_SUBDIR;
@@ -1191,8 +1191,8 @@ if (1)
         {
         Fic[DFen->nbrfic]=GetMem(sizeof(struct file));
 
-        Fic[DFen->nbrfic]->name=GetMem(4);                // Pour Reload
-        memcpy(Fic[DFen->nbrfic]->name,"****",4);
+        Fic[DFen->nbrfic]->name=GetMem(4);                // Pour Open--
+        strcpy(Fic[DFen->nbrfic]->name,"*86");
         Fic[DFen->nbrfic]->time=0;
         Fic[DFen->nbrfic]->date=0;
         Fic[DFen->nbrfic]->attrib=_A_SUBDIR;

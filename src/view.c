@@ -13,14 +13,19 @@
 #include <time.h>
 #include <bios.h>
 
-#include "kk.h"
 #include "idf.h"
+#include "view.h"
+#include "hard.h"
+#include "reddies.h"
 
 void (*AnsiAffChr)(long x,long y,long c);
 void (*AnsiAffCol)(long x,long y,long c);
 
+int InfoIDF2(char *name);
 
 static char ReadChar(void);
+
+KKVIEW *ViewCfg;
 
 void RefreshBar(char *bar);
 
@@ -56,9 +61,35 @@ static long posn;       //--- octet courant ----------------------------
 
 static char srcch[132];
 
+void ChangeTaille2(int i)
+{
+if (i==0)
+    switch(Cfg->TailleY)
+        {
+        case 25:  Cfg->TailleY=30;  break;
+        case 30:  Cfg->TailleY=50;  break;
+        default:  Cfg->TailleY=25;  break;
+        }
+    else
+    Cfg->TailleY=i;
+
+TXTMode();
+LoadPal(Cfg->palette);
+
+InitFont();
+}
+
 /*--------------------------------------------------------------------*\
 |-  Lit l'octet se trouvant en posn                                   -|
 \*--------------------------------------------------------------------*/
+
+unsigned char Crotl(unsigned char,unsigned char,unsigned char,unsigned char);
+#pragma aux Crotl = \
+      "xor al,dl" \
+      "add al,bl" \
+      "ror al,cl" \
+      parm [al] [bl] [dl] [cl] \
+      value [al];
 
 char ReadChar(void)
 {
@@ -87,7 +118,7 @@ if (posn-pos<0)
     fread(view_buffer,32768,1,fic);
     }
 
-return xor^view_buffer[posn-pos];
+return Crotl(view_buffer[posn-pos],0,xor,0);     // 214,0,5
 }
 
 char ReadNextChar(void)
@@ -115,11 +146,9 @@ unsigned char n;
 long s,size;
 static char ficname[256];
 
-if (KKCfg->saveviewpos==1)
+if (ViewCfg->saveviewpos==1)
     {
-    strcpy(ficname,KKFics->trash);
-    Path2Abs(ficname,"kkview.rb");
-    fic=fopen(ficname,"rb");
+    fic=fopen(ViewCfg->viewhist,"rb");
     if (fic!=NULL)
         {
         while(fread(&n,1,1,fic)==1)
@@ -147,13 +176,11 @@ unsigned char n;
 long s,size;
 static char ficname[256];
 
-if (KKCfg->saveviewpos==1)
+if (ViewCfg->saveviewpos==1)
     {
-    strcpy(ficname,KKFics->trash);
-    Path2Abs(ficname,"kkview.rb");
-    fic=fopen(ficname,"r+b");
+    fic=fopen(ViewCfg->viewhist,"r+b");
     if (fic==NULL)
-        fic=fopen(ficname,"w+b");
+        fic=fopen(ViewCfg->viewhist,"w+b");
     if (fic!=NULL)
         {
         fseek(fic,0,SEEK_SET);
@@ -205,7 +232,7 @@ int fin=0; //--- Code de retour ----------------------------------------
 SaveScreen();
 PutCur(3,0);
 
-Bar(" Help  ----  ----  Text  ----  ---- Search ----  ----  Quit ");
+Bar(" Help  ----  ----  Text  Ansi  ---- Search ----  ----  Quit ");
 
 Window(1,1,Cfg->TailleX-2,(Cfg->TailleY)-3,Cfg->col[16]);
 WinCadre(0,3,9,(Cfg->TailleY)-2,2);
@@ -214,7 +241,7 @@ WinCadre(59,3,76,(Cfg->TailleY)-2,2);
 WinCadre(77,3,79,(Cfg->TailleY)-2,2);
 WinCadre(0,0,79,2,3);
 
-RemplisVide();
+// RemplisVide();
 
 ChrCol(34,4,(Cfg->TailleY)-6,Cfg->Tfont);
 
@@ -346,6 +373,9 @@ switch(LO(car))   {
                 break;
             case 0x3E:  // --- F4 --------------------------------------
                 fin=91;
+                break;
+            case 0x3F:  // --- F5 --------------------------------------
+                fin=86;
                 break;
             default:
                 break;
@@ -844,7 +874,7 @@ while(n==16384);
 
 Wait(0,0);
 
-ChangeTaille(Cfg->TailleY);
+ChangeTaille2(Cfg->TailleY);
 
 LoadScreen();
 free(buffer);
@@ -856,7 +886,7 @@ return (-1);
 
 void RefreshBar(char *bar)
 {
-switch(KKCfg->warp)      //--- F2 --------------------------------------
+switch(ViewCfg->warp)      //--- F2 --------------------------------------
     {
     case 0: memcpy(bar+6,"Nowrap",6); break;
     case 1: memcpy(bar+6," Wrap ",6); break;
@@ -889,7 +919,7 @@ for (i=0;i<3;i++)
     if (trad>maxtrad) maxtrad=trad,numtrad=i;
     }
 posn=0;
-KKCfg->cnvtable=numtrad;
+ViewCfg->cnvtable=numtrad;
 }
 
 
@@ -907,11 +937,11 @@ do
     car=ReadChar();
     posn++;
 
-    if ( ((car==10) & (KKCfg->lnfeed==0)) |
-         ((car==13) & (KKCfg->lnfeed==1)) |
-         ((car==10) & (KKCfg->lnfeed==2)) |
-         ((car==10) & (KKCfg->lnfeed==4)) |
-         ((car==KKCfg->userfeed) & (KKCfg->lnfeed==3)))
+    if ( ((car==10) & (ViewCfg->lnfeed==0)) |
+         ((car==13) & (ViewCfg->lnfeed==1)) |
+         ((car==10) & (ViewCfg->lnfeed==2)) |
+         ((car==10) & (ViewCfg->lnfeed==4)) |
+         ((car==ViewCfg->userfeed) & (ViewCfg->lnfeed==3)))
         {
         return 1;
         }
@@ -923,7 +953,7 @@ do
         }
 //
     if ((car!=10) & (car!=13)) m++;
-    if ((m>xl) & (KKCfg->warp!=0))
+    if ((m>xl) & (ViewCfg->warp!=0))
         {
         posn--;
         return 1;
@@ -958,17 +988,17 @@ do
         return 0;
         }
     car=ReadChar();
-    if ( ((car==10) & (KKCfg->lnfeed==0)) |
-         ((car==13) & (KKCfg->lnfeed==1)) |
-         ((car==10) & (KKCfg->lnfeed==2)) |
-         ((car==10) & (KKCfg->lnfeed==4)) |
-         ((car==KKCfg->userfeed) & (KKCfg->lnfeed==3)))
+    if ( ((car==10) & (ViewCfg->lnfeed==0)) |
+         ((car==13) & (ViewCfg->lnfeed==1)) |
+         ((car==10) & (ViewCfg->lnfeed==2)) |
+         ((car==10) & (ViewCfg->lnfeed==4)) |
+         ((car==ViewCfg->userfeed) & (ViewCfg->lnfeed==3)))
         {
         if (posn!=0) posn++;
         return 1;
         }
     if ((car!=10) & (car!=13)) m++;
-    if ((m>=xl) & (KKCfg->warp!=0)) return 1;
+    if ((m>=xl) & (ViewCfg->warp!=0)) return 1;
     }        // m>xl-1
 while(1);
 
@@ -1028,13 +1058,13 @@ aff=1;
 /*--------------------------------------------------------------------*\
 |------------- Recherche de la meilleur traduction --------------------|
 \*--------------------------------------------------------------------*/
-if (KKCfg->autotrad)
+if (ViewCfg->autotrad)
     AutoTrad();
 
 /*--------------------------------------------------------------------*\
 |------------- Calcul de la taille maximum ----------------------------|
 \*--------------------------------------------------------------------*/
-if (KKCfg->ajustview)
+if (ViewCfg->ajustview)
     {
     int xm=0,ym=0;
     int n;
@@ -1050,15 +1080,15 @@ if (KKCfg->ajustview)
         posn=n;
         vb=ReadChar();
 
-        if ( ((vb==13) & (ReadNextChar()==10) & (KKCfg->lnfeed==0)) |
-             ((vb==13) & (KKCfg->lnfeed==1)) |
-             ((vb==10) & (KKCfg->lnfeed==2)) |
-             ((vb==10) & (KKCfg->lnfeed==4)) |
-             ((vb==KKCfg->userfeed) & (KKCfg->lnfeed==3)) )
+        if ( ((vb==13) & (ReadNextChar()==10) & (ViewCfg->lnfeed==0)) |
+             ((vb==13) & (ViewCfg->lnfeed==1)) |
+             ((vb==10) & (ViewCfg->lnfeed==2)) |
+             ((vb==10) & (ViewCfg->lnfeed==4)) |
+             ((vb==ViewCfg->userfeed) & (ViewCfg->lnfeed==3)) )
              {
              x=0;
              ym++;
-             if (KKCfg->lnfeed==0) n++;
+             if (ViewCfg->lnfeed==0) n++;
              }
         else
         switch(view_buffer[n])
@@ -1073,7 +1103,7 @@ if (KKCfg->ajustview)
                 x++;
                 break;
             case 13:
-                if (KKCfg->lnfeed==4) break;
+                if (ViewCfg->lnfeed==4) break;
             default:
                 x++;
                 if (x>xm) xm=x;
@@ -1186,13 +1216,13 @@ do
 
     chaine[0]=ReadChar();
 
-    if ( ((chaine[0]==13) & (ReadNextChar()==10) & (KKCfg->lnfeed==0)) |
-         ((chaine[0]==13) & (KKCfg->lnfeed==1)) |
-         ((chaine[0]==10) & (KKCfg->lnfeed==2)) |
-         ((chaine[0]==10) & (KKCfg->lnfeed==4)) |
-         ((chaine[0]==KKCfg->userfeed) & (KKCfg->lnfeed==3)) )
+    if ( ((chaine[0]==13) & (ReadNextChar()==10) & (ViewCfg->lnfeed==0)) |
+         ((chaine[0]==13) & (ViewCfg->lnfeed==1)) |
+         ((chaine[0]==10) & (ViewCfg->lnfeed==2)) |
+         ((chaine[0]==10) & (ViewCfg->lnfeed==4)) |
+         ((chaine[0]==ViewCfg->userfeed) & (ViewCfg->lnfeed==3)) )
         {
-        if (KKCfg->lnfeed==0) posn++;
+        if (ViewCfg->lnfeed==0) posn++;
         w1=tpos;
         aff=1;
         }
@@ -1207,14 +1237,14 @@ do
                     memset(chaine,32,lchaine);
                 break;
             case 13:
-                if (KKCfg->lnfeed==4)
+                if (ViewCfg->lnfeed==4)
                     {
                     lchaine=0;
                     chaine[0]=0;
                     }
                 break;
             default:
-                chaine[0]=CnvASCII(KKCfg->cnvtable,chaine[0]);
+                chaine[0]=CnvASCII(ViewCfg->cnvtable,chaine[0]);
                 break;
             }
 
@@ -1236,14 +1266,14 @@ do
         {
         if (tpos>=xl2)
             {
-            if ( (KKCfg->warp==1) & (autowarp==0) )
+            if ( (ViewCfg->warp==1) & (autowarp==0) )
                 {
                 aff=2;
 
                 w1=xl2;                             // Premier … retenir
                 w2=tpos;                            // Dernier … retenir
                 }
-            if ( (KKCfg->warp==2) & (autowarp==0) )
+            if ( (ViewCfg->warp==2) & (autowarp==0) )
                 {
                 int n;
                 aff=2;
@@ -1474,8 +1504,8 @@ switch(LO(code))
                 break;
             case 0x3C:  //--- F2 ---------------------------------------
                 if (autowarp==1) break;
-                KKCfg->warp++;
-                if (KKCfg->warp==3) KKCfg->warp=0;
+                ViewCfg->warp++;
+                if (ViewCfg->warp==3) ViewCfg->warp=0;
                 RefreshBar(bar);
                 Bar(bar);
                 break;
@@ -1486,13 +1516,13 @@ switch(LO(code))
                 fin=-2;     //--- N'importe quoi -----------------------
                 break;
             case 0x3F:  //--- F5 ---------------------------------------
-                KKCfg->ajustview^=1;
+                ViewCfg->ajustview^=1;
                 fin=91;
                 break;
             case 0x40:  //--- F6 ---------------------------------------
                 ChangeTrad();
 
-                if (KKCfg->autotrad)
+                if (ViewCfg->autotrad)
                     AutoTrad();
                 break;
             case 0x41:  //--- F7 ---------------------------------------
@@ -1557,12 +1587,13 @@ switch(LO(code))
         break;
     case 6:                                                    // CTRL-F
         SaveScreen();
-        GestionFct(32);
+        Cfg->font^=1;
+        ChangeTaille2(Cfg->TailleY);               // Rafraichit l'ecran
         LoadScreen();
         break;
     }
 
-if ( (KKCfg->warp!=0) & (autowarp==1) ) warp=0;
+if ( (ViewCfg->warp!=0) & (autowarp==1) ) warp=0;
 
 if (warp<0) warp=0;
 }
@@ -2175,11 +2206,15 @@ if (code!=0)    // code &...;
             if (!strnicmp(titre,"IGRAVE",6)) psuiv=1,car='i';
             if (!strnicmp(titre,"IACUTE",6)) psuiv=1,car='i';
 
+            if (!strnicmp(titre,"UGRAVE",6)) psuiv=1,car='u';
+            if (!strnicmp(titre,"UACUTE",6)) psuiv=1,car='u';
+
             if (!strnicmp(titre,"CCEDIL",6)) psuiv=1,car='‡';
 
             if (!strnicmp(titre,"ECIRC",5)) psuiv=1,car='ˆ';
             if (!strnicmp(titre,"ACIRC",5)) psuiv=1,car='ƒ';
-            if (!strnicmp(titre,"ICIRC",5)) psuiv=1,car='i';
+            if (!strnicmp(titre,"ICIRC",5)) psuiv=1,car='Œ';
+            if (!strnicmp(titre,"UCIRC",5)) psuiv=1,car='–';
 
             if (!strnicmp(titre,"QUOT",4)) psuiv=1,car=34;
 
@@ -2253,7 +2288,7 @@ for (k=0;k<lentit;k++)
                 aff=1,car=0;
                 break;
             default:
-                car=CnvASCII(KKCfg->cnvtable,car);
+                car=CnvASCII(ViewCfg->cnvtable,car);
                 break;
             }
         }
@@ -2653,12 +2688,14 @@ char cont,trouve=0;
 
 struct PourMask *CMask;
 
-if (((KKCfg->wmask)&128)==128) return;
+if (((ViewCfg->wmask)&128)==128) return;
 
-CMask=Mask[(KKCfg->wmask)&15];
+CMask=ViewCfg->Mask[(ViewCfg->wmask)&15];
 
 chaine=CMask->chaine;
 
+if (*chaine!=0)
+{
 x=x1;
 y=y1;
 
@@ -2765,7 +2802,7 @@ while ((y<=y2) | (ok==0) )
 |- Filtre eLiTe                                                       -|
 \*--------------------------------------------------------------------*/
 
-    if (((KKCfg->wmask)&64)==64)
+    if (((ViewCfg->wmask)&64)==64)
         {
         c=toupper(c);
         switch(c)
@@ -2798,6 +2835,7 @@ while ((y<=y2) | (ok==0) )
         ok=1;
         }
     }
+}
 
 /*--------------------------------------------------------------------*\
 |- Affichage de la chaine qui a ‚t‚ trouv‚ (par F7)                   -|
@@ -2837,16 +2875,16 @@ max=0;
 nbr=4;
 
 for(i=0;i<16;i++)
-    if (strlen(Mask[i]->title)>0)
+    if (strlen(ViewCfg->Mask[i]->title)>0)
         {
         bar[nbr].fct=i+10;
 
-        bar[nbr].Titre=Mask[i]->title;
+        bar[nbr].Titre=ViewCfg->Mask[i]->title;
         bar[nbr].Help=NULL;
 
-        if ( ((KKCfg->wmask)&15) ==i) n=nbr;
+        if ( ((ViewCfg->wmask)&15) ==i) n=nbr;
 
-        if (strlen(Mask[i]->title)>max) max=strlen(Mask[i]->title);
+        if (strlen(ViewCfg->Mask[i]->title)>max) max=strlen(ViewCfg->Mask[i]->title);
 
         nbr++;
         }
@@ -2857,12 +2895,12 @@ if (y<2) y=2;
 
 do
 {
-sprintf(bars0,"Elite %3s",(KKCfg->wmask&64)==64 ? "ON" : "OFF");
+sprintf(bars0,"Elite %3s",(ViewCfg->wmask&64)==64 ? "ON" : "OFF");
 bar[0].Titre=bars0;
 bar[0].Help=NULL;
 bar[0].fct=1;
 
-sprintf(bars1,"Mask %3s",(KKCfg->wmask&128)==128 ? "OFF" : "ON");
+sprintf(bars1,"Mask %3s",(ViewCfg->wmask&128)==128 ? "OFF" : "ON");
 bar[1].Titre=bars1;
 bar[1].Help=NULL;
 bar[1].fct=2;
@@ -2874,6 +2912,8 @@ bar[3].fct=0;
 
 fin=0;
 
+SaveScreen();
+
 do
     {
     sprintf(bars2,"Xor %02X",xor);
@@ -2883,7 +2923,7 @@ do
     menu.x=x;
     menu.y=y;
     menu.cur=n;
-    menu.attr=0;
+    menu.attr=4;
 
     retour=PannelMenu(bar,nbr,&menu);
 
@@ -2894,20 +2934,22 @@ do
     }
 while ( (retour==1) | (retour==-1) );
 
+LoadScreen();
+
 if (retour==2)
     {
     switch (bar[n].fct)
         {
         case 1:
-            KKCfg->wmask^=64;
+            ViewCfg->wmask^=64;
             break;
         case 2:
-            KKCfg->wmask^=128;
+            ViewCfg->wmask^=128;
             break;
         case 3:
             break;
         default:
-            KKCfg->wmask=((KKCfg->wmask)&240)|(bar[n].fct-10);
+            ViewCfg->wmask=((ViewCfg->wmask)&240)|(bar[n].fct-10);
             fin=1;
         }
     }
@@ -2936,44 +2978,44 @@ x=((Cfg->TailleX)-max)/2;
 y=((Cfg->TailleY)-2*(nbr-2))/2;
 if (y<2) y=2;
 
-n=0;
-if (KKCfg->autotrad) n=4;
-    else
-    while (KKCfg->cnvtable!=(bar[n].fct)-1)
-        n++;
-
-sprintf(bars0,"Normal %c",KKCfg->cnvtable==0 ? 15 : 32);
+sprintf(bars0,"Normal %c",ViewCfg->cnvtable==0 ? 15 : 32);
 bar[0].Titre=bars0;
 bar[0].Help=NULL;
 bar[0].fct=1;
 
-sprintf(bars1,"BBS    %c",KKCfg->cnvtable==1 ? 15 : 32);
+sprintf(bars1,"BBS    %c",ViewCfg->cnvtable==1 ? 15 : 32);
 bar[1].Titre=bars1;
 bar[1].Help=NULL;
 bar[1].fct=2;
 
-sprintf(bars2,"Latin  %c",KKCfg->cnvtable==2 ? 15 : 32);
+sprintf(bars2,"Latin  %c",ViewCfg->cnvtable==2 ? 15 : 32);
 bar[2].Titre=bars2;
 bar[2].Help=NULL;
 bar[2].fct=3;
 
 bar[3].fct=0;
 
-sprintf(bars4,"%s",KKCfg->autotrad ? "Auto" : "No Auto");
+sprintf(bars4,"%s",ViewCfg->autotrad ? "Auto" : "No Auto");
 bar[4].Titre=bars4;
 bar[4].Help=NULL;
 bar[4].fct=10;
 
+n=0;
+if (ViewCfg->autotrad) n=4;
+    else
+    while (ViewCfg->cnvtable!=(bar[n].fct)-1)
+        n++;
+
 fin=0;
 
-    menu.x=x;
-    menu.y=y;
-    menu.cur=n;
-    menu.attr=8;
+menu.x=x;
+menu.y=y;
+menu.cur=n;
+menu.attr=8;
 
-    retour=PannelMenu(bar,nbr,&menu);
+retour=PannelMenu(bar,nbr,&menu);
 
-    n=menu.cur;
+n=menu.cur;
 
 if (retour==2)
     {
@@ -2982,11 +3024,11 @@ if (retour==2)
         case 1:
         case 2:
         case 3:
-            KKCfg->cnvtable=bar[n].fct-1;
-            KKCfg->autotrad=0;
+            ViewCfg->cnvtable=bar[n].fct-1;
+            ViewCfg->autotrad=0;
             break;
         case 10:
-            KKCfg->autotrad^=1;
+            ViewCfg->autotrad^=1;
             break;
         default:
             break;
@@ -3031,32 +3073,36 @@ bar[4].fct=4;
 
 n=0;
 
-while (KKCfg->lnfeed!=(bar[n].fct)-1)
+while (ViewCfg->lnfeed!=(bar[n].fct)-1)
     n++;
+
+SaveScreen();
 
 do
     {
-    sprintf(bars4,"User Line Feed: $%02X",KKCfg->userfeed);
+    sprintf(bars4,"User Line Feed: $%02X",ViewCfg->userfeed);
     bar[4].Titre=bars4;
     bar[4].Help=NULL;
 
     menu.x=x;
     menu.y=y;
     menu.cur=n;
-    menu.attr=0;
+    menu.attr=4;
 
     retour=PannelMenu(bar,nbr,&menu);
 
     n=menu.cur;
 
     if ((bar[n].fct==4) & (retour!=2))
-        KKCfg->userfeed+=retour;
+        ViewCfg->userfeed+=retour;
     }
 while ( (retour==1) | (retour==-1) );
 
+LoadScreen();
+
 if (retour==2)
     {
-    KKCfg->lnfeed=(bar[n].fct)-1;
+    ViewCfg->lnfeed=(bar[n].fct)-1;
     }
 
 if (retour==0)
@@ -3491,7 +3537,7 @@ switch(LO(code))
                 Cfg->TailleX=oldx;
                 Cfg->TailleY=oldy;
 
-                ChangeTaille(Cfg->TailleY);
+                ChangeTaille2(Cfg->TailleY);
 
                 Cfg->col[5]=sc5;
                 Cfg->col[6]=sc6;
@@ -3562,7 +3608,7 @@ CloseAllPage();
 Cfg->TailleX=oldx;
 Cfg->TailleY=oldy;
 
-ChangeTaille(Cfg->TailleY);
+ChangeTaille2(Cfg->TailleY);
 
 LoadScreen();
 
@@ -3650,30 +3696,31 @@ LibMem(buffer);
 |- Fonction principale du viewer                                      -|
 \*--------------------------------------------------------------------*/
 
-void View(FENETRE *F)
+void View(KKVIEW *V,char *file)
 {
-static char buffer[256];
-char *fichier,*liaison;
+static char fichier[256];
+char *liaison;
 int n,o;
 short i;
 extern struct key K[nbrkey];
 
 xor=0;
 
-if (F->FenTyp!=0) return;
+ViewCfg=V;
+
+// if (F->FenTyp!=0) return;
 
 SaveScreen();
 
 Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
-fichier=GetMem(256);
-strcpy(fichier,F->path);
-Path2Abs(fichier,F->F[F->pcur]->name);
-
 liaison=GetMem(256);
 strcpy(liaison,"");
 
-i=InfoIDF(F);
+strcpy(fichier,file);
+
+
+i=InfoIDF2(fichier);
 
 fic=fopen(fichier,"rb");
 
@@ -3709,10 +3756,13 @@ while(i!=-1)
             break;
         case 37:  // GIF
         case 38:  // JPG
-            FicIdf(buffer,fichier,i,0);
-            CommandLine(buffer);
+            {
+//            static char buffer[256];
+//            FicIdf(buffer,fichier,i,0);
+//            CommandLine(buffer);
             i=-1;
             break;
+            }
         default:
             o=-1;
             for(n=0;n<nbrkey;n++)
@@ -3730,68 +3780,24 @@ if (fic!=NULL)
     fclose(fic);
 
 free(liaison);
-free(fichier);
 
 LoadScreen();
 }
 
-
-/*--------------------------------------------------------------------*\
-|- Viewer de vrai file (avec une path complete)                       -|
-\*--------------------------------------------------------------------*/
-void ViewFile(char *file)
+int InfoIDF2(char *name)
 {
-FENETRE *SFen,*OldFen;
-static char buf[256];
-int i,k;
+RB_IDF Info;
 
-OldFen=DFen;
+strcpy(Info.path,name);
 
-SFen=GetMem(sizeof(FENETRE));
-SFen->F=GetMem(TOTFIC*sizeof(void *));
+Traitefic(&Info);
 
-SFen->x=40;
-SFen->nfen=7;
-SFen->FenTyp=0;
-SFen->Fen2=SFen;
-SFen->y=1;
-SFen->yl=(Cfg->TailleY)-4;
-SFen->xl=39;
-SFen->order=17;
-SFen->pcur=0;
-SFen->scur=0;
-
-DFen=SFen;
-
-strcpy(buf,file);
-Path2Abs(buf,"..");
-
-IOver=1;
-IOerr=0;
-
-CommandLine("#CD %s\n",buf);
-
-IOver=0;
-
-FileinPath(file,buf);
-
-k=-1;
-for (i=0;i<DFen->nbrfic;i++)
-    if (!WildCmp(buf,DFen->F[i]->name))
-        {
-        k=i;
-        break;
-        }
-
-if (k!=-1)
-    {
-    DFen->pcur=k;
-    View(DFen);
-    }
-
-DFen=OldFen;
-
-LibMem(SFen->F);
-LibMem(SFen);
+return Info.numero;
 }
 
+
+// Remplisvide
+// CnvASCII
+// Path2Abs
+// CommandLine
+// Ficidf
