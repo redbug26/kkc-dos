@@ -1488,7 +1488,6 @@ if (couleur!=0)
     ColLin(colonne,ligne,fin,couleur);
 
 LoadState();
-
 return retour;
 }
 
@@ -2087,6 +2086,7 @@ if (p==1)
         switch(car%256)
             {
             case 13:
+                LoadState();
                 return 0;
             case 27:
                 r=1;          break;
@@ -2124,7 +2124,6 @@ if (p!=2)       //--- Mets OFF -----------------------------------------
     }
 
 LoadState();
-
 return r;
 }
 
@@ -2164,6 +2163,7 @@ while (r==0)
     switch(car%256)
         {
         case 13:
+            LoadState();
             return 0;
         case 27:
             r=1;            break;
@@ -2187,7 +2187,6 @@ while (r==0)
     }
 
 LoadState();
-
 return r;
 }
 
@@ -2233,6 +2232,7 @@ while (r==0)
     switch(car%256)
         {
         case 13:
+            LoadState();
             return 0;
         case 27:
             r=1;            break;
@@ -2261,8 +2261,6 @@ while (r==0)
     }
 
 LoadState();
-
-
 return r;
 }
 

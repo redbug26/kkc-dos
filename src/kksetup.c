@@ -39,6 +39,8 @@ struct kkconfig *KKCfg;
 struct PourMask **Mask;
 struct kkfichier *KKFics;
 
+char iarver=1;
+
 /*--------------------------------------------------------------------*\
 |- Fake MenuCreat pour ficidf                                         -|
 \*--------------------------------------------------------------------*/
@@ -121,8 +123,6 @@ void ClearAllSpace(char *name);
 
 void GestionFct(int i);
 int GestionBar(void);
-
-char ShowYourPlayer(void);
 
 
 
@@ -458,15 +458,18 @@ return strcmp(a1->ext,b1->ext);                           // ou format ?
 \*--------------------------------------------------------------------*/
 void IdfListe(void)
 {
+
 int car,y;
 
-int n;
+int n,m;
 int info;
 
-int prem;
+int curr,prem;
 
 SaveScreen();
 PutCur(32,0);
+
+Bar(" Help  Info  ----  ----  ----  ----  ----  ----  ----  ---- ");
 
 info=0;
 
@@ -477,56 +480,59 @@ y=3;
 PrintAt(2,0,"%-77s","List of the format");
 
 prem=0;
+curr=1;
 
 do
 {
+if (curr<0) curr=0;
+if (curr>=nbrkey) curr=nbrkey-1;
+
+if (K[curr].ext[0]=='*') curr++;
+
+if (curr<prem+1) prem=curr-1;
+while (curr>=prem+(Cfg->TailleY-6)) prem=curr-(Cfg->TailleY-6)+1;
+
+
+if (prem<0)
+    prem=0;
+if (prem>nbrkey-(Cfg->TailleY-6))
+    prem=nbrkey-(Cfg->TailleY-6);
+
 y=3;
 
 for (n=prem;n<nbrkey;n++)
     {
+    m= (n&1==1) ? 16 : 28;  // y
+
     if (K[n].ext[0]=='*')
         {
         ChrLin(1,y,Cfg->TailleX-2,196);
         PrintAt(4,y,"%s",K[n].format);
 
-        if (y&1==1)
-            ColLin(1,y,Cfg->TailleX-2,Cfg->col[17]);
-            else
-            ColLin(1,y,Cfg->TailleX-2,Cfg->col[16]);
+        ColLin(1,y,Cfg->TailleX-2,Cfg->col[m]);
         }
         else
         {
-        if (y&1==1)
+        ColLin(1,y,4,  Cfg->col[m]);
+        ColLin(5,y,1,  Cfg->col[m]);
+        ColLin(6,y,32, Cfg->col[m+1]);
+        ColLin(38,y,6, Cfg->col[m]);
+        ColLin(44,y,29,Cfg->col[m+1]);
+        ColLin(73,y,1, Cfg->col[m]);
+        ColLin(74,y,5, Cfg->col[m]);
+        if (Cfg->TailleX!=80)
             {
-            ColLin(1,y,4,  10*16+3);
-            ColLin(5,y,1,  10*16+3);
-            ColLin(6,y,32, 10*16+4);
-            ColLin(38,y,6, 10*16+3);
-            ColLin(44,y,29,10*16+5);
-            ColLin(73,y,1, 10*16+3);
-            ColLin(74,y,5, 10*16+3);
-            if (Cfg->TailleX!=80)
-                ColLin(79,y,Cfg->TailleX-80,10*16+3),
-                ChrLin(79,y,Cfg->TailleX-80,32);
-            }
-            else
-            {
-            ColLin(1,y,4,  1*16+3);
-            ColLin(5,y,1,  1*16+3);
-            ColLin(6,y,32, 1*16+4);
-            ColLin(38,y,6, 1*16+3);
-            ColLin(44,y,29,1*16+5);
-            ColLin(73,y,1, 1*16+3);
-            ColLin(74,y,5, 1*16+3);
-            if (Cfg->TailleX!=80)
-                ColLin(79,y,Cfg->TailleX-80,1*16+3),
-                ChrLin(79,y,Cfg->TailleX-80,32);
+            ColLin(79,y,Cfg->TailleX-80,Cfg->col[m]);
+            ChrLin(79,y,Cfg->TailleX-80,32);
             }
 
         PrintAt(1,y," %3s %-32s from %29s %4s ",K[n].ext,
             K[n].format,K[n].pro,((K[n].other)&1)==1 ? "Info" : "----");
 
         if (((K[n].other)&1)==1) info++;
+
+        if (curr==n)
+            ColLin(1,y,Cfg->TailleX-2,Cfg->col[30]);
         }
 
     y++;
@@ -536,33 +542,39 @@ for (n=prem;n<nbrkey;n++)
 
 car=Wait(0,0);
 
+        
+
 switch(HI(car))
     {
     case 72:                                                       // UP
-        prem--;
+        if (curr!=0)
+            {
+            curr--;
+            if (K[curr].ext[0]=='*') curr--;
+            }
         break;
     case 80:                                                     // DOWN
-        prem++;
+        curr++;
         break;
     case 0x49:                                                   // PGUP
-        prem-=10;
+        curr-=10;
         break;
     case 0x51:                                                   // PGDN
-        prem+=10;
+        curr+=10;
         break;
     case 0x47:                                                   // HOME
-        prem=0;
+        curr=0;
         break;
     case 0X4F:                                                    // END
-        prem=nbrkey-(Cfg->TailleY-6);
+        curr=nbrkey-1;
+        break;
+    case 0x3B:
+        HelpTopic("idflist");
+        break;
+    case 0x3C:
+        FicIdfMan(curr,NULL);
         break;
     }
-
-if (prem<0)
-    prem=0;
-if (prem>nbrkey-(Cfg->TailleY-6))
-    prem=nbrkey-(Cfg->TailleY-6);
-
 }
 while (car!=27);
 
@@ -739,9 +751,9 @@ for (n=0;n<26;n++)
         drive[n]=m;
         AffChr(m,9,n+'A');
         if (lstdrv[n]==0)
-            AffCol(drive[n],9,14*16+7);
+            AffCol(drive[n],9,Cfg->col[28]);
             else
-            AffCol(drive[n],9,7*16+4);
+            AffCol(drive[n],9,Cfg->col[30]);
         m+=l;
         }
         else
@@ -779,9 +791,9 @@ do
             if (drive[i]!=0)
                 {
                 if (lstdrv[i]==0)
-                    AffCol(drive[i],9,14*16+7);
+                    AffCol(drive[i],9,Cfg->col[28]);
                 else
-                    AffCol(drive[i],9,7*16+4);
+                    AffCol(drive[i],9,Cfg->col[30]);
                 }
             }
 
@@ -815,16 +827,16 @@ do
         }
 
     if (lstdrv[i]==0)
-        AffCol(drive[i],9,14*16+3);
+        AffCol(drive[i],9,Cfg->col[50]);
         else
-        AffCol(drive[i],9,7*16+3);
+        AffCol(drive[i],9,Cfg->col[51]);
 
     car=Wait(0,0);
 
     if (lstdrv[i]==0)
-        AffCol(drive[i],9,14*16+7);
+        AffCol(drive[i],9,Cfg->col[28]);
         else
-        AffCol(drive[i],9,7*16+7);
+        AffCol(drive[i],9,Cfg->col[30]);
 
 } while ( (LO(car)!=27) & (LO(car)!=13));
 
@@ -1062,6 +1074,8 @@ if (LoadCfg()==-1)
 Cfg->reinit=0;
 InitMode();
 
+Bar(" ----  ----  ----  ----  ----  ----  ----  ----  ----  ---- ");
+
 if (todo!=0)
     {
     int x;
@@ -1205,9 +1219,11 @@ if (todo==0)
 void ApplSearch(void)
 {
 char lstdrv[26];
-short n,t;
+short n;
 char ch[256];
 FILE *fic;
+
+char sn;
 
 /*--------------------------------------------------------------------*\
 |- Initialise les variables globales                                  -|
@@ -1220,8 +1236,7 @@ St_Dir=0;
 SaveScreen();
 PutCur(32,0);
 
-ChrWin(1,3,Cfg->TailleX-2,Cfg->TailleY-3,32);
-ColWin(1,3,Cfg->TailleX-2,Cfg->TailleY-3,10*16+1);
+Window(1,3,Cfg->TailleX-2,Cfg->TailleY-3,Cfg->col[16]);
 
 nbr=0;
 
@@ -1257,35 +1272,24 @@ if (nbr>0)
         {
         fwrite("RedBLEXU",1,8,fic);
 
-        fputc(_getdrive()-1,fic);
-
-        t=0;
-
-        for(n=0;n<nbr;n++)
-            if (app[n]->pres!=0) t++;
-
-        fwrite(&t,1,2,fic);
+        fwrite(&iarver,1,1,fic);
 
         for(n=0;n<nbr;n++)
             if (app[n]->pres!=0)
                 {
-                char sn;
-                char *a;
+                static char a[256];
 
-                a=app[n]->Filename;
-                sn=strlen(a);
+                sn=1;
                 fwrite(&sn,1,1,fic);
-                fwrite(a,sn,1,fic);
 
-                a=app[n]->Titre;
-                sn=strlen(a);
-                fwrite(&sn,1,1,fic);
-                fwrite(a,sn,1,fic);
+                strcpy(a,app[n]->Filename);
+                fwrite(a,32,1,fic);
 
-                a=app[n]->Meneur;
-                sn=strlen(a);
-                fwrite(&sn,1,1,fic);
-                fwrite(a,sn,1,fic);
+                strcpy(a,app[n]->Titre);
+                fwrite(a,38,1,fic);
+
+                strcpy(a,app[n]->Meneur);
+                fwrite(a,38,1,fic);
 
                 fwrite(&(app[n]->ext),2,1,fic);      // Numero de format
                 fwrite(&(app[n]->pres),2,1,fic);     // Numero directory
@@ -1302,16 +1306,21 @@ if (nbr>0)
                 fwrite(&(app[n]->info),1,1,fic);  // Information fichier
                 }
 
-        fwrite(&nbrdir,1,2,fic);
-
         for(n=0;n<nbrdir;n++)
+            {
+            sn=2;
+            fwrite(&sn,1,1,fic);
             fwrite(dir[n],1,128,fic);
+            }
+
+        sn=3;
+        fwrite(&sn,1,1,fic);
 
         fclose(fic);
         }
 
     PrintAt((Cfg->TailleX-22)/2,(Cfg->TailleY-3),"Press a key to continue");
-    ColLin(1,(Cfg->TailleY-3),(Cfg->TailleX-2),10*16+3);
+    ColLin(1,(Cfg->TailleY-3),(Cfg->TailleX-2),Cfg->col[17]);
 
     Wait(0,0);
 
@@ -2105,250 +2114,6 @@ DispMessage("Saving [current] section in KKSETUP.INI: OK");
 DispMessage("");
 }
 
-struct {
-    char *Filename;
-    char *Titre;
-    char *Meneur;
-    short ext;
-    short NoDir;
-    char type;  // 0: Rien de particulier
-                // 1: Decompacteur
-                // 2: Compacteur
-    char os;
-    char info;
-    char dir[128];
-    } IDF2_app;
-
-/*--------------------------------------------------------------------*\
-|-  Montre tous les players que vous possedez                         -|
-\*--------------------------------------------------------------------*/
-char ShowYourPlayer(void)
-{
-char key[9];
-FILE *fic;
-short prem,paff,j,k,nbr;
-int car,y;
-char di;    //--- Ne sert … rien ---------------------------------------
-char info;
-
-int ndir;
-char name[256],dir[129];
-
-fic=fopen(KKFics->FicIdfFile,"rb");
-
-
-if (fic==NULL)
-    {
-	PUTSERR("IDFEXT.RB missing");
-    return 0;
-	}
-
-fread(key,1,8,fic);
-if (memcmp(key,"RedBLEXU",8))
-    {
-	PUTSERR("File IDFEXT.RB is bad");
-    return 0;
-	}
-di=fgetc(fic);
-
-if (fread(&nbr,1,2,fic)==0) return 0;
-
-if (nbr==0) return 0;
-
-
-SaveScreen();
-PutCur(32,0);
-
-ChrWin(1,3,78,(Cfg->TailleY-3),32);
-ColWin(1,3,78,(Cfg->TailleY-3),10*16+1);
-
-
-prem=0;
-paff=0;
-
-do
-    {
-    fseek(fic,11,SEEK_SET);
-    y=3;
-
-    for (j=0;j<paff;j++)
-        {
-        char n;
-
-        fread(&n,1,1,fic);
-        fseek(fic,n,SEEK_CUR);
-
-        fread(&n,1,1,fic);
-        fseek(fic,n,SEEK_CUR);
-
-        fread(&n,1,1,fic);
-        fseek(fic,n,SEEK_CUR);
-
-        fseek(fic,2,SEEK_CUR);                       // Numero de format
-        fseek(fic,2,SEEK_CUR);                       // Numero directory
-        fseek(fic,1,SEEK_CUR);                            // Numero type
-        fseek(fic,1,SEEK_CUR);                              // Numero OS
-        fread(&info,1,1,fic);                                    // info
-        }
-
-    for (j=paff;j<nbr;j++)
-        {
-        char n;
-        char *a;
-
-        fread(&n,1,1,fic);
-        IDF2_app.Filename=GetMem(n+1);
-        a=IDF2_app.Filename;
-        a[n]=0;
-        fread(a,n,1,fic);
-
-        fread(&n,1,1,fic);
-        IDF2_app.Titre=GetMem(n+1);
-        a=IDF2_app.Titre;
-        a[n]=0;
-        fread(a,n,1,fic);
-
-        fread(&n,1,1,fic);
-        IDF2_app.Meneur=GetMem(n+1);
-        a=IDF2_app.Meneur;
-        a[n]=0;
-        fread(a,n,1,fic);
-
-        fread(&(IDF2_app.ext),2,1,fic);              // Numero de format
-
-        fread(&(IDF2_app.NoDir),2,1,fic);            // Numero directory
-
-        fread(&(IDF2_app.type),1,1,fic);                  // Numero type
-
-        fread(&(IDF2_app.os),1,1,fic);        // Numero operating system
-
-        fread(&(IDF2_app.info),1,1,fic);    // information sur le player
-
-        for(k=0;k<nbrkey;k++)
-            if (K[k].numero == IDF2_app.ext) break;
-
-        if (prem==j)
-            {
-            ColLin(1,y,1,  12*16+3);
-            ColLin(2,y,3,  12*16+4);
-            ColLin(5,y,1,  12*16+3);
-            ColLin(6,y,35, 12*16+4);
-            ColLin(41,y,6, 12*16+3);
-            ColLin(47,y,30,12*16+5);
-            ColLin(77,y,1, 12*16+3);
-            if (Cfg->TailleX!=80)
-                ColLin(78,y,Cfg->TailleX-79,12*16+3),
-                ChrLin(78,y,Cfg->TailleX-79,32);
-
-            ndir=IDF2_app.NoDir;
-            strcpy(name,IDF2_app.Filename);
-            info=IDF2_app.info;
-            }
-        else
-        if (y&1==1)
-            {
-            ColLin(1,y,1,  10*16+3);
-            ColLin(2,y,3,  10*16+4);
-            ColLin(5,y,1,  10*16+3);
-            ColLin(6,y,35, 10*16+4);
-            ColLin(41,y,6, 10*16+3);
-            ColLin(47,y,30,10*16+5);
-            ColLin(77,y,1, 10*16+3);
-            if (Cfg->TailleX!=80)
-                ColLin(78,y,Cfg->TailleX-79,10*16+3),
-                ChrLin(78,y,Cfg->TailleX-79,32);
-            }
-        else
-            {
-            ColLin(1,y,1,  1*16+3);
-            ColLin(2,y,3,  1*16+4);
-            ColLin(5,y,1,  1*16+3);
-            ColLin(6,y,35, 1*16+4);
-            ColLin(41,y,6, 1*16+3);
-            ColLin(47,y,30,1*16+5);
-            ColLin(77,y,1, 1*16+3);
-            if (Cfg->TailleX!=80)
-                ColLin(78,y,Cfg->TailleX-79,1*16+3),
-                ChrLin(78,y,Cfg->TailleX-79,32);
-            }
-
-        PrintAt(1,y," %3s %-35s from %30s ",K[k].ext,IDF2_app.Titre,
-                                                       IDF2_app.Meneur);
-        y++;
-
-        if ( (y==(Cfg->TailleY-3)) | (j==nbr-1) ) break;
-        }
-
-    while(j<nbr-1)
-        {
-        char n;
-
-        fread(&n,1,1,fic);
-        fseek(fic,n,SEEK_CUR);
-
-        fread(&n,1,1,fic);
-        fseek(fic,n,SEEK_CUR);
-
-        fread(&n,1,1,fic);
-        fseek(fic,n,SEEK_CUR);
-
-        fseek(fic,2,SEEK_CUR);                       // Numero de format
-        fseek(fic,2,SEEK_CUR);                       // Numero directory
-
-        fseek(fic,1,SEEK_CUR);
-        fseek(fic,1,SEEK_CUR);
-        fseek(fic,1,SEEK_CUR);
-
-        j++;
-        }
-
-    car=Wait(0,0);
-    switch(HI(car))
-        {
-        case 72:                                                   // UP
-            prem--;            break;
-        case 80:                                                 // DOWN
-            prem++;            break;
-        case 0x49:                                               // PGUP
-            prem-=10;          break;
-        case 0x51:                                               // PGDN
-            prem+=10;          break;
-        case 0x47:                                               // HOME
-            prem=0;            break;
-        case 0X4F:                                                // END
-            prem=nbr-1;        break;
-        }
-
-    if (car==13)
-        {
-        fseek(fic,2,SEEK_CUR);
-        fseek(fic,(ndir-1)*128,SEEK_CUR);
-        fread(dir,1,128,fic);
-        dir[128]=0;
-
-        if (info==1)
-            strcat(dir,"\nPlayer without doubt");
-            else
-            strcat(dir,"\nPlayer with a doubt");
-
-        WinMesg(name,dir,0);
-        }
-
-    if (prem<0) prem=0;
-    if (prem>=nbr) prem=nbr-1;
-
-    while (paff<prem-(Cfg->TailleY-7)) paff++;
-    while (paff>prem) paff--;
-    }
-while(car!=27);
-
-
-LoadScreen();
-
-return 1;
-}
-
-
 
 /*--------------------------------------------------------------------*\
 |-  Gestion de la barre de menu du haut                               -|
@@ -2405,8 +2170,7 @@ switch (poscur)
     break;
  case 1:
     bar[0].Titre="Show all format "; bar[0].fct=3; bar[0].Help=NULL;
-    bar[1].Titre="Show your player"; bar[1].fct=8; bar[1].Help=NULL;
-    nbmenu=2;
+    nbmenu=1;
     break;
  case 2:
     bar[0].Titre="Config. Default "; bar[0].fct=10; bar[0].Help=NULL;
@@ -2466,7 +2230,7 @@ return fin;
 |- 5: load kksetup.ini                                                -|
 |- 6: Putinpath                                                       -|
 |- 7: Exit                                                            -|
-|- 8: Show all player                                                 -|
+|- 8:                                                                 -|
 |- 9: Sauve le fichier des configurations                             -|
 |-10: Appelle le menu setup configuration                             -|
 |-11: Configuration de l'editeur                                      -|
@@ -2512,13 +2276,6 @@ switch(i)
     case 7:
         break;
     case 8:
-        if (ShowYourPlayer()==0)
-            {
-            DispMessage("KKSETUP must search application");
-            DispMessage("  -> Go to menu 'Player'");
-            DispMessage("  -> Select 'Search Player'");
-            DispMessage("");
-            }
         break;
     case 9:
         SaveConfigFile();

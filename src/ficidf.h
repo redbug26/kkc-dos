@@ -27,3 +27,9 @@ int FicIdf(char *dest,char *name,int numero,int quefaire);
 |- 2: no player for this file                                         -|
 \*--------------------------------------------------------------------*/
 int PlayerIdf(char *name,int numero);
+
+
+/*--------------------------------------------------------------------*\
+|- Gestion des players dont le numero idf est curr                    -|
+\*--------------------------------------------------------------------*/
+void FicIdfMan(int curr,char *chaine);

@@ -278,6 +278,11 @@ typedef struct __mainmenu
 */
 
 int BarMenu(struct barmenu *bar,int nbr,int *poscur,int *xp,int *yp);
+
+/*--------------------------------------------------------------------*\
+|-  1: [RIGHT]   -1: [LEFT]                                           -|
+|-  0: [ESC]      2: [ENTER]                                          -|
+\*--------------------------------------------------------------------*/
 int PannelMenu(struct barmenu *bar,int nbr,MENU *menu);
 
 void ClearEvents(void);

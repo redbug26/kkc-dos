@@ -178,7 +178,12 @@ if (*Info->format!=0)
 
 if (*Info->info!=0)
     {
-    sprintf(ligne," %-14s : %17s \r\n",Info->Tinfo,Info->info); //34
+    int n;
+    sprintf(ligne," %s :",Info->Tinfo);
+    n=strlen(ligne);
+    sprintf(ligne+n,"%*s ",35-n,Info->info); //34
+    ligne[36]=0;
+    strcat(ligne,"\r\n");
     strcat(Buf,ligne);
     }
 

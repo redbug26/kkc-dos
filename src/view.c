@@ -653,13 +653,23 @@ switch (ansistate)
             case 27:
                 ansistate = 1;
                 break;
-            case '\r':
+/*            case '\r':
                 curx = 0;
                 break;
 
             case '\n':
                 cury++;
                 break;
+*/
+
+            case '\n':
+                curx = 0;
+                cury++;
+                break;
+
+            case '\r':
+                break;
+
 
             case '\t':
                 for (x = 0; x < tabspaces; x++)
@@ -3307,12 +3317,20 @@ int shift=0; // Vaut -1 si reaffichage de l'ecran
 
 static char bar[81];
 
+int sc5,sc6;
 
 int oldx,oldy;
 
-
 SaveScreen();
 PutCur(3,0);
+
+
+sc5=Cfg->col[5];
+sc6=Cfg->col[6];
+
+Cfg->col[6]=3*16+0;
+Cfg->col[5]=0*16+3;
+
 
 oldx=Cfg->TailleX;
 oldy=Cfg->TailleY;
@@ -3378,7 +3396,7 @@ if ( ((car&1)==1) | ((car&2)==2) )
         else
         prc=100;
 
-    ColLin(0,0,Cfg->TailleX,Cfg->col[7]);
+    ColLin(0,0,Cfg->TailleX,3*16+0);   // Cfg->col[7]);
 
     strncpy(temp,fichier,78);
 
@@ -3475,9 +3493,14 @@ switch(LO(code))
 
                 ChangeTaille(Cfg->TailleY);
 
+                Cfg->col[5]=sc5;
+                Cfg->col[6]=sc6;
+
                 HelpTopic("View");
                 Cfg->TailleX=80;
-//                Cfg->TailleY=oldy;
+
+                Cfg->col[6]=3*16+0;
+                Cfg->col[5]=0*16+3;
 
                 TXTMode();
                 LoadScreen();
@@ -3542,6 +3565,9 @@ Cfg->TailleY=oldy;
 ChangeTaille(Cfg->TailleY);
 
 LoadScreen();
+
+Cfg->col[5]=sc5;
+Cfg->col[6]=sc6;
 
 return fin;
 }

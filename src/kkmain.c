@@ -69,7 +69,7 @@ char *Screen_Buffer;
 
 char *Keyboard_Flag1=(char*)0x417;
 
-char *ShellAdr=(char*)0xBA000;
+char *ShellAdr=(char*)0xBB000;
 
 char *Screen_Adr=(char*)0xB8000;
 
@@ -386,6 +386,7 @@ void GestionFct(int fct)
 {
 FENETRE *FenOld;
 static char buffer[256],buf2[256];
+char *ext;
 int i;
 FILE *fic;
 
@@ -914,6 +915,47 @@ switch(fct)
         break;
     case 83:
         PathDir();
+        break;
+    case 84:
+        ext=getext(DFen->F[DFen->pcur]->name);
+        if ( (!stricmp(ext,"COM")) | (!stricmp(ext,"BAT")) |
+             ((!stricmp(ext,"BTM")) & (KKCfg->_4dos==1)) )
+            {
+            CommandLine("%s\n",DFen->F[DFen->pcur]->name);
+            break;
+            }
+        switch(i=EnterArchive())
+            {
+            case 0:                                                // OK
+                break;
+            case 57:                                       // Executable
+                CommandLine("%s\n",DFen->F[DFen->pcur]->name);
+                break;
+            default:
+                strcpy(buf2,DFen->path);
+                Path2Abs(buf2,DFen->F[DFen->pcur]->name);
+                i=FicIdf(buffer,buf2,i,0);
+
+                switch(i)
+                    {
+                    case 0: //-- Execution de la ligne de commande -----
+                        CommandLine(buffer);
+                        CommandLine("\n");
+                        break;
+                    case 1: //-- Pas de fichier IDFEXT.RB --------------
+                        WinError("You must search player in setup");
+                        break;
+                    case 2: //-- No Player for this file ---------------
+//                         CommandLine(DFen->F[DFen->pcur]->name);
+                         break;
+                    case 3: //-- ESCape --------------------------------
+                        break;
+                    case 4: //-- Player Management ---------------------
+                        FicIdfMan(-1,buffer);
+                        break;
+                    }
+                break;
+            }
         break;
     }
 
@@ -2326,8 +2368,6 @@ if (n!=27)
 \*--------------------------------------------------------------------*/
 void Gestion(void)
 {
-char *ext;
-
 clock_t Cl,Cl_Start;
 BYTE car,car2;
 
@@ -2678,44 +2718,8 @@ switch (car)
         GestionFct(63);
         break;
     case 0x0D:                                         // ENTER & CTRL-M
-        ext=getext(DFen->F[DFen->pcur]->name);
-        if ( (!stricmp(ext,"COM")) | (!stricmp(ext,"BAT")) |
-             ((!stricmp(ext,"BTM")) & (KKCfg->_4dos==1)) )
-            {
-            CommandLine("%s\n",DFen->F[DFen->pcur]->name);
-            break;
-            }
-        switch(i=EnterArchive())
-            {
-            case 0:                                                // OK
-                break;
-            case 57:                                       // Executable
-                CommandLine("%s\n",DFen->F[DFen->pcur]->name);
-                break;
-            default:
-                {
-                static char buffer[256],buf2[256];
-                strcpy(buf2,DFen->path);
-                Path2Abs(buf2,DFen->F[DFen->pcur]->name);
-                i=FicIdf(buffer,buf2,i,0);
-                CommandLine(buffer);
-
-                switch(i)
-                    {
-                    case 0:
-                        CommandLine("\n");
-                        break;
-                    case 1:                  // Pas de fichier IDFEXT.RB
-                        CommandLine("@ ERROR WITH FICIDF @");
-                        break;
-                    case 2:
-//                         CommandLine(DFen->F[DFen->pcur]->name);
-                         break;
-                    }
-                }
-            }
+        GestionFct(84);
         break;
-
     case 0x0F:                                                 // CTRL-O
         GestionFct(14);
         GestionFct(15);
@@ -2866,7 +2870,6 @@ switch(car2)
         GestionFct(17);           break;
     case 0x91:                                              // CTRL-DOWN
         GestionFct(64);           break;
-
     case 0xA1:                                               // ALT-PGDN
         GestionFct(51);           break;
     case 0x8C:                                                // ALT-F12
@@ -3030,7 +3033,7 @@ if (KKCfg->scrrest) // & (saveconfig) )
     {
     TXTMode();                          // Retablit le mode texte normal
 
-    for (n=0;n<8000;n++)
+    for (n=0;n<9000;n++)
         Screen_Adr[n]=Screen_Buffer[n];
 
     }
@@ -3047,7 +3050,7 @@ if (KKCfg->scrrest) // & (saveconfig) )
         fwrite(&PosX,1,sizeof(PosX),fic);
         fwrite(&PosY,1,sizeof(PosY),fic);
 
-        fwrite(Screen_Buffer,8000,1,fic);
+        fwrite(Screen_Buffer,9000,1,fic);
 
         fclose(fic);
         }
@@ -3500,14 +3503,14 @@ InitScreen(0);
 |- Sauvegarde des donn‚es ‚crans                                      -|
 \*--------------------------------------------------------------------*/
 
-Screen_Buffer=(char*)GetMem(8000);                      // maximum 80x50
+Screen_Buffer=(char*)GetMem(9000);                      // maximum 80x50
 
 OldX=(*(char*)(0x44A));
 OldY=(*(char*)(0x484))+1;
 
 WhereXY(&PosX,&PosY);
 
-for (n=0;n<8000;n++)
+for (n=0;n<9000;n++)
     Screen_Buffer[n]=Screen_Adr[n];
 
 /*--------------------------------------------------------------------*\
@@ -3673,7 +3676,7 @@ if (KKCfg->scrrest==0)
     fread(&PosX,1,sizeof(PosX),fic);
     fread(&PosY,1,sizeof(PosY),fic);
 
-    fread(Screen_Buffer,1,8000,fic);
+    fread(Screen_Buffer,1,9000,fic);
 
     fclose(fic);
     }

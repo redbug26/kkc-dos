@@ -238,7 +238,7 @@ System proc near
     push ds
     pop es
 
-    push 0BA00h
+    push 0BB00h
     pop ds
 
     xor si,si              ;--- source ---------------------------------

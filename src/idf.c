@@ -772,7 +772,7 @@ struct key K[nbrkey]=   {
     0,
     "SBStudio Module",
     "PAC",
-    "Henning Hellstr”m",117,0*2+0,1},
+    "Henning Hellstrom",117,0*2+0,1},   // hellstr”m
 {  "ustar",
     5,
     0x101,

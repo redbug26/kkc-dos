@@ -54,12 +54,16 @@ LAOPTS = debug all
 
 #zp1 alignement
 
-CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1
+CCOPTS = -w5 -5r -fpc -zdp -d__WC32__ -mf -s -zp1 -zm
 # -obx  (watcom 11.0) chaipuqoui
 # -oneatx
 # quand on mets les optimisations, on peux plus faire un shell, pq ?
+
+# -zm: each function in a segment
+# option el : eliminate no referenced segment
+
 AOPTS =
-LOPTS = option stack=60000 option caseexact option map
+LOPTS = option stack=60000 option caseexact option map option el
 LAOPTS =
 
 !endif
@@ -80,7 +84,7 @@ kkmain.exe  : kkmain.obj     idf.lib  hard.lib    win.obj   gestion.obj &
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 kksetup.exe : kksetup.obj hard.lib idf.lib reddies.obj ficidf.obj &
-              kkfct.obj
+              kkfct.obj rbdos.obj
              $(CL) system $(SYSTEM) $(LOPTS) name $@ file {$<}
 
 kkdesc.exe  : kkdesc.obj idf.lib hard.lib
