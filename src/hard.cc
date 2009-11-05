@@ -1613,11 +1613,13 @@ void Pause(int n)
 {
 int m;
 
+#ifndef NOINT10
 for (m=0;m<n;m++)
 	{
 	while ((inp(0x3DA) & 8)!=8);
 	while ((inp(0x3DA) & 8)==8);
 	}
+#endif
 }
 
 // type: 0	   double exterieur
@@ -4340,6 +4342,32 @@ return strcmp(a,b,c);
 }
 #endif
 
+#ifdef LINUX
+uchar stricmp(char *dest,char *src)
+{
+	int n;
+
+	for (n=0;n<strlen(src);n++)
+		    if (toupper(dest[n])!=toupper(src[n]))
+			            return 1;
+
+	return 0;
+}
+
+uchar strnicmp(char *src,char *dest,int i)
+{
+	int n;
+
+	for (n=0;n<i;n++)
+		    if (toupper(dest[n])!=toupper(src[n]))
+			            return 1;
+
+	return 0;
+
+
+}
+#endif
+
 
 /*--------------------------------------------------------------------*\
 |- Time handler 													  -|
@@ -5270,80 +5298,6 @@ return 1;
 }
 #endif
 
-/*--------------------------------------------------------------------*\
-|- curses															  -|
-\*--------------------------------------------------------------------*/
-#ifdef CURSES
-
-#include <curses.h>
-
-void Curses_AffChr(long x,long y,long c);
-void Curses_AffCol(long x,long y,long c);
-void Curses_GotoXY(long x,long y);
-
-
-int curses_system(int command,char *buffer)
-{
-switch (command)
-	{
-	case 1: 	//--- Info ---------------------------------------------
-		strcpy(buffer,"Curses Mode");
-		return 5;
-
-	case 2:
-		initscr();
-		cbreak();
-		noecho();
-		nonl();
-		intrflush(stdscr,FALSE);
-		keypad(stdscr,TRUE);
-
-		AffChr=Curses_AffChr;
-		AffCol=Curses_AffCol;
-		GotoXY=Curses_GotoXY;
-		return 1;
-
-	case 3:
-		endwin();
-		return 1;
-
-	default:
-		return -1;
-	}
-}
-
-
-void Curses_AffCol(long x,long y,long c)
-{
-char ch,attr;
-
-*(_RB_screen+((y<<8)+x)+256*128)=(char)c;
-
-attr=*(_RB_screen+((y<<8)+x)+256*128);
-ch=*(_RB_screen+((y<<8)+x));
-
-mvaddch(y,x,ch+attr*256);
-}
-
-void Curses_AffChr(long x,long y,long c)
-{
-char ch,attr;
-
-*(_RB_screen+((y<<8)+x))=(char)c;
-
-attr=*(_RB_screen+((y<<8)+x)+256*128);
-ch=*(_RB_screen+((y<<8)+x));
-
-mvaddch(y,x,ch+attr*256);
-}
-
-void Curses_GotoXY(long x,long y)
-{
-move(y,x);
-refresh();
-}
-
-#endif
 
 
 
@@ -5549,7 +5503,7 @@ return 1;
 
 
 /*--------------------------------------------------------------------*\
-|- curses															  -|
+|- curses							  -|
 \*--------------------------------------------------------------------*/
 #ifdef CURSES
 

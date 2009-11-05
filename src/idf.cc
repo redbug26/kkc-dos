@@ -3970,11 +3970,11 @@ for(n=0;n<Info->sizebuf;n++)
         case 10:
         case 13:
             titre[d]=0;
-            if ((!strnicmp(titre,"#comment",8)) & (comment[0]==0))
+            if ((!sstrnicmp(titre,"#comment",8)) & (comment[0]==0))
                 strcpy(comment,titre+9);
-            if (!strnicmp(titre,"#file",4))
+            if (!sstrnicmp(titre,"#file",4))
                 strcpy(file,titre+5);
-            if (!strnicmp(titre,"#paroles",8))
+            if (!sstrnicmp(titre,"#paroles",8))
                 ok=1;
             d=0;
             break;

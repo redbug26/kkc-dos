@@ -642,6 +642,11 @@ void LoadErrorHandler(void);   //--- Load the internal error handler ---
 int stricmp(char *,char*);
 #endif
 
+#ifdef LINUX
+uchar stricmp(char *dest,char *src);
+uchar strnicmp(char *src,char *dest,int i);
+#endif
+
 #endif
 
 
