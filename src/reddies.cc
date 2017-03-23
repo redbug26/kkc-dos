@@ -397,7 +397,7 @@ char *Long2Str(long entier,char *chaine)
 char chaine2[20];
 int i,j,n;
 
-sprintf(chaine2,"%d",entier); // ltoa(entier,chaine2,10);
+sprintf(chaine2,"%ld",entier); // ltoa(entier,chaine2,10);
 
 n=strlen(chaine2);
 

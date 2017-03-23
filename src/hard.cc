@@ -2669,7 +2669,7 @@ return -1;													   // ESCAPE
 |-	1 -> Cancel 													  -|
 |-	0 -> OK 														  -|
 \*--------------------------------------------------------------------*/
-char WinMesg(char *title,char *msg,char info)
+char WinMesg(const char *title, const char *msg,char info)
 {
 static char Buffer2[70];
 

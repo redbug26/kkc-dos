@@ -350,7 +350,7 @@ int WinTraite(struct Tmt *T,int nbr,struct TmtWin *F,int first);
 |- return value:  the number of the button			      -|
 \*--------------------------------------------------------------------*/
 
-char WinMesg(char *title,char *msg,char info);
+char WinMesg(const char *title,const char *msg,char info);
 
 int Gradue(int x,int y,int length,int from,int to,int total);
 

@@ -2,16 +2,26 @@
 
 # -o3 pour maximum optimisation
 
+DEBUG = -dDEBUG -d3 -g
+
 CC = gcc
-CFLAGS = -c -s -O3 -funsigned-char -fpack-struct -Iinclude -Iinclude/kkt -DLINUX -Wno-c++11-compat-deprecated-writable-strings -Wno-invalid-source-encoding 
-LFLAGS = -lncurses -lstdc++ -ltinfo
+CFLAGS = ${DEBUG} -c -O3 -funsigned-char -fpack-struct -Iinclude -Iinclude/kkt -DLINUX -Wno-c++11-compat-deprecated-writable-strings -Wno-invalid-source-encoding 
+LFLAGS = -lncurses -lstdc++ 
+
+# -ltinfo
 #CFLAGS = -funsigned-char -fpack-struct -Iinclude -Iinclude/kkt -DLINUX -Wno-c++11-compat-deprecated-writable-strings
+
 
 OBJS = kkmain.o idf.o hard.o win.o gestion.o view.o driver.o ficidf.o copie.o delete.o search.o util.o reddies.o cygdos.o macro.o edit.o english.o wired.o
 
+TARGET = kkc
+
 #CPFLAGS = -s -O3 -m486 -funsigned-char -fpack-struct -Iinclude -Iinclude/kkt -DLINUX -lncurses
 
-all: kkc
+all: $(TARGET)
+
+clean:
+	rm -f $(OBJS) $(TARGET)
 
 kkedit: kkedit.cc hard.cc
 	$(CC) $(CFLAGS) -DTEST kkedit.cc hard.cc -o $@
