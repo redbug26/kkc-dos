@@ -11,7 +11,7 @@ OBJS = kkmain.o idf.o hard.o win.o gestion.o view.o driver.o ficidf.o copie.o de
 
 #CPFLAGS = -s -O3 -m486 -funsigned-char -fpack-struct -Iinclude -Iinclude/kkt -DLINUX -lncurses
 
-all: kkedit kkc
+all: kkc
 
 kkedit: kkedit.cc hard.cc
 	$(CC) $(CFLAGS) -DTEST kkedit.cc hard.cc -o $@
