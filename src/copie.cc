@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>     /* malloc, calloc, realloc, free */
 
 #ifndef LINUX
     #include <dos.h>
