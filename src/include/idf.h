@@ -12,12 +12,12 @@
 \*--------------------------------------------------------------------*/
 struct key
         {
-        char *buf;
+        const char *buf;
         char len;
         short pos;
-        char *format;
-        char *ext;
-        char *pro;
+        const char *format;
+        const char *ext;
+        const char *pro;
         short numero;
         char other;
         char type;
