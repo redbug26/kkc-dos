@@ -17,7 +17,7 @@ kkedit: kkedit.cc hard.cc
 	$(CC) $(CFLAGS) -DTEST kkedit.cc hard.cc -o $@
 
 kkc : $(OBJS)
-	$(CC) $(LFLAGS) $(OBJS) -o $@
+	$(CC) $(OBJS) -o $@ $(LFLAGS)
 
 kkmain.o: kkmain.cc
 	$(CC) $(CFLAGS) $*.cc -o $@
