@@ -1,0 +1,11 @@
+*.o
+core
+a
+a.cc
+a.bak
+*.bak
+a.c
+*.out
+l
+g
+file
