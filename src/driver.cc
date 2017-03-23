@@ -5,25 +5,23 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#include <io.h>
 #include <ctype.h>
 #include <sys/stat.h>
 
 #ifdef __WC32__
 	#include <dos.h>
 	#include <direct.h>
+    #include <io.h>
+    #include <bios.h>
 #endif
 
 #include "kk.h"
 
-#ifndef LCCWIN
-	#include <bios.h>
-#endif
-
-#ifdef GCC
+#ifdef LINUX
 	#include <unistd.h>
+    #include <sys/types.h>
+    #include <dirent.h>
 #endif
-
 
 
 /*--------------------------------------------------------------------*\
@@ -57,15 +55,37 @@ DFen->pcur=0;
 DFen->scur=0;
 
 DFen->taillefic=0;
-DFen->nbrfic=0;
+DFen->nbrfic=2;
 
 DFen->taillesel=0;
 DFen->nbrsel=0;
 
-CreateFile(DFen,"..",0,0,0x10,0);
+DFen->F[0]=(struct file*)GetMem(sizeof(struct file));
+DFen->F[0]->name=(char*)GetMem(3);
+strcpy(DFen->F[0]->name,"..");
+
+DFen->F[0]->size=0;
+DFen->F[0]->time=0;
+DFen->F[0]->date=33;
+DFen->F[0]->attrib=0x10;
+DFen->F[0]->select=0;
+
+DFen->nbrfic=1;
 
 if (KKCfg->pntrep==1)
-    CreateFile(DFen,".",0,0,0x10,0);
+	{
+	DFen->F[1]=(struct file*)GetMem(sizeof(struct file));
+	DFen->F[1]->name=(char*)GetMem(2);
+	strcpy(DFen->F[1]->name,".");
+
+	DFen->F[1]->size=0;
+	DFen->F[1]->time=0;
+	DFen->F[1]->date=33;
+	DFen->F[1]->attrib=0x10;
+	DFen->F[1]->select=0;
+
+	DFen->nbrfic=2;
+	}
 }
 
 
@@ -158,7 +178,7 @@ struct ARJHeader
 	BYTE Method;
 	BYTE FType;
 	BYTE Reserved;
-    struct ARJTime d;
+	struct ARJTime Filetemps;
 	ULONG PackSize;
 	ULONG UnpSize;
 	ULONG FileCRC;
@@ -181,11 +201,15 @@ char fin;
 
 int n,m;
 
+struct file **Fic;
+
 if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
 	{
 	DFen->system=0;
 	return 1;
 	}
+
+Fic=DFen->F;
 
 StartWinArc();
 
@@ -241,12 +265,28 @@ n=find1st(Nomarch,Dest,nom);
 \*--------------------------------------------------------------------*/
 if ( (n==1) & (Header.FType!=2) )
 	{
-    CreateFile(DFen,
-               Dest,
-               (unsigned short)((Header.d.t_tsec)+(Header.d.t_min)*32+(Header.d.t_heure)*2048),
-               (unsigned short)((Header.d.t_day)+(Header.d.t_mois)*32+(Header.d.t_year)*512),
-               0,
-               Header.UnpSize);
+	Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+	Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
+	memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+	Fic[DFen->nbrfic]->size=Header.UnpSize;
+
+	DFen->taillefic+=Header.UnpSize;
+
+	Fic[DFen->nbrfic]->time=(unsigned short)((Header.Filetemps.t_tsec)+
+			   (Header.Filetemps.t_min)*32+
+			   (Header.Filetemps.t_heure)*2048);
+
+	Fic[DFen->nbrfic]->date=(unsigned short)((Header.Filetemps.t_day)+
+			   (Header.Filetemps.t_mois)*32+
+			   (Header.Filetemps.t_year)*512);
+
+	Fic[DFen->nbrfic]->attrib=0;
+
+	Fic[DFen->nbrfic]->select=0;
+
+	DFen->nbrfic++;
 	}
 
 /*--------------------------------------------------------------------*\
@@ -267,15 +307,33 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.FType!=2) )
 			Dest[m]=0;
 			}
 		}
-
 	if (cont==1)
 		{
 		for (n=0;n<DFen->nbrfic;n++)
-            if (!stricmp(Dest,GetFilename(DFen,n)))
+			if (!stricmp(Dest,Fic[n]->name))
 				cont=0;
 
 		if (cont==1)
-            CreateFile(DFen,Dest,0,0,0x10,0);
+			{
+			Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+			Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
+			memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+			Fic[DFen->nbrfic]->size=0;
+
+			Fic[DFen->nbrfic]->time=33;
+
+			Fic[DFen->nbrfic]->date=33;
+
+			Fic[DFen->nbrfic]->attrib=0x10;
+
+			Fic[DFen->nbrfic]->select=0;
+
+
+			DFen->nbrfic++;
+
+			}
 		}
 	}
 
@@ -323,7 +381,7 @@ struct RARHeader
 	ULONG UnpSize;
 	BYTE HostOS;
 	ULONG FileCRC;
-    struct RARTime d;
+	struct RARTime Filetemps;
 	BYTE UnpVer;
 	BYTE Method;
 	WORD NomSize;
@@ -340,13 +398,18 @@ struct RARHeader Lt;
 ULONG pos;
 char fin;
 
+struct file **Fic;
+
 if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
 	{
 	DFen->system=0;
 	return 1;
 	}
 
+Fic=DFen->F;
+
 StartWinArc();
+
 
 /*--------------------------------------------------------------------*\
 |-	Okay.															  -|
@@ -396,17 +459,34 @@ if (Lt.TeteType==0x74)
 		cont=1;
 
 		for (n=0;n<DFen->nbrfic;n++)
-            if (!stricmp(Dest,GetFilename(DFen,n)))
+			if (!stricmp(Dest,Fic[n]->name))
 				cont=0;
 
 		if (cont==1)
-            CreateFile(DFen,
-                       Dest,
-                       (unsigned short)((Lt.d.t_tsec)+(Lt.d.t_min)*32+(Lt.d.t_heure)*2048),
-                       (unsigned short)((Lt.d.t_day)+(Lt.d.t_mois)*32+(Lt.d.t_year)*512),
-                       (char)(Lt.FileAttr),
-                       Lt.UnpSize);
+			{
+			Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
+			Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
+			memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+			Fic[DFen->nbrfic]->size=Lt.UnpSize; 	   // >< Lt.PackSize
+
+			DFen->taillefic+=Lt.UnpSize;
+
+			Fic[DFen->nbrfic]->time=(unsigned short)((Lt.Filetemps.t_tsec)+
+			   (Lt.Filetemps.t_min)*32+
+			   (Lt.Filetemps.t_heure)*2048);
+
+			Fic[DFen->nbrfic]->date=(unsigned short)((Lt.Filetemps.t_day)+
+			   (Lt.Filetemps.t_mois)*32+
+			   (Lt.Filetemps.t_year)*512);
+
+			Fic[DFen->nbrfic]->attrib=(char)(Lt.FileAttr);
+
+			Fic[DFen->nbrfic]->select=0;
+
+			DFen->nbrfic++;
+			}
 		}
 	else
 		if (!Maskcmp(Nomarch,nom))
@@ -428,11 +508,24 @@ if (Lt.TeteType==0x74)
 		if (cont==1)
 			{
 			for (n=0;n<DFen->nbrfic;n++)
-                if (!stricmp(Dest,GetFilename(DFen,n)))
+				if (!stricmp(Dest,Fic[n]->name))
 					cont=0;
 
 			if (cont==1)
-                CreateFile(DFen,Dest,0,0,0x10,0);
+				{
+				Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+				Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
+				memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+				Fic[DFen->nbrfic]->size=0;
+				Fic[DFen->nbrfic]->time=33;
+				Fic[DFen->nbrfic]->date=33;
+				Fic[DFen->nbrfic]->attrib=0x10;
+				Fic[DFen->nbrfic]->select=0;
+
+				DFen->nbrfic++;
+				}
 			}
 		}
 
@@ -473,7 +566,7 @@ struct ZIPHeader
 	WORD Version;
 	WORD GPBFlag;
 	WORD Compress;
-    struct ZIPTime d;
+	struct ZIPTime Filetemps;
 	ULONG CRC32;
 	ULONG PackSize;
 	ULONG UnpSize;
@@ -494,11 +587,15 @@ char fin;
 
 int n,m;
 
+struct file **Fic;
+
 if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
 	{
 	DFen->system=0;
 	return 1;
 	}
+
+Fic=DFen->F;
 
 StartWinArc();
 
@@ -552,15 +649,31 @@ n=find1st(Nomarch,Dest,nom);
 \*--------------------------------------------------------------------*/
 if ( (n==1) & (Header.Signature==0x04034B50) )
 	{
-    CreateFile(DFen,
-               Dest,
-               (unsigned short)((Header.d.t_tsec)+(Header.d.t_min)*32+(Header.d.t_heure)*2048),
-               (unsigned short)((Header.d.t_day)+(Header.d.t_mois)*32+(Header.d.t_year)*512),
-               0,
-               Header.UnpSize);
+	Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-    // Fic[DFen->nbrfic]->truesize=Header.PackSize;
-    }
+	Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
+	memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+	Fic[DFen->nbrfic]->size=Header.UnpSize;
+
+	Fic[DFen->nbrfic]->truesize=Header.PackSize;
+
+	DFen->taillefic+=Header.UnpSize;
+
+	Fic[DFen->nbrfic]->time=(unsigned short)((Header.Filetemps.t_tsec)+
+			   (Header.Filetemps.t_min)*32+
+			   (Header.Filetemps.t_heure)*2048);
+
+	Fic[DFen->nbrfic]->date=(unsigned short)((Header.Filetemps.t_day)+
+			   (Header.Filetemps.t_mois)*32+
+			   (Header.Filetemps.t_year)*512);
+
+	Fic[DFen->nbrfic]->attrib=0;
+
+	Fic[DFen->nbrfic]->select=0;
+
+	DFen->nbrfic++;
+	}
 
 /*--------------------------------------------------------------------*\
 |-	---On fout un repertoire--- 									  -|
@@ -583,11 +696,24 @@ if ( (!Maskcmp(Nomarch,nom)) & (Header.Signature==0x04034B50) )
 	if (cont==1)
 		{
 		for (n=0;n<DFen->nbrfic;n++)
-            if (!stricmp(Dest,GetFilename(DFen,n)))
+			if (!stricmp(Dest,Fic[n]->name))
 				cont=0;
 
 		if (cont==1)
-            CreateFile(DFen,Dest,0,0,0x10,0);
+			{
+			Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+			Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
+			memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+			Fic[DFen->nbrfic]->size=0;
+			Fic[DFen->nbrfic]->time=33;
+			Fic[DFen->nbrfic]->date=33;
+			Fic[DFen->nbrfic]->attrib=0x10;
+			Fic[DFen->nbrfic]->select=0;
+
+			DFen->nbrfic++;
+			}
 		}
 	}
 
@@ -626,7 +752,7 @@ struct LHAHeader
 	char Method[5];
 	ULONG PackSize;
 	ULONG UnpSize;
-    struct LHATime d;
+	struct LHATime Filetemps;
 	WORD Fill2;
 	BYTE FNameLen;
 	};
@@ -644,11 +770,15 @@ char fin;
 
 int n,m;
 
+struct file **Fic;
+
 if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
 	{
 	DFen->system=0;
 	return 1;
 	}
+
+Fic=DFen->F;
 
 StartWinArc();
 
@@ -689,12 +819,31 @@ if (strlen(DFen->path)==strlen(DFen->VolName))
 n=find1st(Nomarch,Dest,nom);
 
 if (n==1)
-    CreateFile(DFen,
-               Dest,
-               (unsigned short)((Header.d.t_tsec)+(Header.d.t_min)*32+(Header.d.t_heure)*2048),
-               (unsigned short)((Header.d.t_day)+(Header.d.t_mois)*32+(Header.d.t_year)*512),
-               0,
-               Header.UnpSize);
+	{
+	Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+	Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
+	memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+	Fic[DFen->nbrfic]->size=Header.UnpSize;
+
+	DFen->taillefic+=Header.UnpSize;
+
+	Fic[DFen->nbrfic]->time=(unsigned short)((Header.Filetemps.t_tsec)+
+			   (Header.Filetemps.t_min)*32+
+			   (Header.Filetemps.t_heure)*2048);
+
+	Fic[DFen->nbrfic]->date=(unsigned short)((Header.Filetemps.t_day)+
+			   (Header.Filetemps.t_mois)*32+
+			   (Header.Filetemps.t_year)*512);
+
+	Fic[DFen->nbrfic]->attrib=0;
+
+	Fic[DFen->nbrfic]->select=0;
+
+	DFen->nbrfic++;
+	}
+
 
 if (!Maskcmp(Nomarch,nom))
 	{
@@ -714,11 +863,23 @@ if (!Maskcmp(Nomarch,nom))
 	if (cont==1)
 		{
 		for (n=0;n<DFen->nbrfic;n++)
-            if (!stricmp(Dest,GetFilename(DFen,n)))
+			if (!stricmp(Dest,Fic[n]->name))
 				cont=0;
 
 		if (cont==1)
-            CreateFile(DFen,Dest,0,0,0x10,0);
+			{
+			Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+			Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(Dest)+1);
+			memcpy(Fic[DFen->nbrfic]->name,Dest,strlen(Dest)+1);
+
+			Fic[DFen->nbrfic]->size=0;
+			Fic[DFen->nbrfic]->time=33;
+			Fic[DFen->nbrfic]->date=33;
+			Fic[DFen->nbrfic]->attrib=0x10;
+			Fic[DFen->nbrfic]->select=0;
+			DFen->nbrfic++;
+			}
 		}
 	}
 
@@ -766,11 +927,15 @@ int n,i,j;
 
 unsigned char tai;									  // taille des noms
 
+struct file **Fic;
+
 if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
 	{
 	DFen->system=0;
 	return 1;
 	}
+
+Fic=DFen->F;
 
 StartWinArc();
 
@@ -866,18 +1031,29 @@ if (fin==0)
 			{
 			Nomarch[tai]=0;
 
-            CreateFile(DFen,
-                       Nomarch,
-                       KKD_desc.time,
-                       KKD_desc.date,
-                       KKD_desc.attrib,
-                       KKD_desc.size);
-/*
-            if (KKD_desc.desc==0)
+			Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+			Fic[DFen->nbrfic]->name=(char*)GetMem(tai+1);
+
+			strcpy(Fic[DFen->nbrfic]->name,Nomarch);
+			Fic[DFen->nbrfic]->name[tai]=0;
+
+			Fic[DFen->nbrfic]->size=KKD_desc.size;
+
+			DFen->taillefic+=Fic[DFen->nbrfic]->size;
+
+			Fic[DFen->nbrfic]->time=KKD_desc.time;
+			Fic[DFen->nbrfic]->date=KKD_desc.date;
+
+			Fic[DFen->nbrfic]->attrib=KKD_desc.attrib;
+
+			Fic[DFen->nbrfic]->select=0;
+
+			if (KKD_desc.desc==0)
 				Fic[DFen->nbrfic]->desc=0;
 				else
 				Fic[DFen->nbrfic]->desc=1;
-*/
+
+			DFen->nbrfic++;
 			}
 
 		fseek(fic,KKD_desc.next,SEEK_SET);
@@ -906,11 +1082,15 @@ char key[13];
 
 int m,n,nbr,lng,deb;
 
+struct file **Fic;
+
 if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
 	{
 	DFen->system=0;
 	return 1;
 	}
+
+Fic=DFen->F;
 
 oldnoprompt=KKCfg->noprompt;
 KKCfg->noprompt=1;
@@ -941,14 +1121,31 @@ for(n=0;n<nbr;n++)
 
 	key[12]=0;
 
-    CreateFile(DFen, key, 0, 0, 0, lng);
-    }
+	Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+	Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(key)+1);
+	memcpy(Fic[DFen->nbrfic]->name,key,strlen(key)+1);
+
+	Fic[DFen->nbrfic]->size=lng;
+
+	DFen->taillefic+=lng;
+
+	Fic[DFen->nbrfic]->time=0;
+	Fic[DFen->nbrfic]->date=0;
+
+	Fic[DFen->nbrfic]->attrib=0;
+
+	Fic[DFen->nbrfic]->select=0;
+
+	DFen->nbrfic++;
+	}
 
 CloseWinArc();
 
 DFen->IDFSpeed=0;
 
 KKCfg->noprompt=oldnoprompt;
+
 
 if ( ((KKCfg->pntrep==1) & (DFen->nbrfic==2)) | ((KKCfg->pntrep==0) &
 													(DFen->nbrfic==1)) )
@@ -966,11 +1163,15 @@ int DKFlitfic(void)
 char oldnoprompt;
 char name[17];
 
+struct file **Fic;
+
 if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
 	{
 	DFen->system=0;
 	return 1;
 	}
+
+Fic=DFen->F;
 
 oldnoprompt=KKCfg->noprompt;
 KKCfg->noprompt=1;
@@ -985,31 +1186,39 @@ fseek(fic,0x80,SEEK_SET);
 
 while(1)
 	{
-	ushort SizeH,SizeL,PosH,PosL,LongName;
-	int size,pos;
+	ushort lng1,lng2,deb;
+	int lng;
 
-
-	fread(name,1,12,fic);
+	fread(name,1,14,fic);
 	if (name[0]==0)
 		break;
-	name[12]=0;
+	name[14]=0;
 
-	fread(&LongName,1,2,fic);
-	if (LongName!=0) name[0]='!';
+	fread(&lng2,1,2,fic);
+	fread(&lng1,1,2,fic);
+	lng=lng1+lng2*65536;
+	fseek(fic,3,SEEK_CUR);
+	fread(&deb,1,2,fic);
 
-	fread(&SizeL,1,2,fic);
-	fread(&SizeH,1,2,fic);
-	size=SizeH+SizeL*65536;
+	Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-	fseek(fic,1,SEEK_CUR);
+	Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(name)+1);
+	memcpy(Fic[DFen->nbrfic]->name,name,strlen(name)+1);
 
-	fread(&PosH,1,2,fic);
-	fread(&PosL,1,2,fic);
-	pos=PosH+PosL*65536;
+	Fic[DFen->nbrfic]->size=lng;
 
-    CreateFile(DFen, name, 0, 0, 0, size);
+	DFen->taillefic+=lng;
+
+	Fic[DFen->nbrfic]->time=0;
+	Fic[DFen->nbrfic]->date=0;
+
+	Fic[DFen->nbrfic]->attrib=0;
+
+	Fic[DFen->nbrfic]->select=0;
 
 	fseek(fic,16,SEEK_CUR);
+
+	DFen->nbrfic++;
 	}
 
 CloseWinArc();
@@ -1051,6 +1260,10 @@ long sec;
 
 int n;
 
+
+
+struct file **Fic;
+
 if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
 	{
 	DFen->system=0;
@@ -1058,6 +1271,8 @@ if (strnicmp(DFen->VolName,DFen->path,strlen(DFen->VolName))!=0)
 	}
 
 strcpy(path,DFen->path+strlen(DFen->VolName));
+
+Fic=DFen->F;
 
 oldnoprompt=KKCfg->noprompt;
 KKCfg->noprompt=1;
@@ -1207,14 +1422,23 @@ while(1)
 
 	if ((nom[0]!='.') & (nom[0]!=0xE5) & ((key[11]&0x8)!=0x8) )
 		{
-        short time,date;
-        int size;
+		Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
-        memcpy(&time,key+22,2);
-        memcpy(&date,key+24,2);
-        memcpy(&size,key+28,4);
+		Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(nom)+1);
+		memcpy(Fic[DFen->nbrfic]->name,nom,strlen(nom)+1);
 
-        CreateFile(DFen, nom, time, date, key[11], size);
+		memcpy((int*)(&(Fic[DFen->nbrfic]->size)),key+28,4);
+
+		DFen->taillefic+=Fic[DFen->nbrfic]->size;
+
+		memcpy((short*)(&(Fic[DFen->nbrfic]->time)),key+22,2);
+		memcpy((short*)(&(Fic[DFen->nbrfic]->date)),key+24,2);
+
+		Fic[DFen->nbrfic]->attrib=key[11];
+
+		Fic[DFen->nbrfic]->select=0;
+
+		DFen->nbrfic++;
 		}
 	}
 
@@ -1245,6 +1469,7 @@ int DOSlitfic(void)
 {
 int n;
 
+struct file **Fic;
 char rech[256];
 
 static char tnom[256],nom2[256];
@@ -1265,6 +1490,7 @@ struct dirent *ff;
 
 #endif
 
+
 if (chdir(DFen->path)!=0)	//--- Invalid drive ------------------------
 	{
 	if (DFen->path[0]=='*')
@@ -1278,7 +1504,6 @@ if (chdir(DFen->path)!=0)	//--- Invalid drive ------------------------
 	strcpy(tnom,"");
 	do
 		{
-//			strcpy(nom2,DFen->path);  // Marjorie (pq j'avais mis ca ?)
 		n=0;
 		for (i=0;i<strlen(DFen->path)-1;i++)
 			if (DFen->path[i]==DEFSLASH) n=i;
@@ -1323,6 +1548,11 @@ if (chdir(DFen->path)!=0)	//--- Invalid drive ------------------------
 	return 1;
 	}
 
+Fic=DFen->F;
+
+//printf("Traite Commandline after dos %s FIN)\n\n","DOS"); exit(1);
+
+
 DFen->nbrfic=0;
 DFen->pcur=0;
 DFen->scur=0;
@@ -1345,12 +1575,30 @@ if (dirp!=NULL)
 	if (ff==NULL) break;
 
 	if ( ((KKCfg->pntrep==1) |	(strcmp(ff->d_name,".")!=0)) &
-		 ((KKCfg->hidfil==1) | (((ff->d_attr)&_A_HIDDEN)!=_A_HIDDEN)) &
-		 (((ff->d_attr)&_A_VOLID)!=_A_VOLID)
+		 ((KKCfg->hidfil==1) | (((ff->d_attr)&RB_HIDDEN)!=RB_HIDDEN)) &
+		 (((ff->d_attr)&RB_VOLID)!=RB_VOLID)
 		 )
-        CreateFile(DFen, ff->d_name, ff->d_time, ff->d_date, ff->d_attr, ff->d_size);
+		{
+		Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+		Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(ff->d_name)+1);
+		strcpy(Fic[DFen->nbrfic]->name,ff->d_name);
+		Fic[DFen->nbrfic]->time=ff->d_time;
+		Fic[DFen->nbrfic]->date=ff->d_date;
+		Fic[DFen->nbrfic]->attrib=ff->d_attr;
+		Fic[DFen->nbrfic]->select=0;
+
+		if (((ff->d_attr)&RB_SUBDIR)==RB_SUBDIR)
+			Fic[DFen->nbrfic]->size=0;
+			else
+			Fic[DFen->nbrfic]->size=ff->d_size;
+
+		DFen->taillefic+=Fic[DFen->nbrfic]->size;
+		DFen->nbrfic++;
+		}
 	}
 closedir(dirp);
+
+
 #else
 strcpy(rech,DFen->path);
 
@@ -1364,12 +1612,31 @@ if (dirp!=NULL)
 
 	stat(ff->d_name,&s);
 
-	attrib=S_ISDIR(s.st_mode)*_A_SUBDIR;
+	attrib=S_ISDIR(s.st_mode)*RB_SUBDIR;
 
 	if ( (KKCfg->pntrep==1) | (strcmp(ff->d_name,".")!=0) )
-        CreateFile(DFen, ff->d_name, 0, 0, attrib, s.st_size);
+		{
+		Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+		Fic[DFen->nbrfic]->name=(char*)GetMem(strlen(ff->d_name)+1);
+		strcpy(Fic[DFen->nbrfic]->name,ff->d_name);
+		Fic[DFen->nbrfic]->time=0; // s.st_atime;
+		Fic[DFen->nbrfic]->date=0; // s.st_adate;
+		Fic[DFen->nbrfic]->attrib=attrib;
+		Fic[DFen->nbrfic]->select=0;
+
+		if ((attrib&RB_SUBDIR)==RB_SUBDIR)
+			Fic[DFen->nbrfic]->size=0;
+			else
+			Fic[DFen->nbrfic]->size=s.st_size;
+
+		DFen->taillefic+=Fic[DFen->nbrfic]->size;
+		DFen->nbrfic++;
+		}
 	}
 closedir(dirp);
+
+//printf("Traite Commandline after dos %d file)\n\n",DFen->nbrfic); exit(1);
+
 #endif
 
 
@@ -1378,7 +1645,18 @@ rech[3]=0;
 
 if ( ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
 	 | (DFen->nbrfic==0) )
-    CreateFile(DFen, "*27", 0, 0, _A_VOLID, 0);           // Pour Reload
+	{
+	Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+	Fic[DFen->nbrfic]->name=(char*)GetMem(4);				   // Pour Reload
+	strcpy(Fic[DFen->nbrfic]->name,"*27");
+	Fic[DFen->nbrfic]->time=0;
+	Fic[DFen->nbrfic]->date=0;
+	Fic[DFen->nbrfic]->attrib=RB_VOLID;
+	Fic[DFen->nbrfic]->select=0;
+	Fic[DFen->nbrfic]->size=0;
+	DFen->nbrfic++;
+	}
 
 /*--------------------------------------------------------------------*\
 |- Test si c'est un CD-ROM                                            -|
@@ -1393,15 +1671,25 @@ if ( ( (!stricmp(rech,"A:\\")) | (!stricmp(rech,"B:\\")) )
 	int386(0x2F,&R,&R);
 
 	if ( (R.w.bx==0xADAD) & (R.w.ax!=0) )
-        CreateFile(DFen, "*86", 0, 0, _A_VOLID, 0);        // Pour Open
+		{
+		Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
 
+		Fic[DFen->nbrfic]->name=(char*)GetMem(4);		  // Pour Open--
+		strcpy(Fic[DFen->nbrfic]->name,"*86");
+		Fic[DFen->nbrfic]->time=0;
+		Fic[DFen->nbrfic]->date=0;
+		Fic[DFen->nbrfic]->attrib=RB_VOLID;
+		Fic[DFen->nbrfic]->select=0;
+		Fic[DFen->nbrfic]->size=0;
+		DFen->nbrfic++;
+		}
 	}
 #endif
 
 DFen->ChangeLine=1;
 
 /*--------------------------------------------------------------------*\
-|-	Temporise le temps … attendre avant le lecture du header OK ;-}   -|
+|-	Temporise le temps … attendre avant le lecture du header OK ;-)   -|
 \*--------------------------------------------------------------------*/
 
 
@@ -1436,6 +1724,8 @@ FILE *infic;
 char attr,lng;
 int Time,Date,Size;
 
+struct file **Fic;
+
 char nom[256];
 
 KKCfg->scrrest=0;
@@ -1452,6 +1742,8 @@ if (DFen->path[2]!='+')
 	CommandLine("#%s %s %s","remdir",DFen->path+3,KKFics->temp);
 	}
 DFen->path[2]='-';
+
+Fic=DFen->F;
 
 DFen->nbrfic=0;
 DFen->pcur=0;
@@ -1480,18 +1772,24 @@ while(fread(&lng,1,1,infic)==1)
 	fread(&Size,4,1,infic);
 
 	if ( ((KKCfg->pntrep==1) |	(strcmp(nom,".")!=0)) &
-		 ((KKCfg->hidfil==1) | ((attr&_A_HIDDEN)!=_A_HIDDEN)) &
-		 ((attr&_A_VOLID)!=_A_VOLID)
+		 ((KKCfg->hidfil==1) | ((attr&RB_HIDDEN)!=RB_HIDDEN)) &
+		 ((attr&RB_VOLID)!=RB_VOLID)
 		 )
 		{
-        nom[lng]=0;
+		Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+		Fic[DFen->nbrfic]->name=(char*)GetMem(lng+1);
+		nom[lng]=0;
+		strcpy(Fic[DFen->nbrfic]->name,nom);
+		Fic[DFen->nbrfic]->attrib=attr;
+		Fic[DFen->nbrfic]->time=(unsigned short)Time;
+		Fic[DFen->nbrfic]->date=(unsigned short)Date;
+		Fic[DFen->nbrfic]->size=Size;
 
-        CreateFile(DFen,
-                   nom,
-                   (unsigned short)Time,
-                   (unsigned short)Date,
-                   attr,
-                   Size);
+		DFen->taillefic+=Fic[DFen->nbrfic]->size;
+
+		Fic[DFen->nbrfic]->select=0;
+
+		DFen->nbrfic++;
 		}
 	}
 fclose(infic);
@@ -1499,11 +1797,30 @@ fclose(infic);
 
 
 if (DFen->nbrfic==0)
-    CreateFile(DFen, "*27", 0, 0, _A_VOLID, 0);        // Pour Reload --
+	{
+	Fic[DFen->nbrfic]=(struct file*)GetMem(sizeof(struct file));
+
+	Fic[DFen->nbrfic]->name=(char*)GetMem(4);			  // Pour Reload
+	strcpy(Fic[DFen->nbrfic]->name,"*27");
+	Fic[DFen->nbrfic]->time=0;
+	Fic[DFen->nbrfic]->date=0;
+	Fic[DFen->nbrfic]->attrib=RB_VOLID;
+	Fic[DFen->nbrfic]->select=0;
+	Fic[DFen->nbrfic]->size=0;
+	DFen->nbrfic++;
+	}
+
 
 DFen->ChangeLine=1;
 return 0;
 }
+
+
+
+
+
+
+
 
 
 
@@ -1620,14 +1937,7 @@ if (dirp!=NULL)
 
 		if ((error&0x10)!=0x10)    //--- Not a Subdir ------------------
 			{
-            Fichier[Nbfic]->desc=0;
-
-/*            CreateFic(DFen,
-                      ff->d_name,
-                      ff->d_time,
-                      ff->d_date,
-                      ff->d_attr,
-                      ff->d_size);*/
+			Fichier[Nbfic]->desc=0;
 
 			Fichier[Nbfic]=(struct HeaderKKD*)
 									   GetMem(sizeof(struct HeaderKKD));
@@ -1680,8 +1990,7 @@ if (dirp!=NULL)
 			Fichier[Nbfic]->size=ff->d_size;
 			Fichier[Nbfic]->time=ff->d_time;
 			Fichier[Nbfic]->date=ff->d_date;
-
-            Fichier[Nbfic]->attrib=ff->d_attr;
+			Fichier[Nbfic]->attrib=ff->d_attr;
 
 			oldpos+=18+strlen(ff->d_name);
 

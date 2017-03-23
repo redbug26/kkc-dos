@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------*\
-|- prototype pour la gestion des fenetres (?)			      -|
+|- prototype pour la gestion des fenetres (?)                         -|
 \*--------------------------------------------------------------------*/
 
 void ScreenSetup(void);
@@ -8,7 +8,7 @@ void LongnameSetup(void);
 void PutInHistDir(void);
 void ChangeTaille(int i);
 
-void SpeedTest(void);				    // Independant de KK
+void SpeedTest(void);                               // Independant de KK
 
 void FenNor(FENETRE *Fen);
 void FenDIZ(FENETRE *Fen);
@@ -35,7 +35,7 @@ void Setup(void);
 
 extern int *TailleX;
 
-void FenTree(FENETRE *Fen,char *dir);
+
 
 
 

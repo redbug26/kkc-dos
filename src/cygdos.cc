@@ -10,10 +10,16 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <io.h>
+
+#ifndef LINUX
+	#include <io.h>
+	#include <sys\types.h>
+	#include <sys\stat.h>
+#else
+    #include <unistd.h>
+#endif
+
 #include <fcntl.h>
-#include <sys\types.h>
-#include <sys\stat.h>
 
 #include "kk.h"
 

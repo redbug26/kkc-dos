@@ -337,39 +337,28 @@ switch ( regs.h.al )
 
 void DriveInfo(char disk,char *volume)
 {
-//TypeDisk(disk,volume);
+struct find_t ff;
+int n,m;
+int error;
 
-DIR *dirp;
-struct dirent *ff;
+sprintf(volume,"%c:\\*.*",disk+'A');
 
-char *ext;
-char rech[16];
+error=_dos_findfirst(volume,_A_VOLID,&ff);
 
-strcpy(volume,"Unknown");
+if (error!=0)
+    strcpy(volume,"Unknow");
+    else
+    strcpy(volume,ff.name);
 
-sprintf(rech,"%c:\\",disk+'A');
-
-dirp=opendir(rech);
-
-if (dirp!=NULL)
+n=0;
+while (volume[n]!=0)
     {
-	while(1)
-        {
-        ff=readdir(dirp);
-        if (ff==NULL) break;
-
-//        printf("(%s,%d)",ff->d_name,ff->d_attr);
-
-        if (((ff->d_attr)&_A_VOLID)==_A_VOLID)
-            strcpy(volume,ff->d_name);
-        }
-    closedir(dirp);
+    if (volume[n]=='.')
+        for (m=n;m<strlen(volume);m++)
+            volume[m]=volume[m+1];
+        else
+        n++;
     }
-
-
-ext=strchr(volume,'.');
-if (ext!=NULL)
-    strcpy(ext,ext+1);
 }
 
 void DrivePath(char drive,char *path)
@@ -390,7 +379,6 @@ int DriveReady(char drive)
 {
 unsigned nbrdrive,cdrv,n;
 struct diskfree_t d;
-
 
 if ((drive+1<1) | (drive+1>26)) return 0;
 

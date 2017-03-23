@@ -2,16 +2,26 @@
 |- KKSETUP: Main configuration program                                -|
 \*--------------------------------------------------------------------*/
 #include <stdarg.h>
-#include <dos.h>
-#include <direct.h>
-#include <io.h>
+
+
+#ifndef LINUX
+    #include <dos.h>
+    #include <direct.h>
+    #include <io.h>
+    #include <conio.h>
+    #include <mem.h>
+    #include <bios.h>
+#else
+    #include <sys/stat.h>
+    #include <sys/types.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+#endif
+
 #include <stdlib.h>
-#include <conio.h>
-#include <mem.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <bios.h>
 
 #define KDBVER 2
 
@@ -129,7 +139,7 @@ struct player
 
 char dir[MAXDIR][128];      // 50 directory diff‚rents de 128 caracteres
 
-char *box[MAXBOX];
+char *kkbox[MAXBOX];
 int boxlen[MAXBOX];
 
 short nbr;              // nombre d'application lu dans les fichiers KKR
@@ -592,9 +602,9 @@ cfgwrite(&(Fen->nbrfic),4);
 
 for (n=0;n<=Fen->nbrfic;n++)
     {
-    m=strlen(Fen->Fic[n]->name);
+    m=strlen(Fen->F[n]->name);
     cfgwrite(&m,4);
-    cfgwrite(Fen->Fic[n]->name,m);
+    cfgwrite(Fen->F[n]->name,m);
     }
 
 cfgwrite(&(Fen->scur),sizeof(short));
@@ -660,14 +670,14 @@ for (t=0;t<NBWIN;t++)
 
     for (i=0;i<=DFen->nbrfic;i++)
         {
-        DFen->Fic[i]=(file*)GetMem(sizeof(struct file));
+        DFen->F[i]=(file*)GetMem(sizeof(struct file));
 
         cfgread(&m,4);
         cfgread(nom,m);
         nom[m]=0;
 
-        DFen->Fic[i]->name=(char*)GetMem(m+1);
-        memcpy(DFen->Fic[i]->name,nom,m+1);
+        DFen->F[i]->name=(char*)GetMem(m+1);
+        memcpy(DFen->F[i]->name,nom,m+1);
         }
 
     cfgread(&(DFen->scur),sizeof(short));
@@ -775,15 +785,9 @@ char *TPath;
 static char path[2048];
 char erreur;
 FILE *fic;
-char InitPath[256];
 
 int i,j,k;
 
-_searchenv("KK.BAT","PATH",InitPath);
-if (InitPath[0]!=0)
-    Path2Abs(InitPath,"..");
-else
-    strcpy(InitPath,"NoPath");
 
 k=Cfg->TailleY-6;
 
@@ -802,19 +806,14 @@ for(i=0;i<k;i++)
     if (path[i]==';')
         path[i]=0;
 
-menu.cur=0;
 j=0;
 for (i=0;i<50;i++)
     {
     dir[i].Titre=path+j;
-    dir[i].Help=NULL;
+    dir[i].Help=0;
     dir[i].fct=i+1;
     dir[i].Titre=strupr(dir[i].Titre);
     if (strlen(dir[i].Titre)==0) break;
-
-    if (!stricmp(InitPath,dir[i].Titre))
-        menu.cur=i;
-
     while ( (j!=k) & (path[j]!=0) ) j++;
     j++;
     }
@@ -824,6 +823,7 @@ menu.y=9;
 
 menu.attr=2+8;
 
+menu.cur=0;
 
 if (i!=0)
     {
@@ -869,9 +869,11 @@ if (erreur==1)
 /*--------------------------------------------------------------------*\
 |- Procedure principale                                               -|
 \*--------------------------------------------------------------------*/
-void main(int argc,char **argv)
+int main(int argc,char **argv)
 {
 char buffer[256],chaine[256];
+int OldX,OldY;                         // To save the size of the screen
+
 
 int n;
 FILE *fic;
@@ -895,7 +897,7 @@ KKInit();
 if (argc>2)
     {
     printf("No argument");
-    return;
+    return 0;
     }
 
 todo=0;
@@ -910,28 +912,13 @@ if (!stricmp((argv[1])+1,"AREA"))
     todo=4;
     }
 
+InitScreen(0);                     // Initialise toutes les donn~Bes HARD
 
-Screen_Buffer=(char*)GetMem(9000);                      // maximum 90x50
-
-OldX=(*(char*)(0x44A));
-OldY=(*(char*)(0x484))+1;
+OldX=GetScreenSizeX(); // A faire apres le SetMode ou le InitScreen
+OldY=GetScreenSizeY();
 
 Cfg->TailleX=OldX;
-Cfg->TailleY=OldY;                  // Initialisation de la taille ecran
-
-InitScreen(0);                     // Initialise toutes les donn‚es HARD
-
-WhereXY(&PosX,&PosY);
-
-for (n=0;n<9000;n++)
-    Screen_Buffer[n]=Screen_Adr[n];
-
-Pal2Buf(OldPal);
-
-#ifndef NOFONT
-Font2Buf(OldFont);
-#endif
-
+Cfg->TailleY=OldY;                  // Initialisation de la taille ecra
 
 /*--------------------------------------------------------------------*\
 |- initialisation des clefs                                           -|
@@ -965,13 +952,13 @@ for (n=strlen(path);n>0;n--)
 \*--------------------------------------------------------------------*/
 
 Fenetre[0]=(FENETRE*)GetMem(sizeof(FENETRE));
-Fenetre[0]->Fic=(struct file**)GetMem(TOTFIC*sizeof(void *));
+Fenetre[0]->F=(struct file**)GetMem(TOTFIC*sizeof(void *));
 
 Fenetre[1]=(FENETRE*)GetMem(sizeof(FENETRE));
-Fenetre[1]->Fic=(struct file**)GetMem(TOTFIC*sizeof(void *));
+Fenetre[1]->F=(struct file**)GetMem(TOTFIC*sizeof(void *));
 
 Fenetre[2]=(FENETRE*)GetMem(sizeof(FENETRE));
-Fenetre[2]->Fic=(struct file**)GetMem(TOTFIC*sizeof(void *));
+Fenetre[2]->F=(struct file**)GetMem(TOTFIC*sizeof(void *));
 
 KKFics=(struct kkfichier*)GetMem(sizeof(struct kkfichier));
 
@@ -1023,10 +1010,10 @@ if (LoadCfgSetup()==-1)
 
         DFen->nbrsel=0;
 
-        DFen->Fic[0]=(struct file*)GetMem(sizeof(struct file));
+        DFen->F[0]=(struct file*)GetMem(sizeof(struct file));
 
-        DFen->Fic[0]->name=(char*)GetMem(256);
-        strcpy(DFen->Fic[0]->name,"kk.exe");
+        DFen->F[0]->name=(char*)GetMem(256);
+        strcpy(DFen->F[0]->name,"kk.exe");
 
 
         DFen->scur=0;
@@ -1068,7 +1055,11 @@ if (todo!=0)
 if (todo==0)
     {
     strcpy(chaine,KKFics->trash);
+#ifndef LINUX
     if (mkdir(chaine)==0)
+#else 
+    if (mkdir(chaine,0)==0)
+#endif
         {
         DispMessage("Creation of the user directory '%s': OK",chaine);
         DispMessage("");
@@ -1112,7 +1103,7 @@ if (todo==0)
         Path2Abs(tata,"kk.exe\n");
 
         DispMessage("Found kk.Bat in %s",buffer);
-        DispMessage("");
+            DispMessage("");
 
         if (stricmp(tata,toto)!=0)
             {
@@ -1124,7 +1115,7 @@ if (todo==0)
         Path2Abs(buffer,"..");
         strcpy(PathOfKK,buffer);
         }
-    else
+        else
         PutInPath();
 
 
@@ -1195,6 +1186,8 @@ Buf2Pal(OldPal);
 
 if (todo==0)
     cputs(RBTitle2);
+
+return 0;
 }
 
 
@@ -1336,13 +1329,15 @@ for(n=0;n<nbrkey;n++)
 
         if (KeyPres[j]==0)
             ColLin(KeyPosX[j],KeyPosY[j],2,Cfg->col[28]);
-        else
+            else
             ColLin(KeyPosX[j],KeyPosY[j],2,Cfg->col[29]);
         }
     }
 
 
+
 Window(1,y+2,Cfg->TailleX-2,Cfg->TailleY-3,Cfg->col[16]);
+
 
 if (todo!=0) return;
 
@@ -1382,7 +1377,6 @@ if (car==0)
     GetMouseFctBar(0);      //--- Allume -------------------------------
 
     car=GetMouseFctBar(2);  //--- Eteint -------------------------------
-
     }
 #endif
 
@@ -1526,10 +1520,10 @@ do
             break;
         case 4:
             fread(&lenbox,2,1,fic);
-            box[nbrbox]=(char*)GetMem(lenbox);
+            kkbox[nbrbox]=(char*)GetMem(lenbox);
             boxlen[nbrbox]=lenbox;
 
-            fread(box[nbrbox],boxlen[nbrbox],1,fic);
+            fread(kkbox[nbrbox],boxlen[nbrbox],1,fic);
             nbrbox++;
             break;
 
@@ -1600,7 +1594,9 @@ strcpy(ch,Fics->path);
 Path2Abs(ch,"iar_desc.kkr");
 
 fic=fopen(ch,"rb");
-if (fic!=NULL)
+if (fic==NULL)
+    WinError("iar_desc.kkr not found");
+    else
     {
     KKR_Read(fic);
     fclose(fic);
@@ -1699,7 +1695,7 @@ if (nbr>0)
             fwrite(&sn,1,1,fic);
             lenbox=(short)(boxlen[n]);
             fwrite(&lenbox,2,1,fic);
-            fwrite(box[n],1,lenbox,fic);
+            fwrite(kkbox[n],1,lenbox,fic);
             }
 
         sn=3;
@@ -1904,10 +1900,10 @@ DispDir(nom);
 strcpy(moi,nom);
 Path2Abs(moi,"*.KKR");
 
-if (_dos_findfirst(moi,63-_A_SUBDIR,&fic)==0)
+if (_dos_findfirst(moi,63-RB_SUBDIR,&fic)==0)
 do
     {
-    if ((fic.attrib&_A_SUBDIR)!=_A_SUBDIR)
+    if ((fic.attrib&RB_SUBDIR)!=RB_SUBDIR)
         {
         strcpy(moi,nom);
         Path2Abs(moi,fic.name);
@@ -1935,7 +1931,7 @@ Path2Abs(moi,"*.*");
 if ( (_dos_findfirst(moi,63,&fic)==0) & (subdir==1))
 do
     {
-    if  ( (fic.name[0]!='.') & (((fic.attrib)&_A_SUBDIR) == _A_SUBDIR))
+    if  ( (fic.name[0]!='.') & (((fic.attrib)&RB_SUBDIR) == RB_SUBDIR))
             {
             strcpy(moi,nom);
             Path2Abs(moi,fic.name);
@@ -1989,18 +1985,19 @@ do
 {
 o=nbrdir+1;
 
+DispDir(nom);
 St_Dir++;
 
 strcpy(nom,TabRec[NbrRec-1]);
 DispDir(nom);
 
-if (_dos_findfirst(nom,63-_A_SUBDIR,&fic)==0)
+if (_dos_findfirst(nom,63-RB_SUBDIR,&fic)==0)
 do
     {
     ok=0;
     wok=-1;
 
-    if ((fic.attrib&_A_SUBDIR)!=_A_SUBDIR)
+    if ((fic.attrib&RB_SUBDIR)!=RB_SUBDIR)
         {
         C=0;
         KKcrc=0;                               // CRC du fichier courant
@@ -2127,7 +2124,7 @@ NbrRec--;
 if ((_dos_findfirst(nom,63,&fic)==0) & (subdir==1))
 do
 	{
-    if ( (fic.name[0]!='.') & (((fic.attrib) & _A_SUBDIR)==_A_SUBDIR) )
+    if ( (fic.name[0]!='.') & (((fic.attrib) & RB_SUBDIR)==RB_SUBDIR) )
 			{
 			strcpy(moi,nom);
 			moi[strlen(moi)-3]=0;
@@ -2617,10 +2614,10 @@ bar[1].Titre="Information";
 bar[2].Titre="Tools";
 bar[3].Titre="Help";
 
-bar[0].Help=NULL;
-bar[1].Help=NULL;
-bar[2].Help=NULL;
-bar[3].Help=NULL;
+bar[0].Help=0;
+bar[1].Help=0;
+bar[2].Help=0;
+bar[3].Help=0;
 
 u=BarMenu(bar,4,&poscur,&x,0);
                                // Renvoit t: position du machin surligne
@@ -2634,30 +2631,30 @@ if (u==0)
 switch (poscur)
  {
  case 0:
-    bar[0].Titre="Search player";   bar[0].fct=4; bar[0].Help=NULL;
+    bar[0].Titre="Search player";   bar[0].fct=4; bar[0].Help=0;
     nbmenu=1;
     break;
  case 1:
-    bar[0].Titre="Show all format "; bar[0].fct=3; bar[0].Help=NULL;
-    bar[1].Titre="Quick format    "; bar[1].fct=14; bar[1].Help=NULL;
+    bar[0].Titre="Show all format "; bar[0].fct=3; bar[0].Help=0;
+    bar[1].Titre="Quick format    "; bar[1].fct=14; bar[1].Help=0;
     nbmenu=2;
     break;
  case 2:
-    bar[0].Titre="Config. Default "; bar[0].fct=10; bar[0].Help=NULL;
-    bar[1].Titre="File Setup      "; bar[1].fct=11; bar[1].Help=NULL;
-    bar[2].Titre="Key setting     "; bar[2].fct=8;  bar[2].Help=NULL;
-    bar[3].Titre=NULL;               bar[3].fct=0;  bar[3].Help=NULL;
-    bar[4].Titre="Color Definition"; bar[4].fct=12; bar[4].Help=NULL;
-    bar[5].Titre="Palette         "; bar[5].fct=13; bar[5].Help=NULL;
-    bar[6].Titre=NULL;               bar[6].fct=0;  bar[6].Help=NULL;
-    bar[7].Titre="Write Profile   "; bar[7].fct=9;  bar[7].Help=NULL;
+    bar[0].Titre="Config. Default "; bar[0].fct=10; bar[0].Help=0;
+    bar[1].Titre="File Setup      "; bar[1].fct=11; bar[1].Help=0;
+    bar[2].Titre="Key setting     "; bar[2].fct=8;  bar[2].Help=0;
+    bar[3].Titre=NULL;               bar[3].fct=0;  bar[3].Help=0;
+    bar[4].Titre="Color Definition"; bar[4].fct=12; bar[4].Help=0;
+    bar[5].Titre="Palette         "; bar[5].fct=13; bar[5].Help=0;
+    bar[6].Titre=NULL;               bar[6].fct=0;  bar[6].Help=0;
+    bar[7].Titre="Write Profile   "; bar[7].fct=9;  bar[7].Help=0;
     nbmenu=8;
     break;
  case 3:
-    bar[0].Titre="Help "; bar[0].fct=1; bar[0].Help=NULL;
-    bar[1].Titre="About"; bar[1].fct=2; bar[1].Help=NULL;
-    bar[2].Titre=NULL;    bar[2].fct=0; bar[2].Help=NULL;
-    bar[3].Titre="Exit "; bar[3].fct=7; bar[3].Help=NULL;
+    bar[0].Titre="Help "; bar[0].fct=1; bar[0].Help=0;
+    bar[1].Titre="About"; bar[1].fct=2; bar[1].Help=0;
+    bar[2].Titre=NULL;    bar[2].fct=0; bar[2].Help=0;
+    bar[3].Titre="Exit "; bar[3].fct=7; bar[3].Help=0;
     nbmenu=4;
     break;
     }
@@ -3053,31 +3050,31 @@ MENU menu;
 int retour;
 static struct barmenu bar[19];
 
-bar[0].Titre="Pannel"; bar[0].Help=NULL;
+bar[0].Titre="Pannel"; bar[0].Help=0;
 bar[0].fct=1;
 
-bar[1].Titre="KeyBar"; bar[1].Help=NULL;
+bar[1].Titre="KeyBar"; bar[1].Help=0;
 bar[1].fct=2;
 
-bar[2].Titre="Window 1"; bar[2].Help=NULL;
+bar[2].Titre="Window 1"; bar[2].Help=0;
 bar[2].fct=3;
 
-bar[3].Titre="Window 2"; bar[3].Help=NULL;
+bar[3].Titre="Window 2"; bar[3].Help=0;
 bar[3].fct=4;
 
-bar[4].Titre="Help"; bar[4].Help=NULL;
+bar[4].Titre="Help"; bar[4].Help=0;
 bar[4].fct=5;
 
-bar[5].Titre="Input Box"; bar[5].Help=NULL;
+bar[5].Titre="Input Box"; bar[5].Help=0;
 bar[5].fct=6;
 
-bar[6].Titre="PullDown Bar"; bar[6].Help=NULL;
+bar[6].Titre="PullDown Bar"; bar[6].Help=0;
 bar[6].fct=7;
 
-bar[7].Titre="PullDown Menu"; bar[7].Help=NULL;
+bar[7].Titre="PullDown Menu"; bar[7].Help=0;
 bar[7].fct=8;
 
-bar[8].Titre="HTML Viewer"; bar[8].Help=NULL;
+bar[8].Titre="HTML Viewer"; bar[8].Help=0;
 bar[8].fct=9;
 
 SaveScreen();
@@ -3174,47 +3171,47 @@ menu.attr=8;
 switch(m)
     {
     case 0:      // Pannel
-        bar[0].Titre="Border1"; bar[0].Help=NULL;
+        bar[0].Titre="Border1"; bar[0].Help=0;
         bar[0].fct=38;
 
-        bar[1].Titre="Border2"; bar[1].Help=NULL;
+        bar[1].Titre="Border2"; bar[1].Help=0;
         bar[1].fct=39;
 
-        bar[2].Titre="Normal"; bar[2].Help=NULL;
+        bar[2].Titre="Normal"; bar[2].Help=0;
         bar[2].fct=1;
 
-        bar[3].Titre="Bright"; bar[3].Help=NULL;
+        bar[3].Titre="Bright"; bar[3].Help=0;
         bar[3].fct=3;
 
-        bar[4].Titre="Reverse"; bar[4].Help=NULL;
+        bar[4].Titre="Reverse"; bar[4].Help=0;
         bar[4].fct=2;
 
-        bar[5].Titre="Underline"; bar[5].Help=NULL;
+        bar[5].Titre="Underline"; bar[5].Help=0;
         bar[5].fct=5;
 
-        bar[6].Titre="Bright Reverse"; bar[6].Help=NULL;
+        bar[6].Titre="Bright Reverse"; bar[6].Help=0;
         bar[6].fct=4;
 
-        bar[7].Titre="Underline"; bar[7].Help=NULL;
+        bar[7].Titre="Underline"; bar[7].Help=0;
         bar[7].fct=40;
 
-        bar[8].Titre="Bright Reverse"; bar[8].Help=NULL;
+        bar[8].Titre="Bright Reverse"; bar[8].Help=0;
         bar[8].fct=41;
 
-        bar[9].Titre=""; bar[9].Help=NULL;
+        bar[9].Titre=""; bar[9].Help=0;
         bar[9].fct=0;
 
-        bar[10].Titre="EXEcutable"; bar[10].Help=NULL;
+        bar[10].Titre="EXEcutable"; bar[10].Help=0;
         bar[10].fct=16;
-        bar[11].Titre="ARChive"; bar[11].Help=NULL;
+        bar[11].Titre="ARChive"; bar[11].Help=0;
         bar[11].fct=23;
-        bar[12].Titre="SouNDfile"; bar[12].Help=NULL;
+        bar[12].Titre="SouNDfile"; bar[12].Help=0;
         bar[12].fct=24;
-        bar[13].Titre="BitMaP"; bar[13].Help=NULL;
+        bar[13].Titre="BitMaP"; bar[13].Help=0;
         bar[13].fct=33;
-        bar[14].Titre="TeXT"; bar[14].Help=NULL;
+        bar[14].Titre="TeXT"; bar[14].Help=0;
         bar[14].fct=34;
-        bar[15].Titre="USeR defined"; bar[15].Help=NULL;
+        bar[15].Titre="USeR defined"; bar[15].Help=0;
         bar[15].fct=35;
 
         menu.cur=0;
@@ -3245,13 +3242,13 @@ switch(m)
 
 
     case 1:     // KeyBar
-        bar[0].Titre="Normal"; bar[0].Help=NULL;
+        bar[0].Titre="Normal"; bar[0].Help=0;
         bar[0].fct=7;
 
-        bar[1].Titre="Bright"; bar[1].Help=NULL;
+        bar[1].Titre="Bright"; bar[1].Help=0;
         bar[1].fct=6;
 
-        bar[2].Titre="Command Line"; bar[2].Help=NULL;
+        bar[2].Titre="Command Line"; bar[2].Help=0;
         bar[2].fct=64;
 
         n=0;
@@ -3284,19 +3281,19 @@ switch(m)
         break;
 
     case 2:     // Window 1
-        bar[0].Titre="Border1"; bar[0].Help=NULL;
+        bar[0].Titre="Border1"; bar[0].Help=0;
         bar[0].fct=56;
 
-        bar[1].Titre="Border2"; bar[1].Help=NULL;
+        bar[1].Titre="Border2"; bar[1].Help=0;
         bar[1].fct=57;
 
-        bar[2].Titre="Normal"; bar[2].Help=NULL;
+        bar[2].Titre="Normal"; bar[2].Help=0;
         bar[2].fct=17;
 
-        bar[3].Titre="Bright"; bar[3].Help=NULL;
+        bar[3].Titre="Bright"; bar[3].Help=0;
         bar[3].fct=18;
 
-        bar[4].Titre="Reverse"; bar[4].Help=NULL;
+        bar[4].Titre="Reverse"; bar[4].Help=0;
         bar[4].fct=19;
 
         n=0;
@@ -3329,19 +3326,19 @@ switch(m)
         break;
 
     case 3:    // Window 2
-        bar[0].Titre="Border1"; bar[0].Help=NULL;
+        bar[0].Titre="Border1"; bar[0].Help=0;
         bar[0].fct=47;
 
-        bar[1].Titre="Border2"; bar[1].Help=NULL;
+        bar[1].Titre="Border2"; bar[1].Help=0;
         bar[1].fct=48;
 
-        bar[2].Titre="Normal"; bar[2].Help=NULL;
+        bar[2].Titre="Normal"; bar[2].Help=0;
         bar[2].fct=29;
 
-        bar[3].Titre="Bright"; bar[3].Help=NULL;
+        bar[3].Titre="Bright"; bar[3].Help=0;
         bar[3].fct=30;
 
-        bar[4].Titre="Reverse"; bar[4].Help=NULL;
+        bar[4].Titre="Reverse"; bar[4].Help=0;
         bar[4].fct=31;
 
         n=0;
@@ -3378,25 +3375,25 @@ switch(m)
         break;
 
     case 4:     // Help
-        bar[0].Titre="Border1"; bar[0].Help=NULL;
+        bar[0].Titre="Border1"; bar[0].Help=0;
         bar[0].fct=53;
 
-        bar[1].Titre="Border2"; bar[1].Help=NULL;
+        bar[1].Titre="Border2"; bar[1].Help=0;
         bar[1].fct=54;
 
-        bar[2].Titre="Normal"; bar[2].Help=NULL;
+        bar[2].Titre="Normal"; bar[2].Help=0;
         bar[2].fct=25;
 
-        bar[3].Titre="Bright"; bar[3].Help=NULL;
+        bar[3].Titre="Bright"; bar[3].Help=0;
         bar[3].fct=26;
 
-        bar[4].Titre="Reverse"; bar[4].Help=NULL;
+        bar[4].Titre="Reverse"; bar[4].Help=0;
         bar[4].fct=27;
 
-        bar[5].Titre="Underline"; bar[5].Help=NULL;
+        bar[5].Titre="Underline"; bar[5].Help=0;
         bar[5].fct=28;
 
-        bar[6].Titre="Bright Reverse"; bar[6].Help=NULL;
+        bar[6].Titre="Bright Reverse"; bar[6].Help=0;
         bar[6].fct=55;
 
         n=0;
@@ -3429,25 +3426,25 @@ switch(m)
         break;
 
     case 5:     // Input Box
-        bar[0].Titre="Border1"; bar[0].Help=NULL;
+        bar[0].Titre="Border1"; bar[0].Help=0;
         bar[0].fct=45;
 
-        bar[1].Titre="Border2"; bar[1].Help=NULL;
+        bar[1].Titre="Border2"; bar[1].Help=0;
         bar[1].fct=46;
 
-        bar[2].Titre="Normal"; bar[2].Help=NULL;
+        bar[2].Titre="Normal"; bar[2].Help=0;
         bar[2].fct=20;
 
-        bar[3].Titre="Bright"; bar[3].Help=NULL;
+        bar[3].Titre="Bright"; bar[3].Help=0;
         bar[3].fct=21;
 
-        bar[4].Titre="Reverse"; bar[4].Help=NULL;
+        bar[4].Titre="Reverse"; bar[4].Help=0;
         bar[4].fct=22;
 
-        bar[5].Titre="Button Off"; bar[5].Help=NULL;
+        bar[5].Titre="Button Off"; bar[5].Help=0;
         bar[5].fct=49;
 
-        bar[6].Titre="Button On"; bar[6].Help=NULL;
+        bar[6].Titre="Button On"; bar[6].Help=0;
         bar[6].fct=50;
 
         n=0;
@@ -3480,16 +3477,16 @@ switch(m)
         break;
 
     case 6:     // PullDown Bar
-        bar[0].Titre="Normal"; bar[0].Help=NULL;
+        bar[0].Titre="Normal"; bar[0].Help=0;
         bar[0].fct=8;
 
-        bar[1].Titre="Bright"; bar[1].Help=NULL;
+        bar[1].Titre="Bright"; bar[1].Help=0;
         bar[1].fct=43;
 
-        bar[2].Titre="Reverse"; bar[2].Help=NULL;
+        bar[2].Titre="Reverse"; bar[2].Help=0;
         bar[2].fct=9;
 
-        bar[3].Titre="Bright Reverse"; bar[3].Help=NULL;
+        bar[3].Titre="Bright Reverse"; bar[3].Help=0;
         bar[3].fct=44;
 
         n=0;
@@ -3522,22 +3519,22 @@ switch(m)
         break;
 
     case 7:     // PullDown Menu
-        bar[0].Titre="Border1"; bar[0].Help=NULL;
+        bar[0].Titre="Border1"; bar[0].Help=0;
         bar[0].fct=10;
 
-        bar[1].Titre="Border2"; bar[1].Help=NULL;
+        bar[1].Titre="Border2"; bar[1].Help=0;
         bar[1].fct=42;
 
-        bar[2].Titre="Normal"; bar[2].Help=NULL;
+        bar[2].Titre="Normal"; bar[2].Help=0;
         bar[2].fct=11;
 
-        bar[3].Titre="Bright"; bar[3].Help=NULL;
+        bar[3].Titre="Bright"; bar[3].Help=0;
         bar[3].fct=12;
 
-        bar[4].Titre="Reverse"; bar[4].Help=NULL;
+        bar[4].Titre="Reverse"; bar[4].Help=0;
         bar[4].fct=13;
 
-        bar[5].Titre="Bright Reverse"; bar[5].Help=NULL;
+        bar[5].Titre="Bright Reverse"; bar[5].Help=0;
         bar[5].fct=14;
 
         n=0;
@@ -3570,34 +3567,34 @@ switch(m)
         break;
 
     case 8:     // Viewer HTML
-        bar[0].Titre="Title"; bar[0].Help=NULL;
+        bar[0].Titre="Title"; bar[0].Help=0;
         bar[0].fct=36;
 
-        bar[1].Titre="H1"; bar[1].Help=NULL;
+        bar[1].Titre="H1"; bar[1].Help=0;
         bar[1].fct=37;
 
-        bar[2].Titre="H2"; bar[2].Help=NULL;
+        bar[2].Titre="H2"; bar[2].Help=0;
         bar[2].fct=51;
 
-        bar[3].Titre="H3"; bar[3].Help=NULL;
+        bar[3].Titre="H3"; bar[3].Help=0;
         bar[3].fct=52;
 
-        bar[4].Titre="H4"; bar[4].Help=NULL;
+        bar[4].Titre="H4"; bar[4].Help=0;
         bar[4].fct=58;
 
-        bar[5].Titre="H5"; bar[5].Help=NULL;
+        bar[5].Titre="H5"; bar[5].Help=0;
         bar[5].fct=59;
 
-        bar[6].Titre="H6"; bar[6].Help=NULL;
+        bar[6].Titre="H6"; bar[6].Help=0;
         bar[6].fct=60;
 
-        bar[7].Titre="Bold"; bar[7].Help=NULL;
+        bar[7].Titre="Bold"; bar[7].Help=0;
         bar[7].fct=61;
 
-        bar[8].Titre="Italic"; bar[8].Help=NULL;
+        bar[8].Titre="Italic"; bar[8].Help=0;
         bar[8].fct=62;
 
-        bar[9].Titre="Underline"; bar[9].Help=NULL;
+        bar[9].Titre="Underline"; bar[9].Help=0;
         bar[9].fct=63;
 
         n=0;
@@ -4327,14 +4324,14 @@ switch(key)
     case KEY_F(9) + 0x2D00:   strcpy(buffer,"<ALT>+<F9>");  break;
     case KEY_F(10) + 0x2D00:  strcpy(buffer,"<ALT>+<F10>"); break;
 
-    case KEY_F11 :  strcpy(buffer,"<F11>");  break;
-    case KEY_F12 :  strcpy(buffer,"<F12>");  break;
-    case KEY_F11 + 0x0200:   strcpy(buffer,"<SHIFT>+<F11>");  break;
-    case KEY_F12 + 0x0200:   strcpy(buffer,"<SHIFT>+<F12>");  break;
-    case KEY_F11 + 0x0400:   strcpy(buffer,"<CTRL>+<F11>");  break;
-    case KEY_F12 + 0x0400:   strcpy(buffer,"<CTRL>+<F12>");  break;
-    case KEY_F11 + 0x0600:   strcpy(buffer,"<ALT>+<F11>");  break;
-    case KEY_F12 + 0x0600:   strcpy(buffer,"<ALT>+<F12>");  break;
+    case KEY_F(11) :  strcpy(buffer,"<F11>");  break;
+    case KEY_F(12) :  strcpy(buffer,"<F12>");  break;
+    case KEY_F(11) + 0x0200:   strcpy(buffer,"<SHIFT>+<F11>");  break;
+    case KEY_F(12) + 0x0200:   strcpy(buffer,"<SHIFT>+<F12>");  break;
+    case KEY_F(11) + 0x0400:   strcpy(buffer,"<CTRL>+<F11>");  break;
+    case KEY_F(12) + 0x0400:   strcpy(buffer,"<CTRL>+<F12>");  break;
+    case KEY_F(11) + 0x0600:   strcpy(buffer,"<ALT>+<F11>");  break;
+    case KEY_F(12) + 0x0600:   strcpy(buffer,"<ALT>+<F12>");  break;
 
     case KEY_PPAGE : strcpy(buffer,"<PGUP>");   break;
     case KEY_NPAGE : strcpy(buffer,"<PGDN>");   break;
@@ -4345,9 +4342,9 @@ switch(key)
     case KEY_END   : strcpy(buffer,"<END>");    break;
     case KEY_HOME  : strcpy(buffer,"<HOME>");   break;
 
-    case KEY_INS: strcpy(buffer,"<INS>"); break;
+//    case KEY_INS: strcpy(buffer,"<INS>"); break;
 
-    case KEY_A_ENTER: strcpy(buffer,"<ALT>+<ENTER>"); break;
+//    case KEY_A_ENTER: strcpy(buffer,"<ALT>+<ENTER>"); break;
 
 //    case KEY_S_PPAGE : strcpy(buffer,"<SHIFT>+<PGUP>");   break;
 //    case KEY_S_NPAGE : strcpy(buffer,"<SHIFT>+<PGDN>");   break;
@@ -4358,17 +4355,17 @@ switch(key)
 //    case KEY_S_END   : strcpy(buffer,"<SHIFT>+<END>");    break;
 //    case KEY_S_HOME  : strcpy(buffer,"<SHIFT>+<HOME>");   break;
 
-    case KEY_C_PPAGE : strcpy(buffer,"<CTRL>+<PGUP>");   break;
-    case KEY_C_NPAGE : strcpy(buffer,"<CTRL>+<PGDN>");   break;
+//    case KEY_C_PPAGE : strcpy(buffer,"<CTRL>+<PGUP>");   break;
+//    case KEY_C_NPAGE : strcpy(buffer,"<CTRL>+<PGDN>");   break;
     case KEY_C_UP    : strcpy(buffer,"<CTRL>+<UP>");     break;
-    case KEY_C_DOWN  : strcpy(buffer,"<CTRL>+<DOWN>");   break;
+//    case KEY_C_DOWN  : strcpy(buffer,"<CTRL>+<DOWN>");   break;
     case KEY_C_RIGHT : strcpy(buffer,"<CTRL>+<RIGHT>");  break;
     case KEY_C_LEFT  : strcpy(buffer,"<CTRL>+<LEFT>");   break;
 //    case KEY_C_END   : strcpy(buffer,"<CTRL>+<END>");    break;
 //    case KEY_C_HOME  : strcpy(buffer,"<CTRL>+<HOME>");   break;
 
 //    case KEY_A_PPAGE : strcpy(buffer,"<ALT>+<PGUP>");   break;
-    case KEY_A_NPAGE : strcpy(buffer,"<ALT>+<PGDN>");   break;
+//    case KEY_A_NPAGE : strcpy(buffer,"<ALT>+<PGDN>");   break;
 //    case KEY_A_UP    : strcpy(buffer,"<ALT>+<UP>");     break;
 //    case KEY_A_DOWN  : strcpy(buffer,"<ALT>+<DOWN>");   break;
 //    case KEY_A_RIGHT : strcpy(buffer,"<ALT>+<RIGHT>");  break;

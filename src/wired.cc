@@ -9,8 +9,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <dos.h>
-#include <direct.h>
+
+#ifndef LINUX
+    #include <dos.h>
+    #include <direct.h>
+#else
+    #include <unistd.h>
+	#include <sys/stat.h>
+	#include <sys/types.h>
+#endif
 
 #include "kk.h"
 
@@ -42,6 +49,29 @@ struct wiredcfg
 	char ldescri[33];
 	char ltitle[33];
 	};
+
+void center(char *buffer,int length)
+{
+int i,n,l;
+char *buf;
+
+buf=(char*)GetMem(length+1);
+
+l=strlen(buffer);
+n=(length-l)/2;
+for(i=0;i<n;i++)
+	buf[i]=32;
+buf[n]=0;
+strcat(buf,buffer);
+n=strlen(buf);
+while(n<length)
+	{
+	buf[n]=32;
+	n++;
+	}
+buf[n]=0;
+strcpy(buffer,buf);
+}
 
 void CompoCfg(struct wiredcfg *wcfg)
 {
@@ -417,7 +447,7 @@ if ((path[n]==0) | (path[n]=='\\'))
 	strcpy(nom,path);
 	nom[n]=0;
 	if (chdir(nom)!=0)
-		mkdir(nom);
+		mkdir(nom,0);
 	}
 }
 while(path[n]!=0);
@@ -513,7 +543,7 @@ if (res==0)
 
 			sprintf(buffer,"%d",numero);
 			for(i=0;i<DFen->nbrfic;i++)
-                if (!WildCmp(GetFilename(DFen,i),buffer))
+				if (!WildCmp(DFen->F[i]->name,buffer))
 					ok=0;
 
 			}
@@ -571,7 +601,7 @@ if (res==0)
 		fprintf(fic,"%-7s %35s ≤\n",buffer,componame);
 
 		strcpy(buffer,wcfg.ltitle);
-		CenterString(buffer,41);
+		center(buffer,41);
 		fprintf(fic,"≤ %41s ≤\n",buffer);
  // 	  fprintf(fic,"≤                                           ≤\n",buffer);
 
@@ -580,7 +610,7 @@ if (res==0)
 		strcat(buffer,"/");
 		strcat(buffer,wcfg.lgroupe);
 		strcat(buffer," )");
-		CenterString(buffer,41);
+		center(buffer,41);
 		fprintf(fic,"± %-36s ±\n",buffer);
 		fprintf(fic,"ﬂ€€ﬂ‹ﬂ ‹   ‹      ‹   ﬂ  ‹ﬂ‹ﬂ‹  ‹   ‹   ﬂ€€€ﬂ");
 		fclose(fic);
@@ -687,7 +717,7 @@ if (res==2)
 
 		sprintf(buffer,"%d",numero);
 		for(i=0;i<DFen->nbrfic;i++)
-            if (!WildCmp(GetFilename(DFen,i),buffer))
+			if (!WildCmp(DFen->F[i]->name,buffer))
 				ok=0;
 
 		}

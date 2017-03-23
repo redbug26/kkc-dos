@@ -1196,12 +1196,11 @@ struct key K[nbrkey]=   {
 /*
    other: bit 7 6 5 4 3 2 1 0
               ³ ³ ³ ³ ³ ³ ³ ³
-              ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ  1: IDF have more information on file
-              ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ  2: The key is not defined in structure
-              ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄÄ  4: This is a text file
-              ³ ³ ³ ³ ÀÄÄÄÄÄÄÄÄÄ  8: Sauce information possible
-              ³ ³ ³ ÀÄÄÄÄÄÄÄÄÄÄÄ 10: MP3 information possible
-              ÀÄÁÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄ   : Always to 0
+              ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ 1: IDF have more information on file
+              ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ 2: The key is not defined in structure
+              ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄÄ 4: This is a text file
+              ³ ³ ³ ³ ÀÄÄÄÄÄÄÄÄÄ 8: Sauce information possible
+              ÀÄÁÄÁÄÁÄÄÄÄÄÄÄÄÄÄÄ  : Always to 0
    type: 1: module
          2: sample
          3: archive
@@ -1281,14 +1280,14 @@ struct key K[nbrkey]=   {
      "MPEG 2 Audio Layer 2",
      "MP2",
      "ISO",
-     135,0x10+1*2+1,2},
+     135,1*2+1,2},
 {  NULL,
      0,
      0,
      "MPEG 2 Audio Layer 3",
      "MP3",
      "ISO",
-     136,0x10+1*2+1,2},
+     136,1*2+1,2},
 {  "\x80",
     1,
     0,
@@ -1437,11 +1436,11 @@ void SplitName(char *filename,char *name,char *ext);
 void Size2Chr(int Size,char *Taille);
                               // transforme la taille indiqu‚e en chaine
 
-int IsTxt(RB_IDF *Info); //--Renvoit le pourcentage texte (>50=texte)--
+bool IsTxt(RB_IDF *Info); //--Renvoit le pourcentage texte (>50=texte)--
 
 short Infotxt(RB_IDF *Info);   //--- Test pour voir si c'est du texte --
 short InfoSauce(RB_IDF *Info);
-short InfoMP3(RB_IDF *Info);
+short InfoID3(RB_IDF *Info);
 short Infomtm(RB_IDF *Info);
 short Infong(RB_IDF *Info);
 short Infoexe1(RB_IDF *Info);
@@ -1545,7 +1544,7 @@ void   ReadStr(RB_IDF *Info,ulong position,char *str,int taille);
 ulong  ReadLng(RB_IDF *Info,ulong position,uchar type);
 ushort ReadInt(RB_IDF *Info,ulong position,uchar type);
 uchar   ReadChar(RB_IDF *Info,ulong position);
-void   ReadMem(RB_IDF *Info,ulong position,void *str,int taille);
+uchar   ReadMem(RB_IDF *Info,ulong position,void *str,int taille);
 
 uchar sstricmp(char *dest,char *src);
 uchar sstrnicmp(char *src,char *dest,int i);
@@ -1560,22 +1559,6 @@ char tampon[1024];                   // Tampon pour faire n'importe quoi
 |-                        FIN DES DECLARATIONS                        -|
 \*--------------------------------------------------------------------*/
 
-int ReadCmp(RB_IDF *Info,ulong position,char *str,int taille)
-{
-char *buf;
-uchar res;
-
-buf=(char*)malloc(taille);
-
-ReadMem(Info,position,(void*)buf,taille);
-
-res=(uchar)memcmp(str,buf,taille);
-
-free(buf);
-
-return res;
-}
-
 
 /*--------------------------------------------------------------------*\
 |- positon par rapport … posfic                                       -|
@@ -1585,31 +1568,15 @@ return res;
 ulong ReadLng(RB_IDF *Info,ulong position,uchar type)
 {
 ulong entier;
-int pos;
 uchar *a;
 uchar *b;
 ulong result;
 
-assert((type==1) | (type==2));  //--- Condition de continuation --------
-
-if (position+4>(Info->sizemax-Info->posfic))
+if (ReadMem(Info,position,(void*)&entier,4)==0)
     return 0;
-
-if ( ( ((position+4)>(Info->posbuf+Info->sizebuf)) |
-         (position<Info->posbuf)) & (Info->fic!=NULL) )
-    {
-    pos=ftell(Info->fic);
-    fseek(Info->fic,position,SEEK_SET);
-    fread(&entier,4,1,Info->fic);
-    fseek(Info->fic,pos,SEEK_SET);
-    }
-else
-    entier=*(ulong*)(Info->buffer+(ushort)position);
 
 if (type==1)
     return entier;
-
-// if (type==2)
 
 result=entier;
 a=(uchar*)&entier;
@@ -1634,23 +1601,9 @@ ushort entier;
 uchar *a;
 uchar *b;
 ushort result;
-int pos;
 
-if (position+2>(Info->sizemax-Info->posfic))
+if (ReadMem(Info,position,(void*)&entier,2)==0)
     return 0;
-
-if ( ( ((position+2)>(Info->posbuf+Info->sizebuf)) |
-         (position<Info->posbuf)) & (Info->fic!=NULL) )
-    {
-    pos=ftell(Info->fic);
-    fseek(Info->fic,position,SEEK_SET);
-    fread(&entier,2,1,Info->fic);
-    fseek(Info->fic,pos,SEEK_SET);
-    }
-else
-    {
-    entier=*(ushort*)(Info->buffer+(ushort)position);
-    }
 
 if (type==1)
     return entier;
@@ -1666,18 +1619,20 @@ if (type==2)
     return result;
     }
 
-return -1;
+return 0;
 }
 
 /*--------------------------------------------------------------------*\
 |-  positon par rapport … posfic                                      -|
 \*--------------------------------------------------------------------*/
-void ReadMem(RB_IDF *Info,ulong position,void *str,int taille)
+uchar ReadMem(RB_IDF *Info,ulong position,void *str,int taille)
 {
 int pos;
 
+position += Info->begin;
+
 if ((position+taille)>(Info->sizemax-Info->posfic))
-    return;
+    return 0;
 
 if ( ( ((position+taille)>(Info->posbuf+Info->sizebuf)) |
         (position<Info->posbuf)) & (Info->fic!=NULL) )
@@ -1689,6 +1644,40 @@ if ( ( ((position+taille)>(Info->posbuf+Info->sizebuf)) |
     }
 else
     memcpy((char*)str,Info->buffer+(ushort)position,taille);
+
+return 1;
+}
+
+/*--------------------------------------------------------------------*\
+ * Readmem compliant *
+\*--------------------------------------------------------------------*/
+uchar ReadChar(RB_IDF *Info,ulong position)
+{
+int pos;
+uchar a;
+
+if (ReadMem(Info,position,(void*)&a,1)==0) 
+    return 0;
+
+return a;
+}
+
+/* Others fonctions (ReadMem compliant) */
+
+int ReadCmp(RB_IDF *Info,ulong position,char *str,int taille)
+{
+char *buf;
+uchar res;
+
+buf=(char*)malloc(taille);
+
+ReadMem(Info,position,(void*)buf,taille);
+
+res=(uchar)memcmp(str,buf,taille);
+
+free(buf);
+
+return res;
 }
 
 
@@ -1703,30 +1692,6 @@ str[taille]=0;
 ClearSpace(str);
 }
 
-/*--------------------------------------------------------------------*\
-|-  positon par rapport … posfic                                      -|
-\*--------------------------------------------------------------------*/
-uchar ReadChar(RB_IDF *Info,ulong position)
-{
-int pos;
-uchar a;
-
-if (position+1>(Info->sizemax-Info->posfic))
-    return 0;
-
-if ( ( ((position+1)>(Info->posbuf+Info->sizebuf)) |
-        (position<Info->posbuf)) & (Info->fic!=NULL) )
-    {
-    pos=ftell(Info->fic);
-    fseek(Info->fic,position,SEEK_SET);
-    fread(&a,1,1,Info->fic);
-    fseek(Info->fic,pos,SEEK_SET);
-    }
-else
-    a=Info->buffer[position];
-
-return a;
-}
 
 
 /*--------------------------------------------------------------------*\
@@ -1805,9 +1770,10 @@ uchar sstricmp(char *dest,char *src)
 {
 int n;
 
-for (n=0;n<strlen(src);n++)
+for (n=0;n<strlen(src);n++) {
     if (toupper(dest[n])!=toupper(src[n]))
         return 1;
+    }
 
 return 0;
 }
@@ -1878,7 +1844,7 @@ void Traitefic(RB_IDF *Info)
 int n;
 int err;
 
-int trv=-1;       //--- vaut -1 tant que l'on a rien trouv‚ ------------
+signed int trv=-1;       //--- vaut -1 tant que l'on a rien trouv‚ ------------
 
 Info->numero=-1;
 
@@ -1894,7 +1860,7 @@ if (Info->path[0]!=0)
     if (Info->fic==NULL)
         {
         strcpy(Info->format,"Invalid Filename");
-        strcpy(Info->fullname,"Unknow");
+        strcpy(Info->fullname,"Unknown");
         return;
         }
 
@@ -1908,7 +1874,7 @@ if (Info->path[0]!=0)
         {
         fclose(Info->fic);
         strcpy(Info->format,"Null File");
-        strcpy(Info->fullname,"Unknow");
+        strcpy(Info->fullname,"Unknown");
         return;
         }
 
@@ -1944,6 +1910,8 @@ if (Info->path[0]!=0)
     Info->sizebuf=(ushort)Info->buflen;
     }
 
+InfoID3(Info);
+
 
 for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
     {
@@ -1953,6 +1921,8 @@ for (n=0;n<nbrkey-6;n++)  //--- Il faut ignorer les 6 derniers clefs ---
         Wait(0,0);
         }
 */
+
+            // printf("(%d,%X)",K[n].numero,Info->posfic);
 
     if ( (((K[n].other)&2)==0) & ((K[n].buf)!=NULL) )
         if (!ReadCmp(Info,K[n].pos,K[n].buf,K[n].len))
@@ -2072,21 +2042,18 @@ if (trv==-1)
     n=-2; //--- format non reconnu -------------------------------------
 
     strcpy(Info->format,"Unknown Format");
+
     SplitName(Info->filename,NULL,Info->ext);
 
     Info->Btype=0;
     }
-else
+    else
     {
-    if (((K[trv].other)&0x08)==0x08)
+    if (((K[trv].other)&8)==8)
         InfoSauce(Info);
-
-    if (((K[trv].other)&0x10)==0x10)
-        InfoMP3(Info);
 
     if (*Info->format==0)
         strcpy(Info->format,K[trv].format);
-
     if (*Info->ext==0)
         strcpy(Info->ext,K[trv].ext);
 
@@ -3955,8 +3922,6 @@ char titre[64];
 char comment[32],file[15];
 uchar ok,car;
 
-Info->fullname[0]=0;
-
 comment[0]=0;
 file[0]=0;
 ok=0;
@@ -3970,11 +3935,11 @@ for(n=0;n<Info->sizebuf;n++)
         case 10:
         case 13:
             titre[d]=0;
-            if ((!sstrnicmp(titre,"#comment",8)) & (comment[0]==0))
+            if ((!strnicmp(titre,"#comment",8)) & (comment[0]==0))
                 strcpy(comment,titre+9);
-            if (!sstrnicmp(titre,"#file",4))
+            if (!strnicmp(titre,"#file",4))
                 strcpy(file,titre+5);
-            if (!sstrnicmp(titre,"#paroles",8))
+            if (!strnicmp(titre,"#paroles",8))
                 ok=1;
             d=0;
             break;
@@ -4330,7 +4295,7 @@ return 0;
 }
 
 
-int IsTxt(RB_IDF *Info)
+bool IsTxt(RB_IDF *Info)
 {
 unsigned short pos;
 uchar a;
@@ -4412,12 +4377,14 @@ if (val<50)
 return val;
 }
 
+// TODO: isoler le <TITLE></TITLE>
 short Infohtm(RB_IDF *Info)
 {
 unsigned long n,d;
-char titre[64];
+char titre[80];
+int ititle;
 
-Info->fullname[0]=0;
+char ishtml = 0;
 
 d=0;
 for(n=0;n<Info->sizebuf;n++)
@@ -4431,21 +4398,35 @@ for(n=0;n<Info->sizebuf;n++)
             d=n+1;
             break;
         case '>':
-            if (d==0) return 1;
+            if (d==0) break;
             ReadStr(Info,d,titre,32);
             if (n-d<64)
                 {
                 titre[n-d]=0;
-                if (!sstricmp(titre,"HTML")) return 0;
-                if (!sstricmp(titre,"TITLE")) return 0;
-                if (!sstricmp(titre,"PRE")) return 0;
+                if (!sstricmp(titre,"HTML")) 
+                    ishtml++;
+                if (!sstricmp(titre,"TITLE")) {
+                    ititle = n+1;
+                    ishtml++;
+                    }
+                if (!sstricmp(titre,"/TITLE")) {
+                    ReadStr(Info,ititle,titre,79);
+                    if (n-ititle-7<80) {
+                        titre[n-ititle-7]=0;
+                        } 
+                    strcpy(Info->fullname, titre);
+                    ishtml++;
+                    }
                 d=0;
                 }
             break;
         default:
-            if (d==0) return 1;
             break;
         }
+    }
+
+if (ishtml !=0) {
+    return 0;
     }
 
 return 1;
@@ -4562,26 +4543,88 @@ if (!strcmp(buffer,"SAUCE"))
 return 1;
 }
 
-short InfoMP3(RB_IDF *Info)
+short InfoID3(RB_IDF *Info)
 {
-char buffer[3];
+uchar flag,csize[4],rcsize[3];
+char buffer[32];
 int pos;
+char version[2], frameflag[2];
+ulong size, frameid;
+char album[256], title[256], artist[256];
+ulong rsize;
 
-//--- Teste si on a sauce ----------------------------------------------
-
-pos=Info->sizemax-128;
-
+pos=0;
 ReadStr(Info,pos,buffer,3);
-if (!memcmp(buffer,"TAG",3))
-    {
-    ReadStr(Info,pos+3,Info->fullname,30);
-    ReadStr(Info,pos+33,Info->composer,30);
+if (!strcmp(buffer,"ID3")) {
+    ReadMem(Info,pos+3,&version,2);
+    ReadMem(Info,pos+5,&flag,1);
+    ReadMem(Info,pos+6,&csize,4);
 
-    strcpy(Info->Tinfo,"Rem");
-    ReadStr(Info,pos+63,Info->info,30);
-    return 0;
+    pos = 10;
+
+    if (version[0] == 3) {
+    do {
+        frameid = ReadLng(Info,pos,2);
+        size = ReadLng(Info,pos+4,2);
+        ReadMem(Info,pos+8,frameflag,2);
+
+        rsize = size - 1;
+        if (rsize > 79) {
+            rsize = 79;
+            }
+
+        switch (frameid) {
+            case 0x54414C42: // 'TALB':
+                ReadStr(Info,pos+11,album,rsize);
+                break;
+            case 0x54504531: // 'TPE1':
+                ReadStr(Info,pos+11,artist,rsize);
+                strcpy(Info->composer, artist);
+                break;
+            case 0x54495432: // 'TIT2':
+                ReadStr(Info,pos+11,title,rsize);
+                strcpy(Info->fullname, title);
+                break;
+            }
+        pos+=10+size;
+
+    } while (frameid != 0);
     }
 
-return 1;
-}
+    if (version[0] == 2) {
+    do {
+        ReadMem(Info,pos,(void*)rcsize,3);
+        frameid = rcsize[0] * 0x10000 + rcsize[1] * 0x100 + rcsize[2];
 
+        ReadMem(Info,pos+3,(void*)rcsize,3);
+        size = rcsize[0] * 0x10000 + rcsize[1] * 0x100 + rcsize[2];
+
+        rsize = size - 1;
+        if (rsize > 79) {
+            rsize = 79;
+            }
+
+        switch (frameid) {
+            case 0x54414C: // 'TAL':
+                ReadStr(Info,pos+7,album,rsize);
+                break;
+            case 0x544F4C: // 'TOA':
+                ReadStr(Info,pos+7,artist,rsize);
+                strcpy(Info->composer, artist);
+                break;
+            case 0x545432: // 'TT2':
+            case 0x544F54: // 'TOT':
+                ReadStr(Info,pos+7,title,rsize);
+                strcpy(Info->fullname, title);
+                break;
+            }
+        pos+=6+size;
+
+    } while (frameid != 0);
+    }
+
+    size = csize[0]* 0x200000 + csize[1]* 0x4000 + csize[2]* 0x80 + csize[3];
+    Info->begin += size + 10;
+    }
+
+}

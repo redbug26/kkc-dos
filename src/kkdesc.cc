@@ -86,8 +86,8 @@ for (n=strlen(path);n>0;n--)
         break;
         }
 
-ColWin(0,0,Cfg->TailleX-1,Cfg->TailleY-1,7);
-ChrWin(0,0,Cfg->TailleX-1,Cfg->TailleY-1,32);
+ColWin(0,0,79,49,7);
+ChrWin(0,0,79,49,32);
 GotoXY(0,0);
 
 if (argc==3)

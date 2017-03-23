@@ -70,7 +70,8 @@ typedef struct __idfinfo
    ushort sizebuf;                                     // size of buffer
    FILE *fic;
    ulong posfic;
-   ulong sizemax;                            // taille r‚elle du fichier
+   ulong sizemax;                            // taille reelle du fichier
+   ulong begin;
 } RB_IDF;
 
 

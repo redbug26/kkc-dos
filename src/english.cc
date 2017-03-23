@@ -9,15 +9,15 @@
 // - Minimal version of Ketchup Killers Macro needed (0 if not handled)
 
 INFOFCT InfoFct[NBRFUNCT]= {
- {	1,1," Help ","Help",91,1},
- {	2,1," Invt ","Invert selection",91,1},
- {	3,1," Slct ","Select group..",91,1},
- {	4,1,"Unslct","Unselect group..",91,1},
- {	5,1,"Search","Search files..",91,1},
- {	6,1," MKKD ","Create a KKD file",91,0},
- {	7,1," View ","View file",91,0},
- {	8,1,"InView","Quick view file",91,0},
- {	9,1," Edit ","Edit file",91,0},
+ {  1,1," Help ","Help",91,1},
+ {  2,1," Invt ","Invert selection",91,1},
+ {  3,1," Slct ","Select group..",91,1},
+ {  4,1,"Unslct","Unselect group..",91,1},
+ {  5,1,"Search","Search files..",91,1},
+ {  6,1," MKKD ","Create a KKD file",91,0},
+ {  7,1," View ","View file",91,0},
+ {  8,1,"InView","Quick view file",91,0},
+ {  9,1," Edit ","Edit file",91,0},
  { 10,1," Copy ","Copy files",91,0},
  { 11,1," Move ","Move files",91,0},
  { 12,1," MDir ","Create directory..",91,0},
@@ -100,7 +100,7 @@ INFOFCT InfoFct[NBRFUNCT]= {
  { 89,1,"ActivW","Toggle active window",91,0},
  { 90,1," Ansi ","View/save background",91,0},
  { 91,0," ---- ","?? Console",91,0},
- { 92,1,"Select","Select or unselect list of files",91,1},
+ { 92,1,"SUnsel","Select or unselect list of files",91,1},
  { 93,1,"NextLn","Get next command line",91,0},
  { 94,1,"QkSrch","Quick search",91,0},
  { 95,1,"BarIdf","Toggle status bar & idf bar",91,0},
@@ -121,27 +121,25 @@ INFOFCT InfoFct[NBRFUNCT]= {
  {110,1,"View..","View a file (internal or external)",100,0},
  {111,1,"SizeDr","Size of directory",110,0},
  {112,1,"NCompo","Add a new compo",130,0},
- {113,1,"CompoC","Compo Configuration",130,0},
- {114,1,"Tree..","Tree directory",130,0}
-
+ {113,1,"CompoC","Compo Configuration",130,0}
 
  };
 
 
 char _BarHeader[][10]=
-	{"File","Panel","Disk","Selection","Tools","Options","Help"};
+    {"File","Panel","Disk","Selection","Tools","Options","Help"};
 
 
 /*--------------------------------------------------------------------*\
-|- Label in pannel													  -|
+|- Label in pannel                                                    -|
 \*--------------------------------------------------------------------*/
 
 char _PannelHeader[][20]=
-	{"    Name    ",               // 12
-	 "   Size   ",                 // 10
-	 "  Date  ",                   // 8
-	 "Time ",                      // 5
-	 "     Fullname     "};        // 18
+    {"    Name    ",               // 12
+     "   Size   ",                 // 10
+     "  Date  ",                   // 8
+     "Time ",                      // 5
+     "     Fullname     "};        // 18
 
 char _OneFilHeader[]="%-10s bytes in one file         ";
 char _MulFilHeader[]="%-10s bytes in %3d files        ";
@@ -161,27 +159,13 @@ char _LabelUnkno[]="Unknow      ";
 
 char _LabelSel[]="<SEL>";
 
-char _CopyFrom[]="From%59s";   // length=63
-char _CopyTo[]  ="To  %59s";   // length=63
-char _CopyLinkStr[]="Link to %s";
-char _CopyLink[]="Link";
-char _CopyOneTo[]="Copy one file (%11s bytes) to";
-char _CopyMulTo[]="Copy %d files (%11s bytes) to";
-char _CopyFilTo[]="Copy files to";
 
-char KKMsgErr[][40]=
-    { "Couldn't create file",             // 0
-      "Couldn't access to this file",     // 1
-      "System couldn't be loaded",        // 2
-      "No more place on drive",           // 3
-      "Unknown path",                     // 4
-      ""                                  // x
-    };
 
-// 500	cd team menu
-// 501	execute player (ficidf)
-// 502	dos4gw error
-// 503	create new user menu
-// 504	archive
+
+// 500  cd team menu
+// 501  execute player (ficidf)
+// 502  dos4gw error
+// 503  create new user menu
+// 504  archive
 
 

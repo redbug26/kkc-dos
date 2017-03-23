@@ -1,13 +1,14 @@
 /*--------------------------------------------------------------------*\
 |- procedure d'effacement                                             -|
 \*--------------------------------------------------------------------*/
-#include <io.h>
-#include <dos.h>
+#ifndef LINUX
+    #include <io.h>
+    #include <dos.h>
+    #include <direct.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
-#include <direct.h>
-
-//#include <time.h>
 
 #include "kk.h"
 #include "gestion.h"
@@ -27,7 +28,7 @@ strcpy(buffer,s);
 buffer[58]=0;
 PrintTo(1,0,"Delete%58s",buffer);
 
-_dos_setfileattr(s,_A_NORMAL);  // is this command mandatory ?
+// _dos_setfileattr(s,RB_NORMAL);
 
 IOerr=0;
 
@@ -90,7 +91,7 @@ int Erase(char *path,struct file *F)
 {
 int i;
 
-if ((F->attrib & _A_SUBDIR)==_A_SUBDIR)
+if ((F->attrib & RB_SUBDIR)==RB_SUBDIR)
     i=Deltree(path);
     else
     i=Del(path);
@@ -178,18 +179,15 @@ x1=(Cfg->TailleX-66)/2;
 Cadre(x1,10,x1+66,12,0,Cfg->col[55],Cfg->col[56]);
 Window(x1+1,11,x1+65,11,Cfg->col[16]);
 
-F=GetFile(F1,-1);
 
-if ( (F1->nbrsel==0) & (F->name[0]!='.') )
+if ( (F1->nbrsel==0) & (F1->F[F1->pcur]->name[0]!='.') )
     {
-    F->select=1;
+    F1->F[F1->pcur]->select=1;
     F1->nbrsel++;
-
-    F1->taillesel+=F->size;
-
+    F1->taillesel+=F1->F[F1->pcur]->size;
     if (F1->pcur<F1->nbrfic-1)
         F1->pcur++;
-    else
+        else
         if (F1->pcur>0)
             F1->pcur--;
     }
@@ -203,7 +201,7 @@ if ((KKCfg->noprompt&1)==1)
 
 for (i=0;i<F1->nbrfic;i++)
     {
-    F=GetFile(F1,i);
+    F=F1->F[i];
 
     if ((F->select)==1)
         {
@@ -229,11 +227,11 @@ for (i=0;i<F1->nbrfic;i++)
                 switch(F1->system)
                     {
                     case 0:
-                        if (Erase(inpath,F)==0)
+                        if (Erase(inpath,(F1->F[i]))==0)
                             {
-                            F->select=0;
+                            F1->F[i]->select=0;
                             F1->nbrsel--;
-                            (F1->taillesel)-=F->size;
+                            (F1->taillesel)-=F1->F[i]->size;
                             car=7;
                             }
                         else

@@ -1,9 +1,13 @@
 /*--------------------------------------------------------------------*\
 |- KK fonction                                                        -|
 \*--------------------------------------------------------------------*/
+#ifndef LINUX
 #include <mem.h>
+#endif
+
 #include <stdlib.h>       //--- Pour getenv ----------------------------
 #include <stdio.h>
+#include <string.h>
 
 #include "kk.h"
 
@@ -102,7 +106,7 @@ KKCfg->V.Mask[15]->Other_Col=1;
 strcpy(KKCfg->extens,"RAR ARJ ZIP LHA DIZ EXE COM BAT BTM KKP");
 
 
-KKCfg->fentype=4;
+// KKCfg->fentype=4;
 
 KKCfg->mtrash=100000;
 
