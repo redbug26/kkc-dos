@@ -44,7 +44,7 @@ if (strlen(str)>length)
 \*--------------------------------------------------------------------*/
 char *getext(const char *nom)
 {
-char *e,*ext;
+const char *e,*ext;
 
 e=strchr(nom,'.');
 
@@ -53,7 +53,7 @@ if (e==NULL)
     else
     ext=e+1;
 
-return ext;
+return (char*)ext;
 }
 
 /*--------------------------------------------------------------------*\
