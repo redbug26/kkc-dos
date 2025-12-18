@@ -11,20 +11,19 @@
 #include "idf.h"
 #include "hard.h"
 
-
 #define MAXREADBUF 16384
 
-static const char *FORMPIC = " Picture is    %5d * %4d / %2dBps";
-static const char *FORMSMP = " Sampling rate: %16d Hz";
-static const char *FORMBIT = " Smp.Rate: %5dHz Bitrate: %3dkbps";
-static const char *FORMCMP = " Compressed with%19s";
-static const char *FORMUSE = " Using%29s";
-static const char *FORMCOM = " Compiled with%21s";
-static const char *FORMCRY = " Crypted by%24s";
-static const char *FORMLNK = " Link to%27s";
-static const char *FORMSID = " Microsoft ID:                 %04X";
+static const char* FORMPIC = " Picture is    %5d * %4d / %2dBps";
+static const char* FORMSMP = " Sampling rate: %16d Hz";
+static const char* FORMBIT = " Smp.Rate: %5dHz Bitrate: %3dkbps";
+static const char* FORMCMP = " Compressed with%19s";
+static const char* FORMUSE = " Using%29s";
+static const char* FORMCOM = " Compiled with%21s";
+static const char* FORMCRY = " Crypted by%24s";
+static const char* FORMLNK = " Link to%27s";
+static const char* FORMSID = " Microsoft ID:                 %04X";
 
-struct key K[nbrkey] =   {
+struct key K[nbrkey] = {
     {NULL,
      0,
      0,
@@ -51,12 +50,12 @@ struct key K[nbrkey] =   {
      0,
      "HSI raw bitmap",
      "RAW",
-     "Handmade Software, Inc",      // --- HSI (Creator of alchemy) -----
+     "Handmade Software, Inc",  // --- HSI (Creator of alchemy) -----
      73, 0 * 2 + 1, 4},
     {NULL,
      0,
      0,
-     "Module File",    // --- 31 instruments: NoiseTracker --------------
+     "Module File",  // --- 31 instruments: NoiseTracker --------------
      "MOD",
      "",
      1, 1 * 2 + 1, 1},
@@ -79,7 +78,7 @@ struct key K[nbrkey] =   {
      0,
      "Midi file",
      "MID",
-     "I.M.A.",          // --- International MIDI Association -----------
+     "I.M.A.",  // --- International MIDI Association -----------
      14, 0 * 2 + 1, 1},
     {"MTM",
      3,
@@ -257,40 +256,40 @@ struct key K[nbrkey] =   {
      "STM",
      "Future Crew",
      18, 0 * 2 + 1, 1},
-    {"FARþ",
+    {"FARï¿½",
      4,
      0,
      "Farandole Module",
      "FAR",
-     "Digital Infinity",        // --- Daniel Potter / DI ---------------
+     "Digital Infinity",  // --- Daniel Potter / DI ---------------
      8, 0 * 2 + 1, 1},
-    {"FSMþ",
+    {"FSMï¿½",
      4,
      0,
      "Far. Sample Data Signed",
      "FSM",
-     "Digital Infinity",        // --- Daniel Potter / DI ---------------
+     "Digital Infinity",  // --- Daniel Potter / DI ---------------
      22, 0 * 2 + 1, 2},
-    {"USMþ",
+    {"USMï¿½",
      4,
      0,
      "Far. Sample Data Unsigned",
      "USM",
-     "Digital Infinity",        // --- Daniel Potter / DI ---------------
+     "Digital Infinity",  // --- Daniel Potter / DI ---------------
      26, 0 * 2 + 1, 2},
-    {"FPTþ",
+    {"FPTï¿½",
      4,
      0,
      "Farandole Pattern",
      "FPT",
-     "Digital Infinity",        // --- Daniel Potter / DI ---------------
+     "Digital Infinity",  // --- Daniel Potter / DI ---------------
      9, 0 * 2 + 1, 1},
     {"F2RFAR",
      6,
      0,
      "Far. Linear Module V2.0",
      "F2R",
-     "Digital Infinity",        // --- Daniel Potter / DI ---------------
+     "Digital Infinity",  // --- Daniel Potter / DI ---------------
      7, 0 * 2 + 1, 1},
     {"DMDL",
      4,
@@ -333,7 +332,7 @@ struct key K[nbrkey] =   {
      0,
      "JPEG Picture",
      "JPG",
-     "Joint Photo.Exp.Group",    // --- Joint Photographic Experts Group-
+     "Joint Photo.Exp.Group",  // --- Joint Photographic Experts Group-
      38, 0 * 2 + 0, 4},
     {"\x89\x50\x4E\x47",
      4,
@@ -495,7 +494,7 @@ struct key K[nbrkey] =   {
      0,
      "Advanced module system",
      "AMS",
-     "Extreme",     // --- Ou alors ( Velvet Development) Velvet Studio -
+     "Extreme",  // --- Ou alors ( Velvet Development) Velvet Studio -
      68, 0 * 2 + 1, 1},
     {"AIL3DIG",
      7,
@@ -511,7 +510,7 @@ struct key K[nbrkey] =   {
      "AIL 3.0 Midi Driver",
      "MDI",
      "",
-     142, 0 * 2 + 0, 6},   // 000000D6h   14       13
+     142, 0 * 2 + 0, 6},  // 000000D6h   14       13
     {"DMS!",
      4,
      0,
@@ -634,20 +633,20 @@ struct key K[nbrkey] =   {
      "HP",
      "Hewlett Packard", 92, 0 * 2 + 0, 6},
 
-    {"MXM\0", // MXM
+    {"MXM\0",  // MXM
      4,
      0,
      "MXM Module",
      "MXM",
-     "Cubic Team", 94, 0 * 2 + 0, 1},         // --- Pascal/Cubic Team ----
+     "Cubic Team", 94, 0 * 2 + 0, 1},  // --- Pascal/Cubic Team ----
     {"\x00\x00\x00\x00\x00\x00\xE0\x01"
-     "\x00\x00\x80\x02\x00\x00\xE0\xC5", // úú€úúúúú
+     "\x00\x00\x80\x02\x00\x00\xE0\xC5",  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      16,
      0x85,
      "Replay of Need for Speed",
      "RPL",
      "E. Arts", 95, 0 * 2 + 0, 6},
-    {"\x50\x4B\x08\x08\x42\x47\x49\x20", // PKúúBGI
+    {"\x50\x4B\x08\x08\x42\x47\x49\x20",  // PKï¿½ï¿½BGI
      0x8,
      0,
      "CHR Font",
@@ -659,7 +658,7 @@ struct key K[nbrkey] =   {
      "Simcity 2000 Save",
      "SC2",
      "Maxis", 97, 0 * 2 + 0, 6},
-    {"\x70\x6B\x08\x08\x42\x47\x49\x20", // PKúúBGI
+    {"\x70\x6B\x08\x08\x42\x47\x49\x20",  // PKï¿½ï¿½BGI
      0x8,
      0,
      "BGI Driver",
@@ -676,17 +675,17 @@ struct key K[nbrkey] =   {
     {"\x50\x53\x31\x36\xFE",
      5,
      0,
-     "PS16 Module",                   // --- Protracker Studio 16 -------
+     "PS16 Module",  // --- Protracker Studio 16 -------
      "P16",
-     "Renaissance", 100, 0 * 2 + 0, 1}, // --- Joshua C. Jensen -------------
-                                      // --- aka CyberStrike/Renaissance --
+     "Renaissance", 100, 0 * 2 + 0, 1},  // --- Joshua C. Jensen -------------
+                                         // --- aka CyberStrike/Renaissance --
 
     {"KKRB",
      4,
      0,
      "IAR Description",
      "KKR",
-     "RedBug", 101, 0 * 2 + 0,  6},
+     "RedBug", 101, 0 * 2 + 0, 6},
     {"KKD",
      3,
      0,
@@ -698,7 +697,7 @@ struct key K[nbrkey] =   {
      0,
      "Smacker Graphics File",
      "SMK",
-     "Jeff Roberts", 103, 0 * 2 + 0, 5}, // --- RAD Software -------------
+     "Jeff Roberts", 103, 0 * 2 + 0, 5},  // --- RAD Software -------------
     {"\x50\x61\x63\x6B\x65\x64\x20\x46\x69\x6C\x65\x20",
      12,
      0,
@@ -710,7 +709,7 @@ struct key K[nbrkey] =   {
      0,
      "DSMi Module",
      "AMF",
-     "Otto Chrons", 106, 0 * 2 + 1, 1}, // --- Otto Chrons  (Virtual Visions ?) -
+     "Otto Chrons", 106, 0 * 2 + 1, 1},  // --- Otto Chrons  (Virtual Visions ?) -
     {"\xCE\xED\x66\x66"
      "\xCC\x0D\x00\x0B\x03\x73\x00\x83"
      "\x00\x0C\x00\x0D\x00\x08\x11\x1F",
@@ -719,8 +718,8 @@ struct key K[nbrkey] =   {
      "GameBoy Cartridge",
      "GB",
      "Nintendo", 107, 0 * 2 + 1, 6},
-    {"\x00\x00\x00\x00\x00\x50\x54\x4D"  // úúúúúPTM
-     "\x46\x00", // Fú
+    {"\x00\x00\x00\x00\x00\x50\x54\x4D"  // ï¿½ï¿½ï¿½ï¿½ï¿½PTM
+     "\x46\x00",                         // Fï¿½
      10,
      0x27,
      "PTM Module",
@@ -744,7 +743,7 @@ struct key K[nbrkey] =   {
      "Impulse Tracker Sample",
      "ITS",
      "Impulse", 111, 0 * 2 + 1, 2},
-    {"\x53\x43\x52\x53\x80", // SCRS€
+    {"\x53\x43\x52\x53\x80",  // SCRSï¿½
      5,
      0x4c,
      "Scream Tracker Sample",
@@ -779,7 +778,7 @@ struct key K[nbrkey] =   {
      0,
      "SBStudio Module",
      "PAC",
-     "Henning Hellstrom", 117, 0 * 2 + 0, 1}, // hellstr”m
+     "Henning Hellstrom", 117, 0 * 2 + 0, 1},  // hellstrï¿½m
     {"ustar",
      5,
      0x101,
@@ -791,26 +790,26 @@ struct key K[nbrkey] =   {
      0,
      "EdLib compressed module",  // --- Edlib Compresse -----------------
      "D00",
-     "Jens Christian Huus", 119, 0 * 2 + 0, 1}, // Jean Christian Huus / Vibrants
-    {"\x00\x06\xFE\xFD", // úúúú
+     "Jens Christian Huus", 119, 0 * 2 + 0, 1},  // Jean Christian Huus / Vibrants
+    {"\x00\x06\xFE\xFD",                         // ï¿½ï¿½ï¿½ï¿½
      4,
      0x0,
      "EdLib module",  // --- Edlib Non Compresse ------------------------
      "EDL",
-     "Jens Christian Huus", 132, 0 * 2 + 0, 1}, // Jean Christian Huus / Vibrants
+     "Jens Christian Huus", 132, 0 * 2 + 0, 1},  // Jean Christian Huus / Vibrants
     {"AST 000",
      7,
      1,
      "All Sound Tracker Module",
      "AST",
-     "Cagliostro", 120, 0 * 2 + 1, 1}, // --- Patrice Bouchand a.k.a Cagliostro -
+     "Cagliostro", 120, 0 * 2 + 1, 1},  // --- Patrice Bouchand a.k.a Cagliostro -
     {"DSM\x10",
      4,
      0,
      "DigiSound Module",
-     "DSM",                        // --- Used in a music disk from Necros (in Ace) ----
-     "Pelusa", 121, 0 * 2 + 1, 1}, // Carlos Hasan aka Pelusa/Psychik Monks
-                                   // --- (chasan@dcc.uchile.cl) ----------
+     "DSM",                         // --- Used in a music disk from Necros (in Ace) ----
+     "Pelusa", 121, 0 * 2 + 1, 1},  // Carlos Hasan aka Pelusa/Psychik Monks
+                                    // --- (chasan@dcc.uchile.cl) ----------
     {"\x50\x53\x49\x44\x00",
      5,
      0,
@@ -825,10 +824,10 @@ struct key K[nbrkey] =   {
      "CUR",
      "Microsoft Corp.", 123, 0 * 2 + 0, 4},
     {"\xFF\xFF\x00\x01\x64\x00\x00\x00"
-     "\x03\x00", // úú
+     "\x03\x00",  // ï¿½ï¿½
      10,
      0x0,
-     "Alpha Microsystems BMP", // No information(conversion from Alchemy)
+     "Alpha Microsystems BMP",  // No information(conversion from Alchemy)
      "BMP",
      "Alpha Microsystems", 124, 0 * 2 + 0, 4},
     {"\x00\x11\x02\xFF\x0C\x00\xFF\xFE"
@@ -844,13 +843,13 @@ struct key K[nbrkey] =   {
      0,
      "LZA animation",
      "LZA",
-     "goto64", 126, 0 * 2 + 1, 5}, // Brian Strack Jensen aka goto64/Purple
+     "goto64", 126, 0 * 2 + 1, 5},  // Brian Strack Jensen aka goto64/Purple
     {"RAD by REALiTY!!",
      16,
      0,
      "Reality ADlib Tracker Module",
      "RAD",
-     "Reality", 130, 0 * 2 + 0, 1}, // --- Shayde/Reality (?) ----------------
+     "Reality", 130, 0 * 2 + 0, 1},  // --- Shayde/Reality (?) ----------------
     {"\xFC\x00\x01\x00\x0C\x00\x81\x01"
      "\x82\x01\x06\x00\x01\x02\x03\x04"
      "\x05\x08\x10",
@@ -870,7 +869,7 @@ struct key K[nbrkey] =   {
      0,
      "HSI Jpeg bitmap",
      "HSI",
-     "Handmade Software, Inc",   // --- HSI (Creator of alchemy) --------
+     "Handmade Software, Inc",  // --- HSI (Creator of alchemy) --------
      134, 0 * 2 + 1, 4},
 
     {"\x63\x6F\x64\x65\x00\x01\x00",
@@ -884,7 +883,7 @@ struct key K[nbrkey] =   {
      0,
      "RTM Module",
      "RTM",
-     "Arnaud Hasenfratz", 138, 0 * 2 + 0, 1}, // arnaud.hasenfratz@utbm.fr
+     "Arnaud Hasenfratz", 138, 0 * 2 + 0, 1},  // arnaud.hasenfratz@utbm.fr
     {"DFPv",
      4,
      0,
@@ -905,7 +904,7 @@ struct key K[nbrkey] =   {
      "IHP",
      "Watcom", 144, 0 * 2 + 1, 6},
 
-    {"\x53\x45\x47\x41\x20", // SEGA
+    {"\x53\x45\x47\x41\x20",  // SEGA
      5,
      0x100,
      "Megadrive ROM",
@@ -966,44 +965,44 @@ struct key K[nbrkey] =   {
      "PAC",
      "",
      153, 0 * 2 + 0, 4},
-    {"\x4E\x45\x53\x1A", // NESú
+    {"\x4E\x45\x53\x1A",  // NESï¿½
      4,
      0x0,
      "NES ROM",
      "NES",
      "Nintendo", 154, 0 * 2 + 0, 6},
-/*
- * {  "\x08\x83@\x08\x85`\x08\x87\x80\x08",
- *  10,
- *  0x2c2,
- */
+    /*
+     * {  "\x08\x83@\x08\x85`\x08\x87\x80\x08",
+     *  10,
+     *  0x2c2,
+     */
     {"\x01\x00\x02",
      3,
      0xe,
      "Atari Disk DUMP",
      "ST",
      "ATARI", 155, 0 * 2 + 0, 6},
-    {"\x01\x20\x05\x50\x05\xC0\x01", // ú úPúúú
+    {"\x01\x20\x05\x50\x05\xC0\x01",  // ï¿½ ï¿½Pï¿½ï¿½ï¿½
      7,
      0x165,
      "MoonBlaster music",
      "MBM",
-     "", 156, 0 * 2 + 1, 1}, // Format MSX --------------------------------------
+     "", 156, 0 * 2 + 1, 1},  // Format MSX --------------------------------------
     {"USLM",
      4,
      0,
      "Useless Module",
      "USM",
-     "Useless", 157, 0 * 2 + 1, 1}, // By FreddyV -------------------------------
-    {"\x7F\x45\x4C\x46\x01\x01\x01\x00",// ELFúúúú
+     "Useless", 157, 0 * 2 + 1, 1},       // By FreddyV -------------------------------
+    {"\x7F\x45\x4C\x46\x01\x01\x01\x00",  // ELFï¿½ï¿½ï¿½ï¿½
      8,
      0,
-     "Elf executable",   // --- Executable and Linking Format -----------
+     "Elf executable",  // --- Executable and Linking Format -----------
      "OUT",
-     "USL", 158, 0 * 2 + 0, 6}, // --- UNIX System Laboratories --------------
+     "USL", 158, 0 * 2 + 0, 6},  // --- UNIX System Laboratories --------------
     {"[MDF]",
-     5,                // Gautier Porter aka Fire Dragon / Knights -----
-     0,                // --- Impulse pour la version [MDF3] ---
+     5,  // Gautier Porter aka Fire Dragon / Knights -----
+     0,  // --- Impulse pour la version [MDF3] ---
      "MusicDisk Factory File",
      "MDF",
      "Fire Dragon", 159, 4, 1},
@@ -1031,7 +1030,7 @@ struct key K[nbrkey] =   {
      "Lotus Notes Database",
      "NSF",
      "Lotus", 163, 0 * 2 + 1, 6},
-    {"HSP",    // en 3: ?, en 4: "\x9B\x00\x02\x00"
+    {"HSP",  // en 3: ?, en 4: "\x9B\x00\x02\x00"
      3,
      0x0,
      "OS/2 Help File",
@@ -1045,18 +1044,20 @@ struct key K[nbrkey] =   {
      "KKT",
      "RedBug",
      165, 0, 6},
-    {"\xFF" "FONT   ",
+    {"\xFF"
+     "FONT   ",
      5,
      0,
      "Code Page Info(Standard Font)",
      "CPI",
      "",
      166, 0, 6},
-    {"\x7F" "DRFONT ",
+    {"\x7F"
+     "DRFONT ",
      5,
      0,
      "Code Page Info(Enhanced Font)",
-     "CPI",   // --- Utilis‚ par DR-DOS et Novell DOS -------------------
+     "CPI",  // --- Utilisï¿½ par DR-DOS et Novell DOS -------------------
      "",
      167, 0, 6},
     {"DiamondWare Digitized",
@@ -1158,15 +1159,15 @@ struct key K[nbrkey] =   {
     {"\x47\x44\x4D\xFE",
      4,
      0,
-     "B.W.S.B. Module", // Bells, Whistles & Sound Boards
-     "GDM",             // Pascal module library
+     "B.W.S.B. Module",  // Bells, Whistles & Sound Boards
+     "GDM",              // Pascal module library
      "",
      190, 0 * 2 + 1, 1},
     {"CREG\x00\x00\x01\x00",
      8,
      0,
      "Windows Registry File",
-     "POL",    // POL ou REG
+     "POL",  // POL ou REG
      "Microsoft Corp.",
      191, 0, 6},
     {NULL,
@@ -1190,29 +1191,27 @@ struct key K[nbrkey] =   {
      "SMC",
      "Nintendo", 194, 1 * 2 + 1, 6},
 
+    // Dernier employe: 195 //marjo
 
-// Dernier employe: 195 //marjo
+    /*
+     * other: bit 7 6 5 4 3 2 1 0
+     *            ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½
+     *            ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ 1: IDF have more information on file
+     *            ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 2: The key is not defined in structure
+     *            ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 4: This is a text file
+     *            ï¿½ ï¿½ ï¿½ ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 8: Sauce information possible
+     *            ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½  : Always to 0
+     * type: 1: module
+     *       2: sample
+     *       3: archive
+     *       4: bitmap
+     *       5: animation
+     *       6: others
+     */
 
-/*
- * other: bit 7 6 5 4 3 2 1 0
- *            ³ ³ ³ ³ ³ ³ ³ ³
- *            ³ ³ ³ ³ ³ ³ ³ ÀÄÄÄ 1: IDF have more information on file
- *            ³ ³ ³ ³ ³ ³ ÀÄÄÄÄÄ 2: The key is not defined in structure
- *            ³ ³ ³ ³ ³ ÀÄÄÄÄÄÄÄ 4: This is a text file
- *            ³ ³ ³ ³ ÀÄÄÄÄÄÄÄÄÄ 8: Sauce information possible
- *            ÀÄÁÄÁÄÁÄÄÄÄÄÄÄÄÄÄÄ  : Always to 0
- * type: 1: module
- *       2: sample
- *       3: archive
- *       4: bitmap
- *       5: animation
- *       6: others
- */
-
-
-/*--------------------------------------------------------------------*\
-|- Gestion produit microsoft                                          -|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |- Gestion produit microsoft                                          -|
+    \*--------------------------------------------------------------------*/
 
     {NULL,
      0,
@@ -1265,9 +1264,9 @@ struct key K[nbrkey] =   {
      "Microsoft Corp.",
      61, 0 * 2 + 0, 6},
 
-/*--------------------------------------------------------------------*\
-|-              structures … traiter en dernier ressort               -|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |-              structures ï¿½ traiter en dernier ressort               -|
+    \*--------------------------------------------------------------------*/
     {"\xFF\xFF\xFF\xFF",
      4,
      0x0,
@@ -1291,7 +1290,7 @@ struct key K[nbrkey] =   {
     {"\x80",
      1,
      0,
-     "OBJect File",     // --- Les object sont fort mauvais ---------
+     "OBJect File",  // --- Les object sont fort mauvais ---------
      "OBJ",
      "", 90, 0 * 2 + 0, 6},
     {"\x34\x12",
@@ -1358,7 +1357,6 @@ struct key K[nbrkey] =   {
      "Dede",
      195, 0 * 2 + 0, 3},
 
-
     {NULL,
      0,
      0,
@@ -1379,11 +1377,11 @@ struct key K[nbrkey] =   {
      "Text File",
      "TXT",
      "",
-     91, 1 * 4 + 1 * 2 + 0, 6}, // --- Laisser celui-ci dernier -----------------
+     91, 1 * 4 + 1 * 2 + 0, 6},  // --- Laisser celui-ci dernier -----------------
 
-/*--------------------------------------------------------------------*\
-|-                    structures … ne pas toucher                     -|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |-                    structures ï¿½ ne pas toucher                     -|
+    \*--------------------------------------------------------------------*/
 
     {NULL,
      0,
@@ -1426,161 +1424,155 @@ struct key K[nbrkey] =   {
      "Others",
      "*",
      "?",
-     -1, 0 * 2 + 0, 6}
-};
+     -1, 0 * 2 + 0, 6}};
 
+char* GetFile(char* p, char* Ficname);
+void SplitName(char* filename, char* name, char* ext);
 
-char * GetFile(char *p, char *Ficname);
-void SplitName(char *filename, char *name, char *ext);
+void Size2Chr(int Size, char* Taille);
+// transforme la taille indiquï¿½e en chaine
 
-void Size2Chr(int Size, char *Taille);
-// transforme la taille indiqu‚e en chaine
+bool IsTxt(RB_IDF* Info);  // --Renvoit le pourcentage texte (>50=texte)--
 
-bool IsTxt(RB_IDF *Info); // --Renvoit le pourcentage texte (>50=texte)--
+short Infotxt(RB_IDF* Info);  // --- Test pour voir si c'est du texte --
+short InfoSauce(RB_IDF* Info);
+short InfoID3(RB_IDF* Info);
+short Infomtm(RB_IDF* Info);
+short Infong(RB_IDF* Info);
+short Infoexe1(RB_IDF* Info);
+short Infopsm(RB_IDF* Info);
+short Info669(RB_IDF* Info);
+short Infokkp(RB_IDF* Info);
+short Infomod(RB_IDF* Info);  // Nï¿½1
+short Infodmf(RB_IDF* Info);
+short Infoxm(RB_IDF* Info);  // Nï¿½2
+short Infogdm(RB_IDF* Info);
+short Infoxi(RB_IDF* Info);
+short Infos3m(RB_IDF* Info);  // Nï¿½3
+short Infout(RB_IDF* Info);
+short Inforar(RB_IDF* Info);
+short Infogif(RB_IDF* Info);
+short Infofif(RB_IDF* Info);
+short Infopcx(RB_IDF* Info);
+short Infonsf(RB_IDF* Info);
+short Infobmp(RB_IDF* Info);
+short Info3ds(RB_IDF* Info);
+short Infobmp2(RB_IDF* Info);
+short Infomp2(RB_IDF* Info);
+short Infomp3(RB_IDF* Info);
+short Infookt(RB_IDF* Info);
+short Infoau(RB_IDF* Info);
+short Infoiff(RB_IDF* Info);
+short Infolbm(RB_IDF* Info);
+short Infomid(RB_IDF* Info);
+short Infoarj(RB_IDF* Info);
+short Infoit(RB_IDF* Info);
+short Infomed(RB_IDF* Info);
+short Infovoc(RB_IDF* Info);
+short Infotpu(RB_IDF* Info);
+short Infocmf(RB_IDF* Info);
+short Infohlp(RB_IDF* Info);
+short Infohlp2(RB_IDF* Info);
+short Infostm(RB_IDF* Info);
+short Infofar(RB_IDF* Info);
+short Infofsm(RB_IDF* Info);
+short Infousm(RB_IDF* Info);
+short Infofpt(RB_IDF* Info);
+short Infof2r(RB_IDF* Info);
+short Infomdl(RB_IDF* Info);
+short Infospl(RB_IDF* Info);
+short Infottf(RB_IDF* Info);
+short Infogrp(RB_IDF* Info);
+short Infotga(RB_IDF* Info);
+short Infosmc(RB_IDF* Info);
+short Infopar(RB_IDF* Info);
+short Infompg(RB_IDF* Info);
+short Infomov(RB_IDF* Info);
+short Infodlz(RB_IDF* Info);
+short Infofli(RB_IDF* Info);
+short Infolza(RB_IDF* Info);
+short Infoflc(RB_IDF* Info);
+short Infoswg(RB_IDF* Info);
+short Infoams(RB_IDF* Info);
+short Infot64(RB_IDF* Info);
+short Infop00(RB_IDF* Info);
+short Infoico(RB_IDF* Info);
+short Infoamf(RB_IDF* Info);
+short Infopkm(RB_IDF* Info);
+short Infogb(RB_IDF* Info);
+short Infoptm(RB_IDF* Info);
+short Infombm(RB_IDF* Info);
+short Infousm2(RB_IDF* Info);
+short Infohtm(RB_IDF* Info);
+short Inforaw(RB_IDF* Info);
+short Infoits(RB_IDF* Info);
+short Infodp3(RB_IDF* Info);
+short Infopat(RB_IDF* Info);
+short Infodsf(RB_IDF* Info);
+short Infouwf(RB_IDF* Info);
+short Infoams2(RB_IDF* Info);
+short Infoast(RB_IDF* Info);
+short Infodsm(RB_IDF* Info);
+short Infodat(RB_IDF* Info);
+short Infotnl(RB_IDF* Info);
+short Infohsi(RB_IDF* Info);
+short Infoprc(RB_IDF* Info);
+short Infodbf2(RB_IDF* Info);
+short Infodbf3(RB_IDF* Info);
+short Infoihp(RB_IDF* Info);
+short Infosmd(RB_IDF* Info);
+short Infobin(RB_IDF* Info);
+short Infoc(RB_IDF* Info);
 
-short Infotxt(RB_IDF *Info);   // --- Test pour voir si c'est du texte --
-short InfoSauce(RB_IDF *Info);
-short InfoID3(RB_IDF *Info);
-short Infomtm(RB_IDF *Info);
-short Infong(RB_IDF *Info);
-short Infoexe1(RB_IDF *Info);
-short Infopsm(RB_IDF *Info);
-short Info669(RB_IDF *Info);
-short Infokkp(RB_IDF *Info);
-short Infomod(RB_IDF *Info);   // Nø1
-short Infodmf(RB_IDF *Info);
-short Infoxm(RB_IDF *Info);    // Nø2
-short Infogdm(RB_IDF *Info);
-short Infoxi(RB_IDF *Info);
-short Infos3m(RB_IDF *Info);   // Nø3
-short Infout(RB_IDF *Info);
-short Inforar(RB_IDF *Info);
-short Infogif(RB_IDF *Info);
-short Infofif(RB_IDF *Info);
-short Infopcx(RB_IDF *Info);
-short Infonsf(RB_IDF *Info);
-short Infobmp(RB_IDF *Info);
-short Info3ds(RB_IDF *Info);
-short Infobmp2(RB_IDF *Info);
-short Infomp2(RB_IDF *Info);
-short Infomp3(RB_IDF *Info);
-short Infookt(RB_IDF *Info);
-short Infoau(RB_IDF *Info);
-short Infoiff(RB_IDF *Info);
-short Infolbm(RB_IDF *Info);
-short Infomid(RB_IDF *Info);
-short Infoarj(RB_IDF *Info);
-short Infoit(RB_IDF *Info);
-short Infomed(RB_IDF *Info);
-short Infovoc(RB_IDF *Info);
-short Infotpu(RB_IDF *Info);
-short Infocmf(RB_IDF *Info);
-short Infohlp(RB_IDF *Info);
-short Infohlp2(RB_IDF *Info);
-short Infostm(RB_IDF *Info);
-short Infofar(RB_IDF *Info);
-short Infofsm(RB_IDF *Info);
-short Infousm(RB_IDF *Info);
-short Infofpt(RB_IDF *Info);
-short Infof2r(RB_IDF *Info);
-short Infomdl(RB_IDF *Info);
-short Infospl(RB_IDF *Info);
-short Infottf(RB_IDF *Info);
-short Infogrp(RB_IDF *Info);
-short Infotga(RB_IDF *Info);
-short Infosmc(RB_IDF *Info);
-short Infopar(RB_IDF *Info);
-short Infompg(RB_IDF *Info);
-short Infomov(RB_IDF *Info);
-short Infodlz(RB_IDF *Info);
-short Infofli(RB_IDF *Info);
-short Infolza(RB_IDF *Info);
-short Infoflc(RB_IDF *Info);
-short Infoswg(RB_IDF *Info);
-short Infoams(RB_IDF *Info);
-short Infot64(RB_IDF *Info);
-short Infop00(RB_IDF *Info);
-short Infoico(RB_IDF *Info);
-short Infoamf(RB_IDF *Info);
-short Infopkm(RB_IDF *Info);
-short Infogb(RB_IDF *Info);
-short Infoptm(RB_IDF *Info);
-short Infombm(RB_IDF *Info);
-short Infousm2(RB_IDF *Info);
-short Infohtm(RB_IDF *Info);
-short Inforaw(RB_IDF *Info);
-short Infoits(RB_IDF *Info);
-short Infodp3(RB_IDF *Info);
-short Infopat(RB_IDF *Info);
-short Infodsf(RB_IDF *Info);
-short Infouwf(RB_IDF *Info);
-short Infoams2(RB_IDF *Info);
-short Infoast(RB_IDF *Info);
-short Infodsm(RB_IDF *Info);
-short Infodat(RB_IDF *Info);
-short Infotnl(RB_IDF *Info);
-short Infohsi(RB_IDF *Info);
-short Infoprc(RB_IDF *Info);
-short Infodbf2(RB_IDF *Info);
-short Infodbf3(RB_IDF *Info);
-short Infoihp(RB_IDF *Info);
-short Infosmd(RB_IDF *Info);
-short Infobin(RB_IDF *Info);
-short Infoc(RB_IDF *Info);
+short Infopub(RB_IDF* Info);
+short Infoxls(RB_IDF* Info);
+short Infodoc(RB_IDF* Info);
+short Infowps(RB_IDF* Info);
+short Infowdb(RB_IDF* Info);
+short Infoppt(RB_IDF* Info);
 
-short Infopub(RB_IDF *Info);
-short Infoxls(RB_IDF *Info);
-short Infodoc(RB_IDF *Info);
-short Infowps(RB_IDF *Info);
-short Infowdb(RB_IDF *Info);
-short Infoppt(RB_IDF *Info);
+void ClearSpace(char* name);  // --- efface les espaces inutiles ------
 
+int ReadCmp(RB_IDF* Info, ulong position, const char* str, int taille);
+void ReadStr(RB_IDF* Info, ulong position, char* str, int taille);
 
-void ClearSpace(char *name);    // --- efface les espaces inutiles ------
+ulong ReadLng(RB_IDF* Info, ulong position, uchar type);
+ushort ReadInt(RB_IDF* Info, ulong position, uchar type);
+uchar ReadChar(RB_IDF* Info, ulong position);
+uchar ReadMem(RB_IDF* Info, ulong position, void* str, int taille);
 
-int    ReadCmp(RB_IDF *Info, ulong position, const char *str, int taille);
-void   ReadStr(RB_IDF *Info, ulong position, char *str, int taille);
+uchar sstricmp(char* dest, char* src);
+uchar sstrnicmp(char* src, char* dest, int i);
 
-ulong  ReadLng(RB_IDF *Info, ulong position, uchar type);
-ushort ReadInt(RB_IDF *Info, ulong position, uchar type);
-uchar   ReadChar(RB_IDF *Info, ulong position);
-uchar   ReadMem(RB_IDF *Info, ulong position, void *str, int taille);
+ulong InvLong(ulong entier);    // Inverse un ulong HILO <-> LOHI
+ushort InvWord(ushort entier);  // Inverse un ushort HILO <-> LOHI
 
-uchar sstricmp(char *dest, char *src);
-uchar sstrnicmp(char *src, char *dest, int i);
-
-ulong  InvLong(ulong entier);        // Inverse un ulong HILO <-> LOHI
-ushort InvWord(ushort entier);       // Inverse un ushort HILO <-> LOHI
-
-
-char tampon[1024];                   // Tampon pour faire n'importe quoi
+char tampon[1024];  // Tampon pour faire n'importe quoi
 
 /*--------------------------------------------------------------------*\
 |-                        FIN DES DECLARATIONS                        -|
 \*--------------------------------------------------------------------*/
 
-
 /*--------------------------------------------------------------------*\
-|- positon par rapport … posfic                                       -|
+|- positon par rapport ï¿½ posfic                                       -|
 |- type =1 LoHi --> PC                                                -|
 |-      =2 HiLo --> Amiga                                             -|
 \*--------------------------------------------------------------------*/
-ulong ReadLng(RB_IDF *Info, ulong position, uchar type)
-{
+ulong ReadLng(RB_IDF* Info, ulong position, uchar type) {
     ulong entier;
-    uchar *a;
-    uchar *b;
+    uchar* a;
+    uchar* b;
     ulong result;
 
-    if (ReadMem(Info, position, (void *)&entier, 4) == 0)
+    if (ReadMem(Info, position, (void*)&entier, 4) == 0)
         return 0;
 
     if (type == 1)
         return entier;
 
     result = entier;
-    a = (uchar *)&entier;
-    b = (uchar *)&result;
+    a = (uchar*)&entier;
+    b = (uchar*)&result;
 
     b[3] = a[0];
     b[2] = a[1];
@@ -1588,29 +1580,28 @@ ulong ReadLng(RB_IDF *Info, ulong position, uchar type)
     b[0] = a[3];
 
     return result;
-} // ReadLng
+}  // ReadLng
 
 /*--------------------------------------------------------------------*\
-|- positon par rapport … posfic                                       -|
+|- positon par rapport ï¿½ posfic                                       -|
 |- type =1 LoHi --> PC                                                -|
 |-      =2 HiLo --> Amiga                                             -|
 \*--------------------------------------------------------------------*/
-ushort ReadInt(RB_IDF *Info, ulong position, uchar type)
-{
+ushort ReadInt(RB_IDF* Info, ulong position, uchar type) {
     ushort entier;
-    uchar *a;
-    uchar *b;
+    uchar* a;
+    uchar* b;
     ushort result;
 
-    if (ReadMem(Info, position, (void *)&entier, 2) == 0)
+    if (ReadMem(Info, position, (void*)&entier, 2) == 0)
         return 0;
 
     if (type == 1)
         return entier;
     if (type == 2) {
         result = entier;
-        a = (uchar *)&entier;
-        b = (uchar *)&result;
+        a = (uchar*)&entier;
+        b = (uchar*)&result;
 
         b[1] = a[0];
         b[0] = a[1];
@@ -1619,13 +1610,12 @@ ushort ReadInt(RB_IDF *Info, ulong position, uchar type)
     }
 
     return 0;
-} // ReadInt
+}  // ReadInt
 
 /*--------------------------------------------------------------------*\
-|-  positon par rapport … posfic                                      -|
+|-  positon par rapport ï¿½ posfic                                      -|
 \*--------------------------------------------------------------------*/
-uchar ReadMem(RB_IDF *Info, ulong position, void *str, int taille)
-{
+uchar ReadMem(RB_IDF* Info, ulong position, void* str, int taille) {
     int pos;
 
     position += Info->begin;
@@ -1633,14 +1623,22 @@ uchar ReadMem(RB_IDF *Info, ulong position, void *str, int taille)
     if ((position + taille) > (Info->sizemax - Info->posfic))
         return 0;
 
-    if ( ( ((position + taille) > (Info->posbuf + Info->sizebuf)) |
-           (position < Info->posbuf)) & (Info->fic != NULL) ) {
+    if ((((position + taille) > (Info->posbuf + Info->sizebuf)) |
+         (position < Info->posbuf)) &
+        (Info->fic != NULL)) {
         pos = ftell(Info->fic);
         fseek(Info->fic, position, SEEK_SET);
-        fread((char *)str, taille, 1, Info->fic);
+        fread((char*)str, taille, 1, Info->fic);
         fseek(Info->fic, pos, SEEK_SET);
-    } else
-        memcpy((char *)str, Info->buffer + (ushort)position, taille);
+    } else {
+        // Fix: Don't cast to ushort as it truncates positions > 65535
+        ulong offset = position - Info->posbuf;
+        if (offset + taille > Info->sizebuf) {
+            // Safety check: requested data is beyond buffer
+            return 0;
+        }
+        memcpy((char*)str, Info->buffer + offset, taille);
+    }
 
     return 1;
 }
@@ -1648,12 +1646,11 @@ uchar ReadMem(RB_IDF *Info, ulong position, void *str, int taille)
 /*--------------------------------------------------------------------*\
 * Readmem compliant *
 \*--------------------------------------------------------------------*/
-uchar ReadChar(RB_IDF *Info, ulong position)
-{
+uchar ReadChar(RB_IDF* Info, ulong position) {
     int pos;
     uchar a;
 
-    if (ReadMem(Info, position, (void *)&a, 1) == 0)
+    if (ReadMem(Info, position, (void*)&a, 1) == 0)
         return 0;
 
     return a;
@@ -1661,14 +1658,13 @@ uchar ReadChar(RB_IDF *Info, ulong position)
 
 /* Others fonctions (ReadMem compliant) */
 
-int ReadCmp(RB_IDF *Info, ulong position, const char *str, int taille)
-{
-    char *buf;
+int ReadCmp(RB_IDF* Info, ulong position, const char* str, int taille) {
+    char* buf;
     uchar res;
 
-    buf = (char *)malloc(taille);
+    buf = (char*)malloc(taille);
 
-    ReadMem(Info, position, (void *)buf, taille);
+    ReadMem(Info, position, (void*)buf, taille);
 
     res = (uchar)memcmp(str, buf, taille);
 
@@ -1677,32 +1673,30 @@ int ReadCmp(RB_IDF *Info, ulong position, const char *str, int taille)
     return res;
 }
 
-
 /*--------------------------------------------------------------------*\
-|-  positon par rapport … posfic                                      -|
+|-  positon par rapport ï¿½ posfic                                      -|
 \*--------------------------------------------------------------------*/
-void ReadStr(RB_IDF *Info, ulong position, char *str, int taille)
-{
-    ReadMem(Info, position, (void *)str, taille);
+void ReadStr(RB_IDF* Info, ulong position, char* str, int taille) {
+    ReadMem(Info, position, (void*)str, taille);
 
-    str[taille] = 0;
+    // Fix: Don't write beyond buffer - taille-1 is the last valid index
+    if (taille > 0) {
+        str[taille - 1] = 0;
+    }
     ClearSpace(str);
 }
-
-
 
 /*--------------------------------------------------------------------*\
 |-  Inverse un ulong (hihilolo -> lolohihi)                           -|
 \*--------------------------------------------------------------------*/
-ulong InvLong(ulong entier)
-{
-    uchar *a;
-    uchar *b;
+ulong InvLong(ulong entier) {
+    uchar* a;
+    uchar* b;
     ulong result;
 
     result = entier;
-    a = (uchar *)&entier;
-    b = (uchar *)&result;
+    a = (uchar*)&entier;
+    b = (uchar*)&result;
 
     b[3] = a[0];
     b[2] = a[1];
@@ -1710,21 +1704,19 @@ ulong InvLong(ulong entier)
     b[0] = a[3];
 
     return result;
-
 }
 
 /*--------------------------------------------------------------------*\
 |-  Inverse un ushort (hihilolo -> lolohihi)                            -|
 \*--------------------------------------------------------------------*/
-ushort InvWord(ushort entier)
-{
-    uchar *a;
-    uchar *b;
+ushort InvWord(ushort entier) {
+    uchar* a;
+    uchar* b;
     ushort result;
 
     result = entier;
-    a = (uchar *)&entier;
-    b = (uchar *)&result;
+    a = (uchar*)&entier;
+    b = (uchar*)&result;
 
     b[1] = a[0];
     b[0] = a[1];
@@ -1732,9 +1724,7 @@ ushort InvWord(ushort entier)
     return result;
 }
 
-
-
-void SplitName(char *filename, char *name, char *ext)     // name:8, ext:3
+void SplitName(char* filename, char* name, char* ext)  // name:8, ext:3
 {
     int n;
 
@@ -1742,10 +1732,10 @@ void SplitName(char *filename, char *name, char *ext)     // name:8, ext:3
     strcpy(ext, "");
 
     for (n = strlen(filename); n >= 0; n--) {
-        if ( (filename[n] == '.') & (strlen(filename + n + 1) <= 3) & (ext != NULL) )
+        if ((filename[n] == '.') & (strlen(filename + n + 1) <= 3) & (ext != NULL))
             strcpy(ext, filename + n + 1);
 
-        if ( (filename[n] == '\\') & (name != NULL) ) {
+        if ((filename[n] == '\\') & (name != NULL)) {
             memcpy(name, filename + n + 1, 8);
             break;
         }
@@ -1758,11 +1748,9 @@ void SplitName(char *filename, char *name, char *ext)     // name:8, ext:3
                 name[n] = 0;
         }
     }
-} // SplitName
+}  // SplitName
 
-
-uchar sstricmp(char *dest, char *src)
-{
+uchar sstricmp(char* dest, char* src) {
     int n;
 
     for (n = 0; n < strlen(src); n++) {
@@ -1773,8 +1761,7 @@ uchar sstricmp(char *dest, char *src)
     return 0;
 }
 
-uchar sstrnicmp(char *src, char *dest, int i)
-{
+uchar sstrnicmp(char* src, char* dest, int i) {
     int n;
 
     for (n = 0; n < i; n++) {
@@ -1783,21 +1770,18 @@ uchar sstrnicmp(char *src, char *dest, int i)
     }
 
     return 0;
-
-
 }
 
-char * GetFile(char *p, char *Ficname)
-{
+char* GetFile(char* p, char* Ficname) {
     int n;
-    char *s;
+    char* s;
 
     if (*p == 0) return Ficname;
 
     s = p;
 
     for (n = 0; n < strlen(p); n++) {
-        if ( (p[n] == '\\') | (p[n] == '/') )
+        if ((p[n] == '\\') | (p[n] == '/'))
             s = p + n + 1;
     }
 
@@ -1806,10 +1790,8 @@ char * GetFile(char *p, char *Ficname)
     return Ficname;
 }
 
-
-void QuickIdf(RB_IDF *Info, int n)
-{
-    char *ext;
+void QuickIdf(RB_IDF* Info, int n) {
+    char* ext;
 
     Info->numero = -1;
 
@@ -1823,7 +1805,7 @@ void QuickIdf(RB_IDF *Info, int n)
 
     ext++;
 
-    for (n = 0; n < nbrkey - 6; n++) { // --- Il faut ignorer les 6 derniers clefs ---
+    for (n = 0; n < nbrkey - 6; n++) {  // --- Il faut ignorer les 6 derniers clefs ---
         if (!stricmp(K[n].ext, ext)) {
             Info->numero = K[n].numero;
             break;
@@ -1831,21 +1813,19 @@ void QuickIdf(RB_IDF *Info, int n)
     }
 
     return;
-} // QuickIdf
+}  // QuickIdf
 
-
-void Traitefic(RB_IDF *Info)
-{
+void Traitefic(RB_IDF* Info) {
     int n;
     int err;
 
-    signed int trv = -1; // --- vaut -1 tant que l'on a rien trouv‚ ------------
+    signed int trv = -1;  // --- vaut -1 tant que l'on a rien trouvï¿½ ------------
 
     Info->numero = -1;
 
-    n = 0; // --- recherche dans tous les formats --------------------------
+    n = 0;  // --- recherche dans tous les formats --------------------------
 
-    memset(((char *)Info) + 264, 0, sizeof(RB_IDF) - 264);
+    memset(((char*)Info) + 264, 0, sizeof(RB_IDF) - 264);
 
     if (Info->path[0] != 0) {
         GetFile(Info->path, Info->filename);
@@ -1875,8 +1855,7 @@ void Traitefic(RB_IDF *Info)
         else
             Info->sizebuf = MAXREADBUF;
 
-
-        Info->buffer = (char *)malloc(Info->sizebuf);
+        Info->buffer = (char*)malloc(Info->sizebuf);
         memset(Info->buffer, 0, Info->sizebuf);
 
         Info->sizebuf = (ushort)fread(Info->buffer, 1, Info->sizebuf, Info->fic);
@@ -1901,120 +1880,301 @@ void Traitefic(RB_IDF *Info)
 
     InfoID3(Info);
 
-
-    for (n = 0; n < nbrkey - 6; n++) { // --- Il faut ignorer les 6 derniers clefs ---
-/*    if (n>160)
- *      {
- *      PrintAt(0,0,"(%4d %4d %8p)",n,K[n].numero,K[n].buf);
- *      Wait(0,0);
- *      }
- */
+    for (n = 0; n < nbrkey - 6; n++) {  // --- Il faut ignorer les 6 derniers clefs ---
+                                        /*    if (n>160)
+                                         *      {
+                                         *      PrintAt(0,0,"(%4d %4d %8p)",n,K[n].numero,K[n].buf);
+                                         *      Wait(0,0);
+                                         *      }
+                                         */
 
         // printf("(%d,%X)",K[n].numero,Info->posfic);
 
-        if ( (((K[n].other) & 2) == 0) & ((K[n].buf) != NULL) )
+        if ((((K[n].other) & 2) == 0) & ((K[n].buf) != NULL))
             if (!ReadCmp(Info, K[n].pos, K[n].buf, K[n].len))
                 trv = n;
 
-        if ( (((K[n].other) & 2) == 2) | ((((K[n].other) & 1) == 1) & (trv != -1)) ) {
+        if ((((K[n].other) & 2) == 2) | ((((K[n].other) & 1) == 1) & (trv != -1))) {
             switch (K[n].numero) {
-                case  2: err = Infoxm(Info); break;
+                case 2:
+                    err = Infoxm(Info);
+                    break;
 
-                case 83: err = Infop00(Info); break;
-                case 80: err = Infoico(Info); break;
-                case 19: err = Infout(Info); break;
-                case  3: err = Infos3m(Info); break;
-                case  6: err = Infodmf(Info); break;
-                case  4: err = Info669(Info); break;
-                case 15: err = Infomtm(Info); break;
-                case 34: err = Inforar(Info); break;
-                case 37: err = Infogif(Info); break;
-                case 172: err = Infofif(Info); break;
-                case 40: err = Infopcx(Info); break;
-                case 36: err = Infobmp(Info); break;
-                case 148: err = Infobmp2(Info); break;
-                case 135: err = Infomp2(Info); break;
-                case 136: err = Infomp3(Info); break;
-                case 190: err = Infogdm(Info); break;
-                case 73: err = Inforaw(Info); break;
-                case 16: err = Infookt(Info); break;
-                case 21: err = Infoau(Info); break;
-                case 23: err = Infoiff(Info); break;
-                case 39: err = Infolbm(Info); break;
-                case 10: err = Infoit(Info); break;
-                case 14: err = Infomid(Info); break;
-                case 30: err = Infoarj(Info); break;
-                case 13: err = Infomed(Info); break;
-                case 27: err = Infovoc(Info); break;
-                case  1: err = Infomod(Info); break;
-                case 17: err = Infopsm(Info); break;
-                case 57: err = Infoexe1(Info); break;
-                case 29: err = Infoxi(Info); break;
-                case 64: err = Infotpu(Info); break;
-                case  5: err = Infocmf(Info); break;
-                case 59: err = Infohlp(Info); break;
-                case 18: err = Infostm(Info); break;
-                case  8: err = Infofar(Info); break;
-                case 22: err = Infofsm(Info); break;
-                case 26: err = Infousm(Info); break;
-                case  9: err = Infofpt(Info); break;
-                case  7: err = Infof2r(Info); break;
-                case 12: err = Infomdl(Info); break;
-                case 25: err = Infospl(Info); break;
-                case 43: err = Infotga(Info); break;
-                case 52: err = Infompg(Info); break;
-                case 51: err = Infomov(Info); break;
-                case 31: err = Infodlz(Info); break;
-                case 49: err = Infofli(Info); break;
-                case 50: err = Infoflc(Info); break;
-                case 63: err = Infoswg(Info); break;
-                case 68: err = Infoams(Info); break;
-                case 76: err = Infot64(Info); break;
-                case 91: err = Infotxt(Info); break;
-                case 174: err = Infoc(Info); break;
-                case 104: err = Infohtm(Info); break;
-                case 106: err = Infoamf(Info); break;
-                case 107: err = Infogb(Info); break;
-                case 108: err = Infoptm(Info); break;
-                case 110: err = Infopkm(Info); break;
-                case 111: err = Infoits(Info); break;
-                case 112: err = Infodp3(Info); break;
-                case 113: err = Infodsf(Info); break;
-                case 114: err = Infouwf(Info); break;
-                case 115: err = Infoams2(Info); break;
-                case 120: err = Infoast(Info); break;
-                case 121: err = Infodsm(Info); break;
-                case 122: err = Infodat(Info); break;
-                case 24: err = Infopat(Info); break;
-                case 126: err = Infolza(Info); break;
-                case 133: err = Infotnl(Info); break;
-                case 134: err = Infohsi(Info); break;
-                case 137: err = Infoprc(Info); break;
-                case 140: err = Infodbf2(Info); break;
-                case 141: err = Infodbf3(Info); break;
-                case 144: err = Infoihp(Info); break;
-                case 145: err = Infosmd(Info); break;
-                case 146: err = Infobin(Info); break;
-                case 156: err = Infombm(Info); break;
-                case 157: err = Infousm2(Info); break;
-                case 160: err = Infong(Info); break;
-                case 163: err = Infonsf(Info); break;
-                case 164: err = Infohlp2(Info); break;
-                case 173: err = Infokkp(Info); break;
-                case 175: err = Infopub(Info); break;
-                case 176: err = Infoxls(Info); break;
-                case 177: err = Infodoc(Info); break;
-                case 178: err = Infowps(Info); break;
-                case 179: err = Infowdb(Info); break;
-                case 180: err = Infoppt(Info); break;
-                case 188: err = Info3ds(Info); break;
-                case 192: err = Infopar(Info); break;
-                case 194: err = Infosmc(Info); break;
-                default: // --- Ca serait une erreur de ma part alors ---
+                case 83:
+                    err = Infop00(Info);
+                    break;
+                case 80:
+                    err = Infoico(Info);
+                    break;
+                case 19:
+                    err = Infout(Info);
+                    break;
+                case 3:
+                    err = Infos3m(Info);
+                    break;
+                case 6:
+                    err = Infodmf(Info);
+                    break;
+                case 4:
+                    err = Info669(Info);
+                    break;
+                case 15:
+                    err = Infomtm(Info);
+                    break;
+                case 34:
+                    err = Inforar(Info);
+                    break;
+                case 37:
+                    err = Infogif(Info);
+                    break;
+                case 172:
+                    err = Infofif(Info);
+                    break;
+                case 40:
+                    err = Infopcx(Info);
+                    break;
+                case 36:
+                    err = Infobmp(Info);
+                    break;
+                case 148:
+                    err = Infobmp2(Info);
+                    break;
+                case 135:
+                    err = Infomp2(Info);
+                    break;
+                case 136:
+                    err = Infomp3(Info);
+                    break;
+                case 190:
+                    err = Infogdm(Info);
+                    break;
+                case 73:
+                    err = Inforaw(Info);
+                    break;
+                case 16:
+                    err = Infookt(Info);
+                    break;
+                case 21:
+                    err = Infoau(Info);
+                    break;
+                case 23:
+                    err = Infoiff(Info);
+                    break;
+                case 39:
+                    err = Infolbm(Info);
+                    break;
+                case 10:
+                    err = Infoit(Info);
+                    break;
+                case 14:
+                    err = Infomid(Info);
+                    break;
+                case 30:
+                    err = Infoarj(Info);
+                    break;
+                case 13:
+                    err = Infomed(Info);
+                    break;
+                case 27:
+                    err = Infovoc(Info);
+                    break;
+                case 1:
+                    err = Infomod(Info);
+                    break;
+                case 17:
+                    err = Infopsm(Info);
+                    break;
+                case 57:
+                    err = Infoexe1(Info);
+                    break;
+                case 29:
+                    err = Infoxi(Info);
+                    break;
+                case 64:
+                    err = Infotpu(Info);
+                    break;
+                case 5:
+                    err = Infocmf(Info);
+                    break;
+                case 59:
+                    err = Infohlp(Info);
+                    break;
+                case 18:
+                    err = Infostm(Info);
+                    break;
+                case 8:
+                    err = Infofar(Info);
+                    break;
+                case 22:
+                    err = Infofsm(Info);
+                    break;
+                case 26:
+                    err = Infousm(Info);
+                    break;
+                case 9:
+                    err = Infofpt(Info);
+                    break;
+                case 7:
+                    err = Infof2r(Info);
+                    break;
+                case 12:
+                    err = Infomdl(Info);
+                    break;
+                case 25:
+                    err = Infospl(Info);
+                    break;
+                case 43:
+                    err = Infotga(Info);
+                    break;
+                case 52:
+                    err = Infompg(Info);
+                    break;
+                case 51:
+                    err = Infomov(Info);
+                    break;
+                case 31:
+                    err = Infodlz(Info);
+                    break;
+                case 49:
+                    err = Infofli(Info);
+                    break;
+                case 50:
+                    err = Infoflc(Info);
+                    break;
+                case 63:
+                    err = Infoswg(Info);
+                    break;
+                case 68:
+                    err = Infoams(Info);
+                    break;
+                case 76:
+                    err = Infot64(Info);
+                    break;
+                case 91:
+                    err = Infotxt(Info);
+                    break;
+                case 174:
+                    err = Infoc(Info);
+                    break;
+                case 104:
+                    err = Infohtm(Info);
+                    break;
+                case 106:
+                    err = Infoamf(Info);
+                    break;
+                case 107:
+                    err = Infogb(Info);
+                    break;
+                case 108:
+                    err = Infoptm(Info);
+                    break;
+                case 110:
+                    err = Infopkm(Info);
+                    break;
+                case 111:
+                    err = Infoits(Info);
+                    break;
+                case 112:
+                    err = Infodp3(Info);
+                    break;
+                case 113:
+                    err = Infodsf(Info);
+                    break;
+                case 114:
+                    err = Infouwf(Info);
+                    break;
+                case 115:
+                    err = Infoams2(Info);
+                    break;
+                case 120:
+                    err = Infoast(Info);
+                    break;
+                case 121:
+                    err = Infodsm(Info);
+                    break;
+                case 122:
+                    err = Infodat(Info);
+                    break;
+                case 24:
+                    err = Infopat(Info);
+                    break;
+                case 126:
+                    err = Infolza(Info);
+                    break;
+                case 133:
+                    err = Infotnl(Info);
+                    break;
+                case 134:
+                    err = Infohsi(Info);
+                    break;
+                case 137:
+                    err = Infoprc(Info);
+                    break;
+                case 140:
+                    err = Infodbf2(Info);
+                    break;
+                case 141:
+                    err = Infodbf3(Info);
+                    break;
+                case 144:
+                    err = Infoihp(Info);
+                    break;
+                case 145:
+                    err = Infosmd(Info);
+                    break;
+                case 146:
+                    err = Infobin(Info);
+                    break;
+                case 156:
+                    err = Infombm(Info);
+                    break;
+                case 157:
+                    err = Infousm2(Info);
+                    break;
+                case 160:
+                    err = Infong(Info);
+                    break;
+                case 163:
+                    err = Infonsf(Info);
+                    break;
+                case 164:
+                    err = Infohlp2(Info);
+                    break;
+                case 173:
+                    err = Infokkp(Info);
+                    break;
+                case 175:
+                    err = Infopub(Info);
+                    break;
+                case 176:
+                    err = Infoxls(Info);
+                    break;
+                case 177:
+                    err = Infodoc(Info);
+                    break;
+                case 178:
+                    err = Infowps(Info);
+                    break;
+                case 179:
+                    err = Infowdb(Info);
+                    break;
+                case 180:
+                    err = Infoppt(Info);
+                    break;
+                case 188:
+                    err = Info3ds(Info);
+                    break;
+                case 192:
+                    err = Infopar(Info);
+                    break;
+                case 194:
+                    err = Infosmc(Info);
+                    break;
+                default:  // --- Ca serait une erreur de ma part alors ---
                     sprintf(Info->format, "Pingouin %d", K[n].numero);
                     trv = 1;
                     break;
-            } // switch
+            }  // switch
             if (err == 0)
                 trv = n;
             else
@@ -2024,7 +2184,7 @@ void Traitefic(RB_IDF *Info)
     }
 
     if (trv == -1) {
-        n = -2; // --- format non reconnu -------------------------------------
+        n = -2;  // --- format non reconnu -------------------------------------
 
         strcpy(Info->format, "Unknown Format");
 
@@ -2057,47 +2217,46 @@ void Traitefic(RB_IDF *Info)
         free(Info->buffer);
     }
 
-} // Traitefic
+}  // Traitefic
 
-
-void ClearSpace(char *name)
-{
+void ClearSpace(char* name) {
     char c, buf[1024];
     short i, j;
 
-    i = 0; // --- navigation dans name -------------------------------------
-    j = 0; // --- position dans buf ----------------------------------------
+    i = 0;  // --- navigation dans name -------------------------------------
+    j = 0;  // --- position dans buf ----------------------------------------
 
     while (name[i] == 32) i++;
 
     if (name[i] != 0)
         while ((c = name[i]) != 0) {
+            // Fix: Check buffer bounds to prevent overflow
+            if (j >= 1023) break;
             buf[j] = name[i];
             j++;
             i++;
             if (name[i] == 32) {
                 c = name[i];
-                while ( (name[i] == 32) & (name[i] != 0) ) {
+                while ((name[i] == 32) & (name[i] != 0)) {
                     if (name[i] == '=') c = '=';
                     i++;
                 }
+                // Fix: Check buffer bounds before writing
+                if (j >= 1023) break;
                 buf[j] = c;
                 j++;
             }
         }
     buf[j] = 0;
 
-    j--;
+    if (j > 0) j--;
 
-    while (buf[j] == 32) buf[j] = 0, j--;
+    while (j >= 0 && buf[j] == 32) buf[j] = 0, j--;
 
     strcpy(name, buf);
-} // ClearSpace
+}  // ClearSpace
 
-
-
-short Infomod(RB_IDF *Info)
-{
+short Infomod(RB_IDF* Info) {
     short chnl, instr;
     char buf[5];
 
@@ -2107,83 +2266,105 @@ short Infomod(RB_IDF *Info)
 
     if (!memcmp(buf, "TDZ1", 4)) {
         strcpy(Info->format, "TakeTracker");
-        chnl = 1; instr = 31;
+        chnl = 1;
+        instr = 31;
     }
     if (!memcmp(buf, "TDZ2", 4)) {
         strcpy(Info->format, "TakeTracker");
-        chnl = 2; instr = 31;
+        chnl = 2;
+        instr = 31;
     }
     if (!memcmp(buf, "TDZ3", 4)) {
         strcpy(Info->format, "TakeTracker");
-        chnl = 3; instr = 31;
+        chnl = 3;
+        instr = 31;
     }
     if (!memcmp(buf, "M.K.", 4)) {
         strcpy(Info->format, "Protracker");
-        chnl = 4; instr = 31;
+        chnl = 4;
+        instr = 31;
     }
     if (!memcmp(buf, "M&K&", 4)) {
         strcpy(Info->format, "Noisetracker");
-        chnl = 4; instr = 31;
+        chnl = 4;
+        instr = 31;
     }
     if (!memcmp(buf, "M!K!", 4)) {
         strcpy(Info->format, "Protracker");
-        chnl = 4; instr = 31;
+        chnl = 4;
+        instr = 31;
     }
     if (!memcmp(buf, "4CHN", 4)) {
         strcpy(Info->format, "Protracker");
-        chnl = 4; instr = 31;
+        chnl = 4;
+        instr = 31;
     }
     if (!memcmp(buf, "6CHN", 4)) {
         strcpy(Info->format, "PC-FTracker");
-        chnl = 6; instr = 31;
+        chnl = 6;
+        instr = 31;
     }
     if (!memcmp(buf, "8CHN", 4)) {
         strcpy(Info->format, "PC-FTracker");
-        chnl = 8; instr = 31;
+        chnl = 8;
+        instr = 31;
     }
     if (!memcmp(buf, "10CH", 4)) {
         strcpy(Info->format, "PC-FTracker");
-        chnl = 10; instr = 31;
+        chnl = 10;
+        instr = 31;
     }
     if (!memcmp(buf, "16CH", 4)) {
         strcpy(Info->format, "PC-FTracker");
-        chnl = 16; instr = 31;
+        chnl = 16;
+        instr = 31;
     }
     if (!memcmp(buf, "CD81", 4)) {
         strcpy(Info->format, "Octalyser");
-        chnl = 8; instr = 31;
+        chnl = 8;
+        instr = 31;
     }
     // --- octalyser on Atari Ste/falcon nombre de channel ? ---------
     if (!memcmp(buf, "OCTA", 4)) {
         strcpy(Info->format, "Oktotracker");
-        chnl = 8; instr = 31;
+        chnl = 8;
+        instr = 31;
     }
     if (!memcmp(buf, "FLT4", 4)) {
         strcpy(Info->format, "StarTrekker");
-        chnl = 4; instr = 31;
+        chnl = 4;
+        instr = 31;
     }
     if (!memcmp(buf, "RASP", 4)) {
         strcpy(Info->format, "StarTrekker");
-        chnl = 4; instr = 31;
+        chnl = 4;
+        instr = 31;
     }
     if (!memcmp(buf, "FLT8", 4)) {
         strcpy(Info->format, "StarTrekker");
-        chnl = 8; instr = 31;
+        chnl = 8;
+        instr = 31;
     }
     if (!memcmp(buf, "EXO4", 4)) {
         strcpy(Info->format, "StarTrekker");
-        chnl = 8; instr = 31;
+        chnl = 8;
+        instr = 31;
     }
     // EXO OU EX0 ?
     if (!memcmp(buf, "EXO8", 4)) {
         strcpy(Info->format, "StarTrekker");
-        chnl = 8; instr = 31;
+        chnl = 8;
+        instr = 31;
     }
     if (!memcmp(buf, "FA04", 4)) {
-        strcpy(Info->format, "Digital Tracker F030"); chnl = 4; instr = 31;
+        strcpy(Info->format, "Digital Tracker F030");
+        chnl = 4;
+        instr = 31;
     }
     if (!memcmp(buf, "FA08", 4)) {
-        strcpy(Info->format, "Digital Tracker F030"); chnl = 8; instr = 31;
+        strcpy(Info->format, "Digital Tracker F030");
+        chnl = 8;
+        instr = 31;
     }
 
     if (chnl == 0) return 1;
@@ -2196,20 +2377,18 @@ short Infomod(RB_IDF *Info)
     strcpy(Info->Tinfo, "Inst/Lngt/Chnl");
 
     return 0;
-} // Infomod
+}  // Infomod
 
-short Infoihp(RB_IDF *Info)
-{
+short Infoihp(RB_IDF* Info) {
     ReadStr(Info, 0x3A, Info->fullname, 32);
 
     return 0;
 }
 
-short Infosmd(RB_IDF *Info)
-{
+short Infosmd(RB_IDF* Info) {
     int n;
 
-// Titre complet
+    // Titre complet
 
     for (n = 0; n < 16; n++) {
         Info->fullname[n * 2] = ReadChar(Info, 0x2290 + n);
@@ -2218,7 +2397,7 @@ short Infosmd(RB_IDF *Info)
     Info->fullname[32] = 0;
     ClearSpace(Info->fullname);
 
-// Copyright
+    // Copyright
 
     for (n = 0; n < 16; n++) {
         Info->message[0][n * 2] = ReadChar(Info, 0x2280 + n);
@@ -2227,40 +2406,35 @@ short Infosmd(RB_IDF *Info)
     Info->message[0][32] = 0;
     ClearSpace(Info->message[0]);
 
-
     return 0;
-} // Infosmd
+}  // Infosmd
 
-short Infobin(RB_IDF *Info)
-{
-
-// Titre complet
+short Infobin(RB_IDF* Info) {
+    // Titre complet
     ReadStr(Info, 0x150, Info->fullname, 32);
 
-// Copyright
+    // Copyright
     ReadStr(Info, 0x100, Info->message[0], 32);
 
     return 0;
 }
 
-short Infodmf(RB_IDF *Info)
-{
+short Infodmf(RB_IDF* Info) {
     ReadStr(Info, 13, Info->fullname, 30);
     ReadStr(Info, 43, Info->composer, 20);
-// ReadStr(Info,5,Info->format,8); // Nom du tracker
+    // ReadStr(Info,5,Info->format,8); // Nom du tracker
 
-// pour le nombre de sample, il faut rechercher le chunk 'CMPI'.
-//      L'octet suivant est le nombre de sample (MAXSAMPLE)
+    // pour le nombre de sample, il faut rechercher le chunk 'CMPI'.
+    //      L'octet suivant est le nombre de sample (MAXSAMPLE)
 
-/* strcpy(Info[3].help,"INFO");
- * sprintf(Info->message[0], "%3d /%3d /%3d",instr,ReadChar(950),chnl);
- * strcpy(Info->message[0],"Inst/Patt/Chnl"); */
+    /* strcpy(Info[3].help,"INFO");
+     * sprintf(Info->message[0], "%3d /%3d /%3d",instr,ReadChar(950),chnl);
+     * strcpy(Info->message[0],"Inst/Patt/Chnl"); */
 
     return 0;
 }
 
-short Infoit(RB_IDF *Info)
-{
+short Infoit(RB_IDF* Info) {
     ReadStr(Info, 4, Info->fullname, 26);
 
     sprintf(Info->format, "Impulse Tracker %d.%02X module",
@@ -2273,20 +2447,17 @@ short Infoit(RB_IDF *Info)
     return 0;
 }
 
-short Infomid(RB_IDF *Info)
-{
+short Infomid(RB_IDF* Info) {
     char chunk[5];
     int lng, pos;
     short info;
     short mess;
     int tpos;
 
-
     sprintf(Info->Tinfo, "Tracks");
     sprintf(Info->info, "%3d", ReadInt(Info, 10, 2));
 
     tpos = Info->posfic;
-
 
     mess = -1;
 
@@ -2320,7 +2491,7 @@ short Infomid(RB_IDF *Info)
             strlng = ReadChar(Info, tpos);
             tpos++;
             if ((strlng < 1) | (strlng > 7))
-                continue; // --- C'est pas une information texte ----------
+                continue;  // --- C'est pas une information texte ----------
 
             if (tpos > Info->sizemax) break;
             strlng = ReadChar(Info, tpos);
@@ -2345,36 +2516,33 @@ short Infomid(RB_IDF *Info)
     Info->taille = (pos + lng) - Info->posfic;
 
     return 0;
-} // Infomid
+}  // Infomid
 
-
-short Infomtm(RB_IDF *Info)
-{
+short Infomtm(RB_IDF* Info) {
     ReadStr(Info, 4, Info->fullname, 20);
 
     sprintf(Info->info, "%3d /%3d", ReadChar(Info, 27) + 1, ReadChar(Info, 33));
-    strcpy(Info->Tinfo, "SngL/Chnl"); // sngl = songlength
+    strcpy(Info->Tinfo, "SngL/Chnl");  // sngl = songlength
 
-// le nombre de channel est contraire … la doc
-// le nombre de sample aussi !!!
+    // le nombre de channel est contraire ï¿½ la doc
+    // le nombre de sample aussi !!!
 
     return 0;
 }
 
-short Info669(RB_IDF *Info)
-{
+short Info669(RB_IDF* Info) {
     char buf[3];
 
     ReadStr(Info, 0, buf, 2);
 
-    if ( (memcmp(buf, "if", 2) != 0) & (memcmp(buf, "JN", 2) != 0) )
+    if ((memcmp(buf, "if", 2) != 0) & (memcmp(buf, "JN", 2) != 0))
         return 1;
 
-    ReadStr(Info, 2, Info->message[0], 36); // --- 108 octets en r‚alit‚ ------
-    ReadStr(Info, 38, Info->message[1], 36); // --- 108 octets en r‚alit‚ ------
-    ReadStr(Info, 74, Info->message[2], 36); // --- 108 octets en r‚alit‚ ------
+    ReadStr(Info, 2, Info->message[0], 36);   // --- 108 octets en rï¿½alitï¿½ ------
+    ReadStr(Info, 38, Info->message[1], 36);  // --- 108 octets en rï¿½alitï¿½ ------
+    ReadStr(Info, 74, Info->message[2], 36);  // --- 108 octets en rï¿½alitï¿½ ------
 
-    if (!memcmp(buf, "if", 2)) // 0x6669
+    if (!memcmp(buf, "if", 2))  // 0x6669
         strcpy(Info->format, "669 Module");
     else
         strcpy(Info->format, "Extended 669 Module");
@@ -2384,10 +2552,9 @@ short Info669(RB_IDF *Info)
     strcpy(Info->Tinfo, "Inst/Patt/Chnl");
 
     return 0;
-} // Info669
+}  // Info669
 
-short Infoxm(RB_IDF *Info)
-{
+short Infoxm(RB_IDF* Info) {
     char bname[25];
 
     ReadStr(Info, 17, Info->fullname, 20);
@@ -2402,18 +2569,14 @@ short Infoxm(RB_IDF *Info)
     return 0;
 }
 
-short Infogdm(RB_IDF *Info)
-{
+short Infogdm(RB_IDF* Info) {
     ReadStr(Info, 4, Info->fullname, 32);
     ReadStr(Info, 36, Info->composer, 32);
 
     return 0;
 }
 
-
-
-short Infos3m(RB_IDF *Info)
-{
+short Infos3m(RB_IDF* Info) {
     short n, chnl;
 
     ReadStr(Info, 0, Info->fullname, 28);
@@ -2430,13 +2593,12 @@ short Infos3m(RB_IDF *Info)
     return 0;
 }
 
-short Infout(RB_IDF *Info)
-{
+short Infout(RB_IDF* Info) {
     int chnl, instr, patt;
     char version[5];
     int res, patt_seq;
 
-    short sizestruct; // --- taille de la structure sample ------------------
+    short sizestruct;  // --- taille de la structure sample ------------------
 
     char key[10];
 
@@ -2446,19 +2608,33 @@ short Infout(RB_IDF *Info)
         return 1;
     else
         switch (ReadChar(Info, 14)) {
-            case '1': strcpy(version, "1.0"); sizestruct = 64; break;
-            case '2': strcpy(version, "1.4"); sizestruct = 64; break;
-            case '3': strcpy(version, "1.5"); sizestruct = 64; break;
-            case '4': strcpy(version, "1.6"); sizestruct = 66; break;
-            default:  strcpy(version, ">1.6"); sizestruct = 66; break;
+            case '1':
+                strcpy(version, "1.0");
+                sizestruct = 64;
+                break;
+            case '2':
+                strcpy(version, "1.4");
+                sizestruct = 64;
+                break;
+            case '3':
+                strcpy(version, "1.5");
+                sizestruct = 64;
+                break;
+            case '4':
+                strcpy(version, "1.6");
+                sizestruct = 66;
+                break;
+            default:
+                strcpy(version, ">1.6");
+                sizestruct = 66;
+                break;
         }
 
     res = ReadChar(Info, 47) * 32;
     instr = ReadChar(Info, 48 + res);
-    patt_seq = 49 + (instr * sizestruct) + res;// la doc dit 48+ mais elle se trompe
+    patt_seq = 49 + (instr * sizestruct) + res;  // la doc dit 48+ mais elle se trompe
     patt = ReadChar(Info, patt_seq + 257);
     chnl = ReadChar(Info, patt_seq + 256);
-
 
     ReadStr(Info, 15, Info->fullname, 32);
 
@@ -2466,20 +2642,17 @@ short Infout(RB_IDF *Info)
     strcat(Info->format, version);
     strcat(Info->format, " module");
 
-
     sprintf(Info->info, "%3d /%3d /%3d", instr, patt, chnl);
     strcpy(Info->Tinfo, "Inst/Patt/Chnl");
 
     return 0;
-} // Infout
-
+}  // Infout
 
 /*--------------------------------------------------------------------*\
 |- FICHIER .RAR                                                       -|
 \*--------------------------------------------------------------------*/
 
-short Inforar(RB_IDF *Info)
-{
+short Inforar(RB_IDF* Info) {
     char Nomarch[256];
     char buffer[256];
     int SolidType;
@@ -2489,12 +2662,12 @@ short Inforar(RB_IDF *Info)
 
     SolidType = (flag & 8);
 
-// --- Test la solidit‚ ;) de l'archive ---------------------------------
+    // --- Test la soliditï¿½ ;) de l'archive ---------------------------------
 
     strcpy(buffer, "");
     if (SolidType) strcat(buffer, "Solid ");
 
-    if (flag & 1)   // --- MHD_MULT_VOL ---------------------------------
+    if (flag & 1)  // --- MHD_MULT_VOL ---------------------------------
         sprintf(Nomarch, "%colume ", (SolidType) ? 'v' : 'V');
     else
         sprintf(Nomarch, "%crchive ", (SolidType) ? 'a' : 'A');
@@ -2504,10 +2677,9 @@ short Inforar(RB_IDF *Info)
     sprintf(Info->message[0], "  Archive type: %20s", buffer);
 
     return 0;
-} // Inforar
+}  // Inforar
 
-short Infogif(RB_IDF *Info)
-{
+short Infogif(RB_IDF* Info) {
     signed char car;
     short Lp, Hp;
     uchar map, fond;
@@ -2545,7 +2717,6 @@ short Infogif(RB_IDF *Info)
 
     sprintf(Info->message[0], FORMPIC, Lp, Hp, BP);
 
-
     fond = ReadChar(Info, pos);
     pos++;
 
@@ -2553,21 +2724,21 @@ short Infogif(RB_IDF *Info)
     pos++;
 
     if (PG == 1)
-        pos += (1 << BP) * 3; // --- palette --------------------------------------
+        pos += (1 << BP) * 3;  // --- palette --------------------------------------
 
     do {
         car = ReadChar(Info, pos);
         pos++;
 
         switch (car) {
-            case '!': // --- Information --------------------------------------
+            case '!':  // --- Information --------------------------------------
             {
                 short n;
                 uchar lng;
                 short mess;
 
                 car = ReadChar(Info, pos);
-                pos++; // --- code information ---------------------------------
+                pos++;  // --- code information ---------------------------------
 
                 mess = 1;
 
@@ -2575,18 +2746,18 @@ short Infogif(RB_IDF *Info)
                     lng = ReadChar(Info, pos);
                     pos++;
 
-                    if ((mess < 10) & (car == -1) & (lng < 40)) { // --- Texte ---------
+                    if ((mess < 10) & (car == -1) & (lng < 40)) {  // --- Texte ---------
                         char appl[64];
 
                         ReadStr(Info, pos, appl, lng);
-                        pos += lng; // --- comment ------------------------------
+                        pos += lng;  // --- comment ------------------------------
 
                         for (n = 0; n < strlen(appl); n++) {
                             if (appl[n] < 32)
                                 break;
                         }
 
-                        if ((appl[n] == 0) & (lng <= 34) & (strlen(appl) > 1) ) {
+                        if ((appl[n] == 0) & (lng <= 34) & (strlen(appl) > 1)) {
                             if ((lng == 11) & (mess == 1))
                                 sprintf(Info->message[mess],
                                         " Application name: %16s", appl);
@@ -2595,12 +2766,12 @@ short Infogif(RB_IDF *Info)
                             mess++;
                         }
                     } else
-                        pos += lng; // --- passe information -----------------
+                        pos += lng;  // --- passe information -----------------
                 } while (lng != 0);
                 car = 0;
                 break;
             }
-            case ',': // --- DATA -----------------------------------------------
+            case ',':  // --- DATA -----------------------------------------------
             {
                 short DX, DY, TX, TY;
                 int PL, BP;
@@ -2631,11 +2802,11 @@ short Infogif(RB_IDF *Info)
                     t = ReadChar(Info, pos);
                     pos++;
                     pos += t;
-                    if (pos > Info->sizemax) fin = 1; // --- palette ---------------
+                    if (pos > Info->sizemax) fin = 1;  // --- palette ---------------
                 } while ((t != 0) & (!fin));
 
             } break;
-        } // --- fin du case -----------------------------------------------
+        }  // --- fin du case -----------------------------------------------
     }  // --- fin du while (buf) ----------------------------------------
     while ((car != ';') & (!fin));
 
@@ -2650,11 +2821,9 @@ short Infogif(RB_IDF *Info)
     }
 
     return 0;
-} // Infogif
+}  // Infogif
 
-
-short Infopcx(RB_IDF *Info)
-{
+short Infopcx(RB_IDF* Info) {
     int Lp, Hp;
     uchar BP;
 
@@ -2668,8 +2837,7 @@ short Infopcx(RB_IDF *Info)
     return 0;
 }
 
-short Infotnl(RB_IDF *Info)
-{
+short Infotnl(RB_IDF* Info) {
     long Lp, Hp;
 
     Lp = ReadLng(Info, 8, 1);
@@ -2685,14 +2853,14 @@ short Infotnl(RB_IDF *Info)
     return 0;
 }
 
-short Infobmp(RB_IDF *Info)      // --- Windows BMP ---------------------
+short Infobmp(RB_IDF* Info)  // --- Windows BMP ---------------------
 {
     long Lp, Hp;
     int bps;
 
     if (ReadInt(Info, 14, 1) != 40) return 1;
 
-    Info->taille = ReadLng(Info, 2, 1); // Ordre des bytes pour le int: LO-HI
+    Info->taille = ReadLng(Info, 2, 1);  // Ordre des bytes pour le int: LO-HI
 
     Lp = ReadLng(Info, 18, 1);
     Hp = ReadLng(Info, 22, 1);
@@ -2703,11 +2871,10 @@ short Infobmp(RB_IDF *Info)      // --- Windows BMP ---------------------
     return 0;
 }
 
-short Infofif(RB_IDF *Info)
-{
+short Infofif(RB_IDF* Info) {
     long Lp, Hp;
 
-    Info->taille = ReadLng(Info, 0x10, 1); // Ordre des bytes pour le int: LO-HI
+    Info->taille = ReadLng(Info, 0x10, 1);  // Ordre des bytes pour le int: LO-HI
 
     Lp = ReadLng(Info, 6, 1);
     Hp = ReadLng(Info, 10, 1);
@@ -2718,14 +2885,14 @@ short Infofif(RB_IDF *Info)
     return 0;
 }
 
-short Infobmp2(RB_IDF *Info)     // OS2 BMP
+short Infobmp2(RB_IDF* Info)  // OS2 BMP
 {
     long Lp, Hp;
     int bps;
 
     if (ReadInt(Info, 14, 1) != 12) return 1;
 
-    Info->taille = ReadLng(Info, 2, 1); // Ordre des bytes pour le int: LO-HI
+    Info->taille = ReadLng(Info, 2, 1);  // Ordre des bytes pour le int: LO-HI
 
     Lp = ReadInt(Info, 18, 1);
     Hp = ReadInt(Info, 20, 1);
@@ -2736,7 +2903,7 @@ short Infobmp2(RB_IDF *Info)     // OS2 BMP
     return 0;
 }
 
-short Infomp2(RB_IDF *Info)     // Mpeg2 layer 2
+short Infomp2(RB_IDF* Info)  // Mpeg2 layer 2
 {
     int info;
     int deb, freq, tfreq[] = {44100, 48000, 32000, 0};
@@ -2756,7 +2923,7 @@ short Infomp2(RB_IDF *Info)     // Mpeg2 layer 2
     return 0;
 }
 
-short Infomp3(RB_IDF *Info)     // Mpeg2 layer 3
+short Infomp3(RB_IDF* Info)  // Mpeg2 layer 3
 {
     int info;
     int deb, freq, tfreq[] = {44100, 48000, 32000, 0};
@@ -2776,8 +2943,7 @@ short Infomp3(RB_IDF *Info)     // Mpeg2 layer 3
     return 0;
 }
 
-short Infopkm(RB_IDF *Info)
-{
+short Infopkm(RB_IDF* Info) {
     short Lp, Hp;
 
     Lp = ReadInt(Info, 6, 1);
@@ -2788,31 +2954,37 @@ short Infopkm(RB_IDF *Info)
     return 0;
 }
 
-short Infoico(RB_IDF *Info)
-{
+short Infoico(RB_IDF* Info) {
     short Lp, Hp, bps;
 
     Lp = ReadChar(Info, 6);
     Hp = ReadChar(Info, 7);
 
     switch (ReadChar(Info, 8)) {
-        case 2: bps = 1; break;
-        case 8: bps = 3; break;
-        case 16: bps = 4; break;
-        default: bps = 0; break;
+        case 2:
+            bps = 1;
+            break;
+        case 8:
+            bps = 3;
+            break;
+        case 16:
+            bps = 4;
+            break;
+        default:
+            bps = 0;
+            break;
     }
 
-    if ( (Lp != 16) & (Lp != 32) & (Lp != 64) ) return 1;
-    if ( (Hp != 16) & (Hp != 32) & (Hp != 64) ) return 1;
+    if ((Lp != 16) & (Lp != 32) & (Lp != 64)) return 1;
+    if ((Hp != 16) & (Hp != 32) & (Hp != 64)) return 1;
     if (bps == 0) return 1;
 
     sprintf(Info->message[0], FORMPIC, Lp, Hp, bps);
 
     return 0;
-} // Infoico
+}  // Infoico
 
-short Inforaw(RB_IDF *Info)
-{
+short Inforaw(RB_IDF* Info) {
     short int Lp, Hp, Bp;
     uchar ok = 0;
 
@@ -2820,9 +2992,10 @@ short Inforaw(RB_IDF *Info)
     Hp = ReadInt(Info, 10, 2);
     Bp = ReadInt(Info, 12, 2);
 
-    if ((Bp == 0) | (Bp == -24)) Bp = 24;
-    else
-    if (Bp == 256) Bp = 8;
+    if ((Bp == 0) | (Bp == -24))
+        Bp = 24;
+    else if (Bp == 256)
+        Bp = 8;
     else
         ok = 1;
 
@@ -2833,13 +3006,12 @@ short Inforaw(RB_IDF *Info)
                 " Picture is %4d * %4d  (%3d col.)", Lp, Hp, Bp);
 
     return 0;
-} // Inforaw
+}  // Inforaw
 
-short Infohsi(RB_IDF *Info)
-{
+short Infohsi(RB_IDF* Info) {
     ushort Lp, Hp;
 
-    Lp = ReadInt(Info, 6, 2); // --- Motorola mode -----------------------------
+    Lp = ReadInt(Info, 6, 2);  // --- Motorola mode -----------------------------
     Hp = ReadInt(Info, 8, 2);
 
     sprintf(Info->message[0], FORMPIC, Lp, Hp, 24);
@@ -2847,15 +3019,13 @@ short Infohsi(RB_IDF *Info)
     return 0;
 }
 
-short Infoprc(RB_IDF *Info)
-{
+short Infoprc(RB_IDF* Info) {
     ReadStr(Info, 0, Info->fullname, 32);
 
     return 0;
 }
 
-short Infookt(RB_IDF *Info)
-{
+short Infookt(RB_IDF* Info) {
     short chnl, inst, patt;
     ulong pos;
     char chunk[5];
@@ -2872,7 +3042,6 @@ short Infookt(RB_IDF *Info)
         if (tpos > Info->sizemax) break;
         ReadStr(Info, tpos, chunk, 4);
         tpos += 4;
-
 
         cont = 0;
 
@@ -2908,10 +3077,9 @@ short Infookt(RB_IDF *Info)
     Info->taille = (tpos - Info->posfic);
 
     return 0;
-} // Infookt
+}  // Infookt
 
-short Infoau(RB_IDF *Info)
-{
+short Infoau(RB_IDF* Info) {
     ulong dataLocation, dataSize, dataFormat, samplingRate;
 
     dataLocation = ReadLng(Info, 4, 2);
@@ -2930,8 +3098,7 @@ short Infoau(RB_IDF *Info)
     return 0;
 }
 
-short Infoiff(RB_IDF *Info)
-{
+short Infoiff(RB_IDF* Info) {
     ulong pos;
     ushort samplingRate;
     char chunk[5];
@@ -2944,7 +3111,7 @@ short Infoiff(RB_IDF *Info)
         return 1;
 
     ReadStr(Info, 8, buf, 4);
-    if ( (memcmp(buf, "8SVX", 4) != 0) & (memcmp(buf, "16SV", 4) != 0) )
+    if ((memcmp(buf, "8SVX", 4) != 0) & (memcmp(buf, "16SV", 4) != 0))
         return 1;
 
     if (!memcmp(buf, "16SV", 4))
@@ -2953,9 +3120,7 @@ short Infoiff(RB_IDF *Info)
     if (!memcmp(buf, "8SVX", 4))
         strcpy(Info->format, "Amiga 8-bit sampled voice");
 
-
     Info->taille = ReadLng(Info, 4, 2) + 8;
-
 
     tpos = Info->posfic + 12;
 
@@ -2989,12 +3154,10 @@ short Infoiff(RB_IDF *Info)
         break;
     } while (1);
 
-
     return 0;
-} // Infoiff
+}  // Infoiff
 
-short Infolbm(RB_IDF *Info)
-{
+short Infolbm(RB_IDF* Info) {
     ulong pos;
     char chunk[5];
     char fullname[255];
@@ -3008,9 +3171,7 @@ short Infolbm(RB_IDF *Info)
 
     ReadStr(Info, 8, buf, 4);
     ReadStr(Info, 12, buf2, 4);
-    if ( (memcmp(buf, "ILBM", 4))
-         & (memcmp(buf, "HPBM", 4))
-         & (memcmp(buf2, "BMHD", 4)) ) return 1;
+    if ((memcmp(buf, "ILBM", 4)) & (memcmp(buf, "HPBM", 4)) & (memcmp(buf2, "BMHD", 4))) return 1;
 
     Info->taille = ReadLng(Info, 4, 2) + 8;
 
@@ -3054,25 +3215,17 @@ short Infolbm(RB_IDF *Info)
         break;
     } while (1);
 
-
     return 0;
-} // Infolbm
+}  // Infolbm
 
-
-
-short Infoarj(RB_IDF *Info)
-{
-    if ( (ReadChar(Info, 0) != 0x60) | (ReadChar(Info, 1) != 234)
-         | (ReadChar(Info, 4) != 0x1E) )
+short Infoarj(RB_IDF* Info) {
+    if ((ReadChar(Info, 0) != 0x60) | (ReadChar(Info, 1) != 234) | (ReadChar(Info, 4) != 0x1E))
         return 1;
 
     return 0;
 }
 
-
-
-short Infomed(RB_IDF *Info)
-{
+short Infomed(RB_IDF* Info) {
     sprintf(Info->format, "OctaMED ver. %c.0 module", ReadChar(Info, 3) + 1);
 
     Info->taille = ReadLng(Info, 4, 2);
@@ -3080,14 +3233,12 @@ short Infomed(RB_IDF *Info)
     return 0;
 }
 
-short Infovoc(RB_IDF *Info)
-{
+short Infovoc(RB_IDF* Info) {
     short type;
     int size, pos;
     char Csize[40];
     short mess;
     int tpos;
-
 
     tpos = Info->posfic + 0x1A;
 
@@ -3104,11 +3255,10 @@ short Infovoc(RB_IDF *Info)
         size = ((int)Csize[0]) + ((int)Csize[1]) * 256 + ((int)Csize[2]) * 65536;
         pos = tpos;
 
-        if ( (type == 1) & (mess < 9) ) {
+        if ((type == 1) & (mess < 9)) {
             ReadStr(Info, tpos, Csize, 2);
             tpos += 2;
-            sprintf(Info->message[mess], FORMSMP
-                    , 1000000L / (256 - Csize[0]));
+            sprintf(Info->message[mess], FORMSMP, 1000000L / (256 - Csize[0]));
             if (Csize[1] == 0) sprintf(Info->message[mess + 1],
                                        "  Format:            8-bits samples");
             if (Csize[1] == 1) sprintf(Info->message[mess + 1],
@@ -3121,18 +3271,16 @@ short Infovoc(RB_IDF *Info)
         }
 
         if (type == 5) {
-            if ( (size <= 30) & ((Info->fullname[0]) == 0) ) { // msg ASCII
+            if ((size <= 30) & ((Info->fullname[0]) == 0)) {  // msg ASCII
                 ReadStr(Info, tpos, Csize, size);
                 tpos += size;
-                strcpy(Info->fullname, (char *)Csize);
-            } else
-            if ( (size <= 34) & (mess < 10) ) {              // msg ASCII
+                strcpy(Info->fullname, (char*)Csize);
+            } else if ((size <= 34) & (mess < 10)) {  // msg ASCII
                 ReadStr(Info, tpos, Csize, size);
                 tpos += size;
                 sprintf(Info->message[mess], "  %s", Csize);
                 mess++;
             }
-
         }
 
         tpos = pos + size;
@@ -3141,10 +3289,9 @@ short Infovoc(RB_IDF *Info)
     Info->taille = pos - Info->posfic;
 
     return 0;
-} // Infovoc
+}  // Infovoc
 
-short Infopsm(RB_IDF *Info)
-{
+short Infopsm(RB_IDF* Info) {
     Info->taille = ReadLng(Info, 4, 1) + 12;
 
     return 0;
@@ -3157,24 +3304,22 @@ short Infopsm(RB_IDF *Info)
 
 // message[8]:     header
 
-
-short Infoexe1(RB_IDF *Info)
-{
+short Infoexe1(RB_IDF* Info) {
     unsigned short modulo, file, header, overlay, ip, cs;
     long pe;
-    char htc[] = {0xBA, 0, 0, 0x2E, 0x89, 0x16, 0, 0, 0xB4, 0x30, 0xCD, 0x21}; // ---  C++
-    char hqc[] = {0xB4, 0x30, 0xcd, 0x21, 0X3C, 0x02, 0x73, 0x05, 0x33, 0xC0}; // --- QC
-    char hqb[] = {0xA1, 0x02, 0x00, 0x2E, 0xA3, 0x36}; // --- Quick basic
-    char htp[] = {0x9A, 0x00, 0x00}; // header TP
-    char hai[] = {0x0E, 0x07, 0xB9, 0x14, 0x00, 0xBE, 0x00, 0x01}; // ------------ AIN
-    char pkl[] = {0xB8, 0, 0, 0xBA, 0, 0, 0x05, 0, 0, 0x3B, 0x06, 0x02, 0x00}; // -- PKLITE
+    char htc[] = {0xBA, 0, 0, 0x2E, 0x89, 0x16, 0, 0, 0xB4, 0x30, 0xCD, 0x21};  // ---  C++
+    char hqc[] = {0xB4, 0x30, 0xcd, 0x21, 0X3C, 0x02, 0x73, 0x05, 0x33, 0xC0};  // --- QC
+    char hqb[] = {0xA1, 0x02, 0x00, 0x2E, 0xA3, 0x36};                          // --- Quick basic
+    char htp[] = {0x9A, 0x00, 0x00};                                            // header TP
+    char hai[] = {0x0E, 0x07, 0xB9, 0x14, 0x00, 0xBE, 0x00, 0x01};              // ------------ AIN
+    char pkl[] = {0xB8, 0, 0, 0xBA, 0, 0, 0x05, 0, 0, 0x3B, 0x06, 0x02, 0x00};  // -- PKLITE
     char exe[] = {0x8B, 0xE8, 0x8C, 0xC0, 0x05, 0x10, 0, 0x0E, 0x1F, 0xA3, 0x04, 0};
     // --- Exepack
-    char lze[] = {0x06, 0x0E, 0x1F, 0x8B, 0x0E, 0x0C, 0x00, 0X8B, 0xF1, 0x4E}; // LZEXE
+    char lze[] = {0x06, 0x0E, 0x1F, 0x8B, 0x0E, 0x0C, 0x00, 0X8B, 0xF1, 0x4E};  // LZEXE
 
-    char dsh[] = {0x06, 0xE8, 0x00, 0x00, 0x5E}; // ------------------------- LZEXE
-    char gws[] = {0xE9, 0x9A, 0x14, 0xCE, 0xA7, 0x01, 0x00, 0x05, 0x00}; // ------- GWS
-    char rdb[] = "RBID"; // header Redbug File information
+    char dsh[] = {0x06, 0xE8, 0x00, 0x00, 0x5E};                          // ------------------------- LZEXE
+    char gws[] = {0xE9, 0x9A, 0x14, 0xCE, 0xA7, 0x01, 0x00, 0x05, 0x00};  // ------- GWS
+    char rdb[] = "RBID";                                                  // header Redbug File information
 
     char buf3[3];
 
@@ -3189,7 +3334,7 @@ short Infoexe1(RB_IDF *Info)
     ip = ReadInt(Info, 0x14, 1);
     cs = ReadInt(Info, 0x16, 1);
 
-    if ( (cs == 0xFFF0) & (ip == 0x100) )
+    if ((cs == 0xFFF0) & (ip == 0x100))
         pe = (header * 16);
     else
         pe = ip + (header * 16) + (cs * 16);
@@ -3210,8 +3355,7 @@ short Infoexe1(RB_IDF *Info)
         Info->os = 1;
         sprintf(Info->message[1], FORMCMP, "BROKEN LZEXE");
     }
-    if ( (!ReadCmp(Info, pe + 9, pkl + 9, 4)) & (ReadChar(Info, pe) == pkl[0])
-         & (ReadChar(Info, pe + 3) == pkl[3]) & (ReadChar(Info, pe + 6) == pkl[6]) ) {
+    if ((!ReadCmp(Info, pe + 9, pkl + 9, 4)) & (ReadChar(Info, pe) == pkl[0]) & (ReadChar(Info, pe + 3) == pkl[3]) & (ReadChar(Info, pe + 6) == pkl[6])) {
         Info->os = 1;
         sprintf(Info->message[1], FORMCMP, "BROKEN PKLITE");
     }
@@ -3239,7 +3383,7 @@ short Infoexe1(RB_IDF *Info)
     if (!ReadCmp(Info, 0x20, "AIN2", 4))
         sprintf(Info->message[1], FORMCMP, "AIN V2.23");
 
-//
+    //
 
     if (!ReadCmp(Info, 0x55, "PMODE", 5)) {
         sprintf(Info->message[2], " Using   ");
@@ -3267,7 +3411,6 @@ short Infoexe1(RB_IDF *Info)
     if (!ReadCmp(Info, pe, dsh, 5))
         sprintf(Info->message[3], FORMCRY, "DSHIELD");
 
-
     if (!ReadCmp(Info, pe + 3, "WATCOM C/C++", 12))
         sprintf(Info->message[0], FORMCOM, "WATCOM C/C++");
 
@@ -3283,8 +3426,7 @@ short Infoexe1(RB_IDF *Info)
     if (!ReadCmp(Info, pe, htp, 3))
         sprintf(Info->message[0], FORMCOM, "TURBO PASCAL");
 
-    if ( (ReadChar(Info, pe) == htc[0]) & (!ReadCmp(Info, pe + 3, htc + 3, 3))
-         & (!ReadCmp(Info, pe + 8, htc + 8, 4)) )
+    if ((ReadChar(Info, pe) == htc[0]) & (!ReadCmp(Info, pe + 3, htc + 3, 3)) & (!ReadCmp(Info, pe + 8, htc + 8, 4)))
         sprintf(Info->message[0], FORMCOM, "TURBO C/C++");
 
     if (!ReadCmp(Info, pe, hqc, 9))
@@ -3299,7 +3441,7 @@ short Infoexe1(RB_IDF *Info)
         sprintf(Info->message[0], " Created by%24s", temp);
     }
 
-    ReadMem(Info, ReadInt(Info, 0x3C, 1), (void *)buf3, 2);
+    ReadMem(Info, ReadInt(Info, 0x3C, 1), (void*)buf3, 2);
 
     if (!memcmp(buf3, "NE", 2)) {
         uchar os, lv, hv, n;
@@ -3319,7 +3461,7 @@ short Infoexe1(RB_IDF *Info)
                 lv = ReadChar(Info, ReadInt(Info, 0x3C, 1) + 0x3E);
                 hv = ReadChar(Info, ReadInt(Info, 0x3C, 1) + 0x3F);
                 switch (hv) {
-                    case  4:
+                    case 4:
                         sprintf(buf2, "95");
                         break;
                     default:
@@ -3333,7 +3475,6 @@ short Infoexe1(RB_IDF *Info)
                 sprintf(Info->info, "WIN386");
             }
         }
-
 
         pos = ReadLng(Info, ReadInt(Info, 0x3C, 1) + 0x2C, 1) + 1;
 
@@ -3353,7 +3494,6 @@ short Infoexe1(RB_IDF *Info)
             strcpy(Info->format, "Library File");
         }
     }
-
 
     if (!memcmp(buf3, "LE", 2)) {
         uchar os;
@@ -3398,7 +3538,7 @@ short Infoexe1(RB_IDF *Info)
         sprintf(Info->info, "WIN32");
     }
 
-    if ((!memcmp(buf3, "LX", 2))  & (Info->os == 0))
+    if ((!memcmp(buf3, "LX", 2)) & (Info->os == 0))
         Info->os = 2;
 
     if (!memcmp(buf3, "W3", 2)) {
@@ -3425,12 +3565,11 @@ short Infoexe1(RB_IDF *Info)
     if (!ReadCmp(Info, 0x1C, rdb, 4)) {
         short n = 0;
         ReadStr(Info, 0x20, Info->fullname, 32);
-        while ( (Info->fullname[n] >= 32) & (n < 32) ) n++;
+        while ((Info->fullname[n] >= 32) & (n < 32)) n++;
         Info->fullname[n] = 0;
         ClearSpace(Info->fullname);
         Info->os = 1;
     }
-
 
     sprintf(Info->Tinfo, "Operating Sys.");
 
@@ -3448,14 +3587,12 @@ short Infoexe1(RB_IDF *Info)
                 break;
         }
 
-
     Info->taille = (int)modulo + ((int)file) * 512 - 512;
 
     return 0;
-} // Infoexe1
+}  // Infoexe1
 
-short Infoxi(RB_IDF *Info)
-{
+short Infoxi(RB_IDF* Info) {
     char bname[21];
 
     ReadStr(Info, 21, Info->fullname, 22);
@@ -3466,9 +3603,7 @@ short Infoxi(RB_IDF *Info)
     return 0;
 }
 
-
-short Infotpu(RB_IDF *Info)
-{
+short Infotpu(RB_IDF* Info) {
     uchar b;
 
     b = ReadChar(Info, 3);
@@ -3495,12 +3630,11 @@ struct Scmf {
     short nbrinst;
     short bastempo;
 };
-short Infocmf(RB_IDF *Info)
-{
+short Infocmf(RB_IDF* Info) {
     struct Scmf Bcmf;
     short l, n;
 
-    ReadMem(Info, 0, (void *)(&Bcmf), sizeof(struct Scmf));
+    ReadMem(Info, 0, (void*)(&Bcmf), sizeof(struct Scmf));
 
     sprintf(Info->format,
             "Creative Music File v%d.%d", Bcmf.Hbver, Bcmf.Lbver);
@@ -3509,15 +3643,15 @@ short Infocmf(RB_IDF *Info)
 
     if (Bcmf.offrem != 0) l = Bcmf.offrem;
     if (Bcmf.offcom != 0) {
-        if ( (l - Bcmf.offcom) <= 23)
-            ReadMem(Info, Bcmf.offcom, (void *)(Info->composer), l - Bcmf.offcom);
+        if ((l - Bcmf.offcom) <= 23)
+            ReadMem(Info, Bcmf.offcom, (void*)(Info->composer), l - Bcmf.offcom);
 
         l = Bcmf.offcom;
     }
 
     if (Bcmf.offtit != 0) {
-        if ( (l - Bcmf.offtit) <= 30)
-            ReadMem(Info, Bcmf.offtit, (void *)(Info->fullname), l - Bcmf.offtit);
+        if ((l - Bcmf.offtit) <= 30)
+            ReadMem(Info, Bcmf.offtit, (void*)(Info->fullname), l - Bcmf.offtit);
     }
 
     l = 0;
@@ -3529,10 +3663,9 @@ short Infocmf(RB_IDF *Info)
     sprintf(Info->info, "%3d /%3d", Bcmf.nbrinst, l);
 
     return 0;
-} // Infocmf
+}  // Infocmf
 
-short Infohlp(RB_IDF *Info)
-{
+short Infohlp(RB_IDF* Info) {
     Info->taille = ReadLng(Info, 12, 1);
 
     if (ReadLng(Info, 0x23, 2) == 256)
@@ -3542,30 +3675,27 @@ short Infohlp(RB_IDF *Info)
     return 0;
 }
 
-short Infohlp2(RB_IDF *Info)
-{
+short Infohlp2(RB_IDF* Info) {
     ReadStr(Info, 0x6B, Info->fullname, 48);
 
     return 0;
 }
 
-short Infostm(RB_IDF *Info)    // 8 channel
+short Infostm(RB_IDF* Info)  // 8 channel
 {
     ReadStr(Info, 0, Info->fullname, 20);
 
     if (ReadChar(Info, 29) == 2)
-        sprintf(Info->format, "Mod. Scream Tracker V%d.%02d", ReadChar(Info, 30)
-                , ReadChar(Info, 31));
+        sprintf(Info->format, "Mod. Scream Tracker V%d.%02d", ReadChar(Info, 30), ReadChar(Info, 31));
     if (ReadChar(Info, 29) == 1)
-        sprintf(Info->format, "Song Scream Tracker V%d.%02d", ReadChar(Info, 30)
-                , ReadChar(Info, 31));
+        sprintf(Info->format, "Song Scream Tracker V%d.%02d", ReadChar(Info, 30), ReadChar(Info, 31));
 
     strcpy(Info->Tinfo, "Patt/Chnl");
     sprintf(Info->info, "%3d / 8", ReadChar(Info, 33));
     return 0;
 }
 
-short Infofar(RB_IDF *Info)    // 16 channel
+short Infofar(RB_IDF* Info)  // 16 channel
 {
     int a;
 
@@ -3578,14 +3708,12 @@ short Infofar(RB_IDF *Info)    // 16 channel
     return 0;
 }
 
-short Infofsm(RB_IDF *Info)
-{
+short Infofsm(RB_IDF* Info) {
     ReadStr(Info, 0x04, Info->fullname, 32);
     return 0;
 }
 
-short Infousm2(RB_IDF *Info)
-{
+short Infousm2(RB_IDF* Info) {
     int instr, patt, chnl;
 
     instr = ReadInt(Info, 46, 1);
@@ -3600,57 +3728,47 @@ short Infousm2(RB_IDF *Info)
     return 0;
 }
 
-
-short Infofpt(RB_IDF *Info)
-{
+short Infofpt(RB_IDF* Info) {
     ReadStr(Info, 0x04, Info->fullname, 32);
     return 0;
 }
 
-short Infof2r(RB_IDF *Info)
-{
+short Infof2r(RB_IDF* Info) {
     ReadStr(Info, 0x06, Info->fullname, 40);
     return 0;
 }
 
-short Infoits(RB_IDF *Info)
-{
+short Infoits(RB_IDF* Info) {
     ReadStr(Info, 0x14, Info->fullname, 22);
     return 0;
 }
 
-short Infodp3(RB_IDF *Info)
-{
+short Infodp3(RB_IDF* Info) {
     ReadStr(Info, 0x30, Info->fullname, 22);
     return 0;
 }
 
-short Infopat(RB_IDF *Info)
-{
+short Infopat(RB_IDF* Info) {
     ReadStr(Info, 0x83, Info->fullname, 16);
     return 0;
 }
 
-short Infodsf(RB_IDF *Info)
-{
+short Infodsf(RB_IDF* Info) {
     ReadStr(Info, 4, Info->fullname, 22);
     return 0;
 }
 
-short Infouwf(RB_IDF *Info)
-{
+short Infouwf(RB_IDF* Info) {
     ReadStr(Info, 0, Info->fullname, 22);
     return 0;
 }
 
-short Infoams2(RB_IDF *Info)
-{
+short Infoams2(RB_IDF* Info) {
     ReadStr(Info, 37, Info->fullname, 22);
     return 0;
 }
 
-short Infoast(RB_IDF *Info)
-{
+short Infoast(RB_IDF* Info) {
     int lng;
 
     lng = ReadInt(Info, 10, 1);
@@ -3665,8 +3783,7 @@ short Infoast(RB_IDF *Info)
     return 0;
 }
 
-short Infodsm(RB_IDF *Info)
-{
+short Infodsm(RB_IDF* Info) {
     ReadStr(Info, 4, tampon, 79);
     tampon[79] = 0;
 
@@ -3678,19 +3795,15 @@ short Infodsm(RB_IDF *Info)
     return 0;
 }
 
-short Infodat(RB_IDF *Info)
-{
+short Infodat(RB_IDF* Info) {
     ReadStr(Info, 0x16, Info->fullname, 32);
     ReadStr(Info, 0x36, Info->composer, 32);
-// ReadStr(Info,0x56,Info->fullname,32);    // C'est quoi ici ?
+    // ReadStr(Info,0x56,Info->fullname,32);    // C'est quoi ici ?
 
     return 0;
 }
 
-
-
-short Infomdl(RB_IDF *Info)
-{
+short Infomdl(RB_IDF* Info) {
     char chunk[2];
     ulong taille;
     int tpos;
@@ -3699,7 +3812,6 @@ short Infomdl(RB_IDF *Info)
 
     while (1) {
         tpos = taille;
-
 
         if (tpos > Info->sizemax) break;
         ReadStr(Info, tpos, chunk, 2);
@@ -3743,10 +3855,9 @@ short Infomdl(RB_IDF *Info)
     Info->taille = tpos - Info->posfic;
 
     return 0;
-} // Infomdl
+}  // Infomdl
 
-short Infospl(RB_IDF *Info)
-{
+short Infospl(RB_IDF* Info) {
     ReadStr(Info, 0x05, Info->fullname, 22);
 
     sprintf(Info->message[0], FORMSMP, ReadInt(Info, 45, 1));
@@ -3779,9 +3890,7 @@ short Infospl(RB_IDF *Info)
  * }
  */
 
-
-short Infotga(RB_IDF *Info)
-{
+short Infotga(RB_IDF* Info) {
     long Lp, Hp;
     uchar bps;
     char key1[] = {0, 1, 1, 0};
@@ -3796,8 +3905,7 @@ short Infotga(RB_IDF *Info)
 
     if (!memcmp(buf, key1, 4))
         sprintf(Info->format, "Targa Picture 256 Col.");
-    else
-    if (!memcmp(buf, key2, 4))
+    else if (!memcmp(buf, key2, 4))
         sprintf(Info->format, "Targa Picture True Col.");
     else
         return 1;
@@ -3809,45 +3917,42 @@ short Infotga(RB_IDF *Info)
     sprintf(Info->message[0], FORMPIC, Lp, Hp, bps);
 
     return 0;
-} // Infotga
-
+}  // Infotga
 
 struct SNESRomInfoStruct {
-    char ROM_Title[21];          // FFC0
-    char dummy;                  // FFD6
-    unsigned char ROM_Type;      // FFD7
-    unsigned char ROM_Size;      // FFD8
-    unsigned char SRAM_Size;     // FFD9
-    unsigned char Country_Code;  // FFDA
-    unsigned char License;       // FFDB
-    unsigned char ROM_Version;   // FFDC
-    unsigned short int Complement;// FFDD
-    unsigned short int Checksum; // FFDF
+    char ROM_Title[21];             // FFC0
+    char dummy;                     // FFD6
+    unsigned char ROM_Type;         // FFD7
+    unsigned char ROM_Size;         // FFD8
+    unsigned char SRAM_Size;        // FFD9
+    unsigned char Country_Code;     // FFDA
+    unsigned char License;          // FFDB
+    unsigned char ROM_Version;      // FFDC
+    unsigned short int Complement;  // FFDD
+    unsigned short int Checksum;    // FFDF
 };
 
-
-short Infosmc(RB_IDF *Info)
-{
+short Infosmc(RB_IDF* Info) {
     struct SNESRomInfoStruct GI1, GI2;
     unsigned int j, k;
     int fileheader;
 
     fileheader = 512;
 
-/*
- * fseek(file_ptr,0,SEEK_END);
- *
- * if ((fileheader=ftell(file_ptr)&8191)!=512)
- *  puts ("Headerless image");
- * else
- *  {
- *  printf("%i-byte header detected\n",fileheader);
- *  }
- * printf("Size: %li\n",ftell(file_ptr));
- */
+    /*
+     * fseek(file_ptr,0,SEEK_END);
+     *
+     * if ((fileheader=ftell(file_ptr)&8191)!=512)
+     *  puts ("Headerless image");
+     * else
+     *  {
+     *  printf("%i-byte header detected\n",fileheader);
+     *  }
+     * printf("Size: %li\n",ftell(file_ptr));
+     */
 
-    ReadMem(Info, 0x7FC0 + fileheader, (void *)&GI1, sizeof(struct SNESRomInfoStruct));
-    ReadMem(Info, 0xFFC0 + fileheader, (void *)&GI2, sizeof(struct SNESRomInfoStruct));
+    ReadMem(Info, 0x7FC0 + fileheader, (void*)&GI1, sizeof(struct SNESRomInfoStruct));
+    ReadMem(Info, 0xFFC0 + fileheader, (void*)&GI2, sizeof(struct SNESRomInfoStruct));
 
     j = GI1.Complement + GI1.Checksum;
     k = GI2.Complement + GI2.Checksum;
@@ -3864,11 +3969,9 @@ short Infosmc(RB_IDF *Info)
         return 1;
 
     return 0;
-} // Infosmc
+}  // Infosmc
 
-
-short Infopar(RB_IDF *Info)
-{
+short Infopar(RB_IDF* Info) {
     unsigned long n, d;
     char titre[64];
     char comment[32], file[15];
@@ -3910,10 +4013,9 @@ short Infopar(RB_IDF *Info)
     sprintf(Info->message[0], FORMLNK, file);
 
     return 0;
-} // Infopar
+}  // Infopar
 
-short Infodbf2(RB_IDF *Info)
-{
+short Infodbf2(RB_IDF* Info) {
     uchar day, month, year;
 
     if (ReadChar(Info, 0) != 2) return 1;
@@ -3932,11 +4034,10 @@ short Infodbf2(RB_IDF *Info)
     return 0;
 }
 
-short Infodbf3(RB_IDF *Info)
-{
+short Infodbf3(RB_IDF* Info) {
     uchar day, month, year;
 
-    if ( (ReadChar(Info, 0) != 3) & (ReadChar(Info, 0) != (uchar)0x83) ) return 1;
+    if ((ReadChar(Info, 0) != 3) & (ReadChar(Info, 0) != (uchar)0x83)) return 1;
 
     day = ReadChar(Info, 3);
     month = ReadChar(Info, 2);
@@ -3952,8 +4053,7 @@ short Infodbf3(RB_IDF *Info)
     return 0;
 }
 
-short Infompg(RB_IDF *Info)
-{
+short Infompg(RB_IDF* Info) {
     char key[] = {0x00, 0x00, 0x01, 0xBA, 0x21, 0x00};
     char key2[] = {0x00, 0x00, 0x01, 0xB3, 0x0A, 0x00, 0x78};
 
@@ -3961,37 +4061,32 @@ short Infompg(RB_IDF *Info)
 
     ReadStr(Info, 0, buf, 7);
 
-    if ( (memcmp(buf, key, 6)) &
-         (memcmp(buf, key2, 7)) ) return 1;
+    if ((memcmp(buf, key, 6)) &
+        (memcmp(buf, key2, 7))) return 1;
 
     return 0;
 }
 
-short Infomov(RB_IDF *Info)
-{
+short Infomov(RB_IDF* Info) {
     char key[] = "moov";
     char key2[] = "mdat";
     char buf[4];
 
-
     ReadStr(Info, 4, buf, 4);
 
-    if ( (memcmp(buf, key, 4)) &
-         (memcmp(buf, key2, 4)) ) return 1;
+    if ((memcmp(buf, key, 4)) &
+        (memcmp(buf, key2, 4))) return 1;
 
     return 0;
 }
 
-
-short Infodlz(RB_IDF *Info)
-{
+short Infodlz(RB_IDF* Info) {
     Info->taille = (ulong)(ReadInt(Info, 0xA, 1)) + 17 +
-        (ulong)(ReadChar(Info, 0x9)) * 65536L;
+                   (ulong)(ReadChar(Info, 0x9)) * 65536L;
     return 0;
 }
 
-short Infolza(RB_IDF *Info)
-{
+short Infolza(RB_IDF* Info) {
     short Lp, Hp, BP, frame;
 
     Lp = ReadInt(Info, 9, 1);
@@ -4007,12 +4102,11 @@ short Infolza(RB_IDF *Info)
     sprintf(Info->message[0], FORMPIC, Lp, Hp, BP);
     sprintf(Info->message[1], "                     %7d frames", frame);
 
-// Info->taille=ReadLng(Info,0,1);
+    // Info->taille=ReadLng(Info,0,1);
     return 0;
 }
 
-short Infofli(RB_IDF *Info)
-{
+short Infofli(RB_IDF* Info) {
     short Lp, Hp, BP, frame;
 
     Lp = ReadInt(Info, 8, 1);
@@ -4025,7 +4119,6 @@ short Infofli(RB_IDF *Info)
     if (BP > 99) BP = 99;
     if (BP == 0) BP = 8;
 
-
     sprintf(Info->message[0], FORMPIC, Lp, Hp, BP);
     sprintf(Info->message[1], "                      %7d frame", frame);
 
@@ -4033,8 +4126,7 @@ short Infofli(RB_IDF *Info)
     return 0;
 }
 
-short Infoflc(RB_IDF *Info)
-{
+short Infoflc(RB_IDF* Info) {
     short Lp, Hp, BP, frame;
 
     Lp = ReadInt(Info, 8, 1);
@@ -4054,25 +4146,20 @@ short Infoflc(RB_IDF *Info)
     return 0;
 }
 
-short Infoswg(RB_IDF *Info)
-{
+short Infoswg(RB_IDF* Info) {
     ReadStr(Info, 57, Info->fullname, 48);
     return 0;
 }
 
-short Infoams(RB_IDF *Info)
-{
+short Infoams(RB_IDF* Info) {
     ReadStr(Info, 8, Info->fullname, ReadChar(Info, 7));
     return 0;
 }
 
-
-short Infot64(RB_IDF *Info)
-{
-
+short Infot64(RB_IDF* Info) {
     ReadStr(Info, 0, tampon, 14);
-    if ( (memcmp(tampon, "C64S tape file", 14) != 0) &
-         (memcmp(tampon, "C64 tape image", 14) != 0) ) return 1;
+    if ((memcmp(tampon, "C64S tape file", 14) != 0) &
+        (memcmp(tampon, "C64 tape image", 14) != 0)) return 1;
 
     ReadStr(Info, 0x28, Info->fullname, 24);
     return 0;
@@ -4083,52 +4170,44 @@ short Infot64(RB_IDF *Info)
 |- 08  17  File Name (null terminated)                                -|
 |- 25  01  Record Size. P00 = 0                                       -|
 \*--------------------------------------------------------------------*/
-short Infop00(RB_IDF *Info)
-{
+short Infop00(RB_IDF* Info) {
     ReadStr(Info, 0x08, Info->fullname, 17);
     return 0;
 }
 
-short Infoamf(RB_IDF *Info)
-{
+short Infoamf(RB_IDF* Info) {
     ReadStr(Info, 0x04, Info->fullname, 32);
     return 0;
 }
 
-short Infogb(RB_IDF *Info)
-{
+short Infogb(RB_IDF* Info) {
     ReadStr(Info, 0x134, Info->fullname, 16);
     return 0;
 }
 
-short Infoptm(RB_IDF *Info)
-{
+short Infoptm(RB_IDF* Info) {
     ReadStr(Info, 0, Info->fullname, 28);
     return 0;
 }
 
-short Infombm(RB_IDF *Info)
-{
+short Infombm(RB_IDF* Info) {
     ReadStr(Info, 0xCF, Info->fullname, 40);
     return 0;
 }
 
-short Infousm(RB_IDF *Info)
-{
+short Infousm(RB_IDF* Info) {
     ReadStr(Info, 4, Info->fullname, 32);
 
     return 0;
 }
 
-short Infong(RB_IDF *Info)
-{
+short Infong(RB_IDF* Info) {
     ReadStr(Info, 8, Info->fullname, 40);
 
     return 0;
 }
 
-short Infokkp(RB_IDF *Info)
-{
+short Infokkp(RB_IDF* Info) {
     ReadStr(Info, 4, Info->fullname, 30);
 
     if (ReadChar(Info, 34) == 1)
@@ -4137,8 +4216,7 @@ short Infokkp(RB_IDF *Info)
     return 0;
 }
 
-short Infonsf(RB_IDF *Info)
-{
+short Infonsf(RB_IDF* Info) {
     int n;
 
     ReadStr(Info, 0xC8, Info->fullname, 80);
@@ -4153,12 +4231,10 @@ short Infonsf(RB_IDF *Info)
     return 0;
 }
 
-
 /*--------------------------------------------------------------------*\
 |- gestion des fichiers textes                                        -|
 \*--------------------------------------------------------------------*/
-short Infoc(RB_IDF *Info)
-{
+short Infoc(RB_IDF* Info) {
     uchar pasok = 1;
 
     if (IsTxt(Info) < 50) return 1;
@@ -4178,9 +4254,7 @@ short Infoc(RB_IDF *Info)
     return pasok;
 }
 
-
-short Infotxt(RB_IDF *Info)
-{
+short Infotxt(RB_IDF* Info) {
     unsigned short pos;
     uchar a;
     uchar car;
@@ -4193,8 +4267,7 @@ short Infotxt(RB_IDF *Info)
 
     SplitName(Info->filename, NULL, Info->ext);
 
-
-// --- Recherche du nom -------------------------------------------------
+    // --- Recherche du nom -------------------------------------------------
 
     pos = 0;
 
@@ -4203,11 +4276,10 @@ short Infotxt(RB_IDF *Info)
 
         car = ReadChar(Info, pos);
 
-        while ( ((car > 123) | (car < 65)) & (pos < 1000) )
+        while (((car > 123) | (car < 65)) & (pos < 1000))
             pos++;
 
         ReadStr(Info, pos, Info->fullname, 60);
-
 
         for (i = 0; i < 60; i++) {
             if (Info->fullname[i] < 32) Info->fullname[i] = 0;
@@ -4218,40 +4290,36 @@ short Infotxt(RB_IDF *Info)
 
         if (!sstrnicmp(Info->fullname, "include", 7)) {
             a = 1;
-            while ( (ReadChar(Info, pos) != 13) & (pos < 1000) ) pos++;
+            while ((ReadChar(Info, pos) != 13) & (pos < 1000)) pos++;
         }
 
         if (strlen(Info->fullname) < 3) a = 1;
-
 
         if (a == 0)
             pos += strlen(Info->fullname);
         else
             pos += a;
 
-    } while ( ( (!sstrnicmp(Info->fullname, "@ECHO", 5)) |
-                (!sstrnicmp(Info->fullname, "ECHO", 4)) |
-                (!sstrnicmp(Info->fullname, "#INCLUDE", 8)) |
-                (a != 0)
-                ) & (pos < 1000)
-              );
+    } while (((!sstrnicmp(Info->fullname, "@ECHO", 5)) |
+              (!sstrnicmp(Info->fullname, "ECHO", 4)) |
+              (!sstrnicmp(Info->fullname, "#INCLUDE", 8)) |
+              (a != 0)) &
+             (pos < 1000));
 
     Info->fullname[79] = 0;
 
     if (pos > 999) Info->fullname[0] = 0;
 
     return 0;
-} // Infotxt
+}  // Infotxt
 
-
-bool IsTxt(RB_IDF *Info)
-{
+bool IsTxt(RB_IDF* Info) {
     unsigned short pos;
     uchar a;
 
-/*--------------------------------------------------------------------*\
-|-  Recherche de la valeur texte par statistique                      -|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |-  Recherche de la valeur texte par statistique                      -|
+    \*--------------------------------------------------------------------*/
 
     unsigned short tab[256];
     short ord[256];
@@ -4307,11 +4375,11 @@ bool IsTxt(RB_IDF *Info)
                 (a != 12) &              // --- passage de page ---------
                 (a != 17) &
                 (a != 16) &
-                (a != 9) &               // --- tabulation --------------
-                (a != 0) &               // --- erreur buffer -----------
-                (a != 2) &               // --- la petite tˆte ----------
-                (a != 3) &               // --- le petit coeur ----------
-                (a != 26)) {             // --- fin de fichier ----------
+                (a != 9) &    // --- tabulation --------------
+                (a != 0) &    // --- erreur buffer -----------
+                (a != 2) &    // --- la petite tï¿½te ----------
+                (a != 3) &    // --- le petit coeur ----------
+                (a != 26)) {  // --- fin de fichier ----------
                 // cprintf("%d",Info->buffer[pos]);
                 return 0;
             }
@@ -4320,11 +4388,10 @@ bool IsTxt(RB_IDF *Info)
     }
 
     return val;
-} // IsTxt
+}  // IsTxt
 
 // TODO: isoler le <TITLE></TITLE>
-short Infohtm(RB_IDF *Info)
-{
+short Infohtm(RB_IDF* Info) {
     unsigned long n, d;
     char titre[80];
     int ititle;
@@ -4364,7 +4431,7 @@ short Infohtm(RB_IDF *Info)
                 break;
             default:
                 break;
-        } // switch
+        }  // switch
     }
 
     if (ishtml != 0) {
@@ -4372,15 +4439,13 @@ short Infohtm(RB_IDF *Info)
     }
 
     return 1;
-} // Infohtm
-
+}  // Infohtm
 
 /*--------------------------------------------------------------------*\
 |- produit microsoft                                                  -|
 \*--------------------------------------------------------------------*/
 
-short Infoms(RB_IDF *Info)
-{
+short Infoms(RB_IDF* Info) {
     char key[] = "\xD0\xCf\x11\xE0\xA1\xB1\x1A\xE1";
     long pos;
 
@@ -4393,9 +4458,7 @@ short Infoms(RB_IDF *Info)
     return 0;
 }
 
-
-short Infopub(RB_IDF *Info)
-{
+short Infopub(RB_IDF* Info) {
     long pos;
 
     if (Infoms(Info)) return 1;
@@ -4403,8 +4466,7 @@ short Infopub(RB_IDF *Info)
     return (ReadInt(Info, pos + 0x50, 1) != 0x1201);
 }
 
-short Infoxls(RB_IDF *Info)
-{
+short Infoxls(RB_IDF* Info) {
     long pos;
 
     if (Infoms(Info)) return 1;
@@ -4412,13 +4474,11 @@ short Infoxls(RB_IDF *Info)
     return (ReadInt(Info, pos + 0x50, 1) != 0x0810);
 }
 
-short Infodoc(RB_IDF *Info)
-{
+short Infodoc(RB_IDF* Info) {
     long pos;
 
     if (Infoms(Info)) return 1;
     pos = (ReadLng(Info, 0x30, 1) + 1) * 0x200;
-
 
     if (ReadChar(Info, pos + 0x51) != 0x09)
         return 1;
@@ -4426,18 +4486,15 @@ short Infodoc(RB_IDF *Info)
     if (ReadChar(Info, pos + 0x50) == 0x06)
         strcpy(Info->format, "Microsoft Word 97 Document");
 
-
     return 0;
 }
 
-short Info3ds(RB_IDF *Info)
-{
+short Info3ds(RB_IDF* Info) {
     Info->taille = ReadLng(Info, 0x2, 1);
     return 0;
 }
 
-short Infowps(RB_IDF *Info)
-{
+short Infowps(RB_IDF* Info) {
     long pos;
 
     if (Infoms(Info)) return 1;
@@ -4445,8 +4502,7 @@ short Infowps(RB_IDF *Info)
     return (ReadInt(Info, pos + 0x50, 1) != 0xDBC2);
 }
 
-short Infowdb(RB_IDF *Info)
-{
+short Infowdb(RB_IDF* Info) {
     long pos;
 
     if (Infoms(Info)) return 1;
@@ -4454,8 +4510,7 @@ short Infowdb(RB_IDF *Info)
     return (ReadInt(Info, pos + 0x50, 1) != 0xDBC3);
 }
 
-short Infoppt(RB_IDF *Info)
-{
+short Infoppt(RB_IDF* Info) {
     long pos;
 
     if (Infoms(Info)) return 1;
@@ -4463,16 +4518,14 @@ short Infoppt(RB_IDF *Info)
     return (ReadInt(Info, pos + 0x50, 1) != 0x4851);
 }
 
-
 /*--------------------------------------------------------------------*\
 |- extended-information sauce                                         -|
 \*--------------------------------------------------------------------*/
-short InfoSauce(RB_IDF *Info)
-{
+short InfoSauce(RB_IDF* Info) {
     char buffer[6];
     int pos;
 
-// --- Teste si on a sauce ----------------------------------------------
+    // --- Teste si on a sauce ----------------------------------------------
 
     pos = Info->sizemax - 128;
 
@@ -4483,15 +4536,14 @@ short InfoSauce(RB_IDF *Info)
         strcpy(Info->Tinfo, "Group");
         ReadStr(Info, pos + 62, Info->info, 20);
 
-//  if (ReadChar(Info,pos+104)!=0) --> Commentaire avant, on s'en fout !
+        //  if (ReadChar(Info,pos+104)!=0) --> Commentaire avant, on s'en fout !
         return 0;
     }
 
     return 1;
-} // InfoSauce
+}  // InfoSauce
 
-short InfoID3(RB_IDF *Info)
-{
+short InfoID3(RB_IDF* Info) {
     uchar flag, csize[4], rcsize[3];
     char buffer[32];
     int pos;
@@ -4521,14 +4573,14 @@ short InfoID3(RB_IDF *Info)
                 }
 
                 switch (frameid) {
-                    case 0x54414C42: // 'TALB':
+                    case 0x54414C42:  // 'TALB':
                         ReadStr(Info, pos + 11, album, rsize);
                         break;
-                    case 0x54504531: // 'TPE1':
+                    case 0x54504531:  // 'TPE1':
                         ReadStr(Info, pos + 11, artist, rsize);
                         strcpy(Info->composer, artist);
                         break;
-                    case 0x54495432: // 'TIT2':
+                    case 0x54495432:  // 'TIT2':
                         ReadStr(Info, pos + 11, title, rsize);
                         strcpy(Info->fullname, title);
                         break;
@@ -4540,10 +4592,10 @@ short InfoID3(RB_IDF *Info)
 
         if (version[0] == 2) {
             do {
-                ReadMem(Info, pos, (void *)rcsize, 3);
+                ReadMem(Info, pos, (void*)rcsize, 3);
                 frameid = rcsize[0] * 0x10000 + rcsize[1] * 0x100 + rcsize[2];
 
-                ReadMem(Info, pos + 3, (void *)rcsize, 3);
+                ReadMem(Info, pos + 3, (void*)rcsize, 3);
                 size = rcsize[0] * 0x10000 + rcsize[1] * 0x100 + rcsize[2];
 
                 rsize = size - 1;
@@ -4552,15 +4604,15 @@ short InfoID3(RB_IDF *Info)
                 }
 
                 switch (frameid) {
-                    case 0x54414C: // 'TAL':
+                    case 0x54414C:  // 'TAL':
                         ReadStr(Info, pos + 7, album, rsize);
                         break;
-                    case 0x544F4C: // 'TOA':
+                    case 0x544F4C:  // 'TOA':
                         ReadStr(Info, pos + 7, artist, rsize);
                         strcpy(Info->composer, artist);
                         break;
-                    case 0x545432: // 'TT2':
-                    case 0x544F54: // 'TOT':
+                    case 0x545432:  // 'TT2':
+                    case 0x544F54:  // 'TOT':
                         ReadStr(Info, pos + 7, title, rsize);
                         strcpy(Info->fullname, title);
                         break;
@@ -4574,4 +4626,4 @@ short InfoID3(RB_IDF *Info)
         Info->begin += size + 10;
     }
 
-} // InfoID3
+}  // InfoID3

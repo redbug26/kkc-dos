@@ -27,7 +27,7 @@ void (*AffCol)(long x, long y, long c);
 long (*Wait)(long x, long y);
 int (*KbHit)(void);
 void (*GotoXY)(long x, long y);
-void (*WhereXY)(long *x, long *y);
+void (*WhereXY)(long* x, long* y);
 void (*Window)(long left, long top, long right, long bottom, long color);
 void (*Clr)(void);
 int (*SetMode)(void);
@@ -43,46 +43,46 @@ char Curses_KbHit(void);
 #endif
 
 #if defined(__WC32__) | defined(DJGPP)
-        #include <conio.h>
-        #include <mem.h>
-        #include <direct.h>
-        #include <dos.h>
-        #include <bios.h>
-        #include <io.h>
-        #include <conio.h>
+#include <conio.h>
+#include <mem.h>
+#include <direct.h>
+#include <dos.h>
+#include <bios.h>
+#include <io.h>
+#include <conio.h>
 #else
-        #define cprintf printf
+#define cprintf printf
 #endif
 
 #ifdef USEPTC
-int ptc_system(int command, char *buffer);  // 4
+int ptc_system(int command, char* buffer);  // 4
 #endif
 
 #ifdef USEVESA
-int vesa_system(int command, char *buffer);        // 7
+int vesa_system(int command, char* buffer);  // 7
 #endif
 
 #ifndef NOANSI
-int ansi_system(int command, char *buffer);        // 1
+int ansi_system(int command, char* buffer);  // 1
 #endif
 
 #ifdef CURSES
-int curses_system(int command, char *buffer);   // 5
+int curses_system(int command, char* buffer);  // 5
 #endif
 
 #ifndef COM
-int com_system(int command, char *buffer);          // 2
+int com_system(int command, char* buffer);  // 2
 #endif
 
 #ifndef NODIRECTVIDEO
-int video_system(int command, char *buffer);   // 3
+int video_system(int command, char* buffer);  // 3
 #endif
 
 #ifdef PCDISPLAY
-int Pc_system(int command, char *buffer);   // 6
+int Pc_system(int command, char* buffer);  // 6
 #endif
 
-int cache_system(int command, char *buffer);     // 0
+int cache_system(int command, char* buffer);  // 0
 
 /*
  #ifdef __WC32__
@@ -119,8 +119,8 @@ int cache_system(int command, char *buffer);     // 0
 int IOver;
 int IOerr;
 
-struct config *Cfg;
-struct fichier *Fics;
+struct config* Cfg;
+struct fichier* Fics;
 
 char _RB_screen[256 * 128 * 2];
 
@@ -138,37 +138,34 @@ static int _dclik, _mclock;
 static char _charm;
 #endif
 
-static int _xw, _yw;                       // position up left in window -------
-static int _xw2, _yw2;                     // position bottom right in window --
+static int _xw, _yw;    // position up left in window -------
+static int _xw2, _yw2;  // position bottom right in window --
 
-static char _IntBuffer[256];               // Buffer interne multi usage ---
+static char _IntBuffer[256];  // Buffer interne multi usage ---
 
-static int _KeyBuf[32];                    // Buffer pour les touches ------
-static int _NbrKey = 0;                    // Nbr de touches dans KeyBuf ---
+static int _KeyBuf[32];  // Buffer pour les touches ------
+static int _NbrKey = 0;  // Nbr de touches dans KeyBuf ---
 
-char *scrseg[50];
-
+char* scrseg[50];
 
 void InitSeg(void);
 
-int Switch(int x, int y, int *Val, int len);
-int MSwitch(int x, int y, int *Val, int len, int i);
-
+int Switch(int x, int y, int* Val, int len);
+int MSwitch(int x, int y, int* Val, int len, int i);
 
 /*--------------------------------------------------------------------*\
 |- Fonction interne                                                   -|
 \*--------------------------------------------------------------------*/
-void Font8xFile(int height, char *path);
+void Font8xFile(int height, char* path);
 
 void SetScreenSizeX(int x);
 void SetScreenSizeY(int y);
 
 #ifdef __WC32__
-int __far Error_handler(unsigned, unsigned, unsigned far *);
+int __far Error_handler(unsigned, unsigned, unsigned far*);
 #endif
 
-void Buffer_Clr(void)
-{
+void Buffer_Clr(void) {
     memset(_RB_screen + 256 * 128, 0, 256 * 128);
     memset(_RB_screen, 0, 256 * 128);
 }
@@ -176,36 +173,33 @@ void Buffer_Clr(void)
 /*--------------------------------------------------------------------*\
 |-	   Fonction qui convertit les caracteres ASCII en RedBug one	  -|
 \*--------------------------------------------------------------------*/
-char CnvASCII(char table, char car)
-{
+char CnvASCII(char table, char car) {
     char _Tab1[] = {
-        0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,
-        16,  17,  18,  19,  80,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
-        32,  33,  34,  35,  83,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
-        79,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  67,  61,  62,  63,
-        64,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,
-        80,  81,  82,  83,  84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,
-        96,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,
-        80,  81,  82,  83,  84,  85,  86,  87,  88,  89,  90,  123, 124, 125, 126, 127,
-        67,  85,  69,  65,  65,  65,  65,  67,  69,  69,  69,  73,  73,  73,  65,  65,
-        69,  65,  65,  79,  79,  79,  85,  85,  89,  79,  85,  67,  76,  89,  80,  70,
-        65,  73,  79,  85,  78,  78,  65,  79,  67,  169, 170, 171, 172, 73,  174, 175,
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+        16, 17, 18, 19, 80, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+        32, 33, 34, 35, 83, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+        79, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 67, 61, 62, 63,
+        64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+        80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+        96, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+        80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 123, 124, 125, 126, 127,
+        67, 85, 69, 65, 65, 65, 65, 67, 69, 69, 69, 73, 73, 73, 65, 65,
+        69, 65, 65, 79, 79, 79, 85, 85, 89, 79, 85, 67, 76, 89, 80, 70,
+        65, 73, 79, 85, 78, 78, 65, 79, 67, 169, 170, 171, 172, 73, 174, 175,
         176, 177, 178, 179, 180, 181, 'H', 183, 184, 185, 186, 187, 188, 189, 190, 191,
         'L', 193, 'T', 195, 196, 197, 198, 'H', 200, 201, 202, 203, 204, 205, 206, 207,
-        208, 209, 78,  211, 212, 213, 214, 'H', 216, 217, 218, 219, 220, 221, 222, 223,
-        65,  66,  226, 78,  69,  79,  85,  84,  232, 79,  78,  68,  236, 79,  69,  78,
-        240, 241, 242, 243, 244, 245, 246, 247, 79,  46,  46,  86,  78,  50,  254, 32
-    };
-
+        208, 209, 78, 211, 212, 213, 214, 'H', 216, 217, 218, 219, 220, 221, 222, 223,
+        65, 66, 226, 78, 69, 79, 85, 84, 232, 79, 78, 68, 236, 79, 69, 78,
+        240, 241, 242, 243, 244, 245, 246, 247, 79, 46, 46, 86, 78, 50, 254, 32};
 
     char _Tab2[] = {
-        0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,
-        16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
-        32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
-        48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,
-        64,  65,  66,  67,  68,  69,  70,  71,  72,  73,  74,  75,  76,  77,  78,  79,
-        80,  81,  82,  83,  84,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,
-        96,  97,  98,  99,  100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+        48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
+        64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
+        80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95,
+        96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
         112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
         199, 252, 233, 226, 228, 224, 229, 231, 234, 235, 232, 239, 238, 236, 196, 197,
         201, 230, 198, 244, 246, 242, 251, 249, 255, 214, 220, 248, 163, 216, 215, 159,
@@ -214,9 +208,7 @@ char CnvASCII(char table, char car)
         192, 193, 194, 195, 196, 197, 227, 195, 200, 201, 202, 203, 204, 205, 206, 164,
         240, 208, 202, 203, 200, 213, 205, 206, 207, 217, 218, 219, 220, 166, 204, 223,
         211, 223, 212, 210, 245, 213, 181, 222, 254, 218, 219, 217, 253, 221, 175, 180,
-        173, 177, 242, 190, 182, 167, 247, 184, 176, 168, 250, 185, 179, 178, 183, 160
-    };
-
+        173, 177, 242, 190, 182, 167, 247, 184, 176, 168, 250, 185, 179, 178, 183, 160};
 
     switch (table) {
         case 1:
@@ -231,128 +223,117 @@ char CnvASCII(char table, char car)
         case 0:
             return 32;
 
-        case 'Š':
+        case 'è':
             return 232;
-        case '‚':
+        case 'é':
             return 233;
-        case 'ˆ':
+        case 'ê':
             return 234;
-        case '‰':
+        case 'ë':
             return 235;
 
-        case '—':
+        case 'ù':
             return 'u';
-        case '£':
+        case 'ú':
             return 'u';
-        case '–':
+        case 'û':
             return 'u';
-        case '':
+        case 'ü':
             return 'u';
 
-        case '':
+        case 'ì':
             return 'i';
-        case '¡':
+        case 'í':
             return 'i';
-        case 'Œ':
+        case 'î':
             return 'i';
-        case '‹':
+        case 'ï':
             return 'i';
 
-        case '•':
+        case 'ò':
             return 'o';
-        case '¢':
+        case 'ó':
             return 'o';
-        case '“':
+        case 'ô':
             return 'o';
-        case '”':
+        case 'ö':
             return 'o';
         case 153:
             return 'O';
 
-
-        case '…':
+        case 'à':
             return 224;
-        case ' ':
+        case 'á':
             return 225;
-        case 'ƒ':
+        case 'â':
             return 226;
-        case '„':
+        case 'ä':
             return 227;
 
-        case '‡':
+        case 'ç':
             return 231;
 
-        case 0xFA:
-            return 7;
+            // case 0xFA:
+            //     return 7;
 
         case 0x90:
             return 'E';
 
         default:
             return car;
-    } // switch
-} // CnvASCII
+    }  // switch
+}  // CnvASCII
 
 #ifdef LINUX
 
-unsigned _bios_keybrd(unsigned cmd)  // UTILISE pour voir si shift est pressé
+unsigned _bios_keybrd(unsigned cmd)  // UTILISE pour voir si shift est press?
 {
     return 0;
 }
 
-char kbhit(void)
-{
+char kbhit(void) {
     return Curses_KbHit();
 }
 
-
 #define cprintf printf
 
-int filelength(int fic)
-{
+int filelength(int fic) {
     return 1;
 }
 
-int strnicmp(char *s1, char *s2, int c)
-{
+int strnicmp(char* s1, char* s2, int c) {
     char ns1[255], ns2[255];
 
     strcpy(ns1, s1);
     strcpy(ns2, s2);
     strupr(ns1);
     strupr(ns2);
-    return(strncmp(ns1, ns2, c));
+    return (strncmp(ns1, ns2, c));
 }
 
-int stricmp(const char *s1, const char *s2)
-{
+int stricmp(const char* s1, const char* s2) {
     char ns1[255], ns2[255];
 
     strcpy(ns1, s1);
     strcpy(ns2, s2);
     strupr(ns1);
     strupr(ns2);
-    return(strcmp(ns1, ns2));
+    return (strcmp(ns1, ns2));
 }
 
-char * strlwr(char *a)
-{
+char* strlwr(char* a) {
 }
 
-char * strupr(char *s)
-{
+char* strupr(char* s) {
     int i;
 
     for (i = 0; s[i] != 0; i++) {
         if ((s[i] > 96) && (s[i] < 123)) s[i] -= 32;
     }
-    return(s);
+    return (s);
 }
 
-
-
-#endif // ifdef LINUX
-
+#endif  // ifdef LINUX
 
 /*--------------------------------------------------------------------*\
 |-	Fonction interne d'affichage                                      -|
@@ -361,8 +342,7 @@ void Norm_Clr(void);
 void Norm_Window(long left, long top, long right, long bottom, long color);
 int Norm_KbHit(void);
 
-void Norm_Clr(void)
-{
+void Norm_Clr(void) {
     char x, y;
 
     for (y = 0; y < Cfg->TailleY; y++) {
@@ -380,8 +360,7 @@ void Norm_Clr(void)
     Wait(0, 0);
 }
 
-void Norm_Window(long left, long top, long right, long bottom, long color)
-{
+void Norm_Window(long left, long top, long right, long bottom, long color) {
     int x, y;
 
     _xw = left;
@@ -396,21 +375,18 @@ void Norm_Window(long left, long top, long right, long bottom, long color)
         }
     }
 
-
     for (y = top; y <= bottom; y++) {
         for (x = left; x <= right; x++) {
             AffChr(x, y, 32);
         }
     }
-} // Norm_Window
+}  // Norm_Window
 
-int Norm_KbHit(void)
-{
+int Norm_KbHit(void) {
     if (_NbrKey == 0)
         return kbhit();
     return 1;
 }
-
 
 long Cache_Wait(long x, long y);
 int Cache_SetMode(void);
@@ -418,13 +394,10 @@ int Cache_KbHit(void);
 void Cache_AffChr(long x, long y, long c);
 void Cache_AffCol(long x, long y, long c);
 void Cache_GotoXY(long x, long y);
-void Cache_WhereXY(long *x, long *y);
-
-
+void Cache_WhereXY(long* x, long* y);
 
 #ifndef NOINT10
-void GetCur(char *x, char *y)
-{
+void GetCur(char* x, char* y) {
     union REGS regs;
 
     regs.h.bh = 0;
@@ -436,8 +409,7 @@ void GetCur(char *x, char *y)
     *y = regs.h.cl;
 }
 
-void PutCur(char x, char y)
-{
+void PutCur(char x, char y) {
     union REGS regs;
 
     regs.h.ah = 1;
@@ -459,19 +431,16 @@ void Mode30(void);
 void Mode90(void);
 void Mode80(void);
 
-
 // --- Fonction ---------------------------------------------------------
 
-void Mode25(void)
-{
+void Mode25(void) {
     union REGS R;
 
     R.w.ax = 3;
     int386(0x10, &R, &R);
 }
 
-void Mode50(void)
-{
+void Mode50(void) {
     union REGS R;
 
     R.w.ax = 3;
@@ -482,8 +451,7 @@ void Mode50(void)
     int386(0x10, &R, &R);
 }
 
-void Mode30(void)
-{
+void Mode30(void) {
     union REGS R;
     uchar t;
 
@@ -508,60 +476,55 @@ void Mode30(void)
 
     outp(0x3D4, 0x11);
     outp(0x3D5, t);
-} // Mode30
+}  // Mode30
 
-
-void Mode90(void)
-{
+void Mode90(void) {
     int x;
 
-    outpw(0x3C4, 0x100);                                   // Synchronous reset
-    outpw(0x3C4, 0x101);                                   // 8 pixels/char
+    outpw(0x3C4, 0x100);  // Synchronous reset
+    outpw(0x3C4, 0x101);  // 8 pixels/char
 
     x = inp(0x3CC);
-    x = (x & 0xF3) | 4;                                    // mets les bits 2-3 … 01 = 28MhZ
+    x = (x & 0xF3) | 4;  // mets les bits 2-3 à 01 = 28MhZ
     outp(0x3C2, (char)x);
 
     x = inp(0x3DA);
-    outp(0x3C0, 0x13);                                     // Horizontal panning
+    outp(0x3C0, 0x13);  // Horizontal panning
 
-    outp(0x3C0, 0);                                        // set shift=0
+    outp(0x3C0, 0);  // set shift=0
 
-    outp(0x3C0, 0x20);                                     // Restart screen
+    outp(0x3C0, 0x20);  // Restart screen
     outp(0x3C0, 0x20);
 
-    outp(0x3D4, 0x11);                                     // Register protect
+    outp(0x3D4, 0x11);  // Register protect
 
     x = inp(0x3D5);
     x = x & 0X7F;
-    outp(0x3D5, (char)x);                                  // Turn off protect
+    outp(0x3D5, (char)x);  // Turn off protect
 
-    outpw(0x3D4, 0x6B00);                                  // Horizontal Total
-    outpw(0x3D4, 0x5901);                                  // Horizontal Displayed
-    outpw(0x3D4, 0x5A02);                                  // Start Horiz Blanking
-    outpw(0x3D4, 0x8E03);                                  // End Horiz Blanking
-    outpw(0x3D4, 0x6004);                                  // Start Horiz Retrace
-    outpw(0x3D4, 0x8D05);                                  // End Horiz Retrace
-    outpw(0x3D4, 0x2D13);                                  // Memory Allocation
+    outpw(0x3D4, 0x6B00);  // Horizontal Total
+    outpw(0x3D4, 0x5901);  // Horizontal Displayed
+    outpw(0x3D4, 0x5A02);  // Start Horiz Blanking
+    outpw(0x3D4, 0x8E03);  // End Horiz Blanking
+    outpw(0x3D4, 0x6004);  // Start Horiz Retrace
+    outpw(0x3D4, 0x8D05);  // End Horiz Retrace
+    outpw(0x3D4, 0x2D13);  // Memory Allocation
 
-    outpw(0x3D4, 0x9311);                                  // Turn on protect
+    outpw(0x3D4, 0x9311);  // Turn on protect
 
-    outpw(0x3C4, 0x300);                                   // Restart Sequencer
-} // Mode90
+    outpw(0x3C4, 0x300);  // Restart Sequencer
+}  // Mode90
 
-void Mode80(void)
-{
-
+void Mode80(void) {
 }
 
-void LoadPal(void)
-{
+void LoadPal(void) {
     union REGS regs;
     int n;
 
     Buf2Pal(Cfg->palette);
 
-    regs.w.ax = 0x1003;                                 // Donne la palette n … la couleur n
+    regs.w.ax = 0x1003;  // Donne la palette n à la couleur n
     regs.w.bx = 0;
     int386(0x10, &regs, &regs);
 
@@ -573,16 +536,14 @@ void LoadPal(void)
     }
 }
 
-void SetPal(int x, char r, char g, char b)
-{
+void SetPal(int x, char r, char g, char b) {
     outp(0x3C8, (char)x);
     outp(0x3C9, r);
     outp(0x3C9, g);
     outp(0x3C9, b);
 }
 
-void GetPal(int x, char *r, char *g, char *b)
-{
+void GetPal(int x, char* r, char* g, char* b) {
     union REGS R;
 
     R.w.ax = 0x1015;
@@ -593,15 +554,15 @@ void GetPal(int x, char *r, char *g, char *b)
     (*g) = R.h.ch;
     (*b) = R.h.cl;
 
-/*
- * outp(0x3C7,x);
- * (*r)=inp(0x3C9);
- * (*g)=inp(0x3C9);
- * (*b)=inp(0x3C9);
- */
+    /*
+     * outp(0x3C7,x);
+     * (*r)=inp(0x3C9);
+     * (*g)=inp(0x3C9);
+     * (*b)=inp(0x3C9);
+     */
 }
 
-#else // ifndef NOINT10
+#else  // ifndef NOINT10
 /*--------------------------------------------------------------------*\
 |- Changement de mode texte                                           -|
 \*--------------------------------------------------------------------*/
@@ -614,86 +575,66 @@ void Mode30(void);
 void Mode90(void);
 void Mode80(void);
 
-
 // --- Fonction ---------------------------------------------------------
 
-void Mode25(void)
-{
+void Mode25(void) {
 }
 
-void Mode50(void)
-{
+void Mode50(void) {
 }
 
-void Mode30(void)
-{
+void Mode30(void) {
 }
 
-
-void Mode90(void)
-{
+void Mode90(void) {
 }
 
-void Mode80(void)
-{
+void Mode80(void) {
 }
 
 char _curx, _cury;
 
-void GetCur(char *x, char *y)
-{
+void GetCur(char* x, char* y) {
     *x = _curx;
     *y = _cury;
 }
 
-void PutCur(char x, char y)
-{
+void PutCur(char x, char y) {
     _curx = x;
     _cury = y;
 }
 
-void LoadPal(void)
-{
+void LoadPal(void) {
 }
 
-void SetPal(int x, char r, char g, char b)
-{
+void SetPal(int x, char r, char g, char b) {
 }
 
-void GetPal(int x, char *r, char *g, char *b)
-{
+void GetPal(int x, char* r, char* g, char* b) {
 }
 
-#endif // ifndef NOINT10
-
+#endif  // ifndef NOINT10
 
 long _cx, _cy;
 
-void Norm_GotoXY(long x, long y)
-{
+void Norm_GotoXY(long x, long y) {
     _cx = x;
     _cy = y;
 }
 
-void Norm_WhereXY(long *x, long *y)
-{
+void Norm_WhereXY(long* x, long* y) {
     *x = _cx;
     *y = _cy;
 }
 
-
-
-
-void PutKey(int key)
-{
+void PutKey(int key) {
     if (_NbrKey != 32) {
         _KeyBuf[_NbrKey] = key;
         _NbrKey++;
     }
 }
 
-int GetKey(void)
-{
+int GetKey(void) {
     if (_NbrKey != 0) {
         _NbrKey--;
         return _KeyBuf[_NbrKey];
@@ -701,24 +642,22 @@ int GetKey(void)
     return -1;
 }
 
-
-
 #ifndef NOCOM
 
 /*--------------------------------------------------------------------*\
-|-						 Gestion du port s‚rie						  -|
+|-						 Gestion du port série						  -|
 \*--------------------------------------------------------------------*/
-#define XON        1
-#define XOFF       0
+#define XON 1
+#define XOFF 0
 #define MAX_BUFFER 1024
 
 #define INT_OFF() _disable()
-#define INT_ON()  _enable()
+#define INT_ON() _enable()
 
-#define SETVECT    _dos_setvect
-#define GETVECT    _dos_getvect
+#define SETVECT _dos_setvect
+#define GETVECT _dos_getvect
 
-char *modem_buffer;
+char* modem_buffer;
 
 long modem_pause;
 short modem_base;
@@ -736,21 +675,24 @@ long modem_buffer_count;
 long old_modem_imr;
 long old_modem_ier;
 
-void(_interrupt * old_modem_isr)(void);
+void(_interrupt* old_modem_isr)(void);
 
 /*--------------------------------------------------------------------*/
-void interrupt modem_isr(void)
-{
+void interrupt modem_isr(void) {
     int c;
 
     INT_ON();
 
     if (modem_buffer_count < 1024) {
         c = inp(modem_base);
-        if ( ((c == XON) | (c == XOFF)) & (modem_xon_xoff) ) {
+        if (((c == XON) | (c == XOFF)) & (modem_xon_xoff)) {
             switch (c) {
-                case XON: modem_pause = 0; break;
-                case XOFF: modem_pause = 1; break;
+                case XON:
+                    modem_pause = 0;
+                    break;
+                case XOFF:
+                    modem_pause = 1;
+                    break;
             }
         } else {
             modem_pause = 0;
@@ -766,26 +708,24 @@ void interrupt modem_isr(void)
 
     INT_OFF();
     outp(0x20, 0x20);
-} // modem_isr
+}  // modem_isr
 
-long com_carrier(void)
-{
+long com_carrier(void) {
     long x;
 
-    if (!modem_open) return(0);
-    if ((inp((short)(modem_base + 6)) & 0x80) == 128) return(1);
+    if (!modem_open) return (0);
+    if ((inp((short)(modem_base + 6)) & 0x80) == 128) return (1);
 
     for (x = 0; x < 500; x++) {
-        if ((inp((short)(modem_base + 6)) & 0x80) == 128) return(1);
+        if ((inp((short)(modem_base + 6)) & 0x80) == 128) return (1);
     }
-    return(0);
+    return (0);
 }
 
-char com_ch_ready(void)
-{
-    if (!modem_open) return(0);
-    if (modem_buffer_count != 0) return(1);
-    return(0);
+char com_ch_ready(void) {
+    if (!modem_open) return (0);
+    if (modem_buffer_count != 0) return (1);
+    return (0);
 }
 
 /*--------------------------------------------------------------------*\
@@ -793,13 +733,12 @@ char com_ch_ready(void)
 |- the port with com_ch_ready(); first so that if they DID send a 0x0 -|
 |-	   that you will know it's a true 0, not a no character return!   -|
 \*--------------------------------------------------------------------*/
-long com_read_ch(void)
-{
+long com_read_ch(void) {
     long ch;
 
-    if (!modem_open) return(0);
+    if (!modem_open) return (0);
 
-    if (!com_ch_ready()) return(0);
+    if (!com_ch_ready()) return (0);
 
     ch = modem_buffer[modem_buffer_tail];
     modem_buffer[modem_buffer_tail] = 0;
@@ -807,34 +746,31 @@ long com_read_ch(void)
     if (++modem_buffer_tail >= MAX_BUFFER)
         modem_buffer_tail = 0;
 
-    return(ch);
+    return (ch);
 }
 
-void com_send_ch(long ch)
-{
+void com_send_ch(long ch) {
     if (!modem_open) return;
 
     outp((short)(modem_base + 4), 0x0B);
 
     if (modem_rts_cts) {
-        while ((inp((short)(modem_base + 6)) & 0x10) != 0x10) ; // Wait for Clear to Send
+        while ((inp((short)(modem_base + 6)) & 0x10) != 0x10);  // Wait for Clear to Send
     }
-    while ((inp((short)(modem_base + 5)) & 0x20) != 0x20) ;
+    while ((inp((short)(modem_base + 5)) & 0x20) != 0x20);
 
     if (modem_xon_xoff) {
-        while ((modem_pause) && (com_carrier())) ;
+        while ((modem_pause) && (com_carrier()));
     }
     outp((short)(modem_base), (char)ch);
 }
 
-
-char com_open(long comport, long speed, long bit, BYTE parity, BYTE stop)
-{
-    long x,  newb = 0;
+char com_open(long comport, long speed, long bit, BYTE parity, BYTE stop) {
+    long x, newb = 0;
     char l, m;
     long d;
 
-    modem_buffer = (char *)GetMem(MAX_BUFFER);
+    modem_buffer = (char*)GetMem(MAX_BUFFER);
 
     INT_OFF();
 
@@ -844,29 +780,41 @@ char com_open(long comport, long speed, long bit, BYTE parity, BYTE stop)
     modem_port = comport;
 
     switch (modem_port) {
-        case 2: modem_base = 0x2F8; modem_irq = 3; break;
-        case 3: modem_base = 0x3E8; modem_irq = 4; break;
-        case 4: modem_base = 0x2E8; modem_irq = 3; break;
+        case 2:
+            modem_base = 0x2F8;
+            modem_irq = 3;
+            break;
+        case 3:
+            modem_base = 0x3E8;
+            modem_irq = 4;
+            break;
+        case 4:
+            modem_base = 0x2E8;
+            modem_irq = 3;
+            break;
         case 1:
-        default: modem_base = 0x3F8; modem_irq = 4; break;
+        default:
+            modem_base = 0x3F8;
+            modem_irq = 4;
+            break;
     }
 
-    outp((short)(modem_base + 1), 0x00);                // turn off comm interrupts
+    outp((short)(modem_base + 1), 0x00);  // turn off comm interrupts
 
     if (inp((short)(modem_base + 1)) != 0) {
         INT_ON();
-/*	  PrintAt(0,0,"(Toto %X)",modem_base);
- *      Wait(0,0);*/
+        /*	  PrintAt(0,0,"(Toto %X)",modem_base);
+         *      Wait(0,0);*/
         return 0;
     }
 
-/*--------------------------------------------------------------------*\
-|-	Set up the Interupt Info										  -|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |-	Set up the Interupt Info										  -|
+    \*--------------------------------------------------------------------*/
     old_modem_ier = inp((short)(modem_base + 1));
     outp((short)(modem_base + 1), 0x01);
 
-    old_modem_isr = (void(_interrupt *)(void))GETVECT(modem_irq + 8);
+    old_modem_isr = (void(_interrupt*)(void))GETVECT(modem_irq + 8);
     SETVECT(modem_irq + 8, modem_isr);
 
     if (modem_rts_cts) {
@@ -888,11 +836,11 @@ char com_open(long comport, long speed, long bit, BYTE parity, BYTE stop)
     modem_buffer_head = 0;
     modem_buffer_tail = 0;
 
-/*--------------------------------------------------------------------*\
-|----- Speed ----------------------------------------------------------|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |----- Speed ----------------------------------------------------------|
+    \*--------------------------------------------------------------------*/
 
-    x = inp((short)(modem_base + 3));                                   // Read In Old Stats
+    x = inp((short)(modem_base + 3));  // Read In Old Stats
 
     if ((x & 0x80) != 0x80) outp((short)(modem_base + 3), (char)(x + 0x80));
 
@@ -903,70 +851,87 @@ char com_open(long comport, long speed, long bit, BYTE parity, BYTE stop)
     outp((short)(modem_base + 0), l);
     outp((short)(modem_base + 1), m);
 
-    outp((short)(modem_base + 3), (char)x);              // Restore the DLAB bit
+    outp((short)(modem_base + 3), (char)x);  // Restore the DLAB bit
 
-/*--------------------------------------------------------------------*\
-|---- Data-bit --------------------------------------------------------|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |---- Data-bit --------------------------------------------------------|
+    \*--------------------------------------------------------------------*/
     newb = 0;
 
     x = inp((short)(modem_base + 3));
 
-    newb = (x >> 2 << 2);                                // Get rid of the old Data Bits
+    newb = (x >> 2 << 2);  // Get rid of the old Data Bits
 
     switch (bit) {
-        case 5: newb += 0x00; break;
-        case 6: newb += 0x01; break;
-        case 7: newb += 0x02; break;
-        default: newb += 0x03; break;
+        case 5:
+            newb += 0x00;
+            break;
+        case 6:
+            newb += 0x01;
+            break;
+        case 7:
+            newb += 0x02;
+            break;
+        default:
+            newb += 0x03;
+            break;
     }
 
     outp((short)(modem_base + 3), (char)(newb));
 
-/*--------------------------------------------------------------------*\
-|---- Parity ----------------------------------------------------------|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |---- Parity ----------------------------------------------------------|
+    \*--------------------------------------------------------------------*/
     newb = 0;
 
     x = inp((short)(modem_base + 3));
 
-    newb = (x >> 6 << 6) + (x << 5 >> 5);                              // Get rid of old parity
+    newb = (x >> 6 << 6) + (x << 5 >> 5);  // Get rid of old parity
 
     switch (toupper(parity)) {
-        case 'N': newb += 0x00; break;                                 //  None
-        case 'O': newb += 0x08; break;                                 //   Odd
-        case 'E': newb += 0x18; break;                                 //  Even
-        case 'M': newb += 0x28; break;                                 //  Mark
-        case 'S': newb += 0x38; break;                                 // Space
+        case 'N':
+            newb += 0x00;
+            break;  //  None
+        case 'O':
+            newb += 0x08;
+            break;  //   Odd
+        case 'E':
+            newb += 0x18;
+            break;  //  Even
+        case 'M':
+            newb += 0x28;
+            break;  //  Mark
+        case 'S':
+            newb += 0x38;
+            break;  // Space
     }
 
     outp((short)(modem_base + 3), (char)(newb));
 
-/*--------------------------------------------------------------------*\
-|---- Stop bits -------------------------------------------------------|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |---- Stop bits -------------------------------------------------------|
+    \*--------------------------------------------------------------------*/
     newb = 0;
 
     x = inp((short)(modem_base + 3));
 
-    newb = (x << 6 >> 6) + (x >> 5 << 5); // Kill the old Stop Bits
+    newb = (x << 6 >> 6) + (x >> 5 << 5);  // Kill the old Stop Bits
 
-    if (stop == 2) newb += 0x04;          // Only check for 2, assume 1 otherwise
+    if (stop == 2) newb += 0x04;  // Only check for 2, assume 1 otherwise
 
     outp((short)(modem_base + 3), (char)(newb));
 
-/*--------------------------------------------------------------------*\
-|---- fin de l'initialisation -----------------------------------------|
-\*--------------------------------------------------------------------*/
+    /*--------------------------------------------------------------------*\
+    |---- fin de l'initialisation -----------------------------------------|
+    \*--------------------------------------------------------------------*/
 
     INT_ON();
 
-// PrintAt(0,0,"(Presque %X)",modem_base);
+    // PrintAt(0,0,"(Presque %X)",modem_base);
     return 1;
-} // com_open
+}  // com_open
 
-void com_close(void)
-{
+void com_close(void) {
     if (!modem_open) return;
 
     outp((short)(modem_base + 1), (char)(old_modem_ier));
@@ -978,14 +943,11 @@ void com_close(void)
 
     LibMem(modem_buffer);
 }
-#endif // ifndef NOCOM
+#endif  // ifndef NOCOM
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
-
-
-void ColLin(long left, long top, long length, long color)
-{
+void ColLin(long left, long top, long length, long color) {
     long i;
 
     for (i = left; i < left + length; i++) {
@@ -993,8 +955,7 @@ void ColLin(long left, long top, long length, long color)
     }
 }
 
-void ChrLin(long left, long top, long length, long color)
-{
+void ChrLin(long left, long top, long length, long color) {
     long i;
 
     for (i = left; i < left + length; i++) {
@@ -1002,8 +963,7 @@ void ChrLin(long left, long top, long length, long color)
     }
 }
 
-void ChrCol(long left, long top, long length, long color)
-{
+void ChrCol(long left, long top, long length, long color) {
     long i;
 
     for (i = top; i < top + length; i++) {
@@ -1011,8 +971,7 @@ void ChrCol(long left, long top, long length, long color)
     }
 }
 
-void ColCol(long left, long top, long length, long color)
-{
+void ColCol(long left, long top, long length, long color) {
     long i;
 
     for (i = top; i < top + length; i++) {
@@ -1020,9 +979,7 @@ void ColCol(long left, long top, long length, long color)
     }
 }
 
-
-void ColWin(long left, long top, long right, long bottom, long color)
-{
+void ColWin(long left, long top, long right, long bottom, long color) {
     long i, j;
 
     for (j = top; j <= bottom; j++) {
@@ -1032,8 +989,7 @@ void ColWin(long left, long top, long right, long bottom, long color)
     }
 }
 
-void ChrWin(long left, long top, long right, long bottom, long car)
-{
+void ChrWin(long left, long top, long right, long bottom, long car) {
     long i, j;
 
     for (j = top; j <= bottom; j++) {
@@ -1043,13 +999,11 @@ void ChrWin(long left, long top, long right, long bottom, long car)
     }
 }
 
-
-void MoveText(long x1, long y1, long x2, long y2, long x3, long y3)
-{
+void MoveText(long x1, long y1, long x2, long y2, long x3, long y3) {
     long x, y, z;
-    char *_MEcran;
+    char* _MEcran;
 
-    _MEcran = (char *)GetMem(Cfg->TailleX * Cfg->TailleY * 2);
+    _MEcran = (char*)GetMem(Cfg->TailleX * Cfg->TailleY * 2);
 
     for (y = 0; y < Cfg->TailleY; y++) {
         z = (y * Cfg->TailleX) * 2;
@@ -1072,47 +1026,40 @@ void MoveText(long x1, long y1, long x2, long y2, long x3, long y3)
     }
 
     LibMem(_MEcran);
-} // MoveText
+}  // MoveText
 
 /*--------------------------------------------------------------------*\
 |-	Routine de sauvegarde de l'ecran                                  -|
 \*--------------------------------------------------------------------*/
 
-char *_Ecran[10];                                 // --- Copie de l'ecran --------
-long _EcranXW[10], _EcranYW[10];                  // --- Coordonnes absolues -----
-long _EcranXW2[10], _EcranYW2[10];                // --- Coordonnes absolues -----
-signed long _WhichEcran = 0;                      // --- Nbr d'‚cran en memoire --
+char* _Ecran[10];                   // --- Copie de l'ecran --------
+long _EcranXW[10], _EcranYW[10];    // --- Coordonnes absolues -----
+long _EcranXW2[10], _EcranYW2[10];  // --- Coordonnes absolues -----
+signed long _WhichEcran = 0;        // --- Nbr d'écran en memoire --
 
+long _EcranX[10], _EcranY[10];  // --- Position du curseur -----
+char _EcranD[10], _EcranF[10];  // --- Definition du curseur ---
+signed long _WhichState = 0;    // --- Nbr d'états en memoire --
 
-long _EcranX[10], _EcranY[10];                    // --- Position du curseur -----
-char _EcranD[10], _EcranF[10];                    // --- Definition du curseur ---
-signed long _WhichState = 0;                      // --- Nbr d'‚tats en memoire --
-
-
-void SaveState(void)
-{
+void SaveState(void) {
     WhereXY(&(_EcranX[_WhichState]), &(_EcranY[_WhichState]));
     GetCur(&(_EcranD[_WhichState]), &(_EcranF[_WhichState]));
 
     _WhichState++;
 }
 
-void LoadState(void)
-{
-
+void LoadState(void) {
     _WhichState--;
 
     GotoXY(_EcranX[_WhichState], _EcranY[_WhichState]);
     PutCur(_EcranD[_WhichState], _EcranF[_WhichState]);
 }
 
-
-void SaveScreen(void)
-{
+void SaveScreen(void) {
     int x, y, n;
 
     if (_Ecran[_WhichEcran] == NULL)
-        _Ecran[_WhichEcran] = (char *)GetMem((Cfg->TailleY) * (Cfg->TailleX) * 2);
+        _Ecran[_WhichEcran] = (char*)GetMem((Cfg->TailleY) * (Cfg->TailleX) * 2);
 
     n = 0;
     for (y = 0; y < Cfg->TailleY; y++) {
@@ -1139,23 +1086,21 @@ void SaveScreen(void)
     _EcranYW2[_WhichEcran] = _yw2;
 
     _WhichEcran++;
-} // SaveScreen
+}  // SaveScreen
 
-void LoadScreen(void)
-{
+void LoadScreen(void) {
     int x, y, n;
 
     _WhichEcran--;
 
 #ifdef DEBUG
-    if ( (_Ecran[_WhichEcran] == NULL) | (_WhichEcran < 0) ) {
+    if ((_Ecran[_WhichEcran] == NULL) | (_WhichEcran < 0)) {
         Clr();
         PrintAt(0, 0, "Internal Error: LoadScreen");
         getch();
         return;
     }
 #endif
-
 
     n = 0;
     for (y = 0; y < Cfg->TailleY; y++) {
@@ -1183,16 +1128,15 @@ void LoadScreen(void)
 
     LibMem(_Ecran[_WhichEcran]);
     _Ecran[_WhichEcran] = NULL;
-} // LoadScreen
+}  // LoadScreen
 
-void LoadScreenPart(int x1, int y1, int x2, int y2)
-{
+void LoadScreenPart(int x1, int y1, int x2, int y2) {
     int x, y, n;
 
     _WhichEcran--;
 
 #ifdef DEBUG
-    if ( (_Ecran[_WhichEcran] == NULL) | (_WhichEcran < 0) ) {
+    if ((_Ecran[_WhichEcran] == NULL) | (_WhichEcran < 0)) {
         Clr();
         PrintAt(0, 0, "Internal Error: LoadScreen");
         getch();
@@ -1219,79 +1163,66 @@ void LoadScreenPart(int x1, int y1, int x2, int y2)
     }
 
     _WhichEcran++;
-} // LoadScreenPart
+}  // LoadScreenPart
 
 /*--------------------------------------------------------------------*\
 |- Fonction relative												  -|
 \*--------------------------------------------------------------------*/
-void WinRCadre(long x1, long y1, long x2, long y2, long type)
-{
+void WinRCadre(long x1, long y1, long x2, long y2, long type) {
     WinCadre(x1 + _xw, y1 + _yw, x2 + _xw, y2 + _yw, type);
 }
 
-void AffRChr(long x, long y, long c)
-{
+void AffRChr(long x, long y, long c) {
     AffChr(x + _xw, y + _yw, c);
 }
 
-void AffRCol(long x, long y, long c)
-{
+void AffRCol(long x, long y, long c) {
     AffCol(x + _xw, y + _yw, c);
 }
 
-long GetRChr(long x, long y)
-{
+long GetRChr(long x, long y) {
     return GetChr(x + _xw, y + _yw);
 }
 
-long GetRCol(long x, long y)
-{
+long GetRCol(long x, long y) {
     return GetCol(x + _xw, y + _yw);
 }
 
-void ColRLin(long left, long top, long length, long color)
-{
+void ColRLin(long left, long top, long length, long color) {
     ColLin(left + _xw, top + _yw, length, color);
 }
 
-void ChrRLin(long left, long top, long length, long color)
-{
+void ChrRLin(long left, long top, long length, long color) {
     ChrLin(left + _xw, top + _yw, length, color);
 }
 
-void ChrRCol(long left, long top, long length, long color)
-{
+void ChrRCol(long left, long top, long length, long color) {
     ChrCol(left + _xw, top + _yw, length, color);
 }
 
-void ColRCol(long left, long top, long length, long color)
-{
+void ColRCol(long left, long top, long length, long color) {
     ColCol(left + _xw, top + _yw, length, color);
 }
 
-void ColRWin(long right, long top, long left, long bottom, long color)
-{
+void ColRWin(long right, long top, long left, long bottom, long color) {
     ColWin(right + _xw, top + _yw, left + _xw, bottom + _yw, color);
 }
 
-void ChrRWin(long right, long top, long left, long bottom, long color)
-{
+void ChrRWin(long right, long top, long left, long bottom, long color) {
     ChrWin(right + _xw, top + _yw, left + _xw, bottom + _yw, color);
 }
 
-long InputTo(long colonne, long ligne, char *chaine, long longueur)
-{
+long InputTo(long colonne, long ligne, char* chaine, long longueur) {
     return InputAt(colonne + _xw, ligne + _yw, chaine, longueur);
 }
 
 /*--------------------------------------------------------------------*\
 |-	Fonction d'impression du texte relatif                            -|
 \*--------------------------------------------------------------------*/
-void PrintTo(long x, long y, char *string, ...)
-{
+void PrintTo(long x, long y, char* string, ...) {
     va_list arglist;
 
-    char *suite;
+    char* suite;
     long xa, ya;
 
     suite = _IntBuffer;
@@ -1314,8 +1245,7 @@ void PrintTo(long x, long y, char *string, ...)
         }
         suite++;
     }
-} // PrintTo
-
+}  // PrintTo
 
 /*--------------------------------------------------------------------*\
 |- Fonction Absolue                                                   -|
@@ -1324,11 +1254,10 @@ void PrintTo(long x, long y, char *string, ...)
 /*--------------------------------------------------------------------*\
 |-	Fonction d'impression du texte absolu                             -|
 \*--------------------------------------------------------------------*/
-void PrintAt(long x, long y, char *string, ...)
-{
+void PrintAt(long x, long y, char* string, ...) {
     va_list arglist;
 
-    char *suite;
+    char* suite;
     int a;
 
     suite = _IntBuffer;
@@ -1345,8 +1274,6 @@ void PrintAt(long x, long y, char *string, ...)
     }
 }
 
-
-
 /*--------------------------------------------------------------------*\
 |-	  Retourne 1 sur ESC											  -|
 |-			   0 ENTER												  -|
@@ -1354,13 +1281,12 @@ void PrintAt(long x, long y, char *string, ...)
 |-			   3 SHIFT-TAB											  -|
 \*--------------------------------------------------------------------*/
 
-char InputAt(long colonne, long ligne, char *chaine, long longueur)
-{
+char InputAt(long colonne, long ligne, char* chaine, long longueur) {
     long car, c2;
     char chaine2[255], old[255];
     char couleur;
     int n, i = 0, fin;
-    int ins = 1; // --- insere = 1 par default --------------------------------
+    int ins = 1;  // --- insere = 1 par default --------------------------------
 
     char end, retour;
 
@@ -1377,7 +1303,7 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
         fin = 0;
     }
 
-    PrintAt(colonne, ligne, chaine); // R‚‚crit la chaine … la position d‚sir‚e
+    PrintAt(colonne, ligne, chaine);  // Réécrit la chaine à la position désirée
 
     couleur = GetCol(colonne, ligne);
     i = 0;
@@ -1391,7 +1317,6 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
         }
 
     do {
-
         if (ins == 0)
             PutCur(7, 7);
         else
@@ -1406,14 +1331,14 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
             px = MousePosX();
             py = MousePosY();
 
-            if ( (py != ligne) | (px < colonne) | (px >= colonne + longueur) ) {
+            if ((py != ligne) | (px < colonne) | (px >= colonne + longueur)) {
                 retour = 8;
                 end = 1;
             }
         }
 #endif
 
-        if ( ((car & 255) != 0) & (couleur != 0) & (car != 13) & (car != 27) & (car != 9) ) {
+        if (((car & 255) != 0) & (couleur != 0) & (car != 13) & (car != 27) & (car != 9)) {
             ColLin(colonne, ligne, fin, couleur);
             ChrLin(colonne, ligne, fin, 32);
 
@@ -1428,10 +1353,10 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
                 retour = 2;
                 end = 1;
                 break;
-            case 0:                     // v‚rifier si pas de touche de fonction press‚e
+            case 0:  // vérifier si pas de touche de fonction pressée
                 c2 = (car / 256);
-                if (couleur != 0) {     // Preserve ou pas l'ancienne valeur ?
-                    if ( (c2 == 71) | (c2 == 75) | (c2 == 77) | (c2 == 79) ) {
+                if (couleur != 0) {  // Preserve ou pas l'ancienne valeur ?
+                    if ((c2 == 71) | (c2 == 75) | (c2 == 77) | (c2 == 79)) {
                         ColLin(colonne, ligne, fin, couleur);
                         couleur = 0;
                     }
@@ -1446,41 +1371,41 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
                     }
                 }
                 switch (c2) {
-                    case 0x0F:                          // SHIFT-TAB
+                    case 0x0F:  // SHIFT-TAB
                         retour = 3;
                         end = 1;
                         break;
-                    case 71:                            // HOME
+                    case 71:  // HOME
                         i = 0;
                         break;
-                    case 75:                            // LEFT
+                    case 75:  // LEFT
                         if (i > 0)
                             i--;
                         else
                             Beep(BEEP_WARNING0);
                         break;
-                    case 77:                            // RIGHT
+                    case 77:  // RIGHT
                         if (i < fin)
                             i++;
                         else
                             Beep(BEEP_WARNING0);
                         break;
-                    case 79:                            // END
+                    case 79:  // END
                         i = fin;
                         break;
-                    case 13:                            // ENTER
+                    case 13:  // ENTER
                         *(chaine + fin) = 0;
                         break;
-                    case 72:                            // UP
+                    case 72:  // UP
                         retour = 3;
                         end = 1;
                         break;
-                    case 80:                            // DOWN
+                    case 80:  // DOWN
                         retour = 2;
                         end = 1;
                         break;
-                    case 83:                            // del
-                        if (i != fin) {                 // v‚rifier si pas premiere position
+                    case 83:             // del
+                        if (i != fin) {  // vérifier si pas premiere position
                             fin--;
                             *(chaine + fin + 1) = ' ';
                             *(chaine + fin + 2) = '\0';
@@ -1494,18 +1419,18 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
                         ins = (!ins);
                         break;
 
-                    case 0x3B:            // ---------------------- F1 ------------------
+                    case 0x3B:  // ---------------------- F1 ------------------
                         retour = 7;
                         end = 1;
                         break;
 
                     default:
                         break;
-                }          /* fin du switch */
+                } /* fin du switch */
                 break;
 
-            case 8:                                             // v‚rifier si touche [del]
-                if (i > 0) {                                    // v‚rifier si pas premiere position
+            case 8:           // vérifier si touche [del]
+                if (i > 0) {  // vérifier si pas premiere position
                     i--;
                     fin--;
                     if (i != fin) {
@@ -1519,12 +1444,12 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
                     Beep(BEEP_WARNING0);
                 break;
 
-            case 13:                                                             // --- ENTER ---------------
+            case 13:  // --- ENTER ---------------
                 retour = 0;
                 end = 1;
                 break;
 
-            case 27:                                                             // --- ESCAPE -------------
+            case 27:  // --- ESCAPE -------------
                 if (couleur != 0) {
                     ColLin(colonne, ligne, fin, couleur);
 
@@ -1546,20 +1471,18 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
                 *chaine = 0;
                 break;
 
-            default:                                               // v‚rifier si caractŠre correcte
+            default:  // vérifier si caractère correcte
                 if ((car > 31) && (car <= 255)) {
                     if ((i == fin) || (!ins)) {
                         if (i == longueur)
                             i--;
-                        else
-                        if (i == fin)
+                        else if (i == fin)
                             fin++;
                         *(chaine + i) = (char)car;
                         AffChr(colonne + i, ligne, car);
                         i++;
-                    }                                                                    // fin du if i==fin || !ins
-                    else
-                    if (fin < longueur) {
+                    }  // fin du if i==fin || !ins
+                    else if (fin < longueur) {
                         *(chaine + fin) = 0;
                         strcpy(chaine2, chaine + i);
                         strcpy(chaine + i + 1, chaine2);
@@ -1568,7 +1491,7 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
                         fin++;
                         i++;
                     }
-                }                                                                                        // fin du if car>31
+                }  // fin du if car>31
                 else
                     Beep(BEEP_WARNING0);
                 break;
@@ -1582,13 +1505,12 @@ char InputAt(long colonne, long ligne, char *chaine, long longueur)
 
     LoadState();
     return retour;
-} // InputAt
+}  // InputAt
 
 /*--------------------------------------------------------------------*\
 |-							 Screen Saver							  -|
 \*--------------------------------------------------------------------*/
-void ScreenSaver(void)
-{
+void ScreenSaver(void) {
     int xm, ym, zm, xm2, ym2, zm2;
     char r, g, b;
 
@@ -1623,52 +1545,45 @@ void ScreenSaver(void)
 
     while (KbHit())
         Wait(0, 0);
-} // ScreenSaver
+}  // ScreenSaver
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
 #ifndef LINUX
-void Delay(long ms)
-{
+void Delay(long ms) {
     clock_k Cl;
 
     Cl = GetClock();
-    while ((GetClock() - Cl) < ms) ;
+    while ((GetClock() - Cl) < ms);
 }
 
-void Pause(int n)
-{
+void Pause(int n) {
     int m;
 
     for (m = 0; m < n; m++) {
-        while ((inp(0x3DA) & 8) != 8) ;
-        while ((inp(0x3DA) & 8) == 8) ;
+        while ((inp(0x3DA) & 8) != 8);
+        while ((inp(0x3DA) & 8) == 8);
     }
 }
 #else
-void Delay(long ms)
-{
+void Delay(long ms) {
 }
 
-void Pause(int n)
-{
+void Pause(int n) {
 }
-#endif // ifndef LINUX
-
+#endif  // ifndef LINUX
 
 // type: 0	   double exterieur
 // type: 1	   double interieur
 // type: 2	   fin interieur
 // type: 3	   fin exterieur
 
-
 void Norm_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2);
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
-void Norm_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2)
-{
+void Norm_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2) {
     switch (Cfg->windesign) {
         case 1:
         case 3:
@@ -1684,10 +1599,10 @@ void Norm_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2)
                 if (Cfg->UseFont == 0)
                     switch (type) {
                         case 0:
-                            AffChr(x1, y1, 'Ú');
-                            AffChr(x2, y1, '¿');
-                            AffChr(x1, y2, 'À');
-                            AffChr(x2, y2, 'Ù');
+                            AffChr(x1, y1, '?');
+                            AffChr(x2, y1, '?');
+                            AffChr(x1, y2, '?');
+                            AffChr(x2, y2, '?');
 
                             ChrLin(x1 + 1, y1, x2 - x1 - 1, 196);
                             ChrLin(x1 + 1, y2, x2 - x1 - 1, 196);
@@ -1696,10 +1611,10 @@ void Norm_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2)
                             ChrCol(x2, y1 + 1, y2 - y1 - 1, 179);
                             break;
                         case 1:
-                            AffChr(x1, y1, 'É');
-                            AffChr(x2, y1, '»');
-                            AffChr(x1, y2, 'È');
-                            AffChr(x2, y2, '¼');
+                            AffChr(x1, y1, '?');
+                            AffChr(x2, y1, '?');
+                            AffChr(x1, y2, '?');
+                            AffChr(x2, y2, '?');
 
                             ChrLin(x1 + 1, y1, x2 - x1 - 1, 205);
                             ChrLin(x1 + 1, y2, x2 - x1 - 1, 205);
@@ -1747,10 +1662,10 @@ void Norm_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2)
                     switch (type) {
                         case 2:
                         case 3:
-                            AffChr(x1, y1, 'Ú');
-                            AffChr(x2, y1, '¿');
-                            AffChr(x1, y2, 'À');
-                            AffChr(x2, y2, 'Ù');
+                            AffChr(x1, y1, '?');
+                            AffChr(x2, y1, '?');
+                            AffChr(x1, y2, '?');
+                            AffChr(x2, y2, '?');
 
                             ChrLin(x1 + 1, y1, x2 - x1 - 1, 196);
                             ChrLin(x1 + 1, y2, x2 - x1 - 1, 196);
@@ -1832,17 +1747,16 @@ void Norm_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2)
                     ChrCol(x1, y1 + 1, y2 - y1 - 1, 219);
                     ChrCol(x2, y1 + 1, y2 - y1 - 1, 219);
                     break;
-            } // switch
+            }  // switch
             break;
-    } // switch
-// PrintAt(x1,y1,"%d",type);
-} // Norm_Cadre
+    }  // switch
+    // PrintAt(x1,y1,"%d",type);
+}  // Norm_Cadre
 
 /*--------------------------------------------------------------------*\
 |-	Make a Window (0: exterieurn, 1: interieur)                       -|
 \*--------------------------------------------------------------------*/
-void WinCadre(int x1, int y1, int x2, int y2, int type)
-{
+void WinCadre(int x1, int y1, int x2, int y2, int type) {
     int col1, col2;
 
     col1 = (type & 4) == 4 ? Cfg->col[39] : Cfg->col[37];
@@ -1851,13 +1765,11 @@ void WinCadre(int x1, int y1, int x2, int y2, int type)
     Cadre(x1, y1, x2, y2, type & 3, col1, col2);
 }
 
-
 /*--------------------------------------------------------------------*\
 |-	Make a line                                                       -|
 \*--------------------------------------------------------------------*/
 
-void WinLine(int x1, int y1, int xl, int type)
-{
+void WinLine(int x1, int y1, int xl, int type) {
     char car;
 
     if (Cfg->UseFont == 0) {
@@ -1866,9 +1778,11 @@ void WinLine(int x1, int y1, int xl, int type)
         switch (type) {
             case 0:
             case 1:
-                car = 143;        break;
+                car = 143;
+                break;
             case 2:
-                car = 196;        break;
+                car = 196;
+                break;
         }
 
     ChrLin(x1, y1, xl, car);
@@ -1879,10 +1793,9 @@ void WinLine(int x1, int y1, int xl, int type)
 \*--------------------------------------------------------------------*/
 
 #ifndef NOFONT
-void Buf2Font(char *buffer)
-{
+void Buf2Font(char* buffer) {
     int i, j;
-    char *scr = (char *)0xA0000;
+    char* scr = (char*)0xA0000;
 
     int height;
 
@@ -1916,12 +1829,11 @@ void Buf2Font(char *buffer)
     outpw(0x3CE, 4);
     outpw(0x3CE, 0x1005);
     outpw(0x3CE, 0xE06);
-} // Buf2Font
+}  // Buf2Font
 
-void Font2Buf(char *buffer)
-{
+void Font2Buf(char* buffer) {
     int i, j;
-    char *scr = (char *)0xA0000;
+    char* scr = (char*)0xA0000;
 
     int height;
 
@@ -1955,14 +1867,13 @@ void Font2Buf(char *buffer)
     outpw(0x3CE, 4);
     outpw(0x3CE, 0x1005);
     outpw(0x3CE, 0xE06);
-} // Font2Buf
-#endif // ifndef NOFONT
+}  // Font2Buf
+#endif  // ifndef NOFONT
 
 /*--------------------------------------------------------------------*\
 |- Gestion de la palette											  -|
 \*--------------------------------------------------------------------*/
-void Buf2Pal(char *pal)
-{
+void Buf2Pal(char* pal) {
     int n;
 
     for (n = 0; n < 16; n++) {
@@ -1970,8 +1881,7 @@ void Buf2Pal(char *pal)
     }
 }
 
-void Pal2Buf(char *pal)
-{
+void Pal2Buf(char* pal) {
     int n;
 
     for (n = 0; n < 16; n++) {
@@ -1979,17 +1889,15 @@ void Pal2Buf(char *pal)
     }
 }
 
-
 /*--------------------------------------------------------------------*\
 |- Make the font													  -|
 \*--------------------------------------------------------------------*/
 
 #ifndef NOFONT
-void Font8xFile(int height, char *path)
-{
-    char *pol;
+void Font8xFile(int height, char* path) {
+    char* pol;
 
-    pol = (char *)GetMem(256 * height);
+    pol = (char*)GetMem(256 * height);
 
     strcpy(_IntBuffer, path);
     sprintf(_IntBuffer + strlen(_IntBuffer), "\\font8x%d.cfg", height);
@@ -1997,11 +1905,11 @@ void Font8xFile(int height, char *path)
     Cfg->UseFont = 0;
 
     if (Cfg->font) {
-        FILE *fic;
+        FILE* fic;
 
         fic = fopen(_IntBuffer, "rb");
         if (fic != NULL) {
-            Cfg->UseFont = 1;                                                   // utilise les fonts 8x?
+            Cfg->UseFont = 1;  // utilise les fonts 8x?
             fread(pol, 256 * height, 1, fic);
             fclose(fic);
         }
@@ -2025,26 +1933,24 @@ void Font8xFile(int height, char *path)
 
         outp(0x3C2, (char)x);
         outpw(0x3C4, 0x0100);
-        outpw(0x3C4, 0x0101);   // Ou 0x0001
+        outpw(0x3C4, 0x0101);  // Ou 0x0001
         outpw(0x3C4, 0x0300);
 
-        R.w.ax = 0x1000;                  // remet le horizontal PEL panning
+        R.w.ax = 0x1000;  // remet le horizontal PEL panning
         R.h.bl = 0x13;
         int386(0x10, &R, &R);
     }
 
     LibMem(pol);
-} // Font8xFile
-#endif // ifndef NOFONT
+}  // Font8xFile
+#endif  // ifndef NOFONT
 
-void LibMem(void *mem)
-{
+void LibMem(void* mem) {
     free(mem);
 }
 
-void * GetMem(int s)
-{
-    void *buf;
+void* GetMem(int s) {
+    void* buf;
 
     if (s == 0)
         WinError("Null allocation !");
@@ -2061,9 +1967,9 @@ void * GetMem(int s)
     return buf;
 }
 
-void * GetMemSZ(int s)                                             // GetMem sans mise … z‚ro
+void* GetMemSZ(int s)  // GetMem sans mise à zéro
 {
-    void *buf;
+    void* buf;
 
     if (s == 0)
         WinError("Null allocation !");
@@ -2078,7 +1984,6 @@ void * GetMemSZ(int s)                                             // GetMem san
     return buf;
 }
 
-
 /*--------------------------------------------------------------------*\
 |-	 si p vaut 0 mets off											  -|
 |-	 si p vaut 2 mets on											  -|
@@ -2086,8 +1991,7 @@ void * GetMemSZ(int s)                                             // GetMem san
 |-	 si p vaut 1 interroge											  -|
 |-	 retourne -1 si SHIFT TAB, 1 si TAB                               -|
 \*--------------------------------------------------------------------*/
-int Puce(int x, int y, int lng, char p)
-{
+int Puce(int x, int y, int lng, char p) {
     int r = 0;
 
     int car;
@@ -2106,7 +2010,7 @@ int Puce(int x, int y, int lng, char p)
         ChrLin(x + 1, y + 1, lng, 223);
     }
 
-    ColLin(x, y, lng, Cfg->col[49]);                                               // Couleur ON
+    ColLin(x, y, lng, Cfg->col[49]);  // Couleur ON
 
     if (p == 1)
         while (r == 0) {
@@ -2120,7 +2024,7 @@ int Puce(int x, int y, int lng, char p)
                 py = MousePosY();
                 pz = MouseButton();
 
-                if ( ((pz & 1) == 1) & (px >= x) & (px < x + lng) & (py == y) ) {
+                if (((pz & 1) == 1) & (px >= x) & (px < x + lng) & (py == y)) {
                     ReleaseButton();
 
                     do
@@ -2138,26 +2042,31 @@ int Puce(int x, int y, int lng, char p)
                     LoadState();
                     return 0;
                 case 27:
-                    r = 1;              break;
+                    r = 1;
+                    break;
                 case 9:
-                    r = 2;              break;
+                    r = 2;
+                    break;
                 case 0:
                     switch (car / 256) {
                         case 15:
                         case 0x4B:
                         case 72:
-                            r = 3;                       break;
+                            r = 3;
+                            break;
                         case 0x4D:
                         case 80:
-                            r = 2;                       break;
+                            r = 2;
+                            break;
                         case 0x3B:
-                            r = 7;                       break;
+                            r = 7;
+                            break;
                     }
                     break;
-            } // switch
+            }  // switch
         }
 
-    if (p != 2) {       // --- Mets OFF -----------------------------------------
+    if (p != 2) {  // --- Mets OFF -----------------------------------------
         if ((((Cfg->col[48]) & 240) != ((Cfg->col[19]) & 240)) & (p != 3)) {
             AffChr(x, y, 32);
             AffChr(x + lng - 1, y, 32);
@@ -2166,20 +2075,19 @@ int Puce(int x, int y, int lng, char p)
             ChrLin(x + 1, y + 1, lng, 223);
         }
 
-        ColLin(x, y, lng, Cfg->col[48]);                                             // Couleur OFF
+        ColLin(x, y, lng, Cfg->col[48]);  // Couleur OFF
     }
 
     LoadState();
     return r;
-} // Puce
+}  // Puce
 
 /*--------------------------------------------------------------------*\
 |-	 si p vaut 0 mets off											  -|
 |-	 si p vaut 1 interroge											  -|
 |-	 retourne -1 si SHIFT TAB, 1 si TAB                               -|
 \*--------------------------------------------------------------------*/
-int Switch(int x, int y, int *Val, int len)
-{
+int Switch(int x, int y, int* Val, int len) {
     int r = 0;
 
     int car;
@@ -2201,7 +2109,7 @@ int Switch(int x, int y, int *Val, int len)
             py = MousePosY();
             pz = MouseButton();
 
-            if ( ((pz & 1) == 1) & (px >= x) & (px <= x + len + 3) & (py == y) )
+            if (((pz & 1) == 1) & (px >= x) & (px <= x + len + 3) & (py == y))
                 car = 32;
             else
                 r = 8;
@@ -2213,28 +2121,34 @@ int Switch(int x, int y, int *Val, int len)
                 LoadState();
                 return 0;
             case 27:
-                r = 1;                    break;
+                r = 1;
+                break;
             case 9:
-                r = 2;                    break;
+                r = 2;
+                break;
             case 32:
-                (*Val) ^= 1;              break;
+                (*Val) ^= 1;
+                break;
             case 0:
                 switch (car / 256) {
                     case 15:
                     case 72:
-                        r = 3;                    break;
+                        r = 3;
+                        break;
                     case 80:
-                        r = 2;                    break;
+                        r = 2;
+                        break;
                     case 0x3B:
-                        r = 7;                    break;
+                        r = 7;
+                        break;
                 }
                 break;
-        } // switch
+        }  // switch
     }
 
     LoadState();
     return r;
-} // Switch
+}  // Switch
 
 /*--------------------------------------------------------------------*\
 |-	 0 si ENTER                                                       -|
@@ -2247,8 +2161,7 @@ int Switch(int x, int y, int *Val, int len)
 |-	 7 si F1														  -|
 |-	 8 si Souris													  -|
 \*--------------------------------------------------------------------*/
-int MSwitch(int x, int y, int *Val, int len, int i)
-{
+int MSwitch(int x, int y, int* Val, int len, int i) {
     int r = 0;
 
     int car;
@@ -2270,7 +2183,7 @@ int MSwitch(int x, int y, int *Val, int len, int i)
             py = MousePosY();
             pz = MouseButton();
 
-            if ( ((pz & 1) == 1)  & (px >= x) & (px <= x + len + 3) & (py == y) )
+            if (((pz & 1) == 1) & (px >= x) & (px <= x + len + 3) & (py == y))
                 car = 32;
             else
                 r = 8;
@@ -2282,44 +2195,51 @@ int MSwitch(int x, int y, int *Val, int len, int i)
                 LoadState();
                 return 0;
             case 27:
-                r = 1;                    break;
+                r = 1;
+                break;
             case 32:
                 (*Val) = i;
-                r = 4;                    break;
-            case 9:                                                                                             // TAB
-                r = 5;                    break;
+                r = 4;
+                break;
+            case 9:  // TAB
+                r = 5;
+                break;
             case 0:
                 switch (car / 256) {
-                    case 0x4B:                                                                                  // LEFT
-                    case 15:                                                                                    // SHIFT-TAB
-                        r = 6;                                    break;
-                    case 72:                                                                                    // BAS
-                        r = 3;                                    break;
-                    case 80:                                                                                    // HAUT
-                        r = 2;                                    break;
-                    case 0x4D:                                                                                  // RIGHT
-                        r = 5;                                    break;
+                    case 0x4B:  // LEFT
+                    case 15:    // SHIFT-TAB
+                        r = 6;
+                        break;
+                    case 72:  // BAS
+                        r = 3;
+                        break;
+                    case 80:  // HAUT
+                        r = 2;
+                        break;
+                    case 0x4D:  // RIGHT
+                        r = 5;
+                        break;
                     case 0x3B:
-                        r = 7;                                    break;
+                        r = 7;
+                        break;
                 }
                 break;
-        } // switch
+        }  // switch
     }
 
     LoadState();
     return r;
-} // MSwitch
+}  // MSwitch
 
 /*--------------------------------------------------------------------*\
 |-	 Retourne -1 si escape											  -|
 |-	 Retourne numero de la liste sinon								  -|
 \*--------------------------------------------------------------------*/
-int WinTraite(struct Tmt *T, int nbr, struct TmtWin *F, int first)
-{
-    char fin;                                                                            // si =0 continue
-    long direct;                                                                         // direction du tab
+int WinTraite(struct Tmt* T, int nbr, struct TmtWin* F, int first) {
+    char fin;     // si =0 continue
+    long direct;  // direction du tab
     int i, i2, j;
-    int *adr;
+    int* adr;
     static char chaine[80];
     int x1, y1, x2, y2;
     int def = -1;
@@ -2351,7 +2271,6 @@ int WinTraite(struct Tmt *T, int nbr, struct TmtWin *F, int first)
     i = first;
 
     while (fin == 0) {
-
         if (update) {
             i2 = i;
 
@@ -2417,9 +2336,8 @@ int WinTraite(struct Tmt *T, int nbr, struct TmtWin *F, int first)
                         ChrLin(x1 + T[i].x, y1 + T[i].y, *(T[i].entier), 32);
                         PrintAt(x1 + T[i].x, y1 + T[i].y, T[i].str);
                         break;
-                } // switch
+                }  // switch
             }
-
 
             direct = 1;
 
@@ -2428,8 +2346,7 @@ int WinTraite(struct Tmt *T, int nbr, struct TmtWin *F, int first)
             update = 0;
         }
 
-
-        for (i2 = 0; i2 < nbr; i2++) { // --- Affichage a ne faire qu'une fois ---------
+        for (i2 = 0; i2 < nbr; i2++) {  // --- Affichage a ne faire qu'une fois ---------
             switch (T[i2].type) {
                 case 10:
                     PrintAt(x1 + T[i2].x, y1 + T[i2].y, "(%c) %s",
@@ -2438,7 +2355,7 @@ int WinTraite(struct Tmt *T, int nbr, struct TmtWin *F, int first)
             }
         }
 
-        if ( (T[i].type != 2) & (T[i].type != 3) & (T[i].type != 5))
+        if ((T[i].type != 2) & (T[i].type != 3) & (T[i].type != 5))
             Puce(x1 + T[def].x, y1 + T[def].y, 13, 3);
         else
             Puce(x1 + T[def].x, y1 + T[def].y, 13, 0);
@@ -2473,37 +2390,40 @@ int WinTraite(struct Tmt *T, int nbr, struct TmtWin *F, int first)
                 PrintAt(x1 + T[i].x, y1 + T[i].y, "(%c) %s",
                         (*(T[i].entier) == i) ? 'X' : ' ', T[i].str);
                 break;
-        } // switch
+        }  // switch
 
         switch (direct) {
-            case 0:                                                                       // SELECTION
-                fin = 1;   break;
-            case 1:                                                                       // ABORT
-                fin = 2;   break;
-            case 2:                                                                       // Next Case
-                i++;     break;
-            case 3:                                                                       // Previous Case
-                i--;     break;
-            case 5:                                                                       // Type suivant
+            case 0:  // SELECTION
+                fin = 1;
+                break;
+            case 1:  // ABORT
+                fin = 2;
+                break;
+            case 2:  // Next Case
+                i++;
+                break;
+            case 3:  // Previous Case
+                i--;
+                break;
+            case 5:  // Type suivant
                 adr = T[i].entier;
                 while (adr == T[i].entier) {
                     i++;
                     if (i == nbr) i = 0;
                 }
                 break;
-            case 6:                                                                       // Type precedent
+            case 6:  // Type precedent
                 adr = T[i].entier;
                 while (adr == T[i].entier) {
                     i--;
                     if (i == -1) i = nbr - 1;
                 }
                 break;
-            case 7:                                                                       // Aide sur la fenˆtre
+            case 7:  // Aide sur la fenêtre
                 HelpTopic(_numhelp);
                 break;
 #ifndef NOMOUSE
-            case 8:
-            {
+            case 8: {
                 int px2, py2, pz2, px, py, pz, j, k;
                 int xc1, xc2, yc1, lc1;
 
@@ -2522,12 +2442,11 @@ int WinTraite(struct Tmt *T, int nbr, struct TmtWin *F, int first)
                         GetPosMouse(&px2, &py2, &pz2);
                     } while ((px2 == px) & (py2 == py) & (pz2 == pz));
 
-
                     ax = x2 - x1;
                     ay = y2 - y1;
 
-                    if ( ((px2 - px + x1) >= 0) & (py2 >= 0) &
-                         ((px2 - px + x2) < Cfg->TailleX) & ((py2 + ay) < Cfg->TailleY) ) {
+                    if (((px2 - px + x1) >= 0) & (py2 >= 0) &
+                        ((px2 - px + x2) < Cfg->TailleX) & ((py2 + ay) < Cfg->TailleY)) {
                         update = 1;
                         x1 = px2 - px + x1;
                         y1 = py2;
@@ -2547,30 +2466,29 @@ int WinTraite(struct Tmt *T, int nbr, struct TmtWin *F, int first)
                             case 11:
                             case 1:
                             case 7:
-                                if ( (py == yc1) & (px >= xc1) & (px < xc2) ) k = j;
+                                if ((py == yc1) & (px >= xc1) & (px < xc2)) k = j;
                                 break;
                             case 2:
                             case 3:
                             case 5:
-                                if ( (px >= xc1) & (px < xc1 + 13) & (py == yc1) ) k = j;
+                                if ((px >= xc1) & (px < xc1 + 13) & (py == yc1)) k = j;
                                 break;
                             case 8:
                             case 10:
                                 lc1 = strlen(T[j].str);
-                                if ( (px >= xc1) & (px <= xc1 + lc1 + 3) & (py == yc1) ) k = j;
+                                if ((px >= xc1) & (px <= xc1 + lc1 + 3) & (py == yc1)) k = j;
                                 break;
                         }
                         if (k != -1) break;
                     }
                     if (k != -1) i = k;
                 }
-            }
-            break;
-#endif // ifndef NOMOUSE
+            } break;
+#endif  // ifndef NOMOUSE
             case 4:
-            default:                                                                                       // Pas normal
+            default:  // Pas normal
                 break;
-        } // switch
+        }  // switch
 
         if (i == -1) i = nbr - 1;
         if (i == nbr) i = 0;
@@ -2587,43 +2505,39 @@ int WinTraite(struct Tmt *T, int nbr, struct TmtWin *F, int first)
         return def;
     }
 
-    return -1;                                                                                                     // ESCAPE
-} // WinTraite
+    return -1;  // ESCAPE
+}  // WinTraite
 
 /*--------------------------------------------------------------------*\
 |-	1 -> Cancel                                                       -|
 |-	0 -> OK                                                           -|
 \*--------------------------------------------------------------------*/
-char WinMesg(const char *title, const char *msg, char info)
-{
+char WinMesg(const char* title, const char* msg, char info) {
     static char Buffer2[70];
 
     int d, n, lng;
     static int width;
     static char length;
     char ok;
-    char *Mesg[5];
-
-
+    char* Mesg[5];
 
     struct Tmt T[8] = {
-        {0, 4, 2, NULL,    NULL  },                                                                // OK
-        {0, 4, 3, NULL,    NULL  },                                                                // CANCEL
+        {0, 4, 2, NULL, NULL},  // OK
+        {0, 4, 3, NULL, NULL},  // CANCEL
         {1, 1, 9, &length, &width},
-        {2, 2, 0, NULL,    NULL  },
-        {2, 3, 0, NULL,    NULL  },
-        {2, 4, 0, NULL,    NULL  },
-        {2, 5, 0, NULL,    NULL  },
-        {2, 6, 0, NULL,    NULL  }
-    };
+        {2, 2, 0, NULL, NULL},
+        {2, 3, 0, NULL, NULL},
+        {2, 4, 0, NULL, NULL},
+        {2, 5, 0, NULL, NULL},
+        {2, 6, 0, NULL, NULL}};
     int nbr = 0;
-    struct TmtWin F = { -1, 10, 0, 16, Buffer2 };
+    struct TmtWin F = {-1, 10, 0, 16, Buffer2};
 
     lng = 0;
     d = 0;
     for (n = 0; n <= strlen(msg); n++) {
         if ((msg[n] == 0) | (msg[n] == '\n')) {
-            Mesg[nbr] = (char *)GetMem(n - d + 1);
+            Mesg[nbr] = (char*)GetMem(n - d + 1);
             memcpy(Mesg[nbr], msg + d, n - d);
             Mesg[nbr][n - d] = 0;
             if (n - d > lng) lng = n - d;
@@ -2640,7 +2554,6 @@ char WinMesg(const char *title, const char *msg, char info)
 
     lng = MAX(lng, strlen(title)) + 3;
     if (lng < 31) lng = 31;
-
 
     length = (char)(lng - 3);
     width = nbr;
@@ -2680,19 +2593,18 @@ char WinMesg(const char *title, const char *msg, char info)
     }
 
     return ok;
-} // WinMesg
+}  // WinMesg
 
 /*--------------------------------------------------------------------*\
 |-	 Avancement de graduation										  -|
 |-	 Renvoit le prochain											  -|
 \*--------------------------------------------------------------------*/
-int Gradue(int x, int y, int length, int from, int to, int total)
-{
+int Gradue(int x, int y, int length, int from, int to, int total) {
     long j1, j2, j3;
 
     if (total == 0) return 0;
 
-    if ( (to > 1024) & (total > 1024) ) {
+    if ((to > 1024) & (total > 1024)) {
         j3 = (to / 1024);
         j3 = (j3 * length * 8) / (total / 1024);
     } else
@@ -2767,53 +2679,48 @@ int Gradue(int x, int y, int length, int from, int to, int total)
             AffChr(x, y, 155);
 
     return j1;
-} // Gradue
+}  // Gradue
 
-char IsSlash(char c)
-{
+char IsSlash(char c) {
     if (c == '\\') return 1;
     if (c == '/') return 1;
     return 0;
 }
 
-
 /*--------------------------------------------------------------------*\
 |- Configuration par default										  -|
 \*--------------------------------------------------------------------*/
-void DefaultCfg(struct config *Cfg2)
-{
+void DefaultCfg(struct config* Cfg2) {
 #ifndef NOFONT
 
     char defpal[48] = RBPALDEF;
 
     char defcol[64] = {
-        7 * 16 + 6,  14 * 16 + 6, 13 * 16 + 8, 14 * 16 + 2, 7 * 16 + 5,  1 * 16 + 8,  1 * 16 + 3,  14 * 16 + 7,  7 * 16 + 4,
-        14 * 16 + 1, 14 * 16 + 7, 14 * 16 + 3, 7 * 16 + 4,  7 * 16 + 3,  3 * 16 + 0,  7 * 16 + 13, 10 * 16 + 1,  10 * 16 + 5,
-        14 * 16 + 5, 10 * 16 + 1, 10 * 16 + 3, 14 * 16 + 3, 7 * 16 + 8,  7 * 16 + 12, 10 * 16 + 1, 10 * 16 + 3,  1 * 16 + 5,
-        10 * 16 + 5, 14 * 16 + 7, 14 * 16 + 4, 7 * 16 + 4,  0,           7 * 16 + 11, 7 * 16 + 4,  13 * 16 + 11, 3 * 16 + 14,
-        3 * 16 + 13, 10 * 16 + 1, 10 * 16 + 3, 10 * 16 + 1, 10 * 16 + 3, 14 * 16 + 3, 14 * 16 + 3, 7 * 16 + 3,   10 * 16 + 1,
-        10 * 16 + 3, 14 * 16 + 1, 14 * 16 + 3, 14 * 16 + 3, 7 * 16 + 4,  4 * 16 + 13, 5 * 16 + 1,  10 * 16 + 1,  10 * 16 + 3,
-        1 * 16 + 10, 10 * 16 + 1, 10 * 16 + 3, 3 * 16 + 1,  4 * 16 + 1,  5 * 16 + 1,  0 * 16 + 11, 0 * 16 + 7,   0 * 16 + 13,
-        0 * 16 + 2
-    };
+        7 * 16 + 6, 14 * 16 + 6, 13 * 16 + 8, 14 * 16 + 2, 7 * 16 + 5, 1 * 16 + 8, 1 * 16 + 3, 14 * 16 + 7, 7 * 16 + 4,
+        14 * 16 + 1, 14 * 16 + 7, 14 * 16 + 3, 7 * 16 + 4, 7 * 16 + 3, 3 * 16 + 0, 7 * 16 + 13, 10 * 16 + 1, 10 * 16 + 5,
+        14 * 16 + 5, 10 * 16 + 1, 10 * 16 + 3, 14 * 16 + 3, 7 * 16 + 8, 7 * 16 + 12, 10 * 16 + 1, 10 * 16 + 3, 1 * 16 + 5,
+        10 * 16 + 5, 14 * 16 + 7, 14 * 16 + 4, 7 * 16 + 4, 0, 7 * 16 + 11, 7 * 16 + 4, 13 * 16 + 11, 3 * 16 + 14,
+        3 * 16 + 13, 10 * 16 + 1, 10 * 16 + 3, 10 * 16 + 1, 10 * 16 + 3, 14 * 16 + 3, 14 * 16 + 3, 7 * 16 + 3, 10 * 16 + 1,
+        10 * 16 + 3, 14 * 16 + 1, 14 * 16 + 3, 14 * 16 + 3, 7 * 16 + 4, 4 * 16 + 13, 5 * 16 + 1, 10 * 16 + 1, 10 * 16 + 3,
+        1 * 16 + 10, 10 * 16 + 1, 10 * 16 + 3, 3 * 16 + 1, 4 * 16 + 1, 5 * 16 + 1, 0 * 16 + 11, 0 * 16 + 7, 0 * 16 + 13,
+        0 * 16 + 2};
 
-// Cfg2->TailleY=30;
+    // Cfg2->TailleY=30;
     Cfg2->font = 1;
 
     memcpy(Cfg2->palette, NORTONPAL, 48);
     memcpy(Cfg2->col, NORTONCOL, 64);
 
-#else // ifndef NOFONT
+#else   // ifndef NOFONT
 
-// Cfg2->TailleY=25;
+    // Cfg2->TailleY=25;
     Cfg2->font = 0;
 
     memcpy(Cfg2->palette, NORTONPAL, 48);
     memcpy(Cfg2->col, NORTONCOL, 64);
-#endif // ifndef NOFONT
+#endif  // ifndef NOFONT
 
     Cfg2->windesign = 4;
-
 
     Cfg2->SaveSpeed = 120;
 
@@ -2832,16 +2739,14 @@ void DefaultCfg(struct config *Cfg2)
     Cfg2->comstop = 1;
 
     Cfg2->mousemode = 0;
-} // DefaultCfg
-
-
+}  // DefaultCfg
 
 /*--------------------------------------------------------------------*\
 |- Configuration par default										  -|
 \*--------------------------------------------------------------------*/
-void ReadCfg(struct config *Cfg2)
-{
-    char defcol[] = "\x1B\x30\x1E\x3E\x1E\x03\x30\x30\x0F\x30\x3F\x3E"
+void ReadCfg(struct config* Cfg2) {
+    char defcol[] =
+        "\x1B\x30\x1E\x3E\x1E\x03\x30\x30\x0F\x30\x3F\x3E"
         "\x0F\x0E\x30\x19\x1B\x13\x30\x3F\x3E\x0F\x15\x12"
         "\x30\x3F\x0F\x3E\x4F\x4E\x70\x00\x14\x13\xB4\x60"
         "\x70\x1B\x1B\x1B\x1E\x30\x30\x0F\x3F\x3F\x4F\x4F"
@@ -2877,15 +2782,9 @@ void ReadCfg(struct config *Cfg2)
     Cfg2->comstop = 1;
 
     Cfg2->mousemode = 0;
-} // ReadCfg
+}  // ReadCfg
 
-
-
-
-
-
-void LoadErrorHandler(void)
-{
+void LoadErrorHandler(void) {
 #ifdef __WC32__
     _harderr(Error_handler);
 #endif
@@ -2899,8 +2798,7 @@ void LoadErrorHandler(void)
 \*--------------------------------------------------------------------*/
 #ifdef __WC32__
 int __far Error_handler(unsigned deverr, unsigned errcode,
-                        unsigned far *devhdr)
-{
+                        unsigned far* devhdr) {
     int i, n, erreur[3];
     char car;
     int t;
@@ -2929,14 +2827,21 @@ int __far Error_handler(unsigned deverr, unsigned errcode,
     PrintAt(t + 23, 11, "Position of error: ");
 
     switch ((deverr & 1536) / 512) {
-        case 0: PrintAt(42 + t, 11, "MS-DOS"); break;
-        case 1: PrintAt(42 + t, 11, "FAT"); break;
-        case 2: PrintAt(42 + t, 11, "Directory"); break;
-        case 3: PrintAt(42 + t, 11, "Data-area"); break;
+        case 0:
+            PrintAt(42 + t, 11, "MS-DOS");
+            break;
+        case 1:
+            PrintAt(42 + t, 11, "FAT");
+            break;
+        case 2:
+            PrintAt(42 + t, 11, "Directory");
+            break;
+        case 3:
+            PrintAt(42 + t, 11, "Data-area");
+            break;
     }
 
-    PrintAt(t + 23, 12, "Type of error: %s %04X", ((deverr & 256) == 256) ?
-            "Write" : "Read", deverr);
+    PrintAt(t + 23, 12, "Type of error: %s %04X", ((deverr & 256) == 256) ? "Write" : "Read", deverr);
     i = 8192;
     n = 0;
 
@@ -2968,11 +2873,11 @@ int __far Error_handler(unsigned deverr, unsigned errcode,
 
     IOerr = 0;
     do {
-        car = (char)getch(); //  Wait(0,0);
+        car = (char)getch();  //  Wait(0,0);
 
-        if ( (car == 'I') | (car == 'i') & (erreur[0]) ) IOerr = 1;
-        if ( (car == 'R') | (car == 'r') & (erreur[1]) ) IOerr = 2;
-        if ( (car == 'F') | (car == 'f') & (erreur[2]) ) IOerr = 3;
+        if ((car == 'I') | (car == 'i') & (erreur[0])) IOerr = 1;
+        if ((car == 'R') | (car == 'r') & (erreur[1])) IOerr = 2;
+        if ((car == 'F') | (car == 'f') & (erreur[2])) IOerr = 3;
 
     } while (IOerr == 0);
 
@@ -2985,26 +2890,24 @@ int __far Error_handler(unsigned deverr, unsigned errcode,
             return _HARDERR_RETRY;
     }
 
-    if ((errcode) || (devhdr)) ;
+    if ((errcode) || (devhdr))
+        ;
 
     return _HARDERR_FAIL;
-} // Error_handler
-#endif // ifdef __WC32__
-
-
+}  // Error_handler
+#endif  // ifdef __WC32__
 
 /*--------------------------------------------------------------------*\
-|- Initialise les adresses dans la m‚moire vid‚o					  -|
+|- Initialise les adresses dans la mémoire vidéo					  -|
 \*--------------------------------------------------------------------*/
-void InitSeg(void)
-{
+void InitSeg(void) {
     int n;
 
     ClearEvents();
 
 #ifndef NODIRECTVIDEO
     for (n = 0; n < 50; n++) {
-        scrseg[n] = (char *)(0xB8000 + n * (Cfg->TailleX) * 2);
+        scrseg[n] = (char*)(0xB8000 + n * (Cfg->TailleX) * 2);
     }
 #endif
 
@@ -3028,63 +2931,68 @@ void InitSeg(void)
 |-																	  -|
 \*--------------------------------------------------------------------*/
 
-int (*disp_system)(int, char *);
+int (*disp_system)(int, char*);
 
 /*--------------------------------------------------------------------*\
 |-	Renvoit le nombre de systeme									  -|
 \*--------------------------------------------------------------------*/
-int givesyst(int x)
-{
+int givesyst(int x) {
     int nbrsyst = 0;
 
-// printf("Traite Commandline after dos %d FIN)\n\n",x); exit(1);
-
+    // printf("Traite Commandline after dos %d FIN)\n\n",x); exit(1);
 
 #ifdef CURSES
     if (nbrsyst == x) {
-        disp_system = curses_system; return 1;
+        disp_system = curses_system;
+        return 1;
     }
     nbrsyst++;
 #endif
 
 #ifndef NODIRECTVIDEO
     if (nbrsyst == x) {
-        disp_system = cache_system; return 1;
+        disp_system = cache_system;
+        return 1;
     }
     nbrsyst++;
 #endif
 
 #ifndef NOANSI
     if (nbrsyst == x) {
-        disp_system = ansi_system; return 1;
+        disp_system = ansi_system;
+        return 1;
     }
     nbrsyst++;
 #endif
 
 #ifndef NOCOM
     if (nbrsyst == x) {
-        disp_system = com_system; return 1;
+        disp_system = com_system;
+        return 1;
     }
     nbrsyst++;
 #endif
 
 #ifndef NODIRECTVIDEO
     if (nbrsyst == x) {
-        disp_system = video_system; return 1;
+        disp_system = video_system;
+        return 1;
     }
     nbrsyst++;
 #endif
 
 #ifdef PCDISPLAY
     if (nbrsyst == x) {
-        disp_system = Pc_system; return 1;
+        disp_system = Pc_system;
+        return 1;
     }
     nbrsyst++;
 #endif
 
 #ifdef USEVESA
     if (nbrsyst == x) {
-        disp_system = vesa_system; return 1;
+        disp_system = vesa_system;
+        return 1;
     }
     nbrsyst++;
 #endif
@@ -3094,30 +3002,25 @@ int givesyst(int x)
     else
         return -1;
 
-} // givesyst
+}  // givesyst
 
-void Redinit(void)
-{
-    Cfg = (struct config *)GetMem(sizeof(struct config));
-    Fics = (struct fichier *)GetMem(sizeof(struct fichier));
+void Redinit(void) {
+    Cfg = (struct config*)GetMem(sizeof(struct config));
+    Fics = (struct fichier*)GetMem(sizeof(struct fichier));
 
     givesyst(0);
 }
 
-
-
 /*--------------------------------------------------------------------*\
-|- Initialise l'‚cran                                                 -|
+|- Initialise l'écran                                                 -|
 \*--------------------------------------------------------------------*/
-int InitScreen(int a)
-{
+int InitScreen(int a) {
     char buffer[80];
     int n, ok, old;
 
-// --- Default mode ----------------------------------------------------
+    // --- Default mode ----------------------------------------------------
 
     ok = 0;
-
 
     if ((Cfg->TailleX == 0) | (Cfg->TailleY == 0)) {
         Cfg->TailleX = 80;
@@ -3143,7 +3046,6 @@ int InitScreen(int a)
     Cadre = Norm_Cadre;
     Clr = Norm_Clr;
 
-
     if (a != -1) {
         old = disp_system(1, buffer);
 
@@ -3166,11 +3068,11 @@ int InitScreen(int a)
         }
     }
 
-// printf("Traite Commandline after dos (%s) FIN)\n\n",buffer); exit(1);
+    // printf("Traite Commandline after dos (%s) FIN)\n\n",buffer); exit(1);
 
     InitSeg();
     return ok;
-} // InitScreen
+}  // InitScreen
 
 /*--------------------------------------------------------------------*\
 |-	   Gestion de la barre de menu									  -|
@@ -3179,8 +3081,7 @@ int InitScreen(int a)
 |-	 xp: au depart, c'est le numero du titre                          -|
 |-		 a l'arrivee ,c'est la position du titre                      -|
 \*--------------------------------------------------------------------*/
-int BarMenu(struct barmenu *bar, int nbr, int *poscur, int *xp, int yp)
-{
+int BarMenu(struct barmenu* bar, int nbr, int* poscur, int* xp, int yp) {
     char ok;
     int c, i, j, n, x;
     char let[32];
@@ -3200,7 +3101,6 @@ int BarMenu(struct barmenu *bar, int nbr, int *poscur, int *xp, int yp)
 
     ColLin(0, 0, Cfg->TailleX, Cfg->col[7]);
     ChrLin(0, 0, Cfg->TailleX, 32);
-
 
     x = 0;
     for (n = 0; n < nbr; n++) {
@@ -3240,7 +3140,7 @@ int BarMenu(struct barmenu *bar, int nbr, int *poscur, int *xp, int yp)
         if (ok == 1)
             break;
 
-        while ( (!KbHit()) & (car == 0) ) {
+        while ((!KbHit()) & (car == 0)) {
 #ifndef NOMOUSE
 
             GetPosMouse(&xm, &ym, &button);
@@ -3292,19 +3192,19 @@ int BarMenu(struct barmenu *bar, int nbr, int *poscur, int *xp, int yp)
             }
 
             oldxm = xm;
-#endif // ifndef NOMOUSE
+#endif  // ifndef NOMOUSE
         }
 
         if (car == 0)
             car = Wait(0, 0);
 
-// car=1 -> touche pour rire
+        // car=1 -> touche pour rire
 
         switch (car) {
-            case KEY_LEFT:      // --- Gauche ---------------------------------------
+            case KEY_LEFT:  // --- Gauche ---------------------------------------
                 c--;
                 break;
-            case KEY_RIGHT:     // --- Droite ---------------------------------------
+            case KEY_RIGHT:  // --- Droite ---------------------------------------
                 c++;
                 break;
             case KEY_DOWN:
@@ -3317,7 +3217,7 @@ int BarMenu(struct barmenu *bar, int nbr, int *poscur, int *xp, int yp)
                 if (toupper(car) == let[n])
                     c = n, ok = 1;
             }
-    } while ( (car != 13) & (car != 27) );
+    } while ((car != 13) & (car != 27));
 
     *poscur = c;
 
@@ -3325,14 +3225,12 @@ int BarMenu(struct barmenu *bar, int nbr, int *poscur, int *xp, int yp)
         return 0;
     else
         return 1;
-} // BarMenu
+}  // BarMenu
 
-
-static int(*fonction[12])(struct barmenu *);
+static int (*fonction[12])(struct barmenu*);
 static char fctname[61];
 
-void ClearEvents(void)
-{
+void ClearEvents(void) {
     int n;
 
     for (n = 0; n < 12; n++) {
@@ -3342,9 +3240,7 @@ void ClearEvents(void)
     }
 }
 
-
-void NewEvents(register int (*fct)(struct barmenu *), char *titre, int key)
-{
+void NewEvents(register int (*fct)(struct barmenu*), char* titre, int key) {
     if ((key < 1) | (key > 12))
         WinError("Invalid Key");
 
@@ -3353,13 +3249,11 @@ void NewEvents(register int (*fct)(struct barmenu *), char *titre, int key)
         memcpy(fctname + (key - 1) * 6, titre, 6);
 }
 
-
 /*--------------------------------------------------------------------*\
 |-	1: [RIGHT]	 -1: [LEFT]                                           -|
 |-	0: [ESC]	  2: [ENTER]										  -|
 \*--------------------------------------------------------------------*/
-int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
-{
+int PannelMenu(struct barmenu* bar, int nbr, MENU* menu) {
 #ifndef NOMOUSE
     int oldxm, oldym, oldzm;
 #endif
@@ -3367,7 +3261,7 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
     int max, n, m, car, fin;
     int i, col;
     int col1, col2;
-    char *let;
+    char* let;
     char bbar[61];
     int nbraff, prem;
     int xp, yp;
@@ -3378,7 +3272,7 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
     yp = menu->y;
     c = menu->cur;
 
-    let = (char *)GetMem(nbr);
+    let = (char*)GetMem(nbr);
 
     if (((menu->attr) & 2) == 2) {
         for (n = 0; n < nbr; n++) {
@@ -3389,7 +3283,6 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
             i = 0;
 
             if (bar[n].fct != 0) {
-
                 do {
                     do {
                         car = bar[n].Titre[i];
@@ -3411,7 +3304,7 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
     max = 0;
 
     for (n = 0; n < nbr; n++) {
-        if (bar[n].fct != 0 ) {
+        if (bar[n].fct != 0) {
             if (max < strlen(bar[n].Titre))
                 max = strlen(bar[n].Titre);
         }
@@ -3459,11 +3352,11 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
                 PrintAt(xp, yp + n, "%-*s", max, bar[n + prem].Titre);
                 col = 1;
                 if ((n + prem) == c) {
-                    col1 = Cfg->col[12];        // 7
-                    col2 = Cfg->col[13];        // 7
+                    col1 = Cfg->col[12];  // 7
+                    col2 = Cfg->col[13];  // 7
                 } else {
-                    col1 = Cfg->col[10];        // 4
-                    col2 = Cfg->col[11];        // 7
+                    col1 = Cfg->col[10];  // 4
+                    col2 = Cfg->col[11];  // 7
                 }
 
                 for (i = 0; i < strlen(bar[n + prem].Titre); i++) {
@@ -3478,7 +3371,7 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
             }
         }
 
-// --- Ascensceur -------------------------------------------------------
+        // --- Ascensceur -------------------------------------------------------
         if (ascen) {
             AffChr(xp + max, yp, (prem != 0) ? 30 : 32);
             AffChr(xp + max, yp + nbraff - 1, (prem + nbraff < nbr) ? 31 : 32);
@@ -3501,10 +3394,10 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
 
             GetRPosMouse(&xm, &ym, &zm);
 
-            if ( (ym < 0) & (((menu->attr) & 8) == 0) & (zm != 0) ) {
+            if ((ym < 0) & (((menu->attr) & 8) == 0) & (zm != 0)) {
                 ReleaseButton();
                 zm = 0;
-                car = 27;                                 // en esperant que la barre est en 0
+                car = 27;  // en esperant que la barre est en 0
             }
 
             if (zm != 0) {
@@ -3521,7 +3414,7 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
                     xm2 = xm + xp;
                     ym2 = ym + yp;
 
-                    if (ym2 == Cfg->TailleY - 1) { // - Fx key -----------------------
+                    if (ym2 == Cfg->TailleY - 1) {  // - Fx key -----------------------
                         int n;
                         if (Cfg->TailleX == 90) {
                             n = xm2 / 9;
@@ -3532,14 +3425,11 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
                             ColLin(n * 8 + 2, Cfg->TailleY - 1, 6, Cfg->col[6]);
                             car = ((0x3B + (xm2 / 8)) * 256);
                         }
-                    } else
-                    if (xm < 0)
+                    } else if (xm < 0)
                         car = 0x4B00;
-                    else
-                    if (xm > (max - 1))
+                    else if (xm > (max - 1))
                         car = 0x4D00;
-                    else
-                    if ( (ym >= 0) & (ym < nbr) ) {
+                    else if ((ym >= 0) & (ym < nbr)) {
                         if (bar[ym].fct != 0) {
                             if (c == ym)
                                 car = 13;
@@ -3551,7 +3441,7 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
                     }
                 }
             } else {
-                if ( (oldym != ym) & (ym >= 0) & (ym < nbr) & (xm >= 0) & (xm <= (max - 1)) )
+                if ((oldym != ym) & (ym >= 0) & (ym < nbr) & (xm >= 0) & (xm <= (max - 1)))
                     if (bar[ym].fct != 0) {
                         c = ym;
                         car = 1;
@@ -3561,7 +3451,7 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
                     }
             }
         }
-#endif // ifndef NOMOUSE
+#endif  // ifndef NOMOUSE
 
         if (car == 0)
             car = Wait(0, 0);
@@ -3570,18 +3460,18 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
             switch (car) {
                 case 0:
                     break;
-                case KEY_UP:       // --- UP ----------------------------------------
+                case KEY_UP:  // --- UP ----------------------------------------
                     c--;
                     break;
-                case KEY_LEFT:     // --- LEFT --------------------------------------
+                case KEY_LEFT:  // --- LEFT --------------------------------------
                     if (((menu->attr) & 8) == 0)
                         fin = -1, car = 27;
                     break;
-                case KEY_RIGHT:    // --- RIGHT -------------------------------------
+                case KEY_RIGHT:  // --- RIGHT -------------------------------------
                     if (((menu->attr) & 8) == 0)
                         fin = 1, car = 27;
                     break;
-                case KEY_PPAGE:            // --- PGUP --------------------------------------
+                case KEY_PPAGE:  // --- PGUP --------------------------------------
                     m = c;
                     for (n = 0; n < nbraff; n++) {
                         m--;
@@ -3591,7 +3481,7 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
                     }
                     break;
 
-                case KEY_NPAGE:    // --- PGDN --------------------------------------
+                case KEY_NPAGE:  // --- PGDN --------------------------------------
                     m = c;
                     for (n = 0; n < nbraff; n++) {
                         m++;
@@ -3601,10 +3491,10 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
                     }
                     break;
 
-                case KEY_DOWN:     // --- DOWN --------------------------------------
+                case KEY_DOWN:  // --- DOWN --------------------------------------
                     c++;
                     break;
-                case KEY_HOME:     // --- HOME --------------------------------------
+                case KEY_HOME:  // --- HOME --------------------------------------
                     for (n = 0; n < nbr; n++) {
                         if (bar[n].fct != 0) {
                             c = n;
@@ -3612,53 +3502,53 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
                         }
                     }
                     break;
-                case KEY_END: // --- END ---------------------------------------
+                case KEY_END:  // --- END ---------------------------------------
                     for (n = 0; n < nbr; n++) {
                         if (bar[n].fct != 0)
                             c = n;
                     }
                     break;
-                case KEY_F(1):     // --- F1 ----------------------------------------
+                case KEY_F(1):  // --- F1 ----------------------------------------
                     if (bar[c].Help != 0)
                         HelpTopic(bar[c].Help);
                     break;
-                case KEY_F(2): // --- F2 ----------------------------------------
+                case KEY_F(2):  // --- F2 ----------------------------------------
                     if (fonction[1] != NULL)
                         fonction[1](&(bar[c]));
                     break;
-                case KEY_F(3): // --- F3 ----------------------------------------
+                case KEY_F(3):  // --- F3 ----------------------------------------
                     if (fonction[2] != NULL)
                         fonction[2](&(bar[c]));
                     break;
-                case KEY_F(4): // --- F4 ----------------------------------------
+                case KEY_F(4):  // --- F4 ----------------------------------------
                     if (fonction[3] != NULL)
                         fonction[3](&(bar[c]));
                     break;
-                case KEY_F(5): // --- F5 ----------------------------------------
+                case KEY_F(5):  // --- F5 ----------------------------------------
                     if (fonction[4] != NULL)
                         fonction[4](&(bar[c]));
                     break;
-                case KEY_F(6): // --- F6 ----------------------------------------
+                case KEY_F(6):  // --- F6 ----------------------------------------
                     if (fonction[5] != NULL)
                         fonction[5](&(bar[c]));
                     break;
-                case KEY_F(7): // --- F7 ----------------------------------------
+                case KEY_F(7):  // --- F7 ----------------------------------------
                     if (fonction[6] != NULL)
                         fonction[6](&(bar[c]));
                     break;
-                case KEY_F(8): // --- F8 ----------------------------------------
+                case KEY_F(8):  // --- F8 ----------------------------------------
                     if (fonction[7] != NULL)
                         fonction[7](&(bar[c]));
                     break;
-                case KEY_F(9): // --- F9 ----------------------------------------
+                case KEY_F(9):  // --- F9 ----------------------------------------
                     if (fonction[8] != NULL)
                         fonction[8](&(bar[c]));
                     break;
-                case KEY_F(10): // --- F10 ----------------------------------------
+                case KEY_F(10):  // --- F10 ----------------------------------------
                     if (fonction[9] != NULL)
                         fonction[9](&(bar[c]));
                     break;
-            } // switch
+            }  // switch
 
             if (LO(car) != 0)
                 for (n = 0; n < nbr; n++) {
@@ -3666,7 +3556,7 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
                         c = n, car = 13;
                 }
         } while (bar[c].fct == 0);
-    } while ( (car != 13) & (car != 27) );
+    } while ((car != 13) & (car != 27));
 
     if (((menu->attr) & 4) == 0)
         LoadScreen();
@@ -3675,55 +3565,46 @@ int PannelMenu(struct barmenu *bar, int nbr, MENU *menu)
 
     LibMem(let);
 
-// PrintAt(1,1,"(%d,%d)",fin,car);
+    // PrintAt(1,1,"(%d,%d)",fin,car);
 
     if (car == 27)
         return fin;
     else
         return 2;
-} // PannelMenu
-
+}  // PannelMenu
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
-
 
 /*--------------------------------------------------------------------*\
 |- Gestion de l'aide                                                  -|
 \*--------------------------------------------------------------------*/
-
-
 
 /*--------------------------------------------------------------------*\
 |- prototype														  -|
 \*--------------------------------------------------------------------*/
 
 static void (*helphandler)(void);
-static void (*helptopichandler)(char *topic);
+static void (*helptopichandler)(char* topic);
 
-void LoadHelpHandler(register void (*fct)(void))
-{
+void LoadHelpHandler(register void (*fct)(void)) {
     helphandler = fct;
 }
 
-void LoadHelpTopicHandler(register void (*fct)(char *))
-{
+void LoadHelpTopicHandler(register void (*fct)(char*)) {
     helptopichandler = fct;
 }
 
-void NumHelp(int n)
-{
+void NumHelp(int n) {
     _numhelp = n;
 }
 
-void Help(void)
-{
+void Help(void) {
     if (helphandler != NULL)
         helphandler();
 }
 
-void HelpTopic(int n)
-{
+void HelpTopic(int n) {
     if (helptopichandler != NULL) {
         char topic[32];
         sprintf(topic, "lnk%d", n);
@@ -3731,23 +3612,21 @@ void HelpTopic(int n)
     }
 }
 
-
 /*--------------------------------------------------------------------*\
 |- Initialisation des fichiers selon la path						  -|
 \*--------------------------------------------------------------------*/
-void SetDefaultPath(char *path)
-{
+void SetDefaultPath(char* path) {
     strcpy(_IntBuffer, path);
 
-    if ( (path[strlen(path) - 1] != '\\') &
-         (path[strlen(path) - 1] != '/') )
+    if ((path[strlen(path) - 1] != '\\') &
+        (path[strlen(path) - 1] != '/'))
         _IntBuffer[strlen(path)] = DEFSLASH,
         _IntBuffer[strlen(path) + 1] = 0;
 
-    Fics->LastDir = (char *)GetMem(256);
+    Fics->LastDir = (char*)GetMem(256);
     getcwd(Fics->LastDir, 256);
 
-    Fics->path = (char *)GetMem(256);
+    Fics->path = (char*)GetMem(256);
     strcpy(Fics->path, _IntBuffer);
 }
 
@@ -3757,18 +3636,15 @@ void SetDefaultPath(char *path)
 
 #ifndef NOMOUSE
 
-int MouseRPosX(void)
-{
+int MouseRPosX(void) {
     return _xm - _xw;
 }
 
-int MouseRPosY(void)
-{
+int MouseRPosY(void) {
     return _ym - _yw;
 }
 
-void GetRPosMouse(int *x, int *y, int *button)
-{
+void GetRPosMouse(int* x, int* y, int* button) {
     int x1, y1;
 
     GetPosMouse(&x1, &y1, button);
@@ -3777,33 +3653,27 @@ void GetRPosMouse(int *x, int *y, int *button)
     (*y) = y1 - _yw;
 }
 
-
 /*--------------------------------------------------------------------*\
 |-	Absolu															  -|
 \*--------------------------------------------------------------------*/
 
-int MousePosX(void)
-{
+int MousePosX(void) {
     return _xm;
 }
 
-int MousePosY(void)
-{
+int MousePosY(void) {
     return _ym;
 }
 
-int MouseButton(void)
-{
+int MouseButton(void) {
     return _zm;
 }
 
-void ReleaseButton(void)
-{
+void ReleaseButton(void) {
     _zmok = 1;
 }
 
-void InitMouse(void)
-{
+void InitMouse(void) {
     union REGS R;
 
     R.w.ax = 0x0000;
@@ -3829,13 +3699,9 @@ void InitMouse(void)
     _dclik = 0;
 
     ReleaseButton();
-} // InitMouse
+}  // InitMouse
 
-
-
-
-void GetPosMouse(int *x, int *y, int *button)
-{
+void GetPosMouse(int* x, int* y, int* button) {
     if (_MouseOK == 0) {
         (*x) = (*y) = (*button) = 0;
         return;
@@ -3852,7 +3718,7 @@ void GetPosMouse(int *x, int *y, int *button)
 
         _zm = R.w.bx;
 
-        if ( ((*x) != _xm) | ((*y) != _ym) | (_charm == 0) ) {
+        if (((*x) != _xm) | ((*y) != _ym) | (_charm == 0)) {
             *(scrseg[_ym] + (_xm << 1) + 1) = GetCol(_xm, _ym);
 
             _charm = GetCol((*x), (*y));
@@ -3866,7 +3732,7 @@ void GetPosMouse(int *x, int *y, int *button)
 
         if ((_zm & 1) == 1) {
             _mclock = GetClock();
-            if ( (_dclik != 0) & (_dclik != _TmpClik) ) {
+            if ((_dclik != 0) & (_dclik != _TmpClik)) {
                 _zm = 4;
             }
             _dclik = _TmpClik;
@@ -3917,14 +3783,13 @@ void GetPosMouse(int *x, int *y, int *button)
         if ((yp < 0) & (xp == 0))
             PutKey(0x4800);
 
-
-        R.w.ax = 0x05; // --- Etat des boutons --------------------------------
+        R.w.ax = 0x05;  // --- Etat des boutons --------------------------------
         int386(0x33, &R, &R);
 
         _zm = R.w.ax;
 
         if (_zm == 0)
-            _zmok = 1;            // --- On debloque si touche relache ---
+            _zmok = 1;  // --- On debloque si touche relache ---
 
         if (_zmok == 0) _zm = 0;  // Touche est relache si pas encore relache
 
@@ -3945,17 +3810,15 @@ void GetPosMouse(int *x, int *y, int *button)
 
         _zm = 0;
     }
-} // GetPosMouse
-#endif // ifndef NOMOUSE
+}  // GetPosMouse
+#endif  // ifndef NOMOUSE
 
 #ifndef NOFONT
-void InitFont(void)
-{
+void InitFont(void) {
     InitFontFile(Fics->path);
 }
 
-void InitFontFile(char *path)
-{
+void InitFontFile(char* path) {
     switch (Cfg->TailleY) {
         case 50:
             Font8xFile(8, path);
@@ -3972,8 +3835,7 @@ void InitFontFile(char *path)
 |- Affichage de la barre en dessous de l'ecran                        -|
 \*--------------------------------------------------------------------*/
 
-void Bar(char *bar)
-{
+void Bar(char* bar) {
     int TY;
     int i, j, n;
 
@@ -3996,14 +3858,12 @@ void Bar(char *bar)
             n++;
         }
     }
-} // Bar
+}  // Bar
 
 #ifndef NOMOUSE
 static char statusbar;
 
-
-int GetMouseFctBar(int status)
-{
+int GetMouseFctBar(int status) {
     int xm, ym, zm;
     int n0, n1;
     char col0, col1;
@@ -4046,42 +3906,37 @@ int GetMouseFctBar(int status)
         return ((0x3B + (xm / ((Cfg->TailleX == 90) ? 9 : 8))) * 256);
     else
         return 0;
-} // GetMouseFctBar
-#endif // ifndef NOMOUSE
+}  // GetMouseFctBar
+#endif  // ifndef NOMOUSE
 
 /*--------------------------------------------------------------------*\
 \*--------------------------------------------------------------------*/
 
 #ifndef NOINT
-void GetFreeMem(char *buffer);
+void GetFreeMem(char* buffer);
 #pragma aux GetFreeMem = \
-    "mov ax,0500h" \
-    "int 31h" \
-    modify [edi eax] \
-    parm [edi];
+    "mov ax,0500h"       \
+    "int 31h" modify[edi eax] parm[edi];
 
-int FreeMem(void)
-{
+int FreeMem(void) {
     int tail[12];
 
-    GetFreeMem((char *)tail);                                              // inconsistent ?
+    GetFreeMem((char*)tail);  // inconsistent ?
 
     return tail[0];
 }
 #else
-int FreeMem(void)
-{
+int FreeMem(void) {
     return 0;
 }
 #endif
 
-void SnapShot(void)
-{
+void SnapShot(void) {
     char head1[] = {0x6d, 0x68, 0x77, 0x61, 0x6e, 0x68, 0x0, 0x04};
     char head2[] = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     char palette[768];
     char font[256 * 16];
-    FILE *fic;
+    FILE* fic;
     int x, y, x1, y1, z;
     char car, col;
     int expos[] = {128, 64, 32, 16, 8, 4, 2, 1};
@@ -4132,102 +3987,85 @@ void SnapShot(void)
                 for (x1 = 0; x1 < 8; x1++) {
                     car = GetChr(x, y);
                     col = GetCol(x, y);
-                    fputc(((font[car * z + y1]) & expos[x1]) != expos[x1] ? col / 16 : col& 15, fic);
+                    fputc(((font[car * z + y1]) & expos[x1]) != expos[x1] ? col / 16 : col & 15, fic);
                 }
             }
         }
     }
 
     fclose(fic);
-} // SnapShot
-
+}  // SnapShot
 
 #ifndef NODIRECTVIDEO
-void Buf2Scr(char *buffer)
-{
+void Buf2Scr(char* buffer) {
     int n;
-    char *Screen_Adr = (char *)0xB8000;
+    char* Screen_Adr = (char*)0xB8000;
 
     for (n = 0; n < MaxZ; n++) {
         Screen_Adr[n] = buffer[n];
     }
 }
 
-void Scr2Buf(char *buffer)
-{
+void Scr2Buf(char* buffer) {
     int n;
-    char *Screen_Adr = (char *)0xB8000;
+    char* Screen_Adr = (char*)0xB8000;
 
     for (n = 0; n < MaxZ; n++) {
         buffer[n] = Screen_Adr[n];
     }
 }
 
-
-int GetScreenSizeX(void)
-{
-    return (*(char *)(0x44A));
+int GetScreenSizeX(void) {
+    return (*(char*)(0x44A));
 }
 
-int GetScreenSizeY(void)
-{
-    return (*(char *)(0x484)) + 1;
+int GetScreenSizeY(void) {
+    return (*(char*)(0x484)) + 1;
 }
 
-void SetScreenSizeX(int x)
-{
-    (*(char *)(0x44A)) = (char)x;
+void SetScreenSizeX(int x) {
+    (*(char*)(0x44A)) = (char)x;
 }
 
-void SetScreenSizeY(int y)
-{
-    (*(char *)(0x484)) = (char)(y - 1);
+void SetScreenSizeY(int y) {
+    (*(char*)(0x484)) = (char)(y - 1);
 }
-#else // ifndef NODIRECTVIDEO
+#else   // ifndef NODIRECTVIDEO
 
 // Mode par defaut
 
-void Buf2Scr(char *buffer)
-{
+void Buf2Scr(char* buffer) {
 }
 
-void Scr2Buf(char *buffer)
-{
+void Scr2Buf(char* buffer) {
 }
 
 static int _screensizex = 80, _screensizey = 25;
 
-int GetScreenSizeX(void)
-{
+int GetScreenSizeX(void) {
     return _screensizex;
 }
 
-int GetScreenSizeY(void)
-{
+int GetScreenSizeY(void) {
     return _screensizey;
 }
 
-void SetScreenSizeX(int x)
-{
+void SetScreenSizeX(int x) {
     _screensizex = x;
 }
 
-void SetScreenSizeY(int y)
-{
+void SetScreenSizeY(int y) {
     _screensizey = y;
 }
-#endif // ifndef NODIRECTVIDEO
-
-
+#endif  // ifndef NODIRECTVIDEO
 
 #ifdef DEBUG
-void Debug(char *string, ...)
-{
+void Debug(char* string, ...) {
     char sortie[256];
     va_list arglist;
-    FILE *fic;
+    FILE* fic;
 
-    char *suite;
+    char* suite;
 
     suite = sortie;
 
@@ -4241,59 +4079,50 @@ void Debug(char *string, ...)
 }
 #endif
 
-
-
 /*--------------------------------------------------------------------*\
 |- Time handler                                                       -|
 \*--------------------------------------------------------------------*/
 
 #ifdef __WC32__
-clock_k GetClock(void)
-{
-    long *cl = (long *)(0x46C);
+clock_k GetClock(void) {
+    long* cl = (long*)(0x46C);
 
     return *cl;
 }
 #else
-clock_k GetClock(void)
-{
+clock_k GetClock(void) {
     return clock();
 }
 #endif
-
 
 /*--------------------------------------------------------------------*\
 |- Classe KKWin                                                       -|
 \*--------------------------------------------------------------------*/
 
-KKWin::KKWin()
-{
+KKWin::KKWin() {
     Defaults();
 
     SaveScreen();
 }
 
-void KKWin::Test(char *chaine)
-{
+void KKWin::Test(char* chaine) {
     PrintAt(0, 0, chaine);
     Wait(0, 0);
 }
 
-KKWin::KKWin(char *buf)
-{
+KKWin::KKWin(char* buf) {
     Defaults();
 
     SaveScreen();
 
-    title = (char *)GetMem(strlen(buf));
+    title = (char*)GetMem(strlen(buf));
     strcpy(title, buf);
 }
 
-KKWin::KKWin(char *buf, int x1, int y1, int x2, int y2, int typ, int col)
-{
+KKWin::KKWin(char* buf, int x1, int y1, int x2, int y2, int typ, int col) {
     SaveScreen();
 
-    title = (char *)GetMem(strlen(buf));
+    title = (char*)GetMem(strlen(buf));
     strcpy(title, buf);
 
     WinCadre(x1, y1, x2, y2, typ);
@@ -4307,8 +4136,7 @@ KKWin::KKWin(char *buf, int x1, int y1, int x2, int y2, int typ, int col)
     type = typ;
 }
 
-void Beep(int type)
-{
+void Beep(int type) {
     char x, y;
 
     switch (type) {
@@ -4331,23 +4159,20 @@ void Beep(int type)
             }
             break;
     }
-} // Beep
+}  // Beep
 
-KKWin::~KKWin()
-{
+KKWin::~KKWin() {
     if (title != NULL)
         LibMem(title);
 
     LoadScreen();
 }
 
-int KKWin::Wait(int x, int y)
-{
+int KKWin::Wait(int x, int y) {
     return ::Wait(x, y);
 }
 
-void KKWin::Defaults(void)
-{
+void KKWin::Defaults(void) {
     title = NULL;
 
     left = 0;
@@ -4358,16 +4183,14 @@ void KKWin::Defaults(void)
     type = -1;
 }
 
-
 /*--------------------------------------------------------------------*\
 |- Cache															  -|
 \*--------------------------------------------------------------------*/
 #ifndef NODIRECTVIDEO
 
-int cache_system(int command, char *buffer)
-{
+int cache_system(int command, char* buffer) {
     switch (command) {
-        case 1:         // --- Info ---------------------------------------------
+        case 1:  // --- Info ---------------------------------------------
             strcpy(buffer, "Normal Mode");
             return 0;
 
@@ -4376,24 +4199,23 @@ int cache_system(int command, char *buffer)
             AffCol = Cache_AffCol;
             SetMode = Cache_SetMode;
 
-                #ifndef NOINT10
+#ifndef NOINT10
             GotoXY = Cache_GotoXY;
             WhereXY = Cache_WhereXY;
-                #endif
+#endif
 
-                #ifdef __WC32__
+#ifdef __WC32__
             KbHit = Cache_KbHit;
-                #endif
+#endif
 
             return 1;
 
         default:
             return -1;
-    } // switch
-} // cache_system
+    }  // switch
+}  // cache_system
 
-int Cache_SetMode(void)
-{
+int Cache_SetMode(void) {
     int TX, TY;
     long lig;
     char ok;
@@ -4444,7 +4266,7 @@ int Cache_SetMode(void)
         SetScreenSizeX(Cfg->TailleX);
         // Clr();
 
-        memset(_RB_screen, 0, 256 * 128 * 2); // --- Clr --------------------------
+        memset(_RB_screen, 0, 256 * 128 * 2);  // --- Clr --------------------------
     }
 
     Cfg->reinit = 1;
@@ -4452,29 +4274,23 @@ int Cache_SetMode(void)
     InitSeg();
 
     return 1;
-} // Cache_SetMode
+}  // Cache_SetMode
 
-
-
-
-void Cache_AffChr(long x, long y, long c)
-{
+void Cache_AffChr(long x, long y, long c) {
     if (*(_RB_screen + ((y << 8) + x)) != (char)c) {
         *(scrseg[y] + (x << 1)) = (char)c;
         *(_RB_screen + ((y << 8) + x)) = (char)c;
     }
 }
 
-void Cache_AffCol(long x, long y, long c)
-{
+void Cache_AffCol(long x, long y, long c) {
     if (*(_RB_screen + ((y << 8) + x) + 256 * 128) != (char)c) {
         *(scrseg[y] + (x << 1) + 1) = (char)c;
         *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)c;
     }
 }
 
-long Cache_Wait(long x, long y)
-{
+long Cache_Wait(long x, long y) {
     int a, b;
     clock_k Cl;
 
@@ -4494,13 +4310,12 @@ long Cache_Wait(long x, long y)
     a = 0;
     b = 0;
 
-    while ( (!kbhit()) & (b == 0) & (zm == 0) ) {
+    while ((!kbhit()) & (b == 0) & (zm == 0)) {
 #ifndef NOMOUSE
         GetPosMouse(&xm, &ym, &zm);
 #endif
 
-        if ( ((GetClock() - Cl) > Cfg->SaveSpeed * CLOCKK_PER_SEC)
-             & (Cfg->SaveSpeed != 0) ) {
+        if (((GetClock() - Cl) > Cfg->SaveSpeed * CLOCKK_PER_SEC) & (Cfg->SaveSpeed != 0)) {
             ScreenSaver();
             Cl = GetClock() + (clock_k)(10 * CLOCKK_PER_SEC);
         }
@@ -4513,10 +4328,10 @@ long Cache_Wait(long x, long y)
     if ((b == 0) & (zm == 0)) {
         a = getch();
 
-/*
- *      if (a=='ü')
- *              SnapShot();
- */
+        /*
+         *      if (a=='?')
+         *              SnapShot();
+         */
 
         if (a == 0)
             return getch() * 256 + a;
@@ -4525,17 +4340,14 @@ long Cache_Wait(long x, long y)
     }
 
     return b;
-} // Cache_Wait
-
-
+}  // Cache_Wait
 
 #ifdef __WC32__
-int Cache_KbHit(void)
-{
+int Cache_KbHit(void) {
     short int deb, fin;
 
-    deb = *(short int *)(0x41A);
-    fin = *(short int *)(0x41C);
+    deb = *(short int*)(0x41A);
+    fin = *(short int*)(0x41C);
 
     if (_NbrKey == 0)
         return (deb != fin);
@@ -4545,8 +4357,7 @@ int Cache_KbHit(void)
 #endif
 
 #ifndef NOINT10
-void Cache_GotoXY(long x, long y)
-{
+void Cache_GotoXY(long x, long y) {
     union REGS regs;
 
     regs.h.dl = (char)x;
@@ -4557,8 +4368,7 @@ void Cache_GotoXY(long x, long y)
     int386(0x10, &regs, &regs);
 }
 
-void Cache_WhereXY(long *x, long *y)
-{
+void Cache_WhereXY(long* x, long* y) {
     union REGS regs;
 
     regs.h.bh = 0;
@@ -4569,12 +4379,9 @@ void Cache_WhereXY(long *x, long *y)
     *x = regs.h.dl;
     *y = regs.h.dh;
 }
-#endif // ifndef NOINT10
+#endif  // ifndef NOINT10
 
-#endif // ifndef NODIRECTVIDEO
-
-
-
+#endif  // ifndef NODIRECTVIDEO
 
 /*--------------------------------------------------------------------*\
 |- ansi                                                               -|
@@ -4587,23 +4394,21 @@ void Ansi_AffCol(long x, long y, long c);
 void Ansi_Clr(void);
 void Ansi_Window(long left, long top, long right, long bottom, long color);
 void Ansi_GotoXY(long x, long y);
-void Ansi_WhereXY(long *x, long *y);
+void Ansi_WhereXY(long* x, long* y);
 
-
-int ansi_system(int command, char *buffer)
-{
+int ansi_system(int command, char* buffer) {
     char buf[31];
     int nr;
 
     switch (command) {
-        case 1:                                 // --- Info ---------------------------------------------
+        case 1:  // --- Info ---------------------------------------------
             strcpy(buffer, "Ansi Mode");
             return 1;
 
         case 2:
             nr = 0;
-            PRINTF("\x1b[6n\r      \r");          // ask for ansi device report
-            while ((0 != kbhit()) && (nr < 30)) // read whatever input is present
+            PRINTF("\x1b[6n\r      \r");         // ask for ansi device report
+            while ((0 != kbhit()) && (nr < 30))  // read whatever input is present
                 buf[nr++] = (char)getch();
 
             buf[nr] = 0;                        // zero terminate string
@@ -4627,21 +4432,19 @@ int ansi_system(int command, char *buffer)
 
         default:
             return -1;
-    } // switch
-} // ansi_system
+    }  // switch
+}  // ansi_system
 
 void Ansi_GenCol(long x, long y);
 void Ansi_GenChr(long x, long y, long c);
 
-int _Ansi_col1, _Ansi_col2;                     // Couleur que l'on doit mettre
-int _Ansi_tcol;                                 // Couleur que l'on a demand‚ par affcol
-int _Ansi_x = 0, _Ansi_y = 0;                   // precedente position
+int _Ansi_col1, _Ansi_col2;    // Couleur que l'on doit mettre
+int _Ansi_tcol;                // Couleur que l'on a demandé par affcol
+int _Ansi_x = 0, _Ansi_y = 0;  // precedente position
 
 char _Ansi_cnv[] = {0, 4, 2, 6, 1, 5, 3, 7};
 
-
-void Ansi_AffCol(long x, long y, long c)
-{
+void Ansi_AffCol(long x, long y, long c) {
     if (*(_RB_screen + ((y << 8) + x) + 256 * 128) != (char)c) {
         *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)c;
 
@@ -4650,16 +4453,14 @@ void Ansi_AffCol(long x, long y, long c)
     }
 }
 
-void Ansi_AffChr(long x, long y, long c)
-{
+void Ansi_AffChr(long x, long y, long c) {
     Ansi_GenCol(x, y);
 
     if (*(_RB_screen + ((y << 8) + x)) != (char)c)
         Ansi_GenChr(x, y, c);
 }
 
-void Ansi_GenCol(long x, long y)
-{
+void Ansi_GenCol(long x, long y) {
     if (*(_RB_screen + ((y << 8) + x) + 256 * 128) != _Ansi_tcol) {
         _Ansi_tcol = *(_RB_screen + ((y << 8) + x) + 256 * 128);
 
@@ -4671,58 +4472,63 @@ void Ansi_GenCol(long x, long y)
     }
 }
 
-void Ansi_GenChr(long x, long y, long c)
-{
+void Ansi_GenChr(long x, long y, long c) {
     *(_RB_screen + ((y << 8) + x)) = (char)c;
 
     switch (c) {
         case 0:
         case 8:
         case 10:
-        case 13:        c = 32;   break;
-        case 16:        c = '>';  break;
-        case 17:        c = '<';  break;
-        case 127:       c = '^';  break;
-        case 7:         c = '.';  break;
+        case 13:
+            c = 32;
+            break;
+        case 16:
+            c = '>';
+            break;
+        case 17:
+            c = '<';
+            break;
+        case 127:
+            c = '^';
+            break;
+        case 7:
+            c = '.';
+            break;
     }
 
     _Ansi_x++;
 
-//	  if (_Ansi_x==80) _Ansi_x=0, _Ansi_y=y+1;
+    //	  if (_Ansi_x==80) _Ansi_x=0, _Ansi_y=y+1;
 
-    if ( (x != _Ansi_x) | (y != _Ansi_y) ) {
+    if ((x != _Ansi_x) | (y != _Ansi_y)) {
         PRINTF("\x1b[%d;%dH", y + 1, x + 1);
-        _Ansi_x = x,  _Ansi_y = y;
+        _Ansi_x = x, _Ansi_y = y;
     }
 
     PRINTF("%c", c);
     fflush(stdout);
-} // Ansi_GenChr
+}  // Ansi_GenChr
 
-void Ansi_GotoXY(long x, long y)
-{
+void Ansi_GotoXY(long x, long y) {
     PRINTF("\x1b[%d;%dH", y + 1, x + 1);
     fflush(stdout);
     _Ansi_x = x;
     _Ansi_y = y;
 }
 
-void Ansi_WhereXY(long *x, long *y)
-{
+void Ansi_WhereXY(long* x, long* y) {
     *x = _Ansi_x;
     *y = _Ansi_y;
 }
 
-void Ansi_Clr(void)
-{
+void Ansi_Clr(void) {
     memset(_RB_screen + 256 * 128, 7, 256 * 128);
     memset(_RB_screen, 32, 256 * 128);
 
     PRINTF("\x1b[0m\n\n\x1b[2J");
 }
 
-void Ansi_Window(long left, long top, long right, long bottom, long color)
-{
+void Ansi_Window(long left, long top, long right, long bottom, long color) {
     int i, j;
 
     _xw = left;
@@ -4731,11 +4537,10 @@ void Ansi_Window(long left, long top, long right, long bottom, long color)
     _xw2 = right;
     _yw2 = bottom;
 
-
     for (j = top; j <= bottom; j++) {
         for (i = left; i <= right; i++) {
             *(_RB_screen + ((j << 8) + i) + 256 * 128) = (char)color;
-            *(_RB_screen + ((j << 8) + i)) = 0;                 // Pour le remettre apres
+            *(_RB_screen + ((j << 8) + i)) = 0;  // Pour le remettre apres
         }
     }
 
@@ -4744,9 +4549,9 @@ void Ansi_Window(long left, long top, long right, long bottom, long color)
             AffChr(i, j, 32);
         }
     }
-} // Ansi_Window
+}  // Ansi_Window
 
-#endif // ifndef NOANSI
+#endif  // ifndef NOANSI
 
 /*--------------------------------------------------------------------*\
 |- doorway															  -|
@@ -4754,7 +4559,7 @@ void Ansi_Window(long left, long top, long right, long bottom, long color)
 
 #ifndef NOCOM
 
-static char _ComBuffer[256];               // Buffer interne multi usage ---
+static char _ComBuffer[256];  // Buffer interne multi usage ---
 
 /*--------------------------------------------------------------------*\
 |-						 Affichage par COM	Ansi					  -|
@@ -4767,10 +4572,9 @@ int Com_KbHit(void);
 void Com_Clr(void);
 void Com_Window(long left, long top, long right, long bottom, long color);
 
-int com_system(int command, char *buffer)
-{
+int com_system(int command, char* buffer) {
     switch (command) {
-        case 1:         // --- Info ---------------------------------------------
+        case 1:  // --- Info ---------------------------------------------
             strcpy(buffer, "Doorway Mode");
             return 2;
 
@@ -4793,48 +4597,44 @@ int com_system(int command, char *buffer)
 
         default:
             return -1;
-    } // switch
-} // com_system
+    }  // switch
+}  // com_system
 
 void Com_GenCol(long x, long y);
 void Com_GenChr(long x, long y, long c);
 
-int _Com_col1, _Com_col2;                       // Couleur que l'on doit mettre
-int _Com_tcol;                                  // Couleur que l'on a demand‚ par affcol
-int _Com_x = 0, _Com_y = 0;                     // precedente position
+int _Com_col1, _Com_col2;    // Couleur que l'on doit mettre
+int _Com_tcol;               // Couleur que l'on a demandé par affcol
+int _Com_x = 0, _Com_y = 0;  // precedente position
 
 char _Com_cnv[] = {0, 4, 2, 6, 1, 5, 3, 7};
 
-void Com_AffCol(long x, long y, long c)
-{
+void Com_AffCol(long x, long y, long c) {
     if (y >= Cfg->TailleY - 1) return;
 
     if (*(_RB_screen + ((y << 8) + x) + 256 * 128) != (char)c) {
         *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)c;
 
-        *(scrseg[y] + (x << 1) + 1) = (char)c;          // --------- Echo console ------
+        *(scrseg[y] + (x << 1) + 1) = (char)c;  // --------- Echo console ------
 
         Com_GenCol(x, y);
         Com_GenChr(x, y, GetChr(x, y));
     }
-
 }
 
-void Com_AffChr(long x, long y, long c)
-{
+void Com_AffChr(long x, long y, long c) {
     if (y >= Cfg->TailleY - 1) return;
 
     if (*(_RB_screen + ((y << 8) + x)) != (char)c) {
         Com_GenCol(x, y);
 
-        *(scrseg[y] + (x << 1)) = (char)c;            // --------- Echo console ------
+        *(scrseg[y] + (x << 1)) = (char)c;  // --------- Echo console ------
 
         Com_GenChr(x, y, c);
     }
 }
 
-void Com_GenCol(long x, long y)
-{
+void Com_GenCol(long x, long y) {
     int n;
 
     if (*(_RB_screen + ((y << 8) + x) + 256 * 128) != _Com_tcol) {
@@ -4851,31 +4651,39 @@ void Com_GenCol(long x, long y)
     }
 }
 
-void Com_GenChr(long x, long y, long c)
-{
+void Com_GenChr(long x, long y, long c) {
     *(_RB_screen + ((y << 8) + x)) = (char)c;
 
     switch (c) {
         case 0:
         case 8:
         case 10:
-        case 13:        c = 32;   break;
-        case 16:        c = '>';  break;
-        case 17:        c = '<';  break;
-        case 127:       c = '^';  break;
-        case 7:         c = '.';  break;
+        case 13:
+            c = 32;
+            break;
+        case 16:
+            c = '>';
+            break;
+        case 17:
+            c = '<';
+            break;
+        case 127:
+            c = '^';
+            break;
+        case 7:
+            c = '.';
+            break;
     }
 
     _Com_x++;
 
-    if ( (x != _Com_x) | (y != _Com_y) )
+    if ((x != _Com_x) | (y != _Com_y))
         Com_GotoXY(x, y);
 
     com_send_ch(c);
-} // Com_GenChr
+}  // Com_GenChr
 
-long Com_Wait(long x, long y)
-{
+long Com_Wait(long x, long y) {
     char buf[32];
     char n;
     char cont;
@@ -4898,14 +4706,13 @@ long Com_Wait(long x, long y)
             }
         }
 
-        if ( (buf[0] != 27)  & (n == 0) ) cont = 0;
-        if ( (buf[1] != '[') & (n == 1) ) cont = 0;
+        if ((buf[0] != 27) & (n == 0)) cont = 0;
+        if ((buf[1] != '[') & (n == 1)) cont = 0;
 
         if (buf[n] == 0) cont = 1;
         n++;
         if (n == 3) break;
     }
-
 
     buf[n] = 0;
 
@@ -4913,20 +4720,25 @@ long Com_Wait(long x, long y)
 
     if (n == 3) {
         switch (buf[2]) {
-            case 'A': return 72 * 256;                                 // HAUT
-            case 'B': return 80 * 256;                                 // BAS
-            case 'C': return 77 * 256;                                 // DROITE
-            case 'D': return 75 * 256;                                 // GAUCHE
-            case 'H': return 0x47 * 256;                               // HOME
-            case 'K': return 0x4F * 256;                               // END
+            case 'A':
+                return 72 * 256;  // HAUT
+            case 'B':
+                return 80 * 256;  // BAS
+            case 'C':
+                return 77 * 256;  // DROITE
+            case 'D':
+                return 75 * 256;  // GAUCHE
+            case 'H':
+                return 0x47 * 256;  // HOME
+            case 'K':
+                return 0x4F * 256;  // END
         }
     }
 
     return buf[0];
-} // Com_Wait
+}  // Com_Wait
 
-void Com_GotoXY(long x, long y)
-{
+void Com_GotoXY(long x, long y) {
     int n;
 
     sprintf(_ComBuffer, "\x1b[%d;%dH", y + 1, x + 1);
@@ -4938,16 +4750,14 @@ void Com_GotoXY(long x, long y)
     _Com_y = y;
 }
 
-int Com_KbHit(void)
-{
+int Com_KbHit(void) {
     if (kbhit()) return 1;
     if (com_ch_ready()) return 1;
 
     return 0;
 }
 
-void Com_Clr(void)
-{
+void Com_Clr(void) {
     int n;
 
     memset(_RB_screen + 256 * 128, 7, 256 * 128);
@@ -4959,8 +4769,7 @@ void Com_Clr(void)
     }
 }
 
-void Com_Window(long left, long top, long right, long bottom, long color)
-{
+void Com_Window(long left, long top, long right, long bottom, long color) {
     int i, j;
 
     _xw = left;
@@ -4972,9 +4781,9 @@ void Com_Window(long left, long top, long right, long bottom, long color)
     for (j = top; j <= bottom; j++) {
         for (i = left; i <= right; i++) {
             *(_RB_screen + ((j << 8) + i) + 256 * 128) = (char)color;
-            *(_RB_screen + ((j << 8) + i)) = 0;           // Pour le remettre apres
+            *(_RB_screen + ((j << 8) + i)) = 0;  // Pour le remettre apres
 
-            *(scrseg[j] + (i << 1) + 1) = (char)color;    // ------- Echo console --
+            *(scrseg[j] + (i << 1) + 1) = (char)color;  // ------- Echo console --
         }
     }
 
@@ -4983,8 +4792,8 @@ void Com_Window(long left, long top, long right, long bottom, long color)
             AffChr(i, j, 32);
         }
     }
-} // Com_Window
-#endif // ifndef NOCOM
+}  // Com_Window
+#endif  // ifndef NOCOM
 
 /*--------------------------------------------------------------------*\
 |-		  Display the characters on the graphics video screen		  -|
@@ -4995,11 +4804,9 @@ void Video_AffChr(long x, long y, long c);
 void Video_AffCol(long x, long y, long c);
 int Video_SetMode(void);
 
-
-int video_system(int command, char *buffer)
-{
+int video_system(int command, char* buffer) {
     switch (command) {
-        case 1:         // --- Info ---------------------------------------------
+        case 1:  // --- Info ---------------------------------------------
             strcpy(buffer, "Graphics Mode (320x200)");
             return 3;
 
@@ -5016,10 +4823,9 @@ int video_system(int command, char *buffer)
 
 static char videofont[4096];
 
-void Video_Aff(long x, long y)
-{
+void Video_Aff(long x, long y) {
     int car, col;
-    char *screen = (char *)(0xA0000);
+    char* screen = (char*)(0xA0000);
     int i, j, d, e;
 
     if ((x >= Cfg->TailleX) | (y >= Cfg->TailleY))
@@ -5041,35 +4847,31 @@ void Video_Aff(long x, long y)
         }
         d += 321;
     }
-} // Video_Aff
+}  // Video_Aff
 
-
-void Video_AffChr(long x, long y, long c)
-{
+void Video_AffChr(long x, long y, long c) {
     if (*(_RB_screen + ((y << 8) + x)) != (char)c) {
         *(_RB_screen + ((y << 8) + x)) = (char)c;
         Video_Aff(x, y);
     }
 }
 
-void Video_AffCol(long x, long y, long c)
-{
+void Video_AffCol(long x, long y, long c) {
     if (*(_RB_screen + ((y << 8) + x) + 256 * 128) != (char)c) {
         *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)c;
         Video_Aff(x, y);
     }
 }
 
-int Video_SetMode(void)
-{
-    FILE *fic;
+int Video_SetMode(void) {
+    FILE* fic;
     union REGS R;
     char path[256];
 
     R.w.ax = 0x13;
     int386(0x10, &R, &R);
 
-    memset(_RB_screen, 0, 256 * 128 * 2); // --- Clr --------------------------
+    memset(_RB_screen, 0, 256 * 128 * 2);  // --- Clr --------------------------
 
     strcpy(path, Fics->path);
     strcat(path, "\\font8x8.cfg");
@@ -5078,12 +4880,12 @@ int Video_SetMode(void)
     if (fic != NULL) {
         Cfg->TailleX = 80;
         Cfg->TailleY = 24;
-        Cfg->UseFont = 1;                                                 // utilise les fonts 8x?
+        Cfg->UseFont = 1;  // utilise les fonts 8x?
         fread(videofont, 256 * 8, 1, fic);
         fclose(fic);
     } else {
         memcpy(videofont, font8x8, 256 * 8);
-        Cfg->UseFont = 0;                                                 // utilise les fonts 8x?
+        Cfg->UseFont = 0;  // utilise les fonts 8x?
         Cfg->TailleX = 80;
         Cfg->TailleY = 24;
     }
@@ -5091,9 +4893,8 @@ int Video_SetMode(void)
     InitSeg();
 
     return 1;
-} // Video_SetMode
-#endif // ifndef NODIRECTVIDEO
-
+}  // Video_SetMode
+#endif  // ifndef NODIRECTVIDEO
 
 /*--------------------------------------------------------------------*\
 |- video / DJGPP													  -|
@@ -5105,11 +4906,9 @@ int Video_SetMode(void)
 void Pc_AffChr(long x, long y, long c);
 void Pc_AffCol(long x, long y, long c);
 
-
-int Pc_system(int command, char *buffer)
-{
+int Pc_system(int command, char* buffer) {
     switch (command) {
-        case 1:         // --- Info ---------------------------------------------
+        case 1:  // --- Info ---------------------------------------------
             strcpy(buffer, "Graphics Mode (320x200)");
             return 6;
 
@@ -5123,8 +4922,7 @@ int Pc_system(int command, char *buffer)
     }
 }
 
-void Pc_AffCol(long x, long y, long c)
-{
+void Pc_AffCol(long x, long y, long c) {
     char ch, attr;
 
     *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)c;
@@ -5135,8 +4933,7 @@ void Pc_AffCol(long x, long y, long c)
     ScreenPutChar(ch, attr, x, y);
 }
 
-void Pc_AffChr(long x, long y, long c)
-{
+void Pc_AffChr(long x, long y, long c) {
     char ch, attr;
 
     *(_RB_screen + ((y << 8) + x)) = (char)c;
@@ -5146,8 +4943,7 @@ void Pc_AffChr(long x, long y, long c)
 
     ScreenPutChar(ch, attr, x, y);
 }
-#endif // ifdef PCDISPLAY
-
+#endif  // ifdef PCDISPLAY
 
 /*--------------------------------------------------------------------*\
 |- PTC																  -|
@@ -5161,7 +4957,6 @@ void Ptc_AffChr(long x, long y, long c);
 void Ptc_AffCol(long x, long y, long c);
 int Ptc_SetMode(void);
 
-
 /*--------------------------------------------------------------------*\
 |-		  Display the characters on the graphics video screen		  -|
 \*--------------------------------------------------------------------*/
@@ -5171,10 +4966,9 @@ static char ptc_videofont[4096];
 PTC ptc;
 Surface surface;
 
-int ptc_system(int command, char *buffer)
-{
+int ptc_system(int command, char* buffer) {
     switch (command) {
-        case 1:         // --- Info ---------------------------------------------
+        case 1:  // --- Info ---------------------------------------------
             strcpy(buffer, "Graphic Mode (with PTC)");
             return 4;
             break;
@@ -5187,18 +4981,16 @@ int ptc_system(int command, char *buffer)
     return 4;
 }
 
-
-void Ptc_Aff(long x, long y)
-{
+void Ptc_Aff(long x, long y) {
     int car, col;
-    char *buffer;
+    char* buffer;
     int i, j, e;
     int pitch;
 
     if ((x >= Cfg->TailleX) | (y >= Cfg->TailleY))
         return;
 
-    buffer = (char *)(surface.Lock());
+    buffer = (char*)(surface.Lock());
 
     car = *(_RB_screen + ((y << 8) + x));
     col = *(_RB_screen + ((y << 8) + x) + 256 * 128);
@@ -5209,42 +5001,37 @@ void Ptc_Aff(long x, long y)
         e = videofont[car * 8 + j];
 
         for (i = 0; i < 8; i++) {
-            ushort *pixel = (ushort *)(buffer + pitch * (y + j) + (x * 8 + 8 - i) * 2);
+            ushort* pixel = (ushort*)(buffer + pitch * (y + j) + (x * 8 + 8 - i) * 2);
             *pixel = RGB16(
-                    (e & 1) ? 190 : 0,
-                    (e & 1) ? 190 : 0,
-                    (e & 1) ? 190 : 0);
+                (e & 1) ? 190 : 0,
+                (e & 1) ? 190 : 0,
+                (e & 1) ? 190 : 0);
             e = e / 2;
         }
     }
 
-    surface.Unlock();   // unlock surface
+    surface.Unlock();  // unlock surface
 
-    surface.Update();   // update to display
+    surface.Update();  // update to display
 
-} // Ptc_Aff
+}  // Ptc_Aff
 
-
-void Ptc_AffChr(long x, long y, long c)
-{
+void Ptc_AffChr(long x, long y, long c) {
     if (*(_RB_screen + ((y << 8) + x)) != (char)c) {
         *(_RB_screen + ((y << 8) + x)) = (char)c;
         Ptc_Aff(x, y);
     }
 }
 
-void Ptc_AffCol(long x, long y, long c)
-{
+void Ptc_AffCol(long x, long y, long c) {
     if (*(_RB_screen + ((y << 8) + x) + 256 * 128) != (char)c) {
         *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)c;
         Ptc_Aff(x, y);
     }
 }
 
-
-int Ptc_SetMode(void)
-{
-    FILE *fic;
+int Ptc_SetMode(void) {
+    FILE* fic;
     char path[256];
 
     if (!ptc.Init(640, 480, VIRTUAL16)) {
@@ -5254,10 +5041,10 @@ int Ptc_SetMode(void)
 
     ptc.SetTitle("fire");
 
-// create main drawing surface
+    // create main drawing surface
     surface.Init(ptc, 640, 480, RGB565);
 
-    memset(_RB_screen, 0, 256 * 128 * 2); // --- Clr --------------------------
+    memset(_RB_screen, 0, 256 * 128 * 2);  // --- Clr --------------------------
 
     strcpy(path, Fics->path);
     strcat(path, "\\font8x8.cfg");
@@ -5266,12 +5053,12 @@ int Ptc_SetMode(void)
     if (fic != NULL) {
         Cfg->TailleX = 80;
         Cfg->TailleY = 50;
-        Cfg->UseFont = 1;                                                 // utilise les fonts 8x?
+        Cfg->UseFont = 1;  // utilise les fonts 8x?
         fread(ptc_videofont, 256 * 8, 1, fic);
         fclose(fic);
     } else {
         memcpy(ptc_videofont, font8x8, 256 * 8);
-        Cfg->UseFont = 0;                                                 // utilise les fonts 8x?
+        Cfg->UseFont = 0;  // utilise les fonts 8x?
         Cfg->TailleX = 80;
         Cfg->TailleY = 50;
     }
@@ -5279,12 +5066,8 @@ int Ptc_SetMode(void)
     InitSeg();
 
     return 1;
-} // Ptc_SetMode
-#endif // ifdef USEPTC
-
-
-
-
+}  // Ptc_SetMode
+#endif  // ifdef USEPTC
 
 /*--------------------------------------------------------------------*\
 |- curses															  -|
@@ -5293,43 +5076,46 @@ int Ptc_SetMode(void)
 
 #include <curses.h>
 
-
-void Curses_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2)
-{
-
-// Cfg->windesign
-//  type
-
+void Curses_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2) {
+    // Use ncurses ACS (Alternative Character Set) for proper box drawing
+    
+    // Set colors for top and left borders
     ColLin(x1, y1, x2 - x1 + 1, col1);
     ColCol(x1, y1 + 1, y2 - y1, col1);
 
+    // Set colors for bottom and right borders
     ColLin(x1 + 1, y2, x2 - x1, col2);
     ColCol(x2, y1 + 1, y2 - y1 - 1, col2);
 
-    AffChr(x1, y1, '(');
-    AffChr(x2, y1, ')');
-    AffChr(x1, y2, '(');
-    AffChr(x2, y2, ')');
+    // Draw corners using ncurses box drawing characters
+    mvaddch(y1, x1, ACS_ULCORNER);  // Upper left corner
+    mvaddch(y1, x2, ACS_URCORNER);  // Upper right corner
+    mvaddch(y2, x1, ACS_LLCORNER);  // Lower left corner
+    mvaddch(y2, x2, ACS_LRCORNER);  // Lower right corner
 
-    ChrLin(x1 + 1, y1, x2 - x1 - 1, '-');
-    ChrLin(x1 + 1, y2, x2 - x1 - 1, '-');
+    // Draw horizontal lines
+    for (int i = x1 + 1; i < x2; i++) {
+        mvaddch(y1, i, ACS_HLINE);  // Top horizontal line
+        mvaddch(y2, i, ACS_HLINE);  // Bottom horizontal line
+    }
 
-    ChrCol(x1, y1 + 1, y2 - y1 - 1, '|');
-    ChrCol(x2, y1 + 1, y2 - y1 - 1, '|');
-} // Curses_Cadre
+    // Draw vertical lines
+    for (int i = y1 + 1; i < y2; i++) {
+        mvaddch(i, x1, ACS_VLINE);  // Left vertical line
+        mvaddch(i, x2, ACS_VLINE);  // Right vertical line
+    }
+}  // Curses_Cadre
 
-
-int Curses_SetMode(void)
-{
+int Curses_SetMode(void) {
     int TX, TY;
     long lig;
     char ok;
 
-    memset(_RB_screen, 0, 256 * 128 * 2); // --- Clr --------------------------
+    memset(_RB_screen, 0, 256 * 128 * 2);  // --- Clr --------------------------
 
     Cfg->reinit = 1;
 
-    Cfg->UseFont = 0;                   // utilise les fonts 8x?
+    Cfg->UseFont = 0;  // utilise les fonts 8x?
 
     Cfg->TailleX = _screensizex;
     Cfg->TailleY = _screensizey;
@@ -5339,30 +5125,26 @@ int Curses_SetMode(void)
     return 1;
 }
 
-char Curses_KbHit(void)
-{
+char Curses_KbHit(void) {
     int ckey, retour;
 
-// return 0;
+    // return 0;
 
-    if ( (ckey = getch()) != ERR) {
+    if ((ckey = getch()) != ERR) {
         retour = 1;
     } else {
         retour = 0;
     }
 
     if (retour == 1) {
-//        printf("Traite Commandline after dos (%d) FIN)\n\n",ckey); exit(1);
+        //        printf("Traite Commandline after dos (%d) FIN)\n\n",ckey); exit(1);
         PutKey(ckey);
     }
 
     return retour;
 }
 
-
-
-long Curses_Wait(long x, long y)
-{
+long Curses_Wait(long x, long y) {
     int a, b;
     clock_k Cl;
 
@@ -5386,16 +5168,13 @@ long Curses_Wait(long x, long y)
     }
 
     return b;
-} // Curses_Wait
+}  // Curses_Wait
 
-
-int curses_system(int command, char *buffer)
-{
-    WINDOW *w;
-
+int curses_system(int command, char* buffer) {
+    WINDOW* w;
 
     switch (command) {
-        case 1:         // --- Info ---------------------------------------------
+        case 1:  // --- Info ---------------------------------------------
             strcpy(buffer, "Curses Mode");
             return 5;
 
@@ -5411,7 +5190,6 @@ int curses_system(int command, char *buffer)
 
             _screensizex = getmaxx(w);
             _screensizey = getmaxy(w);
-
 
             {
                 int n, m;
@@ -5438,43 +5216,37 @@ int curses_system(int command, char *buffer)
 
         default:
             return -1;
-    } // switch
-} // curses_system
+    }  // switch
+}  // curses_system
 
-void Curses_AffCol(long x, long y, long attr)
-{
+void Curses_AffCol(long x, long y, long attr) {
     char ch;
 
     *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)attr;
 
     ch = *(_RB_screen + ((y << 8) + x));
 
-    attrset(COLOR_PAIR( (attr & 7) + ((attr & 240) >> 2) ));
+    attrset(COLOR_PAIR((attr & 7) + ((attr & 240) >> 2)));
     mvaddch(y, x, ch);
 }
 
-void Curses_AffChr(long x, long y, long ch)
-{
+void Curses_AffChr(long x, long y, long ch) {
     char attr;
 
     *(_RB_screen + ((y << 8) + x)) = (char)ch;
 
-    attr =  *(_RB_screen + ((y << 8) + x) + 256 * 128);
+    attr = *(_RB_screen + ((y << 8) + x) + 256 * 128);
 
-
-    attrset(COLOR_PAIR( (attr & 7) + ((attr & 240) >> 2) ));
+    attrset(COLOR_PAIR((attr & 7) + ((attr & 240) >> 2)));
     mvaddch(y, x, ch);
 }
 
-
-void Curses_GotoXY(long x, long y)
-{
+void Curses_GotoXY(long x, long y) {
     move(y, x);
     refresh();
 }
 
-#endif // ifdef CURSES
-
+#endif  // ifdef CURSES
 
 /*--------------------------------------------------------------------*\
 |-		  Display the characters on the graphics video screen		  -|
@@ -5486,18 +5258,16 @@ void vesa_AffCol(long x, long y, long c);
 int vesa_SetMode(void);
 void vesa_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2);
 
-
-int vesa_system(int command, char *buffer)
-{
+int vesa_system(int command, char* buffer) {
     switch (command) {
-        case 1:         // --- Info ---------------------------------------------
+        case 1:  // --- Info ---------------------------------------------
             strcpy(buffer, "Graphics Mode (Vesa mode)");
             return 7;
 
         case 2:
-//		  AffChr=Video_AffChr;
-//		  AffCol=Video_AffCol;
-//		  SetMode=vesa_SetMode;
+            //		  AffChr=Video_AffChr;
+            //		  AffCol=Video_AffCol;
+            //		  SetMode=vesa_SetMode;
 
             AffChr = vesa_AffChr;
             AffCol = vesa_AffCol;
@@ -5508,16 +5278,15 @@ int vesa_system(int command, char *buffer)
         default:
             return -1;
     }
-} // vesa_system
+}  // vesa_system
 
 static char vesa_videofont[4096];
 
 void vesa_Aff(long x, long y);
 
-void vesa_Aff(long x, long y)
-{
+void vesa_Aff(long x, long y) {
     int car, col;
-    char *screen = (char *)(0xA0000);
+    char* screen = (char*)(0xA0000);
     int i, j, d, e;
 
     for (i = 0; i < 250; i++) {
@@ -5546,10 +5315,9 @@ void vesa_Aff(long x, long y)
         }
         d += 321;
     }
-} // vesa_Aff
+}  // vesa_Aff
 
-void vesa_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2)
-{
+void vesa_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2) {
     int x, y;
 
     for (x = x1; x <= x2; x++) {
@@ -5562,7 +5330,7 @@ void vesa_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2)
         *(_RB_screen + ((y << 8) + x2)) = 0;
     }
 
-    char *screen = (char *)(0xA0000);
+    char* screen = (char*)(0xA0000);
 
     if (x1 >= 40) x1 = 39;
     if (x2 >= 40) x2 = 39;
@@ -5579,35 +5347,31 @@ void vesa_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2)
         screen[(x2 * 8) + y * 320] = (char)col2;
     }
 
-} // vesa_Cadre
+}  // vesa_Cadre
 
-
-void vesa_AffChr(long x, long y, long c)
-{
+void vesa_AffChr(long x, long y, long c) {
     if (*(_RB_screen + ((y << 8) + x)) != (char)c) {
         *(_RB_screen + ((y << 8) + x)) = (char)c;
         vesa_Aff(x, y);
     }
 }
 
-void vesa_AffCol(long x, long y, long c)
-{
+void vesa_AffCol(long x, long y, long c) {
     if (*(_RB_screen + ((y << 8) + x) + 256 * 128) != (char)c) {
         *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)c;
         vesa_Aff(x, y);
     }
 }
 
-int vesa_SetMode(void)
-{
-    FILE *fic;
+int vesa_SetMode(void) {
+    FILE* fic;
     union REGS R;
     char path[256];
 
     R.w.ax = 0x13;
     int386(0x10, &R, &R);
 
-    memset(_RB_screen, 0, 256 * 128 * 2); // --- Clr --------------------------
+    memset(_RB_screen, 0, 256 * 128 * 2);  // --- Clr --------------------------
 
     strcpy(path, Fics->path);
     strcat(path, "\\font8x8.cfg");
@@ -5616,12 +5380,12 @@ int vesa_SetMode(void)
     if (fic != NULL) {
         Cfg->TailleX = 80;
         Cfg->TailleY = 24;
-        Cfg->UseFont = 1;                                                 // utilise les fonts 8x?
+        Cfg->UseFont = 1;  // utilise les fonts 8x?
         fread(vesa_videofont, 256 * 8, 1, fic);
         fclose(fic);
     } else {
         memcpy(vesa_videofont, font8x8, 256 * 8);
-        Cfg->UseFont = 0;                                                 // utilise les fonts 8x?
+        Cfg->UseFont = 0;  // utilise les fonts 8x?
         Cfg->TailleX = 80;
         Cfg->TailleY = 24;
     }
@@ -5629,7 +5393,5 @@ int vesa_SetMode(void)
     InitSeg();
 
     return 1;
-} // vesa_SetMode
-#endif // ifdef USEVESA
-
-
+}  // vesa_SetMode
+#endif  // ifdef USEVESA

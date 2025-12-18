@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run kkc in Terminal",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "./kkc",
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build-kkc"
+        },
+        {
+            "name": "(lldb) Debug kkc with Console",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/kkc",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "TERM",
+                    "value": "xterm-256color"
+                }
+            ],
+            "externalConsole": true,
+            "MIMode": "lldb",
+            "preLaunchTask": "build-kkc"
+        }
+    ]
+}
