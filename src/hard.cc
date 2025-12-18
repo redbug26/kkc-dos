@@ -4828,14 +4828,14 @@ int curses_system(int command, char* buffer) {
 }  // curses_system
 
 void Curses_AffCol(long x, long y, long attr) {
-    char ch;
+    chtype ch;
 
     *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)attr;
 
-    ch = *(_RB_screen + ((y << 8) + x));
+    ch = mvinch(y, x) & A_CHARTEXT;  // Get current character at position
 
     attrset(COLOR_PAIR((attr & 7) + ((attr & 240) >> 2)));
-    mvaddch(y, x, ch);
+    mvaddch(y, x, ch);  // Redraw character with new color
 }
 
 void Curses_AffChr(long x, long y, long ch) {
