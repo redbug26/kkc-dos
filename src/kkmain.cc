@@ -4701,11 +4701,11 @@ int main(int argc, char** argv) {
         int m;
         FILE* fic;
 
-        adrint = (unsigned short*)(0x60 * 4);
-        buf = (char*)(adrint[0] + adrint[1] * 0x10);
+        adrint = (unsigned short*)(intptr_t)(0x60 * 4);
+        buf = (char*)(intptr_t)(adrint[0] + adrint[1] * 0x10);
 
         adrint = (unsigned short*)(buf + 5);
-        buf = (char*)(adrint[0] + adrint[1] * 0x10);
+        buf = (char*)(intptr_t)(adrint[0] + adrint[1] * 0x10);
 
         strcpy(file, KKFics->trash);
         Path2Abs(file, "key.rb");

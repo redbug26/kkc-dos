@@ -600,7 +600,7 @@ void Setup(void) {
         SaveCfg();
 
     DesinitScreen();
-    while (!InitScreen(Cfg->display));
+    while (!InitScreen(Cfg->display));  // Wait for successful screen initialization
     {
         Cfg->display++;
         if (Cfg->display > 16) Cfg->display = 0;

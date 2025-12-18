@@ -4626,4 +4626,5 @@ short InfoID3(RB_IDF* Info) {
         Info->begin += size + 10;
     }
 
+    return 0;
 }  // InfoID3

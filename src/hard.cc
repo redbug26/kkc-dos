@@ -324,6 +324,11 @@ int stricmp(const char* s1, const char* s2) {
 }
 
 char* strlwr(char* a) {
+    // Convert string to lowercase
+    for (int i = 0; a[i]; i++) {
+        a[i] = tolower(a[i]);
+    }
+    return a;
 }
 
 char* strupr(char* s) {
