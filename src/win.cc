@@ -1279,14 +1279,35 @@ void ClearNor(FENETRE* Fen) {
     xl = Fen->xl;
     yl = Fen->yl;
 
+    Cfg->windesign = 1;
+
     switch (Cfg->windesign) {
         case 1:
-            a = 179;
+            a = 'k';
 
-            PrintAt(x, y, "????????????????????????????????????????");
-            PrintAt(x, y + 1, "?                                      ?");
-            PrintAt(x, yl - sb - 1, "????????????????????????????????????????");
-            PrintAt(x, yl, "????????????????????????????????????????");
+            // Top border
+            mvaddch(y, x, ACS_ULCORNER);
+            for (i = x + 1; i < x + 39; i++)
+                mvaddch(y, i, ACS_HLINE);
+            mvaddch(y, x + 39, ACS_URCORNER);
+
+            // Line y+1
+            mvaddch(y + 1, x, ACS_VLINE);
+            for (i = x + 1; i < x + 39; i++)
+                mvaddch(y + 1, i, ' ');
+            mvaddch(y + 1, x + 39, ACS_VLINE);
+
+            // Separator line
+            mvaddch(yl - sb - 1, x, ACS_LTEE);
+            for (i = x + 1; i < x + 39; i++)
+                mvaddch(yl - sb - 1, i, ACS_HLINE);
+            mvaddch(yl - sb - 1, x + 39, ACS_RTEE);
+
+            // Bottom border
+            mvaddch(yl, x, ACS_LLCORNER);
+            for (i = x + 1; i < x + 39; i++)
+                mvaddch(yl, i, ACS_HLINE);
+            mvaddch(yl, x + 39, ACS_LRCORNER);
 
             col = Cfg->col[4];
 
@@ -1300,32 +1321,59 @@ void ClearNor(FENETRE* Fen) {
                 m++;
 
                 if (disp[m] != 0) {
-                    AffChr(j, Fen->y2 - 1, 209);
+                    mvaddch(Fen->y2 - 1, j, ACS_TTEE);  // Top T
                     AffCol(j, Fen->y2, Cfg->col[0]);
                     AffChr(j, Fen->y2, a);
-                    AffChr(j, yl - sb - 1, 193);
+                    mvaddch(yl - sb - 1, j, ACS_BTEE);  // Bottom T
                     j++;
                 }
             }
 
-            for (i = y + 2; i < yl - sb - 1; i++)
-                PrintAt(x, i, "?                                      ?");
-            for (i = yl - sb; i < yl; i++)
-                PrintAt(x, i, "?                                      ?");
+            for (i = y + 2; i < yl - sb - 1; i++) {
+                mvaddch(i, x, ACS_VLINE);
+                for (int k = x + 1; k < x + 39; k++)
+                    mvaddch(i, k, ' ');
+                mvaddch(i, x + 39, ACS_VLINE);
+            }
+            for (i = yl - sb; i < yl; i++) {
+                mvaddch(i, x, ACS_VLINE);
+                for (int k = x + 1; k < x + 39; k++)
+                    mvaddch(i, k, ' ');
+                mvaddch(i, x + 39, ACS_VLINE);
+            }
 
             break;
         case 2:
-            for (i = y + 1; i < yl - sb - 1; i++)
-                PrintAt(x, i, "?                                      ?");
-            PrintAt(x, yl - sb - 1, "????????????????????????????????????????");
-            for (i = yl - sb; i < yl; i++)
-                PrintAt(x, i, "?                                      ?");
-            PrintAt(x, yl, "????????????????????????????????????????");
+            // Using block character (219 = ? full block) as thick border
+            for (i = y + 1; i < yl - sb - 1; i++) {
+                mvaddch(i, x, ACS_BLOCK);
+                for (int k = x + 1; k < x + 39; k++)
+                    mvaddch(i, k, ' ');
+                mvaddch(i, x + 39, ACS_BLOCK);
+            }
+            // Separator line with top-half blocks
+            mvaddch(yl - sb - 1, x, ACS_BLOCK);
+            for (i = x + 1; i < x + 39; i++)
+                mvaddch(yl - sb - 1, i, ACS_HLINE);  // Using horizontal line for separation
+            mvaddch(yl - sb - 1, x + 39, ACS_BLOCK);
+
+            for (i = yl - sb; i < yl; i++) {
+                mvaddch(i, x, ACS_BLOCK);
+                for (int k = x + 1; k < x + 39; k++)
+                    mvaddch(i, k, ' ');
+                mvaddch(i, x + 39, ACS_BLOCK);
+            }
+            // Bottom line
+            for (i = x; i < x + 40; i++)
+                mvaddch(yl, i, ACS_HLINE);
+
             col = (char)((Cfg->col[4] & 15) + (Cfg->col[37] & 15) * 16);
 
             a = 179;
 
-            PrintAt(x, y, "????????????????????????????????????????");
+            // Top header line
+            for (i = x; i < x + 40; i++)
+                mvaddch(y, i, ACS_BLOCK);
 
             j = x + 1;
 
@@ -1345,9 +1393,27 @@ void ClearNor(FENETRE* Fen) {
 
             break;
         case 3:
-            PrintAt(x, y, "????????????????????????????????????????");
-            PrintAt(x, yl - sb - 1, "????????????????????????????????????????");
-            PrintAt(x, yl, "????????????????????????????????????????");
+            // Top border
+            mvaddch(y, x, ACS_ULCORNER);
+            for (i = x + 1; i < x + 39; i++)
+                mvaddch(y, i, ACS_HLINE);
+            mvaddch(y, x + 39, ACS_URCORNER);
+
+            // Middle separator (double-lined effect)
+            mvaddch(yl - sb - 1, x, ACS_VLINE);
+            mvaddch(yl - sb - 1, x + 1, ACS_ULCORNER);
+            for (i = x + 2; i < x + 38; i++)
+                mvaddch(yl - sb - 1, i, ACS_HLINE);
+            mvaddch(yl - sb - 1, x + 38, ACS_URCORNER);
+            mvaddch(yl - sb - 1, x + 39, ACS_VLINE);
+
+            // Bottom border (double-lined effect)
+            mvaddch(yl, x, ACS_LLCORNER);
+            mvaddch(yl, x + 1, ACS_LLCORNER);
+            for (i = x + 2; i < x + 38; i++)
+                mvaddch(yl, i, ACS_HLINE);
+            mvaddch(yl, x + 38, ACS_LRCORNER);
+            mvaddch(yl, x + 39, ACS_LRCORNER);
 
             col = (char)((Cfg->col[37] & 240) + (Cfg->col[4]) & 15);
 
@@ -1369,16 +1435,24 @@ void ClearNor(FENETRE* Fen) {
                 m++;
 
                 if (disp[m] != 0) {
-                    AffChr(j, Fen->y2, 194);
-                    AffChr(j, yl - sb - 1, 193);
+                    mvaddch(Fen->y2, j, ACS_TTEE);      // Top T
+                    mvaddch(yl - sb - 1, j, ACS_BTEE);  // Bottom T
                     j++;
                 }
             }
 
-            for (i = y + 1; i < yl - sb - 1; i++)
-                PrintAt(x, i, "?                                      ?");
-            for (i = yl - sb; i < yl; i++)
-                PrintAt(x, i, "?                                      ?");
+            for (i = y + 1; i < yl - sb - 1; i++) {
+                mvaddch(i, x, ACS_VLINE);
+                for (int k = x + 1; k < x + 39; k++)
+                    mvaddch(i, k, ' ');
+                mvaddch(i, x + 39, ACS_VLINE);
+            }
+            for (i = yl - sb; i < yl; i++) {
+                mvaddch(i, x, ACS_VLINE);
+                for (int k = x + 1; k < x + 39; k++)
+                    mvaddch(i, k, ' ');
+                mvaddch(i, x + 39, ACS_VLINE);
+            }
 
             break;
         case 4:
@@ -1442,7 +1516,7 @@ void FenNor(FENETRE* Fen) {
 
     short i;
 
-    char a;  // Separator Character
+    // char a;  // Separator Character
 
     int x1, y1;
 
@@ -1459,14 +1533,14 @@ void FenNor(FENETRE* Fen) {
     switch (Cfg->windesign) {
         case 1:
         case 3:
-            a = 179;
+            // a = 179;
             break;
         case 2:
         case 4:
-            if (Cfg->UseFont)
-                a = 168;
-            else
-                a = 179;
+            // if (Cfg->UseFont)
+            // a = 168;
+            // else
+            // a = 179;
             break;
     }
 
@@ -1699,7 +1773,8 @@ void FenNor(FENETRE* Fen) {
 
                 if (disp[m] != 0) {
                     AffCol(j, y1, Cfg->col[0]);
-                    AffChr(j, y1, a);
+                    // AffChr(j, y1, a);
+                    mvaddch(y1, j, ACS_VLINE);
                     j++;
                 }
             }
@@ -1723,7 +1798,8 @@ void FenNor(FENETRE* Fen) {
 
                 if (disp[m] != 0) {
                     AffCol(j, y1, Cfg->col[0]);
-                    AffChr(j, y1, a);
+                    // AffChr(j, y1, a);
+                    mvaddch(y1, j, ACS_VLINE);
                     j++;
                 }
             }

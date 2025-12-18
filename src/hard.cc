@@ -40,6 +40,8 @@ void Curses_GotoXY(long x, long y);
 long Curses_Wait(long x, long y);
 int Curses_SetMode(void);
 char Curses_KbHit(void);
+void Curses_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2);
+
 #endif
 
 #if defined(__WC32__) | defined(DJGPP)
@@ -396,173 +398,6 @@ void Cache_AffCol(long x, long y, long c);
 void Cache_GotoXY(long x, long y);
 void Cache_WhereXY(long* x, long* y);
 
-#ifndef NOINT10
-void GetCur(char* x, char* y) {
-    union REGS regs;
-
-    regs.h.bh = 0;
-    regs.h.ah = 3;
-
-    int386(0x10, &regs, &regs);
-
-    *x = regs.h.ch;
-    *y = regs.h.cl;
-}
-
-void PutCur(char x, char y) {
-    union REGS regs;
-
-    regs.h.ah = 1;
-    regs.h.ch = x;
-    regs.h.cl = y;
-
-    int386(0x10, &regs, &regs);
-}
-
-/*--------------------------------------------------------------------*\
-|- Changement de mode texte                                           -|
-\*--------------------------------------------------------------------*/
-
-// --- Prototype --------------------------------------------------------
-
-void Mode25(void);
-void Mode50(void);
-void Mode30(void);
-void Mode90(void);
-void Mode80(void);
-
-// --- Fonction ---------------------------------------------------------
-
-void Mode25(void) {
-    union REGS R;
-
-    R.w.ax = 3;
-    int386(0x10, &R, &R);
-}
-
-void Mode50(void) {
-    union REGS R;
-
-    R.w.ax = 3;
-    int386(0x10, &R, &R);
-
-    R.w.bx = 0;
-    R.w.ax = 0x1112;
-    int386(0x10, &R, &R);
-}
-
-void Mode30(void) {
-    union REGS R;
-    uchar t;
-
-    R.w.ax = 3;
-    int386(0x10, &R, &R);
-
-    R.w.ax = 0x1114;
-    R.w.bx = 0;
-    int386(0x10, &R, &R);
-
-    t = (uchar)inp(0x3CC);
-    outp(0x3C2, (uchar)(t | 192));
-    outp(0x3D4, 0x11);
-    t = (uchar)((t & 112) | 12);
-    outp(0x3D5, t);
-    outpw(0x3D4, 0xB06);
-    outpw(0x3D4, 0x3E07);
-    outpw(0x3D4, 0xEA10);
-    outpw(0x3D4, 0xDF12);
-    outpw(0x3D4, 0xE715);
-    outpw(0x3D4, 0x416);
-
-    outp(0x3D4, 0x11);
-    outp(0x3D5, t);
-}  // Mode30
-
-void Mode90(void) {
-    int x;
-
-    outpw(0x3C4, 0x100);  // Synchronous reset
-    outpw(0x3C4, 0x101);  // 8 pixels/char
-
-    x = inp(0x3CC);
-    x = (x & 0xF3) | 4;  // mets les bits 2-3 à 01 = 28MhZ
-    outp(0x3C2, (char)x);
-
-    x = inp(0x3DA);
-    outp(0x3C0, 0x13);  // Horizontal panning
-
-    outp(0x3C0, 0);  // set shift=0
-
-    outp(0x3C0, 0x20);  // Restart screen
-    outp(0x3C0, 0x20);
-
-    outp(0x3D4, 0x11);  // Register protect
-
-    x = inp(0x3D5);
-    x = x & 0X7F;
-    outp(0x3D5, (char)x);  // Turn off protect
-
-    outpw(0x3D4, 0x6B00);  // Horizontal Total
-    outpw(0x3D4, 0x5901);  // Horizontal Displayed
-    outpw(0x3D4, 0x5A02);  // Start Horiz Blanking
-    outpw(0x3D4, 0x8E03);  // End Horiz Blanking
-    outpw(0x3D4, 0x6004);  // Start Horiz Retrace
-    outpw(0x3D4, 0x8D05);  // End Horiz Retrace
-    outpw(0x3D4, 0x2D13);  // Memory Allocation
-
-    outpw(0x3D4, 0x9311);  // Turn on protect
-
-    outpw(0x3C4, 0x300);  // Restart Sequencer
-}  // Mode90
-
-void Mode80(void) {
-}
-
-void LoadPal(void) {
-    union REGS regs;
-    int n;
-
-    Buf2Pal(Cfg->palette);
-
-    regs.w.ax = 0x1003;  // Donne la palette n à la couleur n
-    regs.w.bx = 0;
-    int386(0x10, &regs, &regs);
-
-    for (n = 0; n < 16; n++) {
-        regs.h.bh = (char)n;
-        regs.h.bl = (char)n;
-        regs.w.ax = 0x1000;
-        int386(0x10, &regs, &regs);
-    }
-}
-
-void SetPal(int x, char r, char g, char b) {
-    outp(0x3C8, (char)x);
-    outp(0x3C9, r);
-    outp(0x3C9, g);
-    outp(0x3C9, b);
-}
-
-void GetPal(int x, char* r, char* g, char* b) {
-    union REGS R;
-
-    R.w.ax = 0x1015;
-    R.h.bl = (char)x;
-
-    int386(0x10, &R, &R);
-    (*r) = R.h.dh;
-    (*g) = R.h.ch;
-    (*b) = R.h.cl;
-
-    /*
-     * outp(0x3C7,x);
-     * (*r)=inp(0x3C9);
-     * (*g)=inp(0x3C9);
-     * (*b)=inp(0x3C9);
-     */
-}
-
-#else  // ifndef NOINT10
 /*--------------------------------------------------------------------*\
 |- Changement de mode texte                                           -|
 \*--------------------------------------------------------------------*/
@@ -612,8 +447,6 @@ void SetPal(int x, char r, char g, char b) {
 
 void GetPal(int x, char* r, char* g, char* b) {
 }
-
-#endif  // ifndef NOINT10
 
 long _cx, _cy;
 
@@ -1059,20 +892,15 @@ void SaveScreen(void) {
     int x, y, n;
 
     if (_Ecran[_WhichEcran] == NULL)
-        _Ecran[_WhichEcran] = (char*)GetMem((Cfg->TailleY) * (Cfg->TailleX) * 2);
+        _Ecran[_WhichEcran] = (char*)GetMem((Cfg->TailleY) * (Cfg->TailleX) * sizeof(chtype));
 
+    // Save screen content using ncurses mvinch()
+    // Store complete chtype which includes character and attributes
+    chtype* screen = (chtype*)_Ecran[_WhichEcran];
     n = 0;
     for (y = 0; y < Cfg->TailleY; y++) {
         for (x = 0; x < Cfg->TailleX; x++) {
-            _Ecran[_WhichEcran][n * 2 + 1] = GetCol(x, y);
-            n++;
-        }
-    }
-
-    n = 0;
-    for (y = 0; y < Cfg->TailleY; y++) {
-        for (x = 0; x < Cfg->TailleX; x++) {
-            _Ecran[_WhichEcran][n * 2] = GetChr(x, y);
+            screen[n] = mvinch(y, x);
             n++;
         }
     }
@@ -1089,6 +917,8 @@ void SaveScreen(void) {
 }  // SaveScreen
 
 void LoadScreen(void) {
+    // return;
+
     int x, y, n;
 
     _WhichEcran--;
@@ -1102,21 +932,17 @@ void LoadScreen(void) {
     }
 #endif
 
+    // Restore screen content using ncurses mvaddch()
+    // Restore complete chtype which includes character and attributes
+    chtype* screen = (chtype*)_Ecran[_WhichEcran];
     n = 0;
     for (y = 0; y < Cfg->TailleY; y++) {
         for (x = 0; x < Cfg->TailleX; x++) {
-            AffCol(x, y, _Ecran[_WhichEcran][n * 2 + 1]);
+            mvaddch(y, x, screen[n]);
             n++;
         }
     }
-
-    n = 0;
-    for (y = 0; y < Cfg->TailleY; y++) {
-        for (x = 0; x < Cfg->TailleX; x++) {
-            AffChr(x, y, _Ecran[_WhichEcran][n * 2]);
-            n++;
-        }
-    }
+    refresh();
 
     LoadState();
 
@@ -1144,23 +970,18 @@ void LoadScreenPart(int x1, int y1, int x2, int y2) {
     }
 #endif
 
+    // Restore screen parts outside the specified rectangle
+    chtype* screen = (chtype*)_Ecran[_WhichEcran];
     n = 0;
     for (y = 0; y < Cfg->TailleY; y++) {
         for (x = 0; x < Cfg->TailleX; x++) {
-            if ((x < x1) | (x > x2) | (y < y1) | (y > y2))
-                AffCol(x, y, _Ecran[_WhichEcran][n * 2 + 1]);
+            if ((x < x1) | (x > x2) | (y < y1) | (y > y2)) {
+                mvaddch(y, x, screen[n]);
+            }
             n++;
         }
     }
-
-    n = 0;
-    for (y = 0; y < Cfg->TailleY; y++) {
-        for (x = 0; x < Cfg->TailleX; x++) {
-            if ((x < x1) | (x > x2) | (y < y1) | (y > y2))
-                AffChr(x, y, _Ecran[_WhichEcran][n * 2]);
-            n++;
-        }
-    }
+    refresh();
 
     _WhichEcran++;
 }  // LoadScreenPart
@@ -1579,180 +1400,6 @@ void Pause(int n) {
 // type: 2	   fin interieur
 // type: 3	   fin exterieur
 
-void Norm_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2);
-
-/*--------------------------------------------------------------------*\
-\*--------------------------------------------------------------------*/
-void Norm_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2) {
-    switch (Cfg->windesign) {
-        case 1:
-        case 3:
-        case 4:
-            if ((type == 1) | (type == 0)) {
-                // --- Relief (surtout pour type==1) --------------------------------
-                ColLin(x1, y1, x2 - x1 + 1, col1);
-                ColCol(x1, y1 + 1, y2 - y1, col1);
-
-                ColLin(x1 + 1, y2, x2 - x1, col2);
-                ColCol(x2, y1 + 1, y2 - y1 - 1, col2);
-
-                if (Cfg->UseFont == 0)
-                    switch (type) {
-                        case 0:
-                            AffChr(x1, y1, '?');
-                            AffChr(x2, y1, '?');
-                            AffChr(x1, y2, '?');
-                            AffChr(x2, y2, '?');
-
-                            ChrLin(x1 + 1, y1, x2 - x1 - 1, 196);
-                            ChrLin(x1 + 1, y2, x2 - x1 - 1, 196);
-
-                            ChrCol(x1, y1 + 1, y2 - y1 - 1, 179);
-                            ChrCol(x2, y1 + 1, y2 - y1 - 1, 179);
-                            break;
-                        case 1:
-                            AffChr(x1, y1, '?');
-                            AffChr(x2, y1, '?');
-                            AffChr(x1, y2, '?');
-                            AffChr(x2, y2, '?');
-
-                            ChrLin(x1 + 1, y1, x2 - x1 - 1, 205);
-                            ChrLin(x1 + 1, y2, x2 - x1 - 1, 205);
-
-                            ChrCol(x1, y1 + 1, y2 - y1 - 1, 186);
-                            ChrCol(x2, y1 + 1, y2 - y1 - 1, 186);
-                            break;
-                    }
-                else
-                    switch (type) {
-                        case 0:
-                            AffChr(x1, y1, 142);
-                            AffChr(x2, y1, 144);
-                            AffChr(x1, y2, 147);
-                            AffChr(x2, y2, 149);
-
-                            ChrLin(x1 + 1, y1, x2 - x1 - 1, 143);
-                            ChrLin(x1 + 1, y2, x2 - x1 - 1, 148);
-
-                            ChrCol(x1, y1 + 1, y2 - y1 - 1, 145);
-                            ChrCol(x2, y1 + 1, y2 - y1 - 1, 146);
-                            break;
-                        case 1:
-                            AffChr(x1, y1, 153);
-                            AffChr(x2, y1, 152);
-                            AffChr(x1, y2, 151);
-                            AffChr(x2, y2, 150);
-
-                            ChrLin(x1 + 1, y1, x2 - x1 - 1, 148);
-                            ChrLin(x1 + 1, y2, x2 - x1 - 1, 143);
-
-                            ChrCol(x1, y1 + 1, y2 - y1 - 1, 146);
-                            ChrCol(x2, y1 + 1, y2 - y1 - 1, 145);
-                            break;
-                    }
-            } else {
-                // --- Relief (surtout pour type==1) --------------------------------
-                ColLin(x1, y1, x2 - x1 + 1, col2);
-                ColCol(x1, y1 + 1, y2 - y1, col2);
-
-                ColLin(x1 + 1, y2, x2 - x1, col1);
-                ColCol(x2, y1 + 1, y2 - y1 - 1, col1);
-
-                if (Cfg->UseFont == 0)
-                    switch (type) {
-                        case 2:
-                        case 3:
-                            AffChr(x1, y1, '?');
-                            AffChr(x2, y1, '?');
-                            AffChr(x1, y2, '?');
-                            AffChr(x2, y2, '?');
-
-                            ChrLin(x1 + 1, y1, x2 - x1 - 1, 196);
-                            ChrLin(x1 + 1, y2, x2 - x1 - 1, 196);
-
-                            ChrCol(x1, y1 + 1, y2 - y1 - 1, 179);
-                            ChrCol(x2, y1 + 1, y2 - y1 - 1, 179);
-                            break;
-                    }
-                else
-                    switch (type) {
-                        case 2:
-                            AffChr(x1, y1, 139);
-                            AffChr(x2, y1, 138);
-                            AffChr(x1, y2, 137);
-                            AffChr(x2, y2, 136);
-
-                            ChrLin(x1 + 1, y1, x2 - x1 - 1, 134);
-                            ChrLin(x1 + 1, y2, x2 - x1 - 1, 129);
-
-                            ChrCol(x1, y1 + 1, y2 - y1 - 1, 132);
-                            ChrCol(x2, y1 + 1, y2 - y1 - 1, 131);
-                            break;
-                        case 3:
-                            AffChr(x1, y1, 128);
-                            AffChr(x2, y1, 130);
-                            AffChr(x1, y2, 133);
-                            AffChr(x2, y2, 135);
-
-                            ChrLin(x1 + 1, y1, x2 - x1 - 1, 129);
-                            ChrLin(x1 + 1, y2, x2 - x1 - 1, 134);
-
-                            ChrCol(x1, y1 + 1, y2 - y1 - 1, 131);
-                            ChrCol(x2, y1 + 1, y2 - y1 - 1, 132);
-                            break;
-                    }
-            }
-            break;
-        case 2:
-            ColLin(x1, y1, x2 - x1 + 1, col1);
-            ColCol(x1, y1 + 1, y2 - y1, col1);
-
-            ColLin(x1 + 1, y2, x2 - x1, col2);
-            ColCol(x2, y1 + 1, y2 - y1 - 1, col2);
-
-            switch (type) {
-                case 0:
-                case 3:
-                    AffChr(x1, y1, 219);
-                    AffChr(x2, y1, 219);
-                    AffChr(x1, y2, 219);
-                    AffChr(x2, y2, 219);
-
-                    ChrLin(x1 + 1, y1, x2 - x1 - 1, 219);
-                    ChrLin(x1 + 1, y2, x2 - x1 - 1, 219);
-
-                    ChrCol(x1, y1 + 1, y2 - y1 - 1, 219);
-                    ChrCol(x2, y1 + 1, y2 - y1 - 1, 219);
-                    break;
-                case 1:
-                    AffChr(x1, y1, 222);
-                    AffChr(x2, y1, 221);
-                    AffChr(x1, y2, 222);
-                    AffChr(x2, y2, 221);
-
-                    ChrLin(x1 + 1, y1, x2 - x1 - 1, 219);
-                    ChrLin(x1 + 1, y2, x2 - x1 - 1, 219);
-
-                    ChrCol(x1, y1 + 1, y2 - y1 - 1, 222);
-                    ChrCol(x2, y1 + 1, y2 - y1 - 1, 221);
-                case 2:
-                    AffChr(x1, y1, 220);
-                    AffChr(x2, y1, 220);
-                    AffChr(x1, y2, 223);
-                    AffChr(x2, y2, 223);
-
-                    ChrLin(x1 + 1, y1, x2 - x1 - 1, 220);
-                    ChrLin(x1 + 1, y2, x2 - x1 - 1, 223);
-
-                    ChrCol(x1, y1 + 1, y2 - y1 - 1, 219);
-                    ChrCol(x2, y1 + 1, y2 - y1 - 1, 219);
-                    break;
-            }  // switch
-            break;
-    }  // switch
-    // PrintAt(x1,y1,"%d",type);
-}  // Norm_Cadre
-
 /*--------------------------------------------------------------------*\
 |-	Make a Window (0: exterieurn, 1: interieur)                       -|
 \*--------------------------------------------------------------------*/
@@ -1770,22 +1417,12 @@ void WinCadre(int x1, int y1, int x2, int y2, int type) {
 \*--------------------------------------------------------------------*/
 
 void WinLine(int x1, int y1, int xl, int type) {
-    char car;
-
-    if (Cfg->UseFont == 0) {
-        car = 196;
-    } else
-        switch (type) {
-            case 0:
-            case 1:
-                car = 143;
-                break;
-            case 2:
-                car = 196;
-                break;
-        }
-
-    ChrLin(x1, y1, xl, car);
+    // Draw a horizontal line using ncurses ACS_HLINE
+    // type parameter is kept for compatibility but not used anymore
+    // as we always use the same horizontal line character
+    for (int i = 0; i < xl; i++) {
+        mvaddch(y1, x1 + i, ACS_HLINE);
+    }
 }
 
 /*--------------------------------------------------------------------*\
@@ -2612,71 +2249,40 @@ int Gradue(int x, int y, int length, int from, int to, int total) {
 
     if (j3 >= (length * 8)) j3 = (length * 8) - 1;
 
+    // Use ncurses block character for progress bar
     for (j1 = from; j1 < j3; j1++) {
         j2 = j1 / 8;
-        if (Cfg->UseFont == 0)
-            switch (j1 % 8) {
-                case 0:
-                    AffChr(j2 + x, y, '*');
-                    break;
-                case 1:
-                case 2:
-                case 3:
-                case 4:
-                    AffChr(j2 + x, y, '*');
-                    AffChr(j2 + x + 1, y, 32);
-                    break;
-                case 5:
-                case 6:
-                case 7:
-                    AffChr(j2 + x, y, 32);
-                    AffChr(j2 + x + 1, y, '*');
-                    break;
-            }
-        else
-            switch (j1 % 8) {
-                case 0:
-                    AffChr(j2 + x, y, 156);
-                    break;
-                case 1:
-                    AffChr(j2 + x, y, 157);
-                    AffChr(j2 + x + 1, y, 32);
-                    break;
-                case 2:
-                    AffChr(j2 + x, y, 158);
-                    AffChr(j2 + x + 1, y, 163);
-                    break;
-                case 3:
-                    AffChr(j2 + x, y, 159);
-                    AffChr(j2 + x + 1, y, 164);
-                    break;
-                case 4:
-                    AffChr(j2 + x, y, 160);
-                    AffChr(j2 + x + 1, y, 165);
-                    break;
-                case 5:
-                    AffChr(j2 + x, y, 161);
-                    AffChr(j2 + x + 1, y, 166);
-                    break;
-                case 6:
-                    AffChr(j2 + x, y, 162);
-                    AffChr(j2 + x + 1, y, 167);
-                    break;
-                case 7:
-                    AffChr(j2 + x, y, 32);
-                    AffChr(j2 + x + 1, y, 155);
-                    break;
-            }
+        // Use ACS_CKBOARD for filled portions of progress bar
+        switch (j1 % 8) {
+            case 0:
+                mvaddch(y, j2 + x, ACS_CKBOARD);
+                break;
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                mvaddch(y, j2 + x, ACS_CKBOARD);
+                mvaddch(y, j2 + x + 1, ' ');
+                break;
+            case 5:
+            case 6:
+            case 7:
+                mvaddch(y, j2 + x, ' ');
+                mvaddch(y, j2 + x + 1, ACS_CKBOARD);
+                break;
+        }
     }
 
-    if (to == total)
-        ChrLin(x, y, length + 1, 32);
+    if (to == total) {
+        // Clear the progress bar area when complete
+        for (int i = 0; i <= length; i++) {
+            mvaddch(y, x + i, ' ');
+        }
+    }
 
-    if (to == 0)
-        if (Cfg->UseFont == 0)
-            AffChr(x, y, '*');
-        else
-            AffChr(x, y, 155);
+    if (to == 0) {
+        mvaddch(y, x, ACS_CKBOARD);
+    }
 
     return j1;
 }  // Gradue
@@ -3027,23 +2633,16 @@ int InitScreen(int a) {
         Cfg->TailleY = 25;
     }
 
-#ifdef LINUX
     AffChr = Curses_AffChr;
     AffCol = Curses_AffCol;
     Wait = Curses_Wait;
     SetMode = Curses_SetMode;
-#else
-    AffChr = Cache_AffChr;
-    AffCol = Cache_AffCol;
-    Wait = Cache_Wait;
-    SetMode = Cache_SetMode;
-#endif
 
     KbHit = Norm_KbHit;
-    GotoXY = Norm_GotoXY;
+    GotoXY = Curses_GotoXY;
     WhereXY = Norm_WhereXY;
     Window = Norm_Window;
-    Cadre = Norm_Cadre;
+    Cadre = Curses_Cadre;
     Clr = Norm_Clr;
 
     if (a != -1) {
@@ -3346,7 +2945,10 @@ int PannelMenu(struct barmenu* bar, int nbr, MENU* menu) {
 
         for (n = 0; n < nbraff; n++) {
             if (bar[n + prem].fct == 0) {
-                ChrLin(xp, yp + n, max, 196);
+                // Draw horizontal separator line using ncurses
+                for (int i = 0; i < max; i++) {
+                    mvaddch(yp + n, xp + i, ACS_HLINE);
+                }
                 ColLin(xp, yp + n, max, Cfg->col[10]);
             } else {
                 PrintAt(xp, yp + n, "%-*s", max, bar[n + prem].Titre);
@@ -4473,6 +4075,7 @@ void Ansi_GenCol(long x, long y) {
 }
 
 void Ansi_GenChr(long x, long y, long c) {
+    exit(1);
     *(_RB_screen + ((y << 8) + x)) = (char)c;
 
     switch (c) {
@@ -5078,7 +4681,7 @@ int Ptc_SetMode(void) {
 
 void Curses_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2) {
     // Use ncurses ACS (Alternative Character Set) for proper box drawing
-    
+
     // Set colors for top and left borders
     ColLin(x1, y1, x2 - x1 + 1, col1);
     ColCol(x1, y1 + 1, y2 - y1, col1);
@@ -5247,151 +4850,3 @@ void Curses_GotoXY(long x, long y) {
 }
 
 #endif  // ifdef CURSES
-
-/*--------------------------------------------------------------------*\
-|-		  Display the characters on the graphics video screen		  -|
-\*--------------------------------------------------------------------*/
-#ifdef USEVESA
-
-void vesa_AffChr(long x, long y, long c);
-void vesa_AffCol(long x, long y, long c);
-int vesa_SetMode(void);
-void vesa_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2);
-
-int vesa_system(int command, char* buffer) {
-    switch (command) {
-        case 1:  // --- Info ---------------------------------------------
-            strcpy(buffer, "Graphics Mode (Vesa mode)");
-            return 7;
-
-        case 2:
-            //		  AffChr=Video_AffChr;
-            //		  AffCol=Video_AffCol;
-            //		  SetMode=vesa_SetMode;
-
-            AffChr = vesa_AffChr;
-            AffCol = vesa_AffCol;
-            SetMode = vesa_SetMode;
-            Cadre = vesa_Cadre;
-            return 1;
-
-        default:
-            return -1;
-    }
-}  // vesa_system
-
-static char vesa_videofont[4096];
-
-void vesa_Aff(long x, long y);
-
-void vesa_Aff(long x, long y) {
-    int car, col;
-    char* screen = (char*)(0xA0000);
-    int i, j, d, e;
-
-    for (i = 0; i < 250; i++) {
-        screen[i] = i;
-    }
-
-    if ((x >= Cfg->TailleX) | (y >= Cfg->TailleY))
-        return;
-
-    if ((x >= 40) | (y >= 25))
-        return;
-
-    car = *(_RB_screen + ((y << 8) + x));
-    col = *(_RB_screen + ((y << 8) + x) + 256 * 128);
-
-    d = (x + y * 320) * 8;
-
-    for (j = 0; j < 8; j++) {
-        d += 7;
-        e = vesa_videofont[car * 8 + j];
-
-        for (i = 0; i < 8; i++) {
-            screen[d] = (e & 1) ? (char)(col & 15) : (char)(col / 16);
-            e = e / 2;
-            d--;
-        }
-        d += 321;
-    }
-}  // vesa_Aff
-
-void vesa_Cadre(int x1, int y1, int x2, int y2, int type, int col1, int col2) {
-    int x, y;
-
-    for (x = x1; x <= x2; x++) {
-        *(_RB_screen + ((y1 << 8) + x)) = 0;
-        *(_RB_screen + ((y2 << 8) + x)) = 0;
-    }
-
-    for (y = y1; y <= y2; y++) {
-        *(_RB_screen + ((y << 8) + x1)) = 0;
-        *(_RB_screen + ((y << 8) + x2)) = 0;
-    }
-
-    char* screen = (char*)(0xA0000);
-
-    if (x1 >= 40) x1 = 39;
-    if (x2 >= 40) x2 = 39;
-    if (y1 >= 25) y1 = 24;
-    if (y2 >= 25) y2 = 24;
-
-    for (x = (x1 + 1) * 8; x < x2 * 8; x++) {
-        screen[x + (y1 * 8 + 7) * 320] = (char)col1;
-        screen[x + (y2 * 8) * 320] = (char)col2;
-    }
-
-    for (y = (y1 + 1) * 8; y < y2 * 8; y++) {
-        screen[(x1 * 8 + 7) + y * 320] = (char)col1;
-        screen[(x2 * 8) + y * 320] = (char)col2;
-    }
-
-}  // vesa_Cadre
-
-void vesa_AffChr(long x, long y, long c) {
-    if (*(_RB_screen + ((y << 8) + x)) != (char)c) {
-        *(_RB_screen + ((y << 8) + x)) = (char)c;
-        vesa_Aff(x, y);
-    }
-}
-
-void vesa_AffCol(long x, long y, long c) {
-    if (*(_RB_screen + ((y << 8) + x) + 256 * 128) != (char)c) {
-        *(_RB_screen + ((y << 8) + x) + 256 * 128) = (char)c;
-        vesa_Aff(x, y);
-    }
-}
-
-int vesa_SetMode(void) {
-    FILE* fic;
-    union REGS R;
-    char path[256];
-
-    R.w.ax = 0x13;
-    int386(0x10, &R, &R);
-
-    memset(_RB_screen, 0, 256 * 128 * 2);  // --- Clr --------------------------
-
-    strcpy(path, Fics->path);
-    strcat(path, "\\font8x8.cfg");
-
-    fic = fopen(path, "rb");
-    if (fic != NULL) {
-        Cfg->TailleX = 80;
-        Cfg->TailleY = 24;
-        Cfg->UseFont = 1;  // utilise les fonts 8x?
-        fread(vesa_videofont, 256 * 8, 1, fic);
-        fclose(fic);
-    } else {
-        memcpy(vesa_videofont, font8x8, 256 * 8);
-        Cfg->UseFont = 0;  // utilise les fonts 8x?
-        Cfg->TailleX = 80;
-        Cfg->TailleY = 24;
-    }
-
-    InitSeg();
-
-    return 1;
-}  // vesa_SetMode
-#endif  // ifdef USEVESA
